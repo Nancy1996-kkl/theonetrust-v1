@@ -8,6 +8,7 @@
 @import './tokens.css';
 @import './components.css';
 @import './shell.css';
+@import './landing.css';
 
 *,
 *::before,
@@ -18,6 +19,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Keyboard focus and #anchors never land under the sticky header (WCAG 2.4.11). */
+  scroll-padding-block-start: calc(var(--space-16) + var(--space-4));
 }
 
 body {

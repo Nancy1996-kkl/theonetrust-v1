@@ -268,6 +268,8 @@ describe('footer', () => {
       siteName: 'Theonetrust.in',
       legalName: null,
       registration: null,
+      established: null,
+      taxApproval: null,
       phone: null,
       whatsappUrl: null,
       email: null,

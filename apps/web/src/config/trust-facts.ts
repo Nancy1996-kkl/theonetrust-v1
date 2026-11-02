@@ -9,6 +9,8 @@ export interface TrustFacts {
   siteName: string;
   legalName: string | null;
   registration: string | null;
+  established: string | null;
+  taxApproval: Record<UiLang, string> | null;
   phone: { display: string; tel: string } | null;
   whatsappUrl: string | null;
   email: string | null;
@@ -20,6 +22,8 @@ export const TRUST_FACTS: TrustFacts = {
   siteName: 'Theonetrust.in',
   legalName: null, // [CONFIRM] #1
   registration: null, // [CONFIRM] #1
+  established: null, // [CONFIRM] #1
+  taxApproval: null, // [CONFIRM] #1 + CA — never shown without evidence
   phone: { display: '+91 96005 16999', tel: '+919600516999' },
   whatsappUrl: 'https://wa.me/919600516999',
   email: 'info.theonetrust@gmail.com',
