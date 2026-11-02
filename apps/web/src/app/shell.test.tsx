@@ -274,6 +274,7 @@ describe('footer', () => {
       whatsappUrl: null,
       email: null,
       area: null,
+      address: null,
       callHours: null,
     };
     const { unmount } = render(
