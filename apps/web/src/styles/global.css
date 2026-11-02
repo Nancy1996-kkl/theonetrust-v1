@@ -7,6 +7,7 @@
 @import '@fontsource/libre-baskerville/700.css';
 @import './tokens.css';
 @import './components.css';
+@import './shell.css';
 
 *,
 *::before,
@@ -170,8 +171,14 @@ button {
   z-index: var(--z-skip-link);
 }
 
+/* When focused it joins the normal flow above the sticky header, so it never covers the
+   header's buttons (axe target-size) and pushes the page down instead. */
 .skip-link:focus {
-  translate: 0 var(--space-4);
+  position: static;
+  display: block;
+  inline-size: fit-content;
+  margin: var(--space-2) var(--space-4);
+  translate: none;
 }
 
 .page {

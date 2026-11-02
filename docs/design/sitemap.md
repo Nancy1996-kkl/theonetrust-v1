@@ -109,11 +109,11 @@ them — this table and the route table are updated first.
 
 ## Navigation
 
-**Desktop (≥ 64em)** — one row: logo + name · About · Ways we help · Impact · Transparency · Contact ·
+**Desktop (≥ 80em, 1280px — Tamil labels need the room; wireframe #6)** — one row: logo + name · About · Ways we help · Impact · Transparency · Contact ·
 தமிழ் / English · **Get Help** (secondary button) · **Donate** (gold primary button).
 The header is sticky; the current section is marked with `aria-current="location"`.
 
-**Tablet and mobile (< 64em)** — logo + name · **Donate** (always visible) · menu button
+**Tablet and mobile (< 80em)** — logo + name · **Donate** (always visible) · menu button
 (accessible name "Menu" / "பட்டியல்"). The menu holds the five anchors, **Get Help** and the language
 switch, opens as a sheet below the header (not full-screen), traps focus, and closes on Escape,
 outside click or link choice. Get Help is also in the hero, so it is never more than one tap away.
