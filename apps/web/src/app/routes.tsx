@@ -16,6 +16,14 @@ export const routes: RouteObject[] = [
     errorElement: <RouteErrorPage />,
     children: [
       { index: true, element: <HomePage /> },
+      // Tamil mirror (ADR 0004). Same layout above it, so switching language keeps state.
+      {
+        path: 'ta',
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -104,7 +104,9 @@ describe('docs/design/sitemap.md matches the app', () => {
 
   it.each(appRoutes)('app route %s is documented as Built', (route) => {
     // Routes under /ta/ (added in #11) are checked against the documented Tamil column.
-    const row = rows.find((r) => r.route === route || r.tamil === route);
+    // React Router flattens the Tamil home to "/ta"; the table writes it as "/ta/".
+    const same = (a: string, b: string) => a.replace(/(.)\/$/, '$1') === b.replace(/(.)\/$/, '$1');
+    const row = rows.find((r) => r.route === route || same(r.tamil, route));
     expect(row, `${route} is missing from sitemap.md`).toBeDefined();
     expect(row!.status).toMatch(/^Built/);
   });
