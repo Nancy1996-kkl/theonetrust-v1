@@ -1,0 +1,197 @@
+import type { UiLang } from '../components/ui/ui-strings.ts';
+
+/**
+ * Landing-page content (issue #12) — the single source for hero, about, ways we help,
+ * how a donation helps and how it works. Components never hard-code this text.
+ *
+ * Gating rule (CLAUDE.md, issue #1): anything about the trust that the trust has not confirmed
+ * is `confirmed: false`. Unconfirmed items are NOT rendered on the live site; they are shown,
+ * marked "Draft", only when VITE_SHOW_DRAFT_CONTENT=true (review/preview builds).
+ * Draft wording comes from the reviewed wireframe (docs/design/wireframes/landing.html).
+ * When the owner dashboard exists (#21, #36) this file is replaced by API data of the same shape.
+ */
+export type Bilingual = Record<UiLang, string>;
+
+export interface Gated<T> {
+  confirmed: boolean;
+  value: T;
+}
+
+export type FundType = 'general' | 'earmarked';
+
+export interface Programme {
+  /** URL-safe id passed to the donate panel: /?programme=<slug>#donate */
+  slug: string;
+  title: Bilingual;
+  /** One line: what the help is. */
+  summary: Bilingual | null;
+  /** Who the help is for. */
+  whoFor: Bilingual | null;
+  fund: FundType;
+  /** The large card in the bento grid (the general fund, so no need looks more important). */
+  featured?: boolean;
+  confirmed: boolean;
+}
+
+export interface DonationExample {
+  /** Whole rupees. Shown only when the trust has verified what it covers. */
+  amountRupees: number;
+  covers: Bilingual;
+  confirmed: boolean;
+}
+
+export interface LandingContent {
+  hero: {
+    eyebrow: Gated<Bilingual> | null;
+    headline: Gated<Bilingual>;
+    lead: Gated<Bilingual> | null;
+    donateCta: Bilingual;
+    getHelpCta: Bilingual;
+    paymentNote: Gated<Bilingual>;
+  };
+  about: {
+    title: Bilingual;
+    intro: Gated<Bilingual> | null;
+    factLabels: {
+      legalName: Bilingual;
+      registration: Bilingual;
+      established: Bilingual;
+      area: Bilingual;
+      taxApproval: Bilingual;
+    };
+  };
+  ways: {
+    title: Bilingual;
+    intro: Gated<Bilingual> | null;
+    giveCta: Bilingual;
+    fundLabels: Record<FundType, Bilingual>;
+    whoForLabel: Bilingual;
+    programmes: Programme[];
+  };
+  donationHelps: {
+    title: Bilingual;
+    illustrativeNote: Bilingual;
+    examples: DonationExample[];
+  };
+  howItWorks: {
+    title: Bilingual;
+    steps: Bilingual[];
+    policyLink: Bilingual;
+  };
+  draftLabel: Bilingual;
+}
+
+const unconfirmedProgramme = (slug: string, title: Bilingual): Programme => ({
+  slug,
+  title,
+  summary: null,
+  whoFor: null,
+  fund: 'earmarked',
+  confirmed: false,
+});
+
+export const LANDING_CONTENT: LandingContent = {
+  hero: {
+    eyebrow: null,
+    headline: {
+      confirmed: false, // [CONFIRM] #1 — draft from the wireframe
+      value: {
+        en: 'Together, we create a better tomorrow.',
+        ta: 'ஒன்றாக இணைந்து நாளைய நல்வாழ்வை உருவாக்குவோம்.',
+      },
+    },
+    lead: null, // [CONFIRM] #1 — one short paragraph about the trust's real scope
+    donateCta: { en: 'Donate now', ta: 'இப்போதே நன்கொடை அளியுங்கள்' },
+    getHelpCta: { en: 'Get Help', ta: 'உதவி பெற' },
+    paymentNote: {
+      confirmed: false, // [CONFIRM] #1 — Razorpay account not yet live
+      value: {
+        en: 'Secure payment via Razorpay · UPI, cards, netbanking · Acknowledgement after verified payment',
+        ta: 'Razorpay மூலம் பாதுகாப்பான கட்டணம் · UPI, கார்டு, நெட்பேங்கிங் · கட்டணம் சரிபார்க்கப்பட்ட பிறகு ஒப்புகை',
+      },
+    },
+  },
+  about: {
+    title: { en: 'About the trust', ta: 'அறக்கட்டளையைப் பற்றி' },
+    intro: null, // [CONFIRM] #1 — short introduction, mission and vision from the owner
+    factLabels: {
+      legalName: { en: 'Legal name', ta: 'சட்டப்பூர்வ பெயர்' },
+      registration: { en: 'Registration', ta: 'பதிவு' },
+      established: { en: 'Established', ta: 'தொடங்கப்பட்டது' },
+      area: { en: 'Area', ta: 'பகுதி' },
+      taxApproval: { en: 'Tax approval', ta: 'வரி ஒப்புதல்' },
+    },
+  },
+  ways: {
+    title: { en: 'Ways we help', ta: 'நாங்கள் உதவும் வழிகள்' },
+    intro: null, // [CONFIRM] #1 — final list from the trust
+    giveCta: { en: 'Give', ta: 'நன்கொடை அளிக்க' },
+    fundLabels: {
+      general: { en: 'General fund', ta: 'பொது நிதி' },
+      earmarked: { en: 'For this need', ta: 'இந்தத் தேவைக்கு' },
+    },
+    whoForLabel: { en: 'For', ta: 'யாருக்கு' },
+    programmes: [
+      {
+        // Giving to the trust's general fund is how every donation works, so it needs no claim.
+        slug: 'general',
+        title: { en: 'Where it’s needed most', ta: 'மிகவும் தேவைப்படும் இடத்திற்கு' },
+        summary: {
+          en: 'A general donation the trust uses for the most urgent needs.',
+          ta: 'மிக அவசரத் தேவைகளுக்கு அறக்கட்டளை பயன்படுத்தும் பொது நன்கொடை.',
+        },
+        whoFor: {
+          en: 'Whoever needs it most at the time',
+          ta: 'அந்த நேரத்தில் மிகவும் தேவைப்படுபவர்கள்',
+        },
+        fund: 'general',
+        featured: true,
+        confirmed: true,
+      },
+      unconfirmedProgramme('education', { en: 'Education', ta: 'கல்வி' }),
+      unconfirmedProgramme('food', {
+        en: 'Food & essentials',
+        ta: 'உணவு மற்றும் அத்தியாவசியப் பொருட்கள்',
+      }),
+      unconfirmedProgramme('health', { en: 'Health access', ta: 'மருத்துவ அணுகல்' }),
+      unconfirmedProgramme('emergency', { en: 'Emergency support', ta: 'அவசரகால உதவி' }),
+      unconfirmedProgramme('livelihood', { en: 'Livelihood', ta: 'வாழ்வாதாரம்' }),
+      unconfirmedProgramme('other', { en: 'Other help', ta: 'பிற உதவிகள்' }),
+    ],
+  },
+  donationHelps: {
+    title: { en: 'How a donation helps', ta: 'ஒரு நன்கொடை எப்படி உதவுகிறது' },
+    illustrativeNote: {
+      en: 'Illustrative examples. Actual costs vary; amounts not used for one need go to the general fund.',
+      ta: 'எடுத்துக்காட்டுகள் மட்டுமே. உண்மையான செலவுகள் மாறுபடும்; ஒரு தேவைக்குப் பயன்படாத தொகை பொது நிதிக்குச் செல்லும்.',
+    },
+    examples: [], // [CONFIRM] #1 — only verified costs; the section stays hidden until then
+  },
+  howItWorks: {
+    title: { en: 'How it works', ta: 'இது எப்படிச் செயல்படுகிறது' },
+    steps: [
+      { en: 'Choose a need', ta: 'தேவையைத் தேர்ந்தெடுங்கள்' },
+      { en: 'Choose an amount', ta: 'தொகையைத் தேர்ந்தெடுங்கள்' },
+      { en: 'Pay securely', ta: 'பாதுகாப்பாகச் செலுத்துங்கள்' },
+      { en: 'Get an acknowledgement and updates', ta: 'ஒப்புகையும் தகவல்களும் பெறுங்கள்' },
+    ],
+    policyLink: {
+      en: 'Payment help, refunds and corrections',
+      ta: 'கட்டண உதவி, பணம் திரும்பப்பெறுதல் மற்றும் திருத்தங்கள்',
+    },
+  },
+  draftLabel: { en: 'Draft — not yet confirmed', ta: 'வரைவு — இன்னும் உறுதிசெய்யப்படவில்லை' },
+};
+
+/** Whether unconfirmed content may be shown (preview builds only, always labelled "Draft"). */
+export function draftsVisible(
+  env: { VITE_SHOW_DRAFT_CONTENT?: string } = import.meta.env,
+): boolean {
+  return env.VITE_SHOW_DRAFT_CONTENT === 'true';
+}
+
+/** A gated value if it may be shown, else null. */
+export function visible<T>(item: Gated<T> | null, showDrafts: boolean): Gated<T> | null {
+  if (!item) return null;
+  return item.confirmed || showDrafts ? item : null;
+}
