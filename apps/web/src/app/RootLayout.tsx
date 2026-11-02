@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router';
+import { Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router';
 import { ToastProvider } from '../components/ui/Toast.tsx';
 import { UiLangContext, type UiLang } from '../components/ui/ui-strings.ts';
 import { langFromPath, saveLangPreference, switchLanguagePath } from '../i18n/lang.ts';
@@ -63,6 +63,9 @@ export function RootLayout() {
             <Outlet />
           </main>
           <SiteFooter onLanguageChange={changeLanguage} />
+          {/* New pages open at the top (or at their #anchor); back/forward restore the old position.
+              The key ignores the /ta prefix, so switching language keeps the reader's place. */}
+          <ScrollRestoration getKey={(loc) => loc.pathname.replace(/^\/ta(?=\/|$)/, '') || '/'} />
         </ToastProvider>
       </DonationDraftContext.Provider>
     </UiLangContext.Provider>

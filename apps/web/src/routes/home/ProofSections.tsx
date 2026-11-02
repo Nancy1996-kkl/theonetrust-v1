@@ -17,6 +17,7 @@ import {
 import { homePath } from '../../i18n/lang.ts';
 import { useLang, useMessages } from '../../i18n/use-lang.ts';
 import { useDonationDraft } from '../../state/donation-draft.ts';
+import { PolicyNotice } from '../policy/PolicyNotice.tsx';
 import { Reveal } from './Reveal.tsx';
 
 /** Where a section's data stands. Static content is always ready; API data (#21) uses all three. */
@@ -315,6 +316,7 @@ export function FinalCtaSection({ proof, landing, showDrafts }: ProofProps) {
           >
             {finalCta.donateCta[lang]}
           </Link>
+          <PolicyNotice />
         </div>
       </Reveal>
     </section>
