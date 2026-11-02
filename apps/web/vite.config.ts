@@ -17,7 +17,14 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'src/vite-env.d.ts'],
+      // Entry points: main.tsx (browser) and entry-server.ts (build-time prerender, covered by e2e).
+      exclude: [
+        'src/**/*.test.{ts,tsx}',
+        'src/test/**',
+        'src/main.tsx',
+        'src/entry-server.ts',
+        'src/vite-env.d.ts',
+      ],
       thresholds: { lines: 90, functions: 90, branches: 85, statements: 90 },
     },
   },

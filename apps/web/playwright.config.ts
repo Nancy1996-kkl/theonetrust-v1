@@ -51,7 +51,7 @@ export default defineConfig({
     ? {}
     : {
         webServer: {
-          command: `pnpm exec vite build && pnpm exec vite preview --host 127.0.0.1 --port ${PORT} --strictPort`,
+          command: `pnpm run build && pnpm exec vite preview --host 127.0.0.1 --port ${PORT} --strictPort`,
           url: BASE_URL,
           reuseExistingServer: !isCI,
           // The Get Help panel uses the mock adapter in e2e; the live default is "unavailable" (#15, #22).

@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { PageMeta } from '../../seo/PageMeta.tsx';
 import { StatusPill } from '../../components/ui/StatusPill.tsx';
 import { TRUST_FACTS, type TrustFacts } from '../../config/trust-facts.ts';
 import { draftsVisible } from '../../content/landing.ts';
@@ -35,7 +36,7 @@ export function PolicyPage({
   const pending = policy.sections.some((s) => !s.confirmed);
   return (
     <article className="page prose policy" aria-labelledby="policy-title">
-      <title>{`${policy.title[lang]} · ${facts.siteName}`}</title>
+      <PageMeta path={policy.path} />
       <h1 id="policy-title">{policy.title[lang]}</h1>
       <p className="policy__intro">{policy.intro[lang]}</p>
       {pending && (

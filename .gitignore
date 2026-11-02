@@ -15,3 +15,4 @@ blob-report/
 .DS_Store
 *.log
 .claude/settings.local.json
+dist-server/
