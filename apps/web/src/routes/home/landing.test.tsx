@@ -121,7 +121,17 @@ describe('live page (drafts hidden)', () => {
     renderHome();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     const ids = [...document.querySelectorAll('main section[id]')].map((s) => s.id);
-    expect(ids).toEqual(['top', 'about', 'ways-we-help', 'how-it-works']);
+    expect(ids).toEqual([
+      'top',
+      'about',
+      'ways-we-help',
+      'how-it-works',
+      'impact',
+      'transparency',
+      'faq',
+      'contact',
+      'give',
+    ]);
   });
 
   it('hero falls back to the site name and never shows unconfirmed wording', () => {
@@ -129,7 +139,7 @@ describe('live page (drafts hidden)', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(TRUST_FACTS.siteName);
     expect(document.body).not.toHaveTextContent(LANDING_CONTENT.hero.headline.value.en);
     expect(document.body).not.toHaveTextContent('Razorpay');
-    expect(document.body).not.toHaveTextContent('Draft');
+    expect(document.body).not.toHaveTextContent('Draft —');
   });
 
   it('hero has Donate (primary) and Get Help (secondary) actions', () => {

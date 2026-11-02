@@ -15,6 +15,7 @@ export interface TrustFacts {
   whatsappUrl: string | null;
   email: string | null;
   area: Record<UiLang, string> | null;
+  address: Record<UiLang, string> | null;
   callHours: Record<UiLang, string> | null;
 }
 
@@ -28,5 +29,6 @@ export const TRUST_FACTS: TrustFacts = {
   whatsappUrl: 'https://wa.me/919600516999',
   email: 'info.theonetrust@gmail.com',
   area: { en: 'Kanchipuram, Tamil Nadu', ta: 'காஞ்சிபுரம், தமிழ்நாடு' },
+  address: null, // [CONFIRM] #1 — postal address pending from the client
   callHours: { en: 'Every day, 8 AM – 10 PM', ta: 'தினமும், காலை 8 – இரவு 10' },
 };
