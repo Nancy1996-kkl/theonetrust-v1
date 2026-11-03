@@ -6,12 +6,22 @@ import { langFromPath, saveLangPreference, switchLanguagePath } from '../i18n/la
 import { MESSAGES } from '../i18n/messages.ts';
 import {
   DonationDraftContext,
-  draftFromSearch,
+  initialDraft,
+  saveDraft,
   type DonationDraft,
 } from '../state/donation-draft.ts';
 import { SiteFooter } from './SiteFooter.tsx';
 import { SiteHeader } from './SiteHeader.tsx';
+import { DonatePanel } from '../donate/DonatePanel.tsx';
 import { GetHelpPanel } from '../help/GetHelpPanel.tsx';
+
+function sessionStore(): Storage | undefined {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return undefined;
+  }
+}
 
 function browserStorage(): Storage | undefined {
   try {
@@ -30,7 +40,12 @@ export function RootLayout() {
   const navigate = useNavigate();
   const lang = langFromPath(location.pathname);
   const t = MESSAGES[lang];
-  const [draft, setDraft] = useState<DonationDraft>(() => draftFromSearch(location.search));
+  const [draft, setDraft] = useState<DonationDraft>(() =>
+    initialDraft(location.search, sessionStore()),
+  );
+  useEffect(() => {
+    saveDraft(draft, sessionStore());
+  }, [draft]);
 
   useEffect(() => {
     document.documentElement.lang = lang;
@@ -65,6 +80,7 @@ export function RootLayout() {
           </main>
           <SiteFooter onLanguageChange={changeLanguage} />
           <GetHelpPanel />
+          <DonatePanel />
           {/* New pages open at the top (or at their #anchor); back/forward restore the old position.
               The key ignores the /ta prefix, so switching language keeps the reader's place. */}
           <ScrollRestoration getKey={(loc) => loc.pathname.replace(/^\/ta(?=\/|$)/, '') || '/'} />

@@ -55,7 +55,7 @@ export default defineConfig({
           url: BASE_URL,
           reuseExistingServer: !isCI,
           // The Get Help panel uses the mock adapter in e2e; the live default is "unavailable" (#15, #22).
-          env: { VITE_HELP_ADAPTER: 'mock' },
+          env: { VITE_HELP_ADAPTER: 'mock', VITE_DONATE_ADAPTER: 'mock' },
           timeout: 120_000,
         },
       }),

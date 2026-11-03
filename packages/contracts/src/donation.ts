@@ -44,8 +44,25 @@ export interface DonationIntentResponse {
 export interface DonationEstimateResponse {
   minPaise: number;
   maxPaise: number;
+  /** Gifts from this amount may ask for an acknowledgement (settings, default ₹500). */
+  receiptMinPaise: number;
   feeCoverOffered: boolean;
   /** Present when a gift was given and fee cover is offered for the method. */
   feePaise?: number;
   amountPaise?: number;
+}
+
+/** What Razorpay Checkout hands the browser on completion. Only a hint — the server verifies. */
+export interface PaymentVerifyRequest {
+  publicReference: string;
+  orderId: string;
+  paymentId: string;
+  signature: string;
+}
+
+/** Donor-safe status (#26): no personal data. PAID only after server-side verification. */
+export interface DonationStatusResponse {
+  publicReference: string;
+  status: 'PAID' | 'PENDING' | 'FAILED';
+  amountPaise: number;
 }

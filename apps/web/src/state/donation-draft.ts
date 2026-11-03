@@ -43,3 +43,46 @@ export function useDonationDraft(): DonationDraftApi {
   if (!api) throw new Error('useDonationDraft must be used inside the app shell');
   return api;
 }
+
+export const DRAFT_STORAGE_KEY = 'theonetrust:donation-draft';
+
+/**
+ * The draft also lives in this tab's sessionStorage, so it survives a full page load (a header
+ * link after a language switch, a refresh, a cancelled checkout). It holds no personal data.
+ * Approved URL keys win over the stored draft.
+ */
+export function initialDraft(
+  search: string,
+  storage: Pick<Storage, 'getItem'> | undefined,
+): DonationDraft {
+  const fromUrl = draftFromSearch(search);
+  if (fromUrl.programme || fromUrl.amountPaise || fromUrl.frequency === 'monthly') return fromUrl;
+  try {
+    const raw = storage?.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return fromUrl;
+    const saved = JSON.parse(raw) as { programme?: unknown; amountPaise?: unknown };
+    const params = new URLSearchParams();
+    if (typeof saved.programme === 'string') params.set('programme', saved.programme);
+    if (typeof saved.amountPaise === 'number' && Number.isInteger(saved.amountPaise)) {
+      params.set('amount', String(saved.amountPaise / 100));
+    }
+    // Re-validated exactly like URL input.
+    return draftFromSearch(`?${params.toString()}`);
+  } catch {
+    return fromUrl;
+  }
+}
+
+export function saveDraft(
+  draft: DonationDraft,
+  storage: Pick<Storage, 'setItem'> | undefined,
+): void {
+  try {
+    storage?.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({ programme: draft.programme, amountPaise: draft.amountPaise }),
+    );
+  } catch {
+    // Storage can be blocked (private mode); the draft then lasts until the page reloads.
+  }
+}

@@ -8,6 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_CONTENT_SOURCE?: string;
   /** Get Help adapter: 'api' (live, #22), 'mock' (dev/e2e only) or 'unavailable'. */
   readonly VITE_HELP_ADAPTER?: string;
+  /** Donate panel adapter: 'api' (live, #24/#26), 'mock' (dev/e2e only) or 'unavailable'. */
+  readonly VITE_DONATE_ADAPTER?: string;
 }
 
 interface ImportMeta {

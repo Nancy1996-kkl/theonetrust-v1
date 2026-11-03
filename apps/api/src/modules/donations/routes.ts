@@ -81,6 +81,7 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
     return {
       minPaise: DONATION_MIN_PAISE,
       maxPaise: settings.maxDonationPaise,
+      receiptMinPaise: settings.receiptMinPaise,
       feeCoverOffered: table !== null,
       ...(query.giftPaise !== undefined &&
         fee !== null && { feePaise: fee, amountPaise: query.giftPaise + fee }),

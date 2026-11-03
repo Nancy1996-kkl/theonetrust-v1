@@ -1,0 +1,167 @@
+import type { UiLang } from '../components/ui/ui-strings.ts';
+
+/**
+ * Donate panel text (#24). Copy follows the reviewed wireframe (docs/design/wireframes/donate.html,
+ * #7); final copy is reviewed by the trust (#37). Every key exists in both languages
+ * (donate.test.tsx checks). `{amount}` and `{fee}` are filled in by the panel.
+ */
+const en = {
+  title: 'Donate',
+  progress: 'Donation progress',
+  stepNeed: 'Need',
+  stepAmount: 'Amount',
+  stepDetails: 'Details',
+  stepPay: 'Pay',
+  whereGo: 'Where should your gift go?',
+  generalText: 'General fund — used for the most urgent needs.',
+  earmarkedText: 'For this need.',
+  continue: 'Continue',
+  back: 'Back',
+  howMuch: 'How much would you like to give?',
+  minAmount: 'Any amount from ₹1',
+  maxAmount: 'For gifts above {amount}, please pay by bank transfer.',
+  coverFee: 'Add {fee} to cover the payment fee',
+  coverFeeHint: 'Optional. So the trust receives your full gift.',
+  methodsTitle: 'Ways to pay',
+  methodsText:
+    'UPI up to ₹1,00,000 per payment (your bank may allow less). Card or netbanking for any amount. Bank transfer for large gifts.',
+  yourDetails: 'Your details',
+  detailsWhy: 'Kept private. The trust keeps a record of every donor.',
+  fullName: 'Full name',
+  mobile: 'Mobile number',
+  mobileError: 'Enter a 10-digit mobile number',
+  email: 'Email',
+  emailError: 'Enter a valid email address',
+  contactError: 'Give a mobile number or an email so the trust can reach you about this gift.',
+  nameError: 'Enter your name',
+  ackOpt: 'Send me a donation acknowledgement',
+  ackHint: 'Offered from {amount}. Download link after payment; email only if you add one.',
+  hideName: "Don't show my name publicly",
+  consent: 'The trust may keep these details to record my donation.',
+  consentError: 'Please tick this box to continue.',
+  review: 'Check and pay',
+  sumNeed: 'Need',
+  sumAmount: 'Amount',
+  sumGift: 'Gift',
+  sumFee: 'Payment fee',
+  sumName: 'Name',
+  trustLine: 'Secure payment via Razorpay · UPI QR or app, card, netbanking',
+  payNow: 'Pay {amount} securely',
+  confirming: 'Confirming your payment…',
+  dontClose: "Please don't close this page or pay again.",
+  thanks: 'Thank you — payment received',
+  reference: 'Reference',
+  backToPage: 'Back to the page',
+  pending: "We're confirming your payment",
+  dontPayAgain: "Please don't pay again. This can take a few minutes.",
+  checkAgain: 'Check again',
+  pendingHelp:
+    "If money left your account and this doesn't change, contact us with this reference.",
+  failed: "Payment didn't go through",
+  failedText: 'Your details are kept. You can try again or use another way to pay.',
+  tryAgain: 'Try again',
+  failedHelp: 'If money left your account, contact us with this reference.',
+  cancelled: 'Payment cancelled',
+  cancelledText: 'Nothing was charged. Your choices are kept.',
+  limitTitle: "Your UPI app or bank didn't allow this amount",
+  limitText:
+    'Banks set their own UPI limits. New UPI users may be limited to ₹5,000 in the first 24 hours.',
+  payCard: 'Pay by card or netbanking',
+  smaller: 'Give a smaller amount',
+  closedTitle: 'Online donations open soon',
+  closedText:
+    'Online payments are not switched on yet. Please contact the trust to give, or come back soon.',
+  invalidTitle: 'Some details need checking',
+  invalidText: 'Please check the amount and your details, then try again.',
+  waitTitle: 'Please wait a moment',
+  waitText: 'There were many attempts from this connection. Please try again in a few minutes.',
+  netTitle: 'Could not reach the trust',
+  netText: 'Your choices are kept. Check your connection and try again.',
+};
+
+export type DonateMessageKey = keyof typeof en;
+
+const ta: Record<DonateMessageKey, string> = {
+  title: 'நன்கொடை',
+  progress: 'நன்கொடை முன்னேற்றம்',
+  stepNeed: 'தேவை',
+  stepAmount: 'தொகை',
+  stepDetails: 'விவரங்கள்',
+  stepPay: 'செலுத்துதல்',
+  whereGo: 'உங்கள் நன்கொடை எங்கு செல்ல வேண்டும்?',
+  generalText: 'பொது நிதி — மிக அவசரத் தேவைகளுக்குப் பயன்படுத்தப்படும்.',
+  earmarkedText: 'இந்தத் தேவைக்கு.',
+  continue: 'தொடரவும்',
+  back: 'பின்செல்',
+  howMuch: 'எவ்வளவு நன்கொடை அளிக்க விரும்புகிறீர்கள்?',
+  minAmount: '₹1 முதல் எந்தத் தொகையும்',
+  maxAmount: '{amount}-க்கு மேலான நன்கொடைகளுக்கு வங்கிப் பரிமாற்றம் மூலம் செலுத்தவும்.',
+  coverFee: 'கட்டணச் செலவுக்கு {fee} சேர்க்கவும்',
+  coverFeeHint: 'விருப்பத்திற்குரியது. அறக்கட்டளைக்கு முழுத் தொகையும் கிடைக்கும்.',
+  methodsTitle: 'செலுத்தும் வழிகள்',
+  methodsText:
+    'UPI மூலம் ஒரு முறைக்கு ₹1,00,000 வரை (உங்கள் வங்கி குறைவாக அனுமதிக்கலாம்). எந்தத் தொகைக்கும் கார்டு அல்லது நெட்பேங்கிங். பெரிய தொகைகளுக்கு வங்கிப் பரிமாற்றம்.',
+  yourDetails: 'உங்கள் விவரங்கள்',
+  detailsWhy:
+    'தனிப்பட்டதாக வைக்கப்படும். ஒவ்வொரு நன்கொடையாளரின் பதிவையும் அறக்கட்டளை வைத்திருக்கும்.',
+  fullName: 'முழுப் பெயர்',
+  mobile: 'கைபேசி எண்',
+  mobileError: '10 இலக்க கைபேசி எண்ணை உள்ளிடவும்',
+  email: 'மின்னஞ்சல்',
+  emailError: 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்',
+  contactError:
+    'இந்த நன்கொடை குறித்து அறக்கட்டளை உங்களைத் தொடர்புகொள்ள கைபேசி எண் அல்லது மின்னஞ்சலைக் கொடுக்கவும்.',
+  nameError: 'உங்கள் பெயரை உள்ளிடவும்',
+  ackOpt: 'எனக்கு நன்கொடை ஒப்புகையை அனுப்பவும்',
+  ackHint:
+    '{amount} முதல். கட்டணத்திற்குப் பிறகு பதிவிறக்க இணைப்பு; மின்னஞ்சல் கொடுத்தால் மட்டுமே மின்னஞ்சல்.',
+  hideName: 'என் பெயரைப் பொதுவில் காட்ட வேண்டாம்',
+  consent: 'என் நன்கொடையைப் பதிவுசெய்ய அறக்கட்டளை இந்த விவரங்களை வைத்திருக்கலாம்.',
+  consentError: 'தொடர இந்தப் பெட்டியைத் தேர்ந்தெடுக்கவும்.',
+  review: 'சரிபார்த்துச் செலுத்துங்கள்',
+  sumNeed: 'தேவை',
+  sumAmount: 'தொகை',
+  sumGift: 'நன்கொடை',
+  sumFee: 'கட்டணச் செலவு',
+  sumName: 'பெயர்',
+  trustLine: 'Razorpay மூலம் பாதுகாப்பான கட்டணம் · UPI QR அல்லது செயலி, கார்டு, நெட்பேங்கிங்',
+  payNow: '{amount} பாதுகாப்பாகச் செலுத்து',
+  confirming: 'உங்கள் கட்டணத்தை உறுதிப்படுத்துகிறோம்…',
+  dontClose: 'இந்தப் பக்கத்தை மூட வேண்டாம், மீண்டும் செலுத்த வேண்டாம்.',
+  thanks: 'நன்றி — கட்டணம் பெறப்பட்டது',
+  reference: 'குறிப்பு எண்',
+  backToPage: 'பக்கத்திற்குத் திரும்பு',
+  pending: 'உங்கள் கட்டணத்தை உறுதிப்படுத்திக்கொண்டிருக்கிறோம்',
+  dontPayAgain: 'மீண்டும் செலுத்த வேண்டாம். இதற்குச் சில நிமிடங்கள் ஆகலாம்.',
+  checkAgain: 'மீண்டும் சரிபார்',
+  pendingHelp:
+    'உங்கள் கணக்கிலிருந்து பணம் போய், இது மாறவில்லை என்றால், இந்தக் குறிப்பு எண்ணுடன் எங்களைத் தொடர்பு கொள்ளுங்கள்.',
+  failed: 'கட்டணம் நிறைவேறவில்லை',
+  failedText:
+    'உங்கள் விவரங்கள் சேமிக்கப்பட்டுள்ளன. மீண்டும் முயற்சிக்கலாம் அல்லது வேறு வழியில் செலுத்தலாம்.',
+  tryAgain: 'மீண்டும் முயற்சி செய்',
+  failedHelp:
+    'உங்கள் கணக்கிலிருந்து பணம் போயிருந்தால், இந்தக் குறிப்பு எண்ணுடன் தொடர்பு கொள்ளுங்கள்.',
+  cancelled: 'கட்டணம் ரத்து செய்யப்பட்டது',
+  cancelledText: 'எந்தத் தொகையும் எடுக்கப்படவில்லை. உங்கள் தேர்வுகள் சேமிக்கப்பட்டுள்ளன.',
+  limitTitle: 'உங்கள் UPI செயலி அல்லது வங்கி இந்தத் தொகையை அனுமதிக்கவில்லை',
+  limitText:
+    'ஒவ்வொரு வங்கியும் தனது UPI வரம்பை நிர்ணயிக்கிறது. புதிய UPI பயனர்களுக்கு முதல் 24 மணி நேரத்தில் ₹5,000 வரம்பு இருக்கலாம்.',
+  payCard: 'கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்து',
+  smaller: 'சிறிய தொகையை அளிக்கவும்',
+  closedTitle: 'இணைய நன்கொடைகள் விரைவில் தொடங்கும்',
+  closedText:
+    'இணையக் கட்டணம் இன்னும் இயக்கப்படவில்லை. நன்கொடை அளிக்க அறக்கட்டளையைத் தொடர்புகொள்ளவும், அல்லது விரைவில் மீண்டும் வாருங்கள்.',
+  invalidTitle: 'சில விவரங்களைச் சரிபார்க்க வேண்டும்',
+  invalidText: 'தொகையையும் உங்கள் விவரங்களையும் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
+  waitTitle: 'சிறிது நேரம் காத்திருக்கவும்',
+  waitText:
+    'இந்த இணைப்பிலிருந்து பல முயற்சிகள் வந்துள்ளன. சில நிமிடங்களில் மீண்டும் முயற்சிக்கவும்.',
+  netTitle: 'அறக்கட்டளையை அணுக முடியவில்லை',
+  netText: 'உங்கள் தேர்வுகள் சேமிக்கப்பட்டுள்ளன. இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.',
+};
+
+export const DONATE_MESSAGES: Record<UiLang, Record<DonateMessageKey, string>> = { en, ta };
+
+/** Quick picks from the plan (₹500, ₹1,000, ₹2,000, ₹5,000). */
+export const DONATE_PRESETS_RUPEES = [500, 1000, 2000, 5000] as const;
