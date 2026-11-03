@@ -20,6 +20,7 @@
     "test:scripts": "node --test \"scripts/**/*.test.mjs\" \".claude/**/*.test.mjs\"",
     "test:e2e": "pnpm --filter @theonetrust/web test:e2e",
     "check:tests-required": "node scripts/check-tests-required.mjs",
+    "check:no-live-keys": "node scripts/check-no-live-keys.mjs",
     "verify": "node scripts/verify.mjs",
     "verify:quick": "node scripts/verify.mjs --quick",
     "wireframes": "node scripts/render-wireframes.mjs"

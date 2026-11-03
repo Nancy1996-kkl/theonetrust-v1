@@ -20,6 +20,7 @@ function diffCheckArgs() {
 
 const steps = [
   ['whitespace + conflict markers', 'git', diffCheckArgs()],
+  ['no live payment keys', 'node', ['scripts/check-no-live-keys.mjs']],
   ['format', 'pnpm', ['format:check']],
   ['lint', 'pnpm', ['lint']],
   ['typecheck', 'pnpm', ['typecheck']],
