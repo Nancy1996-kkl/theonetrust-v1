@@ -113,6 +113,10 @@ enum PaymentExceptionKind {
   UNMATCHED_CREDIT
   AMOUNT_MISMATCH
   ALREADY_PAID
+  /// Provider data disagrees with our order (amount, currency or order ID) — #26.
+  PAYMENT_MISMATCH
+  /// A second payment arrived for an order that already has one — #26.
+  DUPLICATE_PAYMENT
 }
 
 enum ExceptionStatus {
@@ -391,6 +395,8 @@ model PaymentException {
   status               ExceptionStatus      @default(OPEN)
   donationIntentId     String?              @map("donation_intent_id") @db.Uuid
   bankTransferRecordId String?              @map("bank_transfer_record_id") @db.Uuid
+  /// Provider payment ID involved (no card or UPI details).
+  providerPaymentId    String?              @map("provider_payment_id")
   createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
   resolvedAt           DateTime?            @map("resolved_at") @db.Timestamptz(3)
   resolvedById         String?              @map("resolved_by_id") @db.Uuid
