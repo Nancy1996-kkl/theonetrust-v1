@@ -1,0 +1,273 @@
+/*
+ * Landing sections (issue #12): hero, about + facts strip, ways we help, how a donation helps,
+ * how it works. Tokens only. Editorial, calm; motion only under prefers-reduced-motion: no-preference.
+ */
+
+.landing__wrap {
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.landing-section,
+.landing-hero {
+  /* Long words (and the site name) wrap instead of widening the page at 200% text zoom. */
+  overflow-wrap: anywhere;
+}
+
+.landing-section {
+  padding-block: var(--space-section);
+  scroll-margin-block-start: var(--space-16);
+}
+
+.landing-section:nth-of-type(even) {
+  background: var(--color-surface);
+}
+
+.landing-section h2 {
+  margin-block: 0 var(--space-4);
+}
+
+.landing__intro {
+  max-width: var(--measure);
+  color: var(--color-text-muted);
+}
+
+.landing__note {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.landing__draft {
+  vertical-align: middle;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────── */
+.landing-hero {
+  padding-block: var(--space-section);
+  scroll-margin-block-start: var(--space-16);
+}
+
+.landing-hero__grid {
+  display: grid;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+@media (min-width: 64em) {
+  .landing-hero__grid {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+
+.landing-hero__text {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+  min-width: 0;
+}
+
+.landing-hero__eyebrow {
+  margin: 0;
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.landing-hero__title {
+  margin: 0;
+  font-size: var(--text-hero);
+  max-width: 18ch;
+  /* The fallback headline is one long word (the site name): let it break at 200% zoom. */
+  overflow-wrap: anywhere;
+}
+
+:lang(ta) .landing-hero__title {
+  max-width: none;
+}
+
+.landing-hero__lead {
+  margin: 0;
+  max-width: var(--measure);
+  color: var(--color-text-muted);
+}
+
+.landing-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.landing-hero__note {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+/* Typographic visual: a calm navy panel with a gold rule — no stock people (spec §4.2). */
+.landing-hero__art {
+  display: none;
+  place-items: center;
+  min-block-size: 18rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+@media (min-width: 64em) {
+  .landing-hero__art {
+    display: grid;
+  }
+}
+
+.landing-hero__mark {
+  inline-size: var(--space-24);
+  block-size: var(--space-24);
+  border: var(--border-width-strong) solid var(--color-focus-on-inverse);
+  border-radius: var(--radius-pill);
+}
+
+/* ── Facts strip ─────────────────────────────────────────────────── */
+.landing-facts {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  margin: var(--space-6) 0 0;
+}
+
+.landing-facts__item {
+  min-width: 0;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.landing-facts__item dt {
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.landing-facts__item dd {
+  margin: 0;
+}
+
+/* ── Ways we help ────────────────────────────────────────────────── */
+.landing-ways {
+  margin-block-start: var(--space-6);
+}
+
+/* Whole card is one tap target: the link's ::after covers the tile. */
+.landing-card {
+  position: relative;
+  transition:
+    box-shadow var(--duration-base) var(--ease-standard),
+    translate var(--duration-base) var(--ease-standard);
+}
+
+.landing-card:hover,
+.landing-card:focus-within {
+  box-shadow: var(--shadow-md);
+}
+
+.landing-card--featured {
+  border: var(--border-width-strong) solid var(--color-text-heading);
+}
+
+.landing-card__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.landing-card__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.landing-card__who {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+/* ── How a donation helps ────────────────────────────────────────── */
+.landing-helps {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-helps__item {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+/* ── How it works ────────────────────────────────────────────────── */
+.landing-steps {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+}
+
+.landing-steps__item > span:last-child {
+  min-width: 0;
+}
+
+.landing-steps__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  font-weight: var(--weight-medium);
+}
+
+.landing-steps__number {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--space-10);
+  block-size: var(--space-10);
+  border-radius: var(--radius-pill);
+  background: var(--color-action-primary-bg);
+  color: var(--color-action-primary-text);
+  font-weight: var(--weight-bold);
+}
+
+/* ── Scroll reveal (motion only when the visitor allows it) ─────── */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal[data-reveal='waiting'] {
+    opacity: 0;
+    translate: 0 var(--space-4);
+  }
+
+  .reveal[data-reveal='shown'] {
+    opacity: 1;
+    translate: 0 0;
+    transition:
+      opacity var(--duration-slow) var(--ease-emphasized),
+      translate var(--duration-slow) var(--ease-emphasized);
+  }
+
+  .landing-card:hover {
+    translate: 0 calc(var(--space-1) * -1);
+  }
+}

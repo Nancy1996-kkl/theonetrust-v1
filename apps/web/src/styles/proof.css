@@ -1,0 +1,171 @@
+/*
+ * Proof sections (issue #13): impact, transparency, FAQ, contact, final call to action.
+ * Tokens only.
+ */
+
+/* ── Impact ──────────────────────────────────────────────────────── */
+.proof-metrics {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-metrics__item {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.proof-metrics__value {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-heading);
+}
+
+.proof-metrics__meta {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.proof-stories {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  margin-block-start: var(--space-6);
+}
+
+.proof-stories__item {
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.proof-stories__item h3 {
+  margin-block-start: 0;
+}
+
+/* ── FAQ ─────────────────────────────────────────────────────────── */
+.proof-faq {
+  display: grid;
+  gap: var(--space-2);
+  max-width: var(--measure);
+}
+
+.proof-faq__item {
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.proof-faq__question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  padding: var(--space-3) var(--space-4);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-heading);
+  cursor: pointer;
+  list-style: none;
+}
+
+.proof-faq__question::-webkit-details-marker {
+  display: none;
+}
+
+/* Plus / minus marker: shape changes with state, not only colour. */
+.proof-faq__question::after {
+  content: '+';
+  flex: none;
+  font-size: var(--text-h3);
+  line-height: 1;
+}
+
+.proof-faq__item[open] > .proof-faq__question::after {
+  content: '−';
+}
+
+.proof-faq__answer {
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.proof-faq__answer p {
+  margin-block-start: 0;
+}
+
+/* ── Contact ─────────────────────────────────────────────────────── */
+.proof-contact {
+  display: grid;
+  gap: var(--space-8);
+}
+
+@media (min-width: 64em) {
+  .proof-contact {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.proof-contact__facts {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.proof-contact__facts dt {
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.proof-contact__facts dd {
+  margin: 0;
+}
+
+.proof-contact__facts a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+}
+
+.proof-contact__help {
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.proof-contact__help h3 {
+  margin-block-start: 0;
+}
+
+.proof-contact__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* ── Final call to action ────────────────────────────────────────── */
+.proof-cta__form {
+  display: grid;
+  gap: var(--space-5);
+  justify-items: start;
+  max-width: 40rem;
+  margin-block-start: var(--space-4);
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+}
+
+.proof-cta__form .ui-amount {
+  inline-size: 100%;
+}

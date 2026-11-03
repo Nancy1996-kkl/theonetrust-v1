@@ -35,12 +35,19 @@ async function injectSpecimen(page: Page): Promise<void> {
 test.describe('type scale', () => {
   test('h1 and body match the fluid scale at this viewport', async ({ page }) => {
     const width = page.viewportSize()!.width;
-    await page.goto('/');
+    // A plain page h1 uses --text-h1 (the home page h1 is the hero, checked below).
+    await page.goto('/missing');
     const h1 = await computed(page, 'h1');
     const body = await computed(page, 'main p');
     expect(h1.fontSize).toBeCloseTo(fluid(34, 48, width), 0);
     expect(body.fontSize).toBeCloseTo(fluid(16, 17, width), 0);
     expect(h1.fontWeight).toBeGreaterThanOrEqual(400);
+  });
+
+  test('the home hero headline uses the hero scale', async ({ page }) => {
+    const width = page.viewportSize()!.width;
+    await page.goto('/');
+    expect((await computed(page, 'h1')).fontSize).toBeCloseTo(fluid(38, 64, width), 0);
   });
 
   test('the scale follows the user font-size setting (rem-based)', async ({ page }) => {
@@ -95,7 +102,11 @@ test.describe('fonts', () => {
     for (const selector of ['#tamil-specimen h2', '#tamil-specimen h3', '#inverse-band h3']) {
       expect((await computed(page, selector)).fontFamily, selector).toMatch(/^"?Noto Serif Tamil/);
     }
-    for (const selector of ['#tamil-specimen p', 'p[lang="ta"]', '[data-check="card"] button']) {
+    for (const selector of [
+      '#tamil-specimen p',
+      '#tamil-specimen small',
+      '[data-check="card"] button',
+    ]) {
       expect((await computed(page, selector)).fontFamily, selector).toMatch(
         /^"?Noto Sans Tamil Variable/,
       );
@@ -144,6 +155,10 @@ test.describe('Tamil specimen at this viewport', () => {
       body: await page.locator('#tamil-specimen').screenshot(),
       contentType: 'image/png',
     });
+    // The element screenshot scrolls to the specimen, which leaves footer links under the sticky
+    // header; axe's target-size rule then reports that scroll position, not a real target problem.
+    // Return to the top so the auto bug detector checks the page as a visitor first sees it.
+    await page.evaluate(() => window.scrollTo(0, 0));
     expect(problems).toEqual([]);
   });
 

@@ -1,0 +1,292 @@
+/*
+ * Public shell (issue #11): sticky header, mobile menu sheet, footer.
+ * Breakpoint: section links move into the header at 80em (1280px) — below that they live in
+ * the menu, because Tamil labels need the room (wireframe docs/design/wireframes/landing.html).
+ */
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.site-header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-header);
+  background: var(--color-surface);
+  border-block-end: var(--border-width) solid var(--color-border-subtle);
+  box-shadow: var(--shadow-sm);
+}
+
+.site-header__bar {
+  display: flex;
+  /* At 200% text zoom the desktop row may not fit: wrap instead of scrolling sideways. */
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: var(--content-max);
+  min-height: var(--space-16);
+  margin-inline: auto;
+  padding: var(--space-2) var(--gutter);
+}
+
+.site-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--control-height-sm);
+  margin-inline-end: auto;
+  color: var(--color-text-heading);
+  font-family: var(--font-heading);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+}
+
+.site-header__mark {
+  flex: none;
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  border: var(--border-width-strong) solid var(--color-text-heading);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+}
+
+.site-header__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-header__nav {
+  display: none;
+}
+
+.site-header__nav ul,
+.site-header__sheet ul,
+.site-footer ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-header__nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.site-header__nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  color: var(--color-link);
+  font-size: var(--text-small);
+  font-weight: var(--weight-medium);
+  text-underline-offset: 0.3em;
+  white-space: nowrap;
+}
+
+.site-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.site-header__actions .ui-button {
+  min-height: var(--control-height-sm);
+  padding-inline: var(--space-4);
+  white-space: nowrap;
+}
+
+/* Language switch and Get Help live in the menu on narrow screens. */
+.site-header__lang,
+.site-header__help {
+  display: none;
+}
+
+.site-header__menu-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-height-sm);
+  min-inline-size: var(--control-height-sm);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width-strong) solid var(--color-action-secondary-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-action-secondary-text);
+  font-weight: var(--weight-semibold);
+}
+
+.site-header__menu-button:hover {
+  background: var(--color-action-secondary-bg-hover);
+}
+
+/* Three bars → a cross when open (state is also aria-expanded, read by screen readers). */
+.site-header__menu-icon {
+  position: relative;
+  inline-size: var(--space-5);
+  block-size: var(--border-width-strong);
+  background: currentColor;
+  box-shadow:
+    0 calc(var(--space-2) * -1) 0 currentColor,
+    0 var(--space-2) 0 currentColor;
+}
+
+.site-header__menu-icon[data-open] {
+  background: transparent;
+  box-shadow: none;
+}
+
+.site-header__menu-icon[data-open]::before,
+.site-header__menu-icon[data-open]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  rotate: 45deg;
+}
+
+.site-header__menu-icon[data-open]::after {
+  rotate: -45deg;
+}
+
+/* Text label hidden only on the smallest phones; the button keeps its accessible name. */
+@media (max-width: 29.99em) {
+  .site-header__menu-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* Menu sheet: drops below the header, never covers the whole page. */
+.site-header__sheet {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 100%;
+  display: grid;
+  gap: var(--space-4);
+  max-block-size: calc(100dvh - var(--space-16));
+  overflow-y: auto;
+  padding: var(--space-4) var(--gutter) var(--space-6);
+  border-block-end: var(--border-width) solid var(--color-border-subtle);
+  box-shadow: var(--shadow-lg);
+}
+
+.site-header__sheet[hidden] {
+  display: none;
+}
+
+.site-header__sheet nav a {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+  border-block-end: var(--border-width) solid var(--color-border-subtle);
+  color: var(--color-link);
+  font-weight: var(--weight-medium);
+}
+
+@media (min-width: 48em) {
+  .site-header__help {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 80em) {
+  .site-header__nav,
+  .site-header__lang {
+    display: flex;
+  }
+
+  .site-header__menu-button,
+  .site-header__sheet {
+    display: none;
+  }
+
+  :lang(ta) .site-header__nav ul {
+    gap: var(--space-3);
+  }
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+.site-footer {
+  padding: var(--space-12) var(--gutter) var(--space-8);
+}
+
+.site-footer__grid {
+  display: grid;
+  gap: var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  max-width: var(--content-max);
+  margin-inline: auto;
+}
+
+@media (min-width: 64em) {
+  .site-footer__grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+}
+
+.site-footer__group {
+  /* Long e-mail addresses and names must wrap at 200% text zoom on small phones. */
+  overflow-wrap: anywhere;
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.site-footer__title {
+  margin: 0;
+  font-size: var(--text-body);
+}
+
+.site-footer ul {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.site-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+}
+
+.site-footer__facts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.site-footer__facts dt {
+  font-size: var(--text-small);
+  font-weight: var(--weight-semibold);
+}
+
+.site-footer__facts dd {
+  margin: 0;
+}
+
+.site-footer__facts dd a {
+  min-height: auto;
+  padding-block: var(--space-2);
+}
+
+.site-footer__copyright {
+  max-width: var(--content-max);
+  margin: var(--space-8) auto 0;
+  padding-block-start: var(--space-4);
+  border-block-start: var(--border-width) solid var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+/* Inside navy bands the pressed language uses the gold action pair (navy on navy otherwise). */
+.surface-inverse .ui-lang__option[aria-pressed='true'] {
+  background: var(--color-action-donate-bg);
+  color: var(--color-action-donate-text);
+}

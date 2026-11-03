@@ -6,6 +6,10 @@
 @import '@fontsource/libre-baskerville/400.css';
 @import '@fontsource/libre-baskerville/700.css';
 @import './tokens.css';
+@import './components.css';
+@import './shell.css';
+@import './landing.css';
+@import './proof.css';
 
 *,
 *::before,
@@ -16,6 +20,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Keyboard focus and #anchors never land under the sticky header (WCAG 2.4.11). */
+  scroll-padding-block-start: calc(var(--space-16) + var(--space-4));
 }
 
 body {
@@ -169,8 +175,14 @@ button {
   z-index: var(--z-skip-link);
 }
 
+/* When focused it joins the normal flow above the sticky header, so it never covers the
+   header's buttons (axe target-size) and pushes the page down instead. */
 .skip-link:focus {
-  translate: 0 var(--space-4);
+  position: static;
+  display: block;
+  inline-size: fit-content;
+  margin: var(--space-2) var(--space-4);
+  translate: none;
 }
 
 .page {

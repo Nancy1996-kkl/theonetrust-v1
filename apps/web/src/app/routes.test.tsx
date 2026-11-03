@@ -9,13 +9,17 @@ import { consoleGuard } from '../test/console-guard.ts';
 import { renderRoute } from '../test/render.tsx';
 
 describe('home route', () => {
-  it('renders one top-level heading and bilingual placeholder text', () => {
+  it('renders one top-level heading in each language (the placeholder text was replaced in #12)', () => {
     renderRoute('/');
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(screen.getByText('இந்த இணையதளம் உருவாக்கப்பட்டு வருகிறது.')).toHaveAttribute(
-      'lang',
-      'ta',
-    );
+    expect(screen.getByRole('heading', { level: 2, name: 'Ways we help' })).toBeVisible();
+  });
+
+  it('renders the Tamil page under /ta/', () => {
+    renderRoute('/ta/');
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 2, name: 'நாங்கள் உதவும் வழிகள்' })).toBeVisible();
+    expect(document.documentElement.lang).toBe('ta');
   });
 
   it('exposes a skip link that targets the main landmark', () => {
