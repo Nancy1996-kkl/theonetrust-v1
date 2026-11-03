@@ -128,3 +128,40 @@
   font-size: var(--text-small);
   overflow-wrap: anywhere;
 }
+
+.admin-facts {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-8);
+}
+
+.admin-facts > div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.admin-facts dt {
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+.admin-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-notes {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-6);
+  padding-inline-start: var(--space-6);
+}
+
+.admin-notes p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-page section {
+  margin-block-end: var(--space-8);
+}

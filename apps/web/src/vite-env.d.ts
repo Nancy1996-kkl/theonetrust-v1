@@ -6,6 +6,8 @@ interface ImportMetaEnv {
   readonly VITE_SHOW_DRAFT_CONTENT?: string;
   /** 'api' on the live site: landing content comes from the public API (#21). Default 'bundled'. */
   readonly VITE_CONTENT_SOURCE?: string;
+  /** Get Help adapter: 'api' (live, #22), 'mock' (dev/e2e only) or 'unavailable'. */
+  readonly VITE_HELP_ADAPTER?: string;
 }
 
 interface ImportMeta {

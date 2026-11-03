@@ -482,31 +482,38 @@ model TrustSettings {
 // ── Help requests ───────────────────────────────────────────────────────────────────────
 
 model HelpRequest {
-  id            String            @id @default(uuid()) @db.Uuid
-  /// Public reference shown to the requester, e.g. "TOT-H-7K2M9Q".
-  reference     String            @unique
-  kind          HelpRequestKind   @default(FULL)
-  status        HelpRequestStatus @default(NEW)
-  forWhom       String?           @map("for_whom")
-  helpType      String?           @map("help_type")
-  description   String?
-  contactPhone  String            @map("contact_phone")
-  viaWhatsapp   Boolean           @default(false) @map("via_whatsapp")
-  locale        Locale            @default(ta)
-  bestTime      String?           @map("best_time")
-  personName    String?           @map("person_name")
-  personVillage String?           @map("person_village")
-  consentAt     DateTime          @map("consent_at") @db.Timestamptz(3)
-  assigneeId    String?           @map("assignee_id") @db.Uuid
-  remindOn      DateTime?         @map("remind_on") @db.Date
-  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                  String            @id @default(uuid()) @db.Uuid
+  /// Public reference the person can quote on the phone, e.g. "HLP-7K2M9Q". No personal data.
+  reference           String            @unique
+  kind                HelpRequestKind   @default(FULL)
+  status              HelpRequestStatus @default(NEW)
+  /// self | someone | on_behalf (packages/contracts HELP_FOR). Null for call-back requests.
+  forWhom             String?           @map("for_whom")
+  /// One or more of packages/contracts HELP_KINDS.
+  helpTypes           String[]          @map("help_types")
+  description         String?
+  /// E.164 (+91XXXXXXXXXX). Needed to call back; masked in every export.
+  contactPhone        String            @map("contact_phone")
+  /// Language the person wants to be called in.
+  locale              Locale            @default(ta)
+  /// Language of the page they used.
+  pageLocale          Locale            @default(ta) @map("page_locale")
+  bestTime            String?           @map("best_time")
+  /// Only when asking for someone else, and only if they were comfortable sharing it.
+  personNameOrVillage String?           @map("person_name_or_village")
+  consentAt           DateTime          @map("consent_at") @db.Timestamptz(3)
+  thirdPartyConsentAt DateTime?         @map("third_party_consent_at") @db.Timestamptz(3)
+  assigneeId          String?           @map("assignee_id") @db.Uuid
+  remindOn            DateTime?         @map("remind_on") @db.Date
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   assignee AdminUser?        @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
   notes    HelpRequestNote[]
 
   @@index([status, createdAt])
-  @@index([helpType, locale])
+  @@index([locale, createdAt])
+  @@index([contactPhone, createdAt])
   @@map("help_requests")
 }
 

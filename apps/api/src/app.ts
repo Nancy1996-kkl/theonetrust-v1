@@ -18,6 +18,7 @@ import { authRoutes, unavailableAuthRoutes } from './modules/auth/routes.ts';
 import { authService } from './modules/auth/service.ts';
 import { publicContentRepository } from './modules/public-content/repository.ts';
 import { publicContentRoutes } from './modules/public-content/routes.ts';
+import { helpPublicRoutes } from './modules/help/public-routes.ts';
 import { healthRoutes } from './routes/health.ts';
 import { deriveAuthKeys } from './security/crypto.ts';
 
@@ -132,6 +133,16 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   });
 
   app.register(healthRoutes, { prefix: API_V1_PREFIX, version: APP_VERSION });
+
+  // Get Help (#22): public submissions, rate-limited, honeypot, validated with the form's rules.
+  app.register(helpPublicRoutes, {
+    prefix: `${API_V1_PREFIX}/help-requests`,
+    perHour: env.HELP_RATE_LIMIT_PER_HOUR,
+    duplicateWindowMs: env.HELP_DUPLICATE_WINDOW_MINUTES * 60_000,
+    now: options.now ?? (() => new Date()),
+    ...(options.db && { db: options.db }),
+    ...(env.OWNER_NOTIFICATION_EMAIL && { ownerEmail: env.OWNER_NOTIFICATION_EMAIL }),
+  });
 
   // Public content for the landing page (#21): published records only.
   app.register(publicContentRoutes, {

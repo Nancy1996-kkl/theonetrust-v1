@@ -67,6 +67,53 @@ async function mockAdminApi(page: Page) {
         },
       });
     }
+    if (path === '/api/v1/admin/team') {
+      return route.fulfill({
+        json: {
+          users: [{ id: '22222222-2222-4222-8222-222222222222', email: 'owner@example.org' }],
+        },
+      });
+    }
+    const helpItem = {
+      id: '11111111-1111-4111-8111-111111111111',
+      reference: 'HLP-7K2M9Q',
+      createdAt: '2026-11-03T05:00:00.000Z',
+      kind: 'FULL',
+      status: 'NEW',
+      helpTypes: ['education', 'food'],
+      callLanguage: 'ta',
+      bestTime: 'evening',
+      phoneMasked: '••••••3210',
+      assigneeEmail: null,
+      remindOn: null,
+    };
+    if (path === '/api/v1/admin/help-requests') {
+      return route.fulfill({ json: { items: [helpItem], nextCursor: null } });
+    }
+    if (path.startsWith('/api/v1/admin/help-requests/')) {
+      if (route.request().method() === 'PATCH')
+        return route.fulfill({ json: { ...helpItem, status: 'CONTACTED' } });
+      return route.fulfill({
+        json: {
+          ...helpItem,
+          forWhom: 'someone',
+          description: 'Needs school books',
+          phone: '+919876543210',
+          personNameOrVillage: 'Thiruvallur',
+          pageLanguage: 'en',
+          notes: [],
+          history: [
+            {
+              action: 'help_request.created',
+              actorEmail: null,
+              changedFields: [],
+              reason: null,
+              createdAt: helpItem.createdAt,
+            },
+          ],
+        },
+      });
+    }
     return route.fulfill({ json: USER });
   });
 }
@@ -139,4 +186,22 @@ test('audit log: read-only table with filters, fits every viewport', async ({ pa
   await page.getByLabel('Type of event').selectOption('auth');
   await page.getByRole('button', { name: 'Show' }).click();
   await expect(table).toBeVisible();
+});
+
+test('help inbox: masked list, case detail and status update', async ({ page }) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await mockAdminApi(page);
+  await page.goto('/admin/login');
+  await signIn(page);
+  await page.getByLabel('6-digit code').fill('654321');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('link', { name: 'Help requests' }).click();
+  const table = page.getByRole('table', { name: 'Help requests, newest first' });
+  await expect(table).toContainText('••••••3210');
+  await expect(table).not.toContainText('9876543210');
+  await page.getByRole('link', { name: /HLP-7K2M9Q/ }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'HLP-7K2M9Q' })).toBeVisible();
+  await page.getByLabel('Status').selectOption('CONTACTED');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
 });

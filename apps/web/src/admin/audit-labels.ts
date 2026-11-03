@@ -32,6 +32,20 @@ const LABELS: Record<string, { en: string; ta: string }> = {
     en: 'Owner password set or reset',
     ta: 'உரிமையாளர் கடவுச்சொல் அமைக்கப்பட்டது',
   },
+  'help_request.created': { en: 'Help request received', ta: 'உதவிக் கோரிக்கை பெறப்பட்டது' },
+  'help_request.status_changed': {
+    en: 'Help request status changed',
+    ta: 'உதவிக் கோரிக்கை நிலை மாற்றப்பட்டது',
+  },
+  'help_request.updated': { en: 'Help request updated', ta: 'உதவிக் கோரிக்கை புதுப்பிக்கப்பட்டது' },
+  'help_request.note_added': {
+    en: 'Note added to a help request',
+    ta: 'உதவிக் கோரிக்கையில் குறிப்பு சேர்க்கப்பட்டது',
+  },
+  'help_request.exported': {
+    en: 'Help requests exported (masked)',
+    ta: 'உதவிக் கோரிக்கைகள் ஏற்றுமதி (மறைக்கப்பட்டது)',
+  },
   'admin.preferences.update': { en: 'Dashboard language changed', ta: 'பலகை மொழி மாற்றப்பட்டது' },
 };
 

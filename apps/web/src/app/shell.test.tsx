@@ -80,7 +80,12 @@ describe('header', () => {
   it('does not invent a trust name: shows only the site name', () => {
     renderRoute('/');
     expect(banner()).toHaveTextContent(TRUST_FACTS.siteName);
-    expect(document.body).not.toHaveTextContent('[');
+    // Visible text only (the JSON-LD script from #16 legitimately contains "[").
+    for (const region of [banner(), screen.getByRole('main'), footer()]) {
+      const visible = region.cloneNode(true) as HTMLElement;
+      visible.querySelectorAll('script').forEach((s) => s.remove());
+      expect(visible.textContent).not.toContain('[');
+    }
   });
 });
 
