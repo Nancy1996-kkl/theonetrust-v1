@@ -67,6 +67,34 @@ async function mockAdminApi(page: Page) {
         },
       });
     }
+    if (path === '/api/v1/admin/bank-transfers') {
+      return route.fulfill({
+        json: {
+          credits: [
+            {
+              id: 'c1',
+              bankReference: 'UTR111111',
+              amountPaise: 5_000_000,
+              receivedOn: '2026-11-01',
+              evidence: 'Synthetic statement line 1',
+              status: 'REPORTED',
+              donationReference: 'TOT-D-ABCDEFGHJKMN',
+              createdAt: '2026-11-01T10:00:00Z',
+            },
+          ],
+          awaiting: [],
+          exceptions: [
+            {
+              id: 'x1',
+              kind: 'UNMATCHED_CREDIT',
+              bankTransferRecordId: null,
+              createdAt: '2026-11-01T10:00:00Z',
+            },
+          ],
+        },
+      });
+    }
+    if (path.endsWith('/confirm')) return route.fulfill({ json: { status: 'MATCHED' } });
     if (path === '/api/v1/admin/team') {
       return route.fulfill({
         json: {
@@ -203,5 +231,23 @@ test('help inbox: masked list, case detail and status update', async ({ page }) 
   await expect(page.getByRole('heading', { level: 1, name: 'HLP-7K2M9Q' })).toBeVisible();
   await page.getByLabel('Status').selectOption('CONTACTED');
   await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+});
+
+test('bank transfers: confirm a credit with a reason and the retyped reference', async ({
+  page,
+}) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await mockAdminApi(page);
+  await page.goto('/admin/login');
+  await signIn(page);
+  await page.getByLabel('6-digit code').fill('654321');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('link', { name: 'Bank transfers' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Bank transfers' })).toBeVisible();
+  await page.getByRole('button', { name: /Open UTR111111/ }).click();
+  await page.getByLabel('Reason (kept in the audit log)').fill('Seen on the statement');
+  await page.getByLabel('Type the donation reference again to confirm').fill('TOT-D-ABCDEFGHJKMN');
+  await page.getByRole('button', { name: 'Confirm: mark donation paid' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
 });

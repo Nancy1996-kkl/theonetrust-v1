@@ -24,6 +24,30 @@ export interface DonationIntentRequest {
   feeMethod?: FeeCoverMethod;
   consent: true;
   locale: 'ta' | 'en';
+  /** `bank_transfer`: no Razorpay order; the owner confirms the credit (#25). Default checkout. */
+  channel?: 'checkout' | 'bank_transfer';
+}
+
+/** The trust's account for NEFT/RTGS/IMPS, shown only when confirmed in settings. */
+export interface TrustBankAccount {
+  accountName: string;
+  accountNumber: string;
+  ifsc: string;
+  bankName: string;
+}
+
+export interface BankTransferIntentResponse {
+  publicReference: string;
+  giftPaise: number;
+  feePaise: 0;
+  amountPaise: number;
+  currency: 'INR';
+  bankTransfer: TrustBankAccount;
+}
+
+/** Optional bank reference the donor saw. Never confirms the payment by itself. */
+export interface BankTransferClaimRequest {
+  utr: string | null;
 }
 
 export interface DonationIntentResponse {
@@ -47,6 +71,8 @@ export interface DonationEstimateResponse {
   /** Gifts from this amount may ask for an acknowledgement (settings, default ₹500). */
   receiptMinPaise: number;
   feeCoverOffered: boolean;
+  /** True when the trust's bank details are confirmed and bank transfer is offered. */
+  bankTransferOffered: boolean;
   /** Present when a gift was given and fee cover is offered for the method. */
   feePaise?: number;
   amountPaise?: number;

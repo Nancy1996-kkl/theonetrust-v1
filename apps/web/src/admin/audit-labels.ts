@@ -46,6 +46,26 @@ const LABELS: Record<string, { en: string; ta: string }> = {
     en: 'Help requests exported (masked)',
     ta: 'உதவிக் கோரிக்கைகள் ஏற்றுமதி (மறைக்கப்பட்டது)',
   },
+  'bank_transfer.credit_recorded': {
+    en: 'Bank credit recorded and matched',
+    ta: 'வங்கி வரவு பதிவாகிப் பொருந்தியது',
+  },
+  'bank_transfer.credit_unmatched': {
+    en: 'Bank credit recorded — exception',
+    ta: 'வங்கி வரவு பதிவானது — விதிவிலக்கு',
+  },
+  'bank_transfer.confirmed_paid': {
+    en: 'Bank transfer confirmed — donation paid',
+    ta: 'வங்கிப் பரிமாற்றம் உறுதி — நன்கொடை செலுத்தப்பட்டது',
+  },
+  'bank_transfer.credit_rejected': {
+    en: 'Bank credit rejected',
+    ta: 'வங்கி வரவு நிராகரிக்கப்பட்டது',
+  },
+  'payment_exception.resolved': {
+    en: 'Payment exception resolved',
+    ta: 'கட்டண விதிவிலக்கு தீர்க்கப்பட்டது',
+  },
   'admin.preferences.update': { en: 'Dashboard language changed', ta: 'பலகை மொழி மாற்றப்பட்டது' },
 };
 

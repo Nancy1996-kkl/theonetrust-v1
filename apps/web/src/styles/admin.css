@@ -165,3 +165,23 @@
 .admin-page section {
   margin-block-end: var(--space-8);
 }
+
+.admin-decision {
+  margin-block-start: var(--space-6);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.admin-decision h3 {
+  margin: 0;
+  font-size: var(--text-body);
+  overflow-wrap: anywhere;
+}
+
+.admin-decision__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3);
+}

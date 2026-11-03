@@ -126,3 +126,18 @@ test('the chosen amount survives a language switch', async ({ page }) => {
   await page.getByRole('dialog').getByRole('button', { name: 'தொடரவும்' }).click();
   await expect(page.getByRole('dialog').getByRole('radio', { name: '₹2,000' })).toBeChecked();
 });
+
+test('bank transfer: account details + reference; "not confirmed yet" until the trust confirms', async ({
+  page,
+}) => {
+  const panel = await toReview(page, 'en', 'success');
+  await panel.getByRole('button', { name: 'Giving a large amount? Pay by bank transfer' }).click();
+  await expect(
+    panel.getByRole('heading', { name: 'Pay by bank transfer (NEFT / RTGS / IMPS)' }),
+  ).toBeVisible();
+  await expect(panel).toContainText('TOT-D-');
+  await panel.getByRole('textbox', { name: /UTR/ }).fill('SBIN12345678');
+  await panel.getByRole('button', { name: "I've made the transfer" }).click();
+  await expect(panel.getByRole('heading', { name: 'Not confirmed yet' })).toBeVisible();
+  await expect(panel.getByRole('heading', { name: T.en.thanks })).toHaveCount(0);
+});

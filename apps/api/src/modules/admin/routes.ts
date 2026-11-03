@@ -11,6 +11,7 @@ import { parseInput } from '../../http/validation.ts';
 import { auditLog, changedFieldNames, type AuditEntry } from '../audit/audit.ts';
 import { AuditQuery, listAuditEntries } from '../audit/query.ts';
 import { helpAdminRoutes } from '../help/admin-routes.ts';
+import { bankAdminRoutes } from '../payments/bank-admin-routes.ts';
 import type { AdminGuard } from './guard.ts';
 
 type ScopedEntry = Omit<AuditEntry, 'actorId' | 'correlationId'>;
@@ -123,7 +124,10 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
     return { email: updated.email, role: updated.role, locale: updated.locale };
   });
 
-  if (opts.db) await helpAdminRoutes(app, { db: opts.db });
+  if (opts.db) {
+    await helpAdminRoutes(app, { db: opts.db });
+    await bankAdminRoutes(app, { db: opts.db });
+  }
 
   /** Read-only. There is intentionally no PUT/PATCH/DELETE for audit entries. */
   app.get('/audit-log', async (request): Promise<AuditListResponse> => {

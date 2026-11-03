@@ -31,6 +31,7 @@ describe('migration from an empty database', () => {
       'admin_sessions',
       'admin_users',
       'audit_logs',
+      'bank_transfer_claims',
       'bank_transfer_records',
       'content_sections',
       'donation_intents',
@@ -41,6 +42,7 @@ describe('migration from an empty database', () => {
       'impact_metrics',
       'notification_outbox',
       'payment_attempts',
+      'payment_exceptions',
       'programmes',
       'receipts',
       'tax_certificate_tracking',
@@ -283,18 +285,30 @@ describe('tax and evidence rules', () => {
     expect(err).toContain('impact_metrics_published_evidence');
   });
 
-  it('only matches a bank transfer with a donation, an admin and a time', async () => {
-    const err = await pgError(
-      db.bankTransferRecord.create({
-        data: {
-          bankReference: unique('UTR'),
-          amountPaise: 100_000,
-          receivedOn: new Date('2026-11-01'),
-          status: 'MATCHED',
-        },
-      }),
-    );
-    expect(err).toContain('bank_transfer_records_match_evidence');
+  it('only matches a bank transfer with a donation, an admin, a time and a reason', async () => {
+    const admin = await db.adminUser.create({
+      data: { email: `${unique('bank')}@example.org`, passwordHash: 'x' },
+    });
+    const base = {
+      bankReference: `UTR${Date.now()}`,
+      amountPaise: 100_000,
+      receivedOn: new Date('2026-11-01'),
+      evidence: 'Statement line 1',
+      recordedById: admin.id,
+    };
+    expect(
+      await pgError(
+        db.bankTransferRecord.create({
+          data: { ...base, status: 'MATCHED', decisionReason: 'Seen on statement' },
+        }),
+      ),
+    ).toContain('bank_transfer_records_match_evidence');
+    expect(
+      await pgError(db.bankTransferRecord.create({ data: { ...base, status: 'REJECTED' } })),
+    ).toContain('bank_transfer_records_decision_reason');
+    expect(
+      await pgError(db.bankTransferRecord.create({ data: { ...base, bankReference: 'utr-1' } })),
+    ).toContain('bank_transfer_records_reference_format');
   });
 
   it('stores PAN ciphertext only together with its key version', async () => {

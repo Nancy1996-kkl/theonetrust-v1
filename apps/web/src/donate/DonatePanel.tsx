@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router';
 import {
   formatInr,
   normalizeIndianMobile,
+  type BankTransferIntentResponse,
   type DonationEstimateResponse,
   type DonationIntentResponse,
   type Paise,
@@ -33,7 +34,17 @@ export const PENDING_KEY = 'theonetrust:donation-pending';
 
 type Step = 'need' | 'amount' | 'details' | 'review';
 type Screen =
-  'form' | 'confirming' | 'paid' | 'pending' | 'failed' | 'limit' | 'invalid' | 'wait' | 'network';
+  | 'form'
+  | 'confirming'
+  | 'paid'
+  | 'pending'
+  | 'failed'
+  | 'limit'
+  | 'invalid'
+  | 'wait'
+  | 'network'
+  | 'bank'
+  | 'bank-sent';
 const STEPS: Step[] = ['need', 'amount', 'details', 'review'];
 const STEP_LABELS: DonateMessageKey[] = ['stepNeed', 'stepAmount', 'stepDetails', 'stepPay'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -116,6 +127,9 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const [fee, setFee] = useState<number | null>(null);
   const [intent, setIntent] = useState<DonationIntentResponse | null>(null);
   const [reference, setReference] = useState('');
+  const [bankIntent, setBankIntent] = useState<BankTransferIntentResponse | null>(null);
+  const [utr, setUtr] = useState('');
+  const [utrError, setUtrError] = useState(false);
   const attemptKey = useRef<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -160,7 +174,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
 
   function close() {
     navigate({ pathname: location.pathname, search: location.search }, { replace: true });
-    if (screen === 'paid') {
+    if (screen === 'paid' || screen === 'bank-sent') {
       setScreen('form');
       setStep('need');
       setCancelled(false);
@@ -222,6 +236,57 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     if (index > 0) setStep(STEPS[index - 1] ?? 'need');
   }
 
+  function intentRequest() {
+    const mobile = details.mobile.trim() ? normalizeIndianMobile(details.mobile) : null;
+    return {
+      giftPaise: gift ?? 0,
+      currency: 'INR' as const,
+      programme,
+      donorName: details.name.trim(),
+      donorEmail: details.email.trim() || null,
+      donorPhone: mobile,
+      hideNamePublicly: details.hideName,
+      wantsReceipt: details.wantsReceipt,
+      coverFee: details.coverFee && fee !== null,
+      consent: true as const,
+      locale: lang,
+    };
+  }
+
+  /** Bank transfer (#25): the trust's account + a reference; the owner confirms the credit. */
+  async function startBank() {
+    if (busy || !gift || !programme) return;
+    setBusy(true);
+    const started = await client.startBankTransfer(
+      { ...intentRequest(), coverFee: false },
+      newIdempotencyKey(),
+    );
+    setBusy(false);
+    if (!started.ok) {
+      setScreen(
+        started.reason === 'invalid'
+          ? 'invalid'
+          : started.reason === 'rate_limited'
+            ? 'wait'
+            : 'network',
+      );
+      return;
+    }
+    setBankIntent(started.intent);
+    setReference(started.intent.publicReference);
+    setScreen('bank');
+  }
+
+  async function claimBank() {
+    if (!bankIntent) return;
+    const cleaned = utr.replace(/\s/g, '').toUpperCase();
+    if (cleaned && !/^[A-Z0-9]{6,30}$/.test(cleaned)) return setUtrError(true);
+    setBusy(true);
+    const ok = await client.claimBankTransfer(bankIntent.publicReference, cleaned || null);
+    setBusy(false);
+    setScreen(ok ? 'bank-sent' : 'network');
+  }
+
   async function pay() {
     if (busy || !gift || !programme) return;
     setBusy(true);
@@ -233,23 +298,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     let current = intent && attemptKey.current ? intent : null;
     if (!current) {
       attemptKey.current ??= newIdempotencyKey();
-      const mobile = details.mobile.trim() ? normalizeIndianMobile(details.mobile) : null;
-      const started = await client.start(
-        {
-          giftPaise: gift,
-          currency: 'INR',
-          programme,
-          donorName: details.name.trim(),
-          donorEmail: details.email.trim() || null,
-          donorPhone: mobile,
-          hideNamePublicly: details.hideName,
-          wantsReceipt: details.wantsReceipt,
-          coverFee: details.coverFee && fee !== null,
-          consent: true,
-          locale: lang,
-        },
-        attemptKey.current,
-      );
+      const started = await client.start(intentRequest(), attemptKey.current);
       if (!started.ok) {
         setBusy(false);
         setScreen(
@@ -362,6 +411,81 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         {t.tryAgain}
       </Button>
     );
+  } else if (screen === 'bank' && bankIntent) {
+    const account = bankIntent.bankTransfer;
+    body = (
+      <>
+        {heading(t.bankTitle)}
+        <dl className="donate__summary">
+          {(
+            [
+              [t.sumAmount, money(bankIntent.amountPaise)],
+              [t.accName, account.accountName],
+              [t.accNo, account.accountNumber],
+              [t.ifsc, account.ifsc],
+              [t.bankName, account.bankName],
+              [t.reference, bankIntent.publicReference],
+            ] as const
+          ).map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>
+                <strong>{value}</strong>
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <Callout tone="info">{t.bankUseReference}</Callout>
+        <TextField
+          label={t.utr}
+          hint={t.utrHint}
+          showOptional
+          maxLength={40}
+          value={utr}
+          onChange={(e) => {
+            setUtr(e.target.value);
+            setUtrError(false);
+          }}
+          error={utrError ? t.utrError : undefined}
+        />
+      </>
+    );
+    footer = (
+      <div className="donate__actions">
+        <Button fullWidth loading={busy} onClick={() => void claimBank()}>
+          {t.doneTransfer}
+        </Button>
+        <Button
+          variant="ghost"
+          fullWidth
+          disabled={busy}
+          onClick={() => {
+            setScreen('form');
+            setStep('review');
+          }}
+        >
+          {t.back}
+        </Button>
+      </div>
+    );
+  } else if (screen === 'bank-sent') {
+    body = (
+      <>
+        {heading(t.notYet)}
+        <Callout tone="warning">{t.bankText}</Callout>
+        <dl className="donate__summary">
+          <div>
+            <dt>{t.reference}</dt>
+            <dd>{reference}</dd>
+          </div>
+        </dl>
+      </>
+    );
+    footer = (
+      <Button fullWidth onClick={close}>
+        {t.backToPage}
+      </Button>
+    );
   } else if (screen === 'limit') {
     body = (
       <>
@@ -391,6 +515,11 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         >
           {t.smaller}
         </Button>
+        {limits?.bankTransferOffered && (
+          <Button variant="ghost" fullWidth loading={busy} onClick={() => void startBank()}>
+            {t.payBank}
+          </Button>
+        )}
       </div>
     );
   } else if (screen === 'invalid' || screen === 'wait' || screen === 'network') {
@@ -586,6 +715,11 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             </div>
           </dl>
           <p className="donate__muted">{t.trustLine}</p>
+          {limits?.bankTransferOffered && (
+            <Button variant="ghost" loading={busy} onClick={() => void startBank()}>
+              {t.bankTransferLink}
+            </Button>
+          )}
         </>
       );
     }

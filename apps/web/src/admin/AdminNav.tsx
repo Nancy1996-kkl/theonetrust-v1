@@ -34,6 +34,9 @@ export function AdminNav() {
               <NavLink to="/admin/help-requests">{t.navHelp}</NavLink>
             </li>
             <li>
+              <NavLink to="/admin/bank-transfers">{t.navBank}</NavLink>
+            </li>
+            <li>
               <NavLink to="/admin/audit-log">{t.navAuditLog}</NavLink>
             </li>
           </ul>

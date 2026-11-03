@@ -5,6 +5,9 @@ import {
   type AdminSessionUser,
   type ApiErrorCode,
   type AuditListResponse,
+  type BankTransfersResponse,
+  type RecordBankCreditRequest,
+  type RecordBankCreditResponse,
   type HelpCaseDetail,
   type HelpCaseFilters,
   type HelpCaseList,
@@ -106,6 +109,30 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
     /** Plain link: the browser downloads it with the session cookie (GET, no CSRF needed). */
     helpExportUrl: (filters: HelpCaseFilters) =>
       apiUrl(baseUrl, `/admin/help-requests/export.csv?${query({ ...filters })}`),
+    bankTransfers: () => call<BankTransfersResponse>('GET', '/admin/bank-transfers'),
+    recordBankCredit: (body: RecordBankCreditRequest) =>
+      call<RecordBankCreditResponse>('POST', '/admin/bank-transfers/credits', body),
+    confirmBankCredit: (id: string, reason: string, confirmReference: string) =>
+      call<{ status: string }>(
+        'POST',
+        `/admin/bank-transfers/credits/${encodeURIComponent(id)}/confirm`,
+        {
+          reason,
+          confirmReference,
+        },
+      ),
+    rejectBankCredit: (id: string, reason: string) =>
+      call<{ status: string }>(
+        'POST',
+        `/admin/bank-transfers/credits/${encodeURIComponent(id)}/reject`,
+        { reason },
+      ),
+    resolveException: (id: string, reason: string) =>
+      call<{ status: string }>(
+        'POST',
+        `/admin/payment-exceptions/${encodeURIComponent(id)}/resolve`,
+        { reason },
+      ),
     logout: async () => {
       await call<undefined>('POST', '/auth/logout');
       csrfToken = undefined;

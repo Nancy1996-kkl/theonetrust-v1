@@ -4,6 +4,7 @@ import { AdminLayout } from '../admin/AdminLayout.tsx';
 import { AdminLoginPage } from '../admin/AdminLoginPage.tsx';
 import { AdminNav } from '../admin/AdminNav.tsx';
 import { AuditLogPage } from '../admin/AuditLogPage.tsx';
+import { BankTransfersPage } from '../admin/BankTransfersPage.tsx';
 import { HelpInboxPage } from '../admin/HelpInboxPage.tsx';
 import { HelpRequestPage } from '../admin/HelpRequestPage.tsx';
 import { RequireAdmin } from '../admin/RequireAdmin.tsx';
@@ -42,6 +43,7 @@ export const routes: RouteObject[] = [
               { index: true, element: <AdminHomePage /> },
               { path: 'help-requests', element: <HelpInboxPage /> },
               { path: 'help-requests/:id', element: <HelpRequestPage /> },
+              { path: 'bank-transfers', element: <BankTransfersPage /> },
               { path: 'audit-log', element: <AuditLogPage /> },
             ],
           },

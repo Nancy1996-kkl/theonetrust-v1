@@ -55,3 +55,12 @@ export function groupKey(key: string): string {
 export function statusLabel(t: AdminStrings, status: HelpRequestStatus): string {
   return t[`status${status}`];
 }
+
+/** "50000" / "50,000.50" / "₹ 50000" → integer paise (≥ ₹1), or null. */
+export function rupeesToPaiseInput(raw: string): number | null {
+  const clean = raw.replace(/[,\s₹]/g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(clean)) return null;
+  const [whole = '0', frac = ''] = clean.split('.');
+  const paise = Number(whole) * 100 + Number(frac.padEnd(2, '0'));
+  return paise >= 100 ? paise : null;
+}
