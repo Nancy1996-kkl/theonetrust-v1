@@ -11,4 +11,3 @@ ALTER TYPE "PaymentExceptionKind" ADD VALUE 'DUPLICATE_PAYMENT';
 
 -- AlterTable
 ALTER TABLE "payment_exceptions" ADD COLUMN     "provider_payment_id" TEXT;
-
