@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  API_ERROR_CODES,
   DONATION_STATUSES,
   InvalidAmountError,
   TERMINAL_DONATION_STATUSES,
   formatInr,
+  isApiErrorCode,
   isDonationStatus,
   isLocale,
   rupeesToPaise,
@@ -67,5 +69,18 @@ describe('money', () => {
 
   it('formats INR for Tamil locale without losing the amount', () => {
     expect(formatInr(toPaise(50000), 'ta-IN')).toContain('500');
+  });
+});
+
+describe('API error codes', () => {
+  it('are unique upper-snake-case identifiers', () => {
+    expect(new Set(API_ERROR_CODES).size).toBe(API_ERROR_CODES.length);
+    for (const code of API_ERROR_CODES) expect(code).toMatch(/^[A-Z]+(_[A-Z]+)*$/);
+  });
+
+  it('recognises only known codes', () => {
+    expect(isApiErrorCode('RATE_LIMITED')).toBe(true);
+    expect(isApiErrorCode('rate_limited')).toBe(false);
+    expect(isApiErrorCode(429)).toBe(false);
   });
 });

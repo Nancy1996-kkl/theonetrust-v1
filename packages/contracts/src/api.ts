@@ -11,12 +11,42 @@ export function isLocale(value: unknown): value is Locale {
   return typeof value === 'string' && (LOCALES as readonly string[]).includes(value);
 }
 
+/**
+ * Stable machine-readable error codes. Clients branch on these, never on the message text.
+ * Messages are generic and safe to show; details live only in private logs.
+ */
+export const API_ERROR_CODES = [
+  'BAD_REQUEST',
+  'VALIDATION_ERROR',
+  'UNAUTHORIZED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'CONFLICT',
+  'PAYLOAD_TOO_LARGE',
+  'UNSUPPORTED_MEDIA_TYPE',
+  'RATE_LIMITED',
+  'INTERNAL_ERROR',
+] as const;
+export type ApiErrorCode = (typeof API_ERROR_CODES)[number];
+
+export function isApiErrorCode(value: unknown): value is ApiErrorCode {
+  return typeof value === 'string' && (API_ERROR_CODES as readonly string[]).includes(value);
+}
+
+/** One invalid field: where it is and what kind of problem. The submitted value is never echoed. */
+export interface ApiFieldIssue {
+  path: string;
+  issue: string;
+}
+
 /** Stable machine-readable error envelope returned by every API error. */
 export interface ApiError {
   error: {
-    code: string;
+    code: ApiErrorCode;
     message: string;
     correlationId: string;
+    /** Only for VALIDATION_ERROR. */
+    fields?: ApiFieldIssue[];
   };
 }
 

@@ -36,3 +36,20 @@ describe('loadEnv', () => {
     );
   });
 });
+
+describe('loadEnv — request limits', () => {
+  it('defaults the rate limit and body limit', () => {
+    const env = loadEnv({});
+    expect(env.RATE_LIMIT_MAX).toBe(120);
+    expect(env.RATE_LIMIT_WINDOW_MS).toBe(60_000);
+    expect(env.BODY_LIMIT_BYTES).toBe(65_536);
+  });
+
+  it.each([
+    ['RATE_LIMIT_MAX', { RATE_LIMIT_MAX: '0' }],
+    ['RATE_LIMIT_WINDOW_MS', { RATE_LIMIT_WINDOW_MS: '10' }],
+    ['BODY_LIMIT_BYTES', { BODY_LIMIT_BYTES: '99999999' }],
+  ])('rejects invalid %s', (key, source) => {
+    expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
+  });
+});
