@@ -1,5 +1,4 @@
 import {
-  API_V1_PREFIX,
   CSRF_HEADER,
   isApiErrorCode,
   type AdminSessionResponse,
@@ -9,6 +8,7 @@ import {
   type MfaEnableResponse,
   type MfaSetupResponse,
 } from '@theonetrust/contracts';
+import { apiUrl } from '../lib/api-url.ts';
 
 /**
  * Owner sign-in client. The session cookie is HttpOnly (JavaScript cannot read it); this module
@@ -41,7 +41,7 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
   ): Promise<T> {
     let res: Response;
     try {
-      res = await fetchImpl(`${baseUrl}${API_V1_PREFIX}${path}`, {
+      res = await fetchImpl(apiUrl(baseUrl, path), {
         method,
         credentials: 'include',
         headers: {

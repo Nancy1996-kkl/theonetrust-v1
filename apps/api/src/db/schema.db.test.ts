@@ -253,7 +253,7 @@ describe('tax and evidence rules', () => {
     expect(err).toContain('tax_certificate_tracking_fy_format');
   });
 
-  it('does not publish an impact metric without evidence and approval', async () => {
+  it('does not publish an impact metric without source, period, date and approval', async () => {
     const err = await pgError(
       db.impactMetric.create({
         data: { labelTa: 'சோதனை', labelEn: 'Synthetic', value: 1n, status: 'PUBLISHED' },

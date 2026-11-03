@@ -1,6 +1,8 @@
 import { TRUST_FACTS, type TrustFacts } from '../../config/trust-facts.ts';
-import { LANDING_CONTENT, draftsVisible, type LandingContent } from '../../content/landing.ts';
-import { PROOF_CONTENT, type ProofContent } from '../../content/proof.ts';
+import { draftsVisible, type LandingContent } from '../../content/landing.ts';
+import type { ProofContent } from '../../content/proof.ts';
+import { usePublicContent } from '../../content/use-public-content.ts';
+import { useLang } from '../../i18n/use-lang.ts';
 import {
   AboutSection,
   DonationHelpsSection,
@@ -18,7 +20,7 @@ import {
 } from './ProofSections.tsx';
 
 interface HomePageProps {
-  /** Injected in tests; the live page reads the content file and the confirmed facts. */
+  /** Injected in tests; the live page reads published content from the API (#21). */
   content?: LandingContent;
   proof?: ProofContent;
   states?: ProofProps['states'];
@@ -31,12 +33,16 @@ interface HomePageProps {
  * transparency, FAQ, contact and the final call to action (#13).
  */
 export function HomePage({
-  content = LANDING_CONTENT,
-  proof = PROOF_CONTENT,
-  states,
+  content: injectedContent,
+  proof: injectedProof,
+  states: injectedStates,
   facts = TRUST_FACTS,
   showDrafts = draftsVisible(),
 }: HomePageProps) {
+  const live = usePublicContent(useLang());
+  const content = injectedContent ?? live.content;
+  const proof = injectedProof ?? live.proof;
+  const states = injectedStates ?? (injectedProof ? undefined : live.states);
   const props = { content, facts, showDrafts };
   const proofProps: ProofProps = {
     proof,

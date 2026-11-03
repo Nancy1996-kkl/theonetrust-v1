@@ -121,3 +121,18 @@ describe('loadEnv — sign-in settings', () => {
     );
   });
 });
+
+describe('loadEnv — public content', () => {
+  it('defaults the cache and leaves the documents URL unset', () => {
+    const env = loadEnv({ PUBLIC_DOCUMENTS_BASE_URL: '' });
+    expect(env.PUBLIC_CACHE_SECONDS).toBe(300);
+    expect(env.PUBLIC_DOCUMENTS_BASE_URL).toBeUndefined();
+  });
+
+  it.each([
+    ['PUBLIC_DOCUMENTS_BASE_URL', { PUBLIC_DOCUMENTS_BASE_URL: 'ftp://files.example' }],
+    ['PUBLIC_CACHE_SECONDS', { PUBLIC_CACHE_SECONDS: '-1' }],
+  ])('rejects invalid %s', (key, source) => {
+    expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
+  });
+});
