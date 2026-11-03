@@ -75,7 +75,10 @@ describe('loadEnv — database URLs', () => {
   it.each([
     ['DATABASE_URL', { DATABASE_URL: 'mysql://x@y/z' }],
     ['DIRECT_URL', { DIRECT_URL: 'not a url' }],
-    ['DATABASE_URL', { NODE_ENV: 'production' }],
+    [
+      'DATABASE_URL',
+      { NODE_ENV: 'production', AUTH_SECRET_KEY: Buffer.alloc(32, 7).toString('base64') },
+    ],
   ])('rejects invalid or missing %s', (key, source) => {
     expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
   });
@@ -83,6 +86,38 @@ describe('loadEnv — database URLs', () => {
   it('never echoes the database URL or password in the error', () => {
     expect(() => loadEnv({ DATABASE_URL: 'mysql://app:SuperSecret@host/db' })).toThrow(
       expect.objectContaining({ message: expect.not.stringContaining('SuperSecret') }),
+    );
+  });
+});
+
+describe('loadEnv — sign-in settings', () => {
+  const key = Buffer.alloc(32, 7).toString('base64');
+
+  it('defaults session and lockout limits', () => {
+    expect(loadEnv({})).toMatchObject({
+      SESSION_IDLE_MINUTES: 30,
+      SESSION_MAX_HOURS: 12,
+      LOGIN_MAX_FAILURES: 5,
+      LOGIN_LOCKOUT_MINUTES: 15,
+    });
+  });
+
+  it('accepts a 32-byte base64 AUTH_SECRET_KEY and treats empty as unset', () => {
+    expect(loadEnv({ AUTH_SECRET_KEY: key }).AUTH_SECRET_KEY).toBe(key);
+    expect(loadEnv({ AUTH_SECRET_KEY: '' }).AUTH_SECRET_KEY).toBeUndefined();
+  });
+
+  it.each([
+    ['AUTH_SECRET_KEY', { AUTH_SECRET_KEY: 'too-short' }],
+    ['SESSION_IDLE_MINUTES', { SESSION_IDLE_MINUTES: '1' }],
+    ['LOGIN_MAX_FAILURES', { LOGIN_MAX_FAILURES: '1' }],
+  ])('rejects invalid %s', (name, source) => {
+    expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [name] }));
+  });
+
+  it('requires AUTH_SECRET_KEY in production', () => {
+    expect(() => loadEnv({ NODE_ENV: 'production', DATABASE_URL: 'postgresql://u:p@h/d' })).toThrow(
+      expect.objectContaining({ invalidKeys: ['AUTH_SECRET_KEY'] }),
     );
   });
 });

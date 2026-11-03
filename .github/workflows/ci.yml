@@ -67,7 +67,7 @@ jobs:
 
       - name: Secrets must not reach the browser bundle
         run: |
-          if grep -rEn "RAZORPAY_KEY_SECRET|RAZORPAY_WEBHOOK_SECRET|DATABASE_URL|DIRECT_URL|rzp_live_" apps/web/dist; then
+          if grep -rEn "RAZORPAY_KEY_SECRET|RAZORPAY_WEBHOOK_SECRET|DATABASE_URL|DIRECT_URL|AUTH_SECRET_KEY|rzp_live_" apps/web/dist; then
             echo "::error::Server-only values found in the web bundle"; exit 1
           fi
 

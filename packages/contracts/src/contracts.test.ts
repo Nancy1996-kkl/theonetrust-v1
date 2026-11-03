@@ -84,3 +84,12 @@ describe('API error codes', () => {
     expect(isApiErrorCode(429)).toBe(false);
   });
 });
+
+describe('admin session stages', () => {
+  it('start signed out and end active', async () => {
+    const { ADMIN_SESSION_STAGES, CSRF_HEADER } = await import('./index.ts');
+    expect(ADMIN_SESSION_STAGES[0]).toBe('SIGNED_OUT');
+    expect(ADMIN_SESSION_STAGES.at(-1)).toBe('ACTIVE');
+    expect(CSRF_HEADER).toBe(CSRF_HEADER.toLowerCase());
+  });
+});

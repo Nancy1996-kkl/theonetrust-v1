@@ -320,6 +320,7 @@ describe('security headers', () => {
       NODE_ENV: 'production',
       LOG_LEVEL: 'silent',
       DATABASE_URL: 'postgresql://u:p@db.example/app',
+      AUTH_SECRET_KEY: Buffer.alloc(32, 1).toString('base64'),
     });
     const res = await t.app.inject({ method: 'GET', url: '/api/v1/health' });
     expect(res.headers['strict-transport-security']).toBe(HSTS_HEADER);

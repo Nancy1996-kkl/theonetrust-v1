@@ -1,0 +1,89 @@
+/* Owner dashboard shell (#19). Tokens only — see no-hardcoded-values.test.ts. */
+.admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.admin-header__name {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.admin-main {
+  padding: var(--space-8) var(--space-4) var(--space-16);
+}
+
+.admin-login,
+.admin-page {
+  margin-inline: auto;
+  max-width: var(--measure);
+}
+
+.admin-login {
+  max-width: 28rem;
+}
+
+.admin-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.admin-form__error {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-inline-start: var(--space-1) solid var(--color-status-error);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.admin-steps {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding-inline-start: var(--space-6);
+}
+
+.admin-key {
+  display: block;
+  margin-block: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  font-size: var(--text-body);
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+}
+
+.admin-codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  list-style: none;
+}
+
+.admin-page__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  margin-block-end: var(--space-6);
+}
+
+.admin-page__bar h1 {
+  margin: 0;
+}
+
+.admin-page__who {
+  margin: 0;
+  margin-inline-end: auto;
+  overflow-wrap: anywhere;
+}

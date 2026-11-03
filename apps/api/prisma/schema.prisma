@@ -107,24 +107,68 @@ enum BankTransferStatus {
 // ── Admin ───────────────────────────────────────────────────────────────────────────────
 
 model AdminUser {
-  id           String    @id @default(uuid()) @db.Uuid
-  email        String    @unique
-  passwordHash String?   @map("password_hash")
-  authProvider String?   @map("auth_provider")
-  authSubject  String?   @map("auth_subject")
-  role         AdminRole @default(STAFF)
-  active       Boolean   @default(true)
-  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(3)
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id                   String    @id @default(uuid()) @db.Uuid
+  email                String    @unique
+  passwordHash         String?   @map("password_hash")
+  authProvider         String?   @map("auth_provider")
+  authSubject          String?   @map("auth_subject")
+  role                 AdminRole @default(STAFF)
+  active               Boolean   @default(true)
+  lastLoginAt          DateTime? @map("last_login_at") @db.Timestamptz(3)
+  /// Authenticator-app secret, AES-256-GCM encrypted with AUTH_ENCRYPTION_KEY (never plain).
+  totpSecretCiphertext Bytes?    @map("totp_secret_ciphertext")
+  totpKeyVersion       Int?      @map("totp_key_version")
+  totpEnabledAt        DateTime? @map("totp_enabled_at") @db.Timestamptz(3)
+  /// Last accepted 30-second time step: a code can never be used twice.
+  totpLastStep         BigInt?   @map("totp_last_step")
+  failedLoginCount     Int       @default(0) @map("failed_login_count")
+  lockedUntil          DateTime? @map("locked_until") @db.Timestamptz(3)
+  locale               Locale    @default(en)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   auditLogs        AuditLog[]
+  sessions         AdminSession[]
+  recoveryCodes    AdminRecoveryCode[]
   helpNotes        HelpRequestNote[]
   assignedRequests HelpRequest[]
   bankTransfers    BankTransferRecord[]
 
   @@unique([authProvider, authSubject])
   @@map("admin_users")
+}
+
+/// Server-side admin session. The cookie holds a random token; only its SHA-256 is stored.
+model AdminSession {
+  id            String    @id @default(uuid()) @db.Uuid
+  adminUserId   String    @map("admin_user_id") @db.Uuid
+  tokenHash     String    @unique @map("token_hash")
+  /// Null until the second factor is verified. Admin routes require it.
+  mfaVerifiedAt DateTime? @map("mfa_verified_at") @db.Timestamptz(3)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastSeenAt    DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  expiresAt     DateTime  @map("expires_at") @db.Timestamptz(3)
+  revokedAt     DateTime? @map("revoked_at") @db.Timestamptz(3)
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}
+
+/// One-time recovery codes for a lost authenticator. Only hashes are stored.
+model AdminRecoveryCode {
+  id          String    @id @default(uuid()) @db.Uuid
+  adminUserId String    @map("admin_user_id") @db.Uuid
+  codeHash    String    @unique @map("code_hash")
+  usedAt      DateTime? @map("used_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@map("admin_recovery_codes")
 }
 
 // ── Programmes and donations ────────────────────────────────────────────────────────────

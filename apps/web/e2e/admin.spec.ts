@@ -1,0 +1,98 @@
+import type { Page } from '@playwright/test';
+import { expect, test } from './fixtures/guard.ts';
+
+/**
+ * Owner sign-in screens (#19) at all five viewports, with the API mocked in the browser
+ * (the API's own access control is tested in apps/api). The auto bug detector checks overflow,
+ * axe (incl. contrast), console and lang/title/h1/main after every test.
+ */
+const USER = { email: 'owner@example.org', role: 'OWNER', locale: 'en' };
+
+async function mockApi(page: Page, firstStage: 'MFA_SETUP' | 'MFA_VERIFY') {
+  let stage = 'SIGNED_OUT';
+  await page.route('**/api/v1/auth/**', async (route) => {
+    const path = new URL(route.request().url()).pathname.replace('/api/v1/auth', '');
+    const reply = (body: unknown) => route.fulfill({ json: body });
+    switch (path) {
+      case '/session':
+        return reply(stage === 'SIGNED_OUT' ? { stage } : { stage, user: USER, csrfToken: 'c' });
+      case '/login':
+        stage = firstStage;
+        return reply({ stage, user: USER, csrfToken: 'c' });
+      case '/mfa/setup':
+        return reply({
+          secret: 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP',
+          otpauthUri: 'otpauth://totp/Theonetrust.in:owner@example.org?secret=JBSWY3DPEHPK3PXP',
+        });
+      case '/mfa/enable':
+        stage = 'ACTIVE';
+        return reply({
+          stage,
+          user: USER,
+          csrfToken: 'c',
+          recoveryCodes: Array.from({ length: 10 }, (_, i) => `ABCDE-2345${i}`.slice(0, 11)),
+        });
+      case '/mfa/verify':
+        stage = 'ACTIVE';
+        return reply({ stage, user: USER, csrfToken: 'c' });
+      case '/logout':
+        stage = 'SIGNED_OUT';
+        return route.fulfill({ status: 204 });
+      default:
+        return route.fulfill({ json: { stage: 'SIGNED_OUT' } });
+    }
+  });
+}
+
+async function signIn(page: Page) {
+  await page.getByLabel('Email').fill('owner@example.org');
+  await page.getByLabel('Password').fill('river mango lamp seventeen');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+}
+
+test('/admin redirects a signed-out visitor to the sign-in page (noindex)', async ({ page }) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await page.goto('/admin');
+  await expect(page).toHaveURL(/\/admin\/login$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Owner sign in' })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
+});
+
+test('first sign-in: authenticator setup and recovery codes, then the dashboard', async ({
+  page,
+}) => {
+  await mockApi(page, 'MFA_SETUP');
+  await page.goto('/admin/login');
+  await signIn(page);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Set up your authenticator app' }),
+  ).toBeVisible();
+  await expect(page.getByLabel('Setup key')).toContainText('JBSW Y3DP');
+  await page.getByLabel('6-digit code').fill('123456');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Save your recovery codes' }),
+  ).toBeVisible();
+  await page.getByLabel('I have saved these codes somewhere safe').check();
+  await page.getByRole('button', { name: 'Go to the dashboard' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
+});
+
+test('later sign-in with a code, then sign out', async ({ page }) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await page.goto('/admin/login');
+  await signIn(page);
+  await page.getByLabel('6-digit code').fill('654321');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Overview' })).toBeVisible();
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page).toHaveURL(/\/admin\/login$/);
+});
+
+test('Tamil sign-in page fits the viewport', async ({ page }) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await page.goto('/admin/login');
+  await page.getByRole('button', { name: 'தமிழ்' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'உரிமையாளர் உள்நுழைவு' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ta');
+});
