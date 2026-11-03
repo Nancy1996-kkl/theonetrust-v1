@@ -16,6 +16,7 @@ pnpm 10 workspaces (`apps/web`, `apps/api`, `packages/contracts`), Node 22 LTS, 
 | React Router      | 8.5        | latest (data router: `createBrowserRouter`)                                                        |
 | Vite / Vitest     | 8.3 / 5.0  | latest                                                                                             |
 | Fastify / Zod     | 5.12 / 4.6 | latest                                                                                             |
+| Prisma ORM        | 7.10       | 8.x is a release candidate (ADR 0006)                                                              |
 | Playwright        | 1.63       | matches the browsers pre-installed in the cloud sandbox; CI installs its own Chromium              |
 
 Re-evaluate when `typescript-eslint` supports TS 7 and `jsx-a11y` supports ESLint 10 (Dependabot PRs).

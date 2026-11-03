@@ -316,7 +316,11 @@ describe('security headers', () => {
   });
 
   it('adds HSTS only in production', async () => {
-    const t = await start({ NODE_ENV: 'production', LOG_LEVEL: 'silent' });
+    const t = await start({
+      NODE_ENV: 'production',
+      LOG_LEVEL: 'silent',
+      DATABASE_URL: 'postgresql://u:p@db.example/app',
+    });
     const res = await t.app.inject({ method: 'GET', url: '/api/v1/health' });
     expect(res.headers['strict-transport-security']).toBe(HSTS_HEADER);
   });

@@ -1,0 +1,496 @@
+// Theonetrust.in — PostgreSQL schema (Prisma ORM 7, pinned).
+// Portable: standard PostgreSQL types, constraints and indexes only — no Neon- or
+// Supabase-specific features. Amounts are integer paise. IDs are UUIDs; public links use
+// separate unguessable references or token hashes, never these IDs.
+// Extra CHECK constraints live in the migration SQL (Prisma cannot express them).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Enums (mirror packages/contracts/src/statuses.ts) ───────────────────────────────────
+
+enum AdminRole {
+  OWNER
+  STAFF
+}
+
+enum FundDesignation {
+  GENERAL
+  RESTRICTED
+}
+
+enum DonationStatus {
+  CREATED
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUND_PENDING
+  REFUNDED
+  MANUAL_REVIEW
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  BANK_TRANSFER
+}
+
+enum WebhookProcessingStatus {
+  RECEIVED
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+enum TaxCertificateStatus {
+  NOT_APPLICABLE
+  PENDING_TRUST_FILING
+  FORM_113_FILED
+  FORM_114_ISSUED
+  CORRECTION_REQUIRED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum Locale {
+  ta
+  en
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum HelpRequestStatus {
+  NEW
+  CONTACTED
+  VERIFYING
+  HELPING
+  CLOSED
+}
+
+enum HelpRequestKind {
+  FULL
+  CALLBACK
+}
+
+enum SubscriptionStatus {
+  CREATED
+  AUTHENTICATED
+  ACTIVE
+  PAUSED
+  HALTED
+  CANCELLED
+  COMPLETED
+}
+
+enum BankTransferStatus {
+  REPORTED
+  MATCHED
+  REJECTED
+}
+
+// ── Admin ───────────────────────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique
+  passwordHash String?   @map("password_hash")
+  authProvider String?   @map("auth_provider")
+  authSubject  String?   @map("auth_subject")
+  role         AdminRole @default(STAFF)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  auditLogs        AuditLog[]
+  helpNotes        HelpRequestNote[]
+  assignedRequests HelpRequest[]
+  bankTransfers    BankTransferRecord[]
+
+  @@unique([authProvider, authSubject])
+  @@map("admin_users")
+}
+
+// ── Programmes and donations ────────────────────────────────────────────────────────────
+
+model Programme {
+  id            String          @id @default(uuid()) @db.Uuid
+  slug          String          @unique
+  titleTa       String          @map("title_ta")
+  titleEn       String          @map("title_en")
+  descriptionTa String?         @map("description_ta")
+  descriptionEn String?         @map("description_en")
+  designation   FundDesignation @default(GENERAL)
+  active        Boolean         @default(false)
+  sortOrder     Int             @default(0) @map("sort_order")
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  donationIntents DonationIntent[]
+  subscriptions   DonationSubscription[]
+
+  @@index([active, sortOrder])
+  @@map("programmes")
+}
+
+/// One donation the donor started. Only server-verified captured payments make it PAID.
+model DonationIntent {
+  id                  String         @id @default(uuid()) @db.Uuid
+  /// Unguessable public reference shown to the donor; never the UUID.
+  publicReference     String         @unique @map("public_reference")
+  programmeId         String?        @map("programme_id") @db.Uuid
+  amountPaise         Int            @map("amount_paise")
+  currency            String         @default("INR") @db.Char(3)
+  status              DonationStatus @default(CREATED)
+  donorName           String         @map("donor_name")
+  donorEmail          String?        @map("donor_email")
+  donorPhone          String?        @map("donor_phone")
+  hideNamePublicly    Boolean        @default(true) @map("hide_name_publicly")
+  wantsReceipt        Boolean        @default(false) @map("wants_receipt")
+  wantsTaxCertificate Boolean        @default(false) @map("wants_tax_certificate")
+  coverFee            Boolean        @default(false) @map("cover_fee")
+  locale              Locale         @default(en)
+  subscriptionId      String?        @map("subscription_id") @db.Uuid
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  programme       Programme?              @relation(fields: [programmeId], references: [id], onDelete: Restrict)
+  subscription    DonationSubscription?   @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  paymentAttempts PaymentAttempt[]
+  receipts        Receipt[]
+  donorIdentity   DonorIdentityRecord?
+  taxTracking     TaxCertificateTracking?
+  bankTransfers   BankTransferRecord[]
+
+  @@index([status, createdAt])
+  @@index([programmeId, createdAt])
+  @@index([createdAt])
+  @@map("donation_intents")
+}
+
+/// One provider order/payment for an intent. Provider IDs are unique across the ledger.
+model PaymentAttempt {
+  id                  String          @id @default(uuid()) @db.Uuid
+  donationIntentId    String          @map("donation_intent_id") @db.Uuid
+  provider            PaymentProvider @default(RAZORPAY)
+  providerOrderId     String          @unique @map("provider_order_id")
+  providerPaymentId   String?         @unique @map("provider_payment_id")
+  providerStatus      String?         @map("provider_status")
+  amountPaise         Int             @map("amount_paise")
+  method              String?
+  capturedPaise       Int             @default(0) @map("captured_paise")
+  refundedPaise       Int             @default(0) @map("refunded_paise")
+  feePaise            Int?            @map("fee_paise")
+  signatureVerifiedAt DateTime?       @map("signature_verified_at") @db.Timestamptz(3)
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  donationIntent DonationIntent @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+  receipt        Receipt?
+
+  @@index([donationIntentId])
+  @@map("payment_attempts")
+}
+
+/// Every provider webhook, deduplicated by event ID. No secrets or signatures stored.
+model WebhookEvent {
+  id               String                  @id @default(uuid()) @db.Uuid
+  provider         PaymentProvider         @default(RAZORPAY)
+  providerEventId  String                  @map("provider_event_id")
+  eventType        String                  @map("event_type")
+  signatureValid   Boolean                 @map("signature_valid")
+  processingStatus WebhookProcessingStatus @default(RECEIVED) @map("processing_status")
+  /// Short error code only — never the payload or a stack trace.
+  processingError  String?                 @map("processing_error")
+  attempts         Int                     @default(0)
+  receivedAt       DateTime                @default(now()) @map("received_at") @db.Timestamptz(3)
+  processedAt      DateTime?               @map("processed_at") @db.Timestamptz(3)
+
+  @@unique([provider, providerEventId])
+  @@index([processingStatus, receivedAt])
+  @@map("webhook_events")
+}
+
+model DonationSubscription {
+  id                     String             @id @default(uuid()) @db.Uuid
+  providerSubscriptionId String             @unique @map("provider_subscription_id")
+  providerPlanId         String?            @map("provider_plan_id")
+  programmeId            String?            @map("programme_id") @db.Uuid
+  amountPaise            Int                @map("amount_paise")
+  interval               String             @default("monthly")
+  status                 SubscriptionStatus @default(CREATED)
+  donorName              String             @map("donor_name")
+  donorEmail             String?            @map("donor_email")
+  donorPhone             String?            @map("donor_phone")
+  /// SHA-256 of the manage-link token; the token itself is never stored.
+  manageTokenHash        String             @unique @map("manage_token_hash")
+  locale                 Locale             @default(en)
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  cancelledAt            DateTime?          @map("cancelled_at") @db.Timestamptz(3)
+
+  programme Programme?       @relation(fields: [programmeId], references: [id], onDelete: Restrict)
+  charges   DonationIntent[]
+
+  @@index([status])
+  @@map("donation_subscriptions")
+}
+
+/// Private identity for tax opt-in. PAN is stored only encrypted (app-level, key outside the DB).
+model DonorIdentityRecord {
+  id               String   @id @default(uuid()) @db.Uuid
+  donationIntentId String   @unique @map("donation_intent_id") @db.Uuid
+  fullName         String   @map("full_name")
+  addressLine      String?  @map("address_line")
+  panCiphertext    Bytes?   @map("pan_ciphertext")
+  panKeyVersion    Int?     @map("pan_key_version")
+  /// Last four characters for display to the owner (e.g. "**** 234F").
+  panLast4         String?  @map("pan_last4") @db.VarChar(4)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  donationIntent DonationIntent @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+
+  @@map("donor_identity_records")
+}
+
+/// Manual NEFT/RTGS reconciliation: only an admin with bank evidence may match it.
+model BankTransferRecord {
+  id               String             @id @default(uuid()) @db.Uuid
+  donationIntentId String?            @map("donation_intent_id") @db.Uuid
+  bankReference    String             @unique @map("bank_reference")
+  amountPaise      Int                @map("amount_paise")
+  receivedOn       DateTime           @map("received_on") @db.Date
+  status           BankTransferStatus @default(REPORTED)
+  matchedById      String?            @map("matched_by_id") @db.Uuid
+  matchedAt        DateTime?          @map("matched_at") @db.Timestamptz(3)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  donationIntent DonationIntent? @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+  matchedBy      AdminUser?      @relation(fields: [matchedById], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@map("bank_transfer_records")
+}
+
+// ── Receipts and tax ────────────────────────────────────────────────────────────────────
+
+/// "Donation acknowledgement" — never Form 114. One receipt per payment; corrections add rows.
+model Receipt {
+  id               String    @id @default(uuid()) @db.Uuid
+  donationIntentId String    @map("donation_intent_id") @db.Uuid
+  paymentAttemptId String    @unique @map("payment_attempt_id") @db.Uuid
+  receiptNumber    String    @unique @map("receipt_number")
+  templateVersion  String    @map("template_version")
+  /// SHA-256 of the share-link token; the token itself is never stored.
+  tokenHash        String    @unique @map("token_hash")
+  storageKey       String?   @map("storage_key")
+  issuedAt         DateTime  @default(now()) @map("issued_at") @db.Timestamptz(3)
+  replacesId       String?   @unique @map("replaces_id") @db.Uuid
+  voidedAt         DateTime? @map("voided_at") @db.Timestamptz(3)
+
+  donationIntent DonationIntent @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+  paymentAttempt PaymentAttempt @relation(fields: [paymentAttemptId], references: [id], onDelete: Restrict)
+  replaces       Receipt?       @relation("ReceiptCorrection", fields: [replacesId], references: [id], onDelete: Restrict)
+  replacedBy     Receipt?       @relation("ReceiptCorrection")
+
+  @@index([donationIntentId])
+  @@map("receipts")
+}
+
+/// Statutory certificate tracking (feature-gated). Never marked issued without evidence.
+model TaxCertificateTracking {
+  id               String               @id @default(uuid()) @db.Uuid
+  donationIntentId String               @unique @map("donation_intent_id") @db.Uuid
+  /// Financial year label, e.g. "2026-27" (April–March, IST).
+  financialYear    String               @map("financial_year") @db.VarChar(7)
+  status           TaxCertificateStatus @default(PENDING_TRUST_FILING)
+  form113Reference String?              @map("form_113_reference")
+  form113FiledAt   DateTime?            @map("form_113_filed_at") @db.Timestamptz(3)
+  form114Reference String?              @map("form_114_reference")
+  form114IssuedOn  DateTime?            @map("form_114_issued_on") @db.Date
+  notes            String?
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt        DateTime             @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  donationIntent DonationIntent @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+
+  @@index([financialYear, status])
+  @@map("tax_certificate_tracking")
+}
+
+// ── Notifications ───────────────────────────────────────────────────────────────────────
+
+/// Retryable outbox. Stores a reference to look data up, not the sensitive payload.
+model NotificationOutbox {
+  id            String             @id @default(uuid()) @db.Uuid
+  eventType     String             @map("event_type")
+  /// e.g. "donation_intent:<uuid>" — the worker looks the details up.
+  entityRef     String             @map("entity_ref")
+  template      String
+  locale        Locale             @default(en)
+  status        NotificationStatus @default(PENDING)
+  retryCount    Int                @default(0) @map("retry_count")
+  nextAttemptAt DateTime           @default(now()) @map("next_attempt_at") @db.Timestamptz(3)
+  sentAt        DateTime?          @map("sent_at") @db.Timestamptz(3)
+  failedAt      DateTime?          @map("failed_at") @db.Timestamptz(3)
+  lastError     String?            @map("last_error")
+  dedupeKey     String             @unique @map("dedupe_key")
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([status, nextAttemptAt])
+  @@map("notification_outbox")
+}
+
+// ── Content ─────────────────────────────────────────────────────────────────────────────
+
+model ContentSection {
+  id         String            @id @default(uuid()) @db.Uuid
+  sectionKey String            @map("section_key")
+  locale     Locale
+  /// Structured, validated by the API before saving.
+  content    Json
+  status     PublicationStatus @default(DRAFT)
+  version    Int               @default(1)
+  editedById String?           @map("edited_by_id") @db.Uuid
+  updatedAt  DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([sectionKey, locale, version])
+  @@index([sectionKey, locale, status])
+  @@map("content_sections")
+}
+
+/// Published only with a source/evidence link and owner approval — never invented.
+model ImpactMetric {
+  id           String            @id @default(uuid()) @db.Uuid
+  labelTa      String            @map("label_ta")
+  labelEn      String            @map("label_en")
+  value        BigInt
+  valueFormat  String            @default("count") @map("value_format")
+  evidenceUrl  String?           @map("evidence_url")
+  periodLabel  String?           @map("period_label")
+  status       PublicationStatus @default(DRAFT)
+  approvedById String?           @map("approved_by_id") @db.Uuid
+  approvedAt   DateTime?         @map("approved_at") @db.Timestamptz(3)
+  sortOrder    Int               @default(0) @map("sort_order")
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([status, sortOrder])
+  @@map("impact_metrics")
+}
+
+model TransparencyDocument {
+  id           String            @id @default(uuid()) @db.Uuid
+  title        String
+  locale       Locale
+  periodLabel  String?           @map("period_label")
+  storageKey   String            @unique @map("storage_key")
+  fileType     String            @map("file_type")
+  fileSize     Int               @map("file_size")
+  status       PublicationStatus @default(DRAFT)
+  approvedById String?           @map("approved_by_id") @db.Uuid
+  approvedAt   DateTime?         @map("approved_at") @db.Timestamptz(3)
+  uploadedAt   DateTime          @default(now()) @map("uploaded_at") @db.Timestamptz(3)
+
+  @@index([status, locale])
+  @@map("transparency_documents")
+}
+
+/// Singleton row (id = 1). Tax benefit stays off until the CA confirms approval.
+model TrustSettings {
+  id                 Int       @id @default(1)
+  taxBenefitEnabled  Boolean   @default(false) @map("tax_benefit_enabled")
+  rnpoReference      String?   @map("rnpo_reference")
+  section354Approval String?   @map("section_354_approval")
+  approvalValidUntil DateTime? @map("approval_valid_until") @db.Date
+  receiptMinPaise    Int       @default(50000) @map("receipt_min_paise")
+  foreignDonations   Boolean   @default(false) @map("foreign_donations")
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("trust_settings")
+}
+
+// ── Help requests ───────────────────────────────────────────────────────────────────────
+
+model HelpRequest {
+  id            String            @id @default(uuid()) @db.Uuid
+  /// Public reference shown to the requester, e.g. "TOT-H-7K2M9Q".
+  reference     String            @unique
+  kind          HelpRequestKind   @default(FULL)
+  status        HelpRequestStatus @default(NEW)
+  forWhom       String?           @map("for_whom")
+  helpType      String?           @map("help_type")
+  description   String?
+  contactPhone  String            @map("contact_phone")
+  viaWhatsapp   Boolean           @default(false) @map("via_whatsapp")
+  locale        Locale            @default(ta)
+  bestTime      String?           @map("best_time")
+  personName    String?           @map("person_name")
+  personVillage String?           @map("person_village")
+  consentAt     DateTime          @map("consent_at") @db.Timestamptz(3)
+  assigneeId    String?           @map("assignee_id") @db.Uuid
+  remindOn      DateTime?         @map("remind_on") @db.Date
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  assignee AdminUser?        @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  notes    HelpRequestNote[]
+
+  @@index([status, createdAt])
+  @@index([helpType, locale])
+  @@map("help_requests")
+}
+
+model HelpRequestNote {
+  id            String   @id @default(uuid()) @db.Uuid
+  helpRequestId String   @map("help_request_id") @db.Uuid
+  authorId      String   @map("author_id") @db.Uuid
+  body          String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  helpRequest HelpRequest @relation(fields: [helpRequestId], references: [id], onDelete: Cascade)
+  author      AdminUser   @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([helpRequestId, createdAt])
+  @@map("help_request_notes")
+}
+
+// ── Audit ───────────────────────────────────────────────────────────────────────────────
+
+/// Append-only (enforced by a trigger in the migration). Changed field NAMES only, no values.
+model AuditLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  actorId       String?  @map("actor_id") @db.Uuid
+  action        String
+  entityType    String   @map("entity_type")
+  entityId      String?  @map("entity_id")
+  reason        String?
+  changedFields String[] @map("changed_fields")
+  correlationId String?  @map("correlation_id")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  actor AdminUser? @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

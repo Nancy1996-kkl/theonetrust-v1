@@ -7,3 +7,5 @@ docs/reference
 PROJECT_SPEC.md
 docs/database-provider-switch.md
 docs/ux-design-brief.md
+apps/api/src/generated
+apps/api/prisma/migrations

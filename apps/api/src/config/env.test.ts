@@ -53,3 +53,36 @@ describe('loadEnv — request limits', () => {
     expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
   });
 });
+
+describe('loadEnv — database URLs', () => {
+  const pooled = 'postgresql://app:SuperSecret@pooler.example/app?sslmode=require';
+
+  it('treats empty values (as copied from .env.example) as not set', () => {
+    const env = loadEnv({ DATABASE_URL: '', DIRECT_URL: '' });
+    expect(env.DATABASE_URL).toBeUndefined();
+    expect(env.DIRECT_URL).toBeUndefined();
+  });
+
+  it('accepts postgres:// and postgresql:// URLs', () => {
+    const env = loadEnv({
+      DATABASE_URL: pooled,
+      DIRECT_URL: 'postgres://app:pw@direct.example/app',
+    });
+    expect(env.DATABASE_URL).toBe(pooled);
+    expect(env.DIRECT_URL).toBe('postgres://app:pw@direct.example/app');
+  });
+
+  it.each([
+    ['DATABASE_URL', { DATABASE_URL: 'mysql://x@y/z' }],
+    ['DIRECT_URL', { DIRECT_URL: 'not a url' }],
+    ['DATABASE_URL', { NODE_ENV: 'production' }],
+  ])('rejects invalid or missing %s', (key, source) => {
+    expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
+  });
+
+  it('never echoes the database URL or password in the error', () => {
+    expect(() => loadEnv({ DATABASE_URL: 'mysql://app:SuperSecret@host/db' })).toThrow(
+      expect.objectContaining({ message: expect.not.stringContaining('SuperSecret') }),
+    );
+  });
+});
