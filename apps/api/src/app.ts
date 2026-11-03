@@ -167,7 +167,7 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   app.register(adminRoutes, {
     prefix: `${API_V1_PREFIX}/admin`,
     guard: adminGuard(auth && { ctx: auth.ctx, service: auth.service }, production),
-    ...(auth && { findUser: (id: string) => auth.repo.findUserById(id) }),
+    ...(auth && options.db && { db: options.db }),
   });
 
   return app;

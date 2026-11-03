@@ -7,6 +7,8 @@ import { expectNoA11yViolations } from '../test/a11y.ts';
 import { AdminHomePage } from './AdminHomePage.tsx';
 import { AdminLayout } from './AdminLayout.tsx';
 import { AdminLoginPage } from './AdminLoginPage.tsx';
+import { AdminNav } from './AdminNav.tsx';
+import { AuditLogPage } from './AuditLogPage.tsx';
 import { groupKey } from './admin-context.ts';
 import { RequireAdmin } from './RequireAdmin.tsx';
 import { AdminApiError, createAdminApi, type AdminApi } from './api.ts';
@@ -28,6 +30,8 @@ function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
     mfaEnable: vi.fn(async () => ({ ...ACTIVE, recoveryCodes: ['ABCDE-23456', 'FGHJK-78923'] })),
     mfaVerify: vi.fn(async () => ACTIVE),
     logout: vi.fn(async () => undefined),
+    updatePreferences: vi.fn(async (locale: 'ta' | 'en') => ({ ...USER, locale })),
+    auditLog: vi.fn(async () => ({ items: [], nextCursor: null })),
     ...overrides,
   };
 }
@@ -40,7 +44,18 @@ function renderAdmin(path: string, api: AdminApi) {
         element: <AdminLayout api={api} />,
         children: [
           { path: 'login', element: <AdminLoginPage /> },
-          { element: <RequireAdmin />, children: [{ index: true, element: <AdminHomePage /> }] },
+          {
+            element: <RequireAdmin />,
+            children: [
+              {
+                element: <AdminNav />,
+                children: [
+                  { index: true, element: <AdminHomePage /> },
+                  { path: 'audit-log', element: <AuditLogPage /> },
+                ],
+              },
+            ],
+          },
         ],
       },
     ],
@@ -299,6 +314,20 @@ describe('groupKey', () => {
 });
 
 describe('createAdminApi', () => {
+  it('builds audit-log and preference requests', async () => {
+    const fetchImpl = vi.fn(
+      async (_url: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(JSON.stringify({ items: [], nextCursor: null }), { status: 200 }),
+    );
+    const api = createAdminApi('', fetchImpl);
+    await api.auditLog({ action: 'auth', from: '' }, 'c1');
+    expect(fetchImpl.mock.calls[0]![0]).toBe(
+      '/api/v1/admin/audit-log?action=auth&cursor=c1&limit=50',
+    );
+    await api.updatePreferences('ta');
+    expect(fetchImpl.mock.calls[1]![1]).toMatchObject({ method: 'PATCH', body: '{"locale":"ta"}' });
+  });
+
   function json(status: number, body: unknown) {
     return new Response(JSON.stringify(body), {
       status,
@@ -359,5 +388,143 @@ describe('createAdminApi', () => {
       '/api/v1/auth/mfa/setup',
       '/api/v1/auth/mfa/enable',
     ]);
+  });
+});
+
+const ENTRY = {
+  id: '11111111-1111-4111-8111-111111111111',
+  createdAt: '2026-11-03T10:30:00.000Z',
+  actorEmail: USER.email,
+  action: 'admin.preferences.update',
+  entityType: 'admin_user',
+  entityId: '22222222-2222-4222-8222-222222222222',
+  reason: null,
+  changedFields: ['locale'],
+  correlationId: 'req-1',
+};
+
+describe('audit log page', () => {
+  it('lists entries with plain-language actions, IST time and field names', async () => {
+    const api = fakeApi({
+      session: vi.fn(async () => ACTIVE),
+      auditLog: vi.fn(async () => ({
+        items: [
+          ENTRY,
+          {
+            ...ENTRY,
+            id: 'e2',
+            actorEmail: null,
+            action: 'custom.thing',
+            entityId: null,
+            changedFields: [],
+            reason: 'checked',
+          },
+        ],
+        nextCursor: null,
+      })),
+    });
+    const { container } = renderAdmin('/admin/audit-log', api);
+    expect(await screen.findByRole('heading', { level: 1, name: t.auditTitle })).toBeVisible();
+    const table = await screen.findByRole('table', { name: t.auditCaption });
+    expect(table).toHaveTextContent('Dashboard language changed');
+    expect(table).toHaveTextContent('3 Nov 2026');
+    expect(table).toHaveTextContent('locale');
+    expect(table).toHaveTextContent(t.auditSystem);
+    expect(table).toHaveTextContent('custom.thing');
+    expect(table).toHaveTextContent('checked');
+    expect(screen.getByRole('link', { name: t.navAuditLog })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    await expectNoA11yViolations(container);
+  });
+
+  it('applies filters (IST day range, inclusive end date) and pages with "show older"', async () => {
+    const user = userEvent.setup();
+    const auditLog = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [ENTRY], nextCursor: 'c1' })
+      .mockResolvedValueOnce({ items: [{ ...ENTRY, id: 'old' }], nextCursor: null })
+      .mockResolvedValue({ items: [], nextCursor: null });
+    renderAdmin('/admin/audit-log', fakeApi({ session: vi.fn(async () => ACTIVE), auditLog }));
+    await user.click(await screen.findByRole('button', { name: t.auditLoadMore }));
+    expect(auditLog).toHaveBeenLastCalledWith({}, 'c1');
+    expect(await screen.findAllByRole('row')).toHaveLength(3);
+    expect(screen.queryByRole('button', { name: t.auditLoadMore })).toBeNull();
+
+    await user.selectOptions(screen.getByLabelText(t.auditAction), 'auth');
+    await user.type(screen.getByLabelText(t.auditFrom), '2026-11-01');
+    await user.type(screen.getByLabelText(t.auditTo), '2026-11-03');
+    await user.click(screen.getByRole('button', { name: t.auditApply }));
+    expect(auditLog).toHaveBeenLastCalledWith({
+      action: 'auth',
+      from: '2026-10-31T18:30:00.000Z',
+      to: '2026-11-03T18:30:00.000Z',
+    });
+    expect(await screen.findByText(t.auditEmpty)).toBeVisible();
+  });
+
+  it('shows an error with retry', async () => {
+    const user = userEvent.setup();
+    const auditLog = vi
+      .fn()
+      .mockRejectedValueOnce(new AdminApiError('NETWORK_ERROR'))
+      .mockResolvedValue({ items: [ENTRY], nextCursor: null });
+    renderAdmin('/admin/audit-log', fakeApi({ session: vi.fn(async () => ACTIVE), auditLog }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(t.errorNetwork);
+    await user.click(screen.getByRole('button', { name: t.retry }));
+    expect(await screen.findByRole('table')).toBeVisible();
+  });
+
+  it('a failed "show older" shows the error', async () => {
+    const user = userEvent.setup();
+    const auditLog = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [ENTRY], nextCursor: 'c1' })
+      .mockRejectedValueOnce(new Error('boom'));
+    renderAdmin('/admin/audit-log', fakeApi({ session: vi.fn(async () => ACTIVE), auditLog }));
+    await user.click(await screen.findByRole('button', { name: t.auditLoadMore }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(t.errorGeneric);
+  });
+});
+
+describe('dashboard language is saved to the account', () => {
+  it('uses the account language on load and saves a change', async () => {
+    const user = userEvent.setup();
+    const api = fakeApi({
+      session: vi.fn(async () => ({ ...ACTIVE, user: { ...USER, locale: 'ta' as const } })),
+    });
+    renderAdmin('/admin', api);
+    expect(
+      await screen.findByRole('heading', { level: 1, name: ADMIN_STRINGS.ta.overviewTitle }),
+    ).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'English' }));
+    expect(api.updatePreferences).toHaveBeenCalledWith('en');
+  });
+
+  it('does not call the API when signed out, and ignores a failed save', async () => {
+    const user = userEvent.setup();
+    const api = fakeApi();
+    renderAdmin('/admin/login', api);
+    await user.click(await screen.findByRole('button', { name: 'தமிழ்' }));
+    expect(api.updatePreferences).not.toHaveBeenCalled();
+    const failing = fakeApi({
+      session: vi.fn(async () => ACTIVE),
+      updatePreferences: vi.fn(async () => Promise.reject(new AdminApiError('NETWORK_ERROR'))),
+    });
+    renderAdmin('/admin', failing);
+    await user.click((await screen.findAllByRole('button', { name: 'தமிழ்' })).at(-1)!);
+    expect(failing.updatePreferences).toHaveBeenCalled();
+  });
+});
+
+describe('audit helpers', () => {
+  it('converts dates to IST day boundaries and rejects bad input', async () => {
+    const { istDayStart, auditActionLabel } = await import('./audit-labels.ts');
+    expect(istDayStart('2026-04-01')).toBe('2026-03-31T18:30:00.000Z');
+    expect(istDayStart('2026-04-01', 1)).toBe('2026-04-01T18:30:00.000Z');
+    expect(istDayStart('')).toBeUndefined();
+    expect(auditActionLabel('auth.logout', 'ta')).toBe('வெளியேறினார்');
+    expect(auditActionLabel('x.y', 'en')).toBe('x.y');
   });
 });

@@ -1,4 +1,5 @@
 import type { Db } from '../db/client.ts';
+import { auditRow } from '../modules/audit/audit.ts';
 import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
@@ -55,13 +56,14 @@ export async function setOwnerPassword(db: Db, emailInput: string, password: str
   });
   await db.adminRecoveryCode.deleteMany({ where: { adminUserId: user.id } });
   await db.auditLog.create({
-    data: {
+    data: auditRow({
       actorId: user.id,
       action: 'auth.owner.password_set',
       entityType: 'admin_user',
       entityId: user.id,
       changedFields: ['password_hash', 'totp_enabled_at'],
-    },
+      correlationId: null,
+    }),
   });
   return { id: user.id, email: user.email };
 }

@@ -3,7 +3,9 @@ import {
   CSRF_HEADER,
   isApiErrorCode,
   type AdminSessionResponse,
+  type AdminSessionUser,
   type ApiErrorCode,
+  type AuditListResponse,
   type MfaEnableResponse,
   type MfaSetupResponse,
 } from '@theonetrust/contracts';
@@ -23,10 +25,20 @@ export class AdminApiError extends Error {
 
 export type Fetch = typeof fetch;
 
+export interface AuditFilters {
+  action?: string;
+  from?: string;
+  to?: string;
+}
+
 export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => fetch(...args)) {
   let csrfToken: string | undefined;
 
-  async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
+  async function call<T>(
+    method: 'GET' | 'POST' | 'PATCH',
+    path: string,
+    body?: unknown,
+  ): Promise<T> {
     let res: Response;
     try {
       res = await fetchImpl(`${baseUrl}${API_V1_PREFIX}${path}`, {
@@ -60,6 +72,15 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
     mfaSetup: () => call<MfaSetupResponse>('POST', '/auth/mfa/setup'),
     mfaEnable: (code: string) => call<MfaEnableResponse>('POST', '/auth/mfa/enable', { code }),
     mfaVerify: (code: string) => call<AdminSessionResponse>('POST', '/auth/mfa/verify', { code }),
+    updatePreferences: (locale: 'ta' | 'en') =>
+      call<AdminSessionUser>('PATCH', '/admin/me', { locale }),
+    auditLog: (filters: AuditFilters, cursor?: string) => {
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(filters)) if (value) params.set(key, value);
+      if (cursor) params.set('cursor', cursor);
+      params.set('limit', '50');
+      return call<AuditListResponse>('GET', `/admin/audit-log?${params.toString()}`);
+    },
     logout: async () => {
       await call<undefined>('POST', '/auth/logout');
       csrfToken = undefined;
