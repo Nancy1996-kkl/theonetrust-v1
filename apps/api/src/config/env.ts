@@ -74,6 +74,11 @@ const EnvSchema = z
       (value) => (value === '' ? undefined : value),
       z.string().min(16).max(128).optional(),
     ),
+    /** Secret set on the Razorpay webhook (Dashboard → Webhooks). Without it, webhooks answer 503. */
+    RAZORPAY_WEBHOOK_SECRET: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.string().min(16).max(256).optional(),
+    ),
     /** Donation intents allowed per IP per hour. */
     DONATION_RATE_LIMIT_PER_HOUR: z.coerce.number().int().min(1).max(500).default(20),
     /** Get Help submissions allowed per IP per hour (plan §5 anti-spam). */

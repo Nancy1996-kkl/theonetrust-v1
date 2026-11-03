@@ -65,7 +65,8 @@ export interface RazorpayConfig {
 const PAYMENT_ID = /^pay_[A-Za-z0-9]{6,40}$/;
 const ORDER_ID = /^order_[A-Za-z0-9]{6,40}$/;
 
-function toPayment(raw: unknown): ProviderPayment {
+/** Validates a Razorpay Payment entity (API response or signed webhook payload). */
+export function parseProviderPayment(raw: unknown): ProviderPayment {
   const p = raw as {
     id?: unknown;
     order_id?: unknown;
@@ -134,13 +135,13 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
     },
     async fetchPayment(paymentId) {
       if (!PAYMENT_ID.test(paymentId)) throw new PaymentProviderError('rejected');
-      return toPayment(await getJson(`/v1/payments/${paymentId}`));
+      return parseProviderPayment(await getJson(`/v1/payments/${paymentId}`));
     },
     async fetchOrderPayments(orderId) {
       if (!ORDER_ID.test(orderId)) throw new PaymentProviderError('rejected');
       const body = (await getJson(`/v1/orders/${orderId}/payments`)) as { items?: unknown };
       if (!Array.isArray(body.items)) throw new PaymentProviderError('unexpected_response');
-      return body.items.map(toPayment);
+      return body.items.map(parseProviderPayment);
     },
     async createOrder(input) {
       let res: Response;

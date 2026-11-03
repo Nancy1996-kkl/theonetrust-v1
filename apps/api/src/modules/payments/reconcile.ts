@@ -91,3 +91,50 @@ export function donorStatus(status: DonationStatus): 'PAID' | 'PENDING' | 'FAILE
   if (status === 'FAILED') return 'FAILED';
   return 'PENDING';
 }
+
+/**
+ * Refunds (#27): the trusted payment entity says how much was refunded. A full refund ends in
+ * REFUNDED (via REFUND_PENDING); a partial one keeps the donation PAID with the refunded amount
+ * recorded; a failed refund returns REFUND_PENDING to PAID. Nothing is ever deleted.
+ */
+export async function applyRefund(
+  db: Db,
+  attemptId: string,
+  payment: ProviderPayment,
+  refundStatus: 'created' | 'processed' | 'failed',
+): Promise<DonationStatus> {
+  return db.$transaction(async (tx) => {
+    const attempt = await tx.paymentAttempt.findUniqueOrThrow({
+      where: { id: attemptId },
+      include: { donationIntent: true },
+    });
+    const intent = attempt.donationIntent;
+    const refunded = Math.min(
+      Math.max(payment.refundedPaise, attempt.refundedPaise),
+      attempt.capturedPaise,
+    );
+    await tx.paymentAttempt.update({
+      where: { id: attempt.id },
+      data: { refundedPaise: refunded, providerStatus: payment.status },
+    });
+    const full = refunded > 0 && refunded >= attempt.capturedPaise;
+    if (refundStatus === 'failed') {
+      if (intent.status === 'REFUND_PENDING') {
+        await transitionDonation(tx, intent.id, 'PAID', 'gateway_verified');
+        return 'PAID';
+      }
+      return intent.status;
+    }
+    if (!full) return intent.status; // partial refund: still PAID, amount recorded
+    let status = intent.status;
+    if (status === 'PAID') {
+      await transitionDonation(tx, intent.id, 'REFUND_PENDING', 'gateway_status');
+      status = 'REFUND_PENDING';
+    }
+    if (refundStatus === 'processed' && status === 'REFUND_PENDING') {
+      await transitionDonation(tx, intent.id, 'REFUNDED', 'gateway_status');
+      status = 'REFUNDED';
+    }
+    return status;
+  });
+}
