@@ -19,6 +19,8 @@ import {
   type AdminReceiptList,
   type AdminSubscriptionDetail,
   type AdminSubscriptionList,
+  type TaxSettings,
+  type TaxSettingsUpdate,
   type DonationDetail,
   type ExceptionQueue,
   type LedgerFilters,
@@ -171,6 +173,9 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
       call<AdminSubscriptionList>('GET', `/admin/subscriptions?${query({ status, page })}`),
     subscription: (id: string) =>
       call<AdminSubscriptionDetail>('GET', `/admin/subscriptions/${encodeURIComponent(id)}`),
+    taxSettings: () => call<TaxSettings>('GET', '/admin/tax-settings'),
+    updateTaxSettings: (body: TaxSettingsUpdate) =>
+      call<TaxSettings>('PATCH', '/admin/tax-settings', body),
     notifications: (status?: NotificationStatusDto) =>
       call<NotificationListResponse>(
         'GET',

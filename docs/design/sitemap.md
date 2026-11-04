@@ -43,7 +43,7 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
 | `/admin/programmes` | — | Ways we help: create, edit, pause (bilingual) | Trust owner | Owner session | No index | #36 | Planned |
 | `/admin/content` | — | Site sections, FAQ, impact metrics, stories (draft → preview → publish) | Trust owner | Owner session | No index | #36 | Planned |
 | `/admin/transparency` | — | Transparency documents upload and publishing | Trust owner | Owner session | No index | #36 | Planned |
-| `/admin/tax` | — | Tax & compliance: approval details, Form 113 export, 31 May reminder | Trust owner | Owner session | No index | #34, #35 | Planned |
+| `/admin/tax` | — | Tax & compliance: approval details, Form 113 export, 31 May reminder | Trust owner | Owner session | No index | #34, #35 | Built (tax profile; Form 113 in #35) |
 | `/admin/settings` | — | Trust profile, receipt threshold, owner email, fee table, payment config status | Trust owner | Owner session | No index | #36 | Planned |
 | `/admin/audit-log` | — | Append-only audit log | Trust owner | Owner session | No index | #20 | Built |
 | `*` | `/ta/*` | Not found page with a link home | Everyone | Public | No index | #2 | Built |

@@ -39,6 +39,7 @@ export default defineConfig({
         'src/modules/notifications/worker.ts',
         'src/modules/receipts/issue.ts',
         'src/modules/subscriptions/admin-routes.ts',
+        'src/modules/tax/admin-routes.ts',
         'src/modules/subscriptions/lifecycle.ts',
         'src/modules/subscriptions/routes.ts',
         'src/modules/receipts/routes.ts',

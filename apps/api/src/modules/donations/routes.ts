@@ -18,6 +18,7 @@ import { parseInput } from '../../http/validation.ts';
 import { feeCoverFor, parseFeeTable, type FeeMethod } from './fees.ts';
 import { PaymentProviderError, type PaymentProvider } from './provider.ts';
 import { transitionDonation } from '../payments/transitions.ts';
+import { normalizePan, sealAddress, sealPan, taxOptInOffered } from '../tax/identity.ts';
 
 const IntentBody = z.object({
   giftPaise: z.number().int().min(DONATION_MIN_PAISE),
@@ -37,6 +38,18 @@ const IntentBody = z.object({
   consent: z.literal(true),
   locale: z.enum(['ta', 'en']),
   channel: z.enum(['checkout', 'bank_transfer']).default('checkout'),
+  /**
+   * Tax-benefit opt-in (#34). Accepted ONLY when the trust's approval is recorded, valid and
+   * switched on; otherwise refused. PAN and address are encrypted before they are stored.
+   */
+  taxOptIn: z
+    .object({
+      pan: z.string().max(20),
+      address: z.string().trim().min(10).max(300),
+      oldRegimeAck: z.literal(true),
+    })
+    .strict()
+    .optional(),
 });
 
 const ClaimBody = z.object({
@@ -63,6 +76,8 @@ export interface DonationRouteOptions {
   now: () => Date;
   /** Monthly giving is switched on and configured (#32). */
   monthlyOffered?: boolean;
+  /** AES-256-GCM key (+ version) for PAN and address at rest (#34). */
+  encryption?: { key: Buffer; version: number };
 }
 
 /**
@@ -106,6 +121,7 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       feeCoverOffered: table !== null && opts.provider !== undefined,
       bankTransferOffered: bankAccount(settings) !== null,
       monthlyOffered: opts.monthlyOffered === true,
+      taxOptInOffered: opts.encryption !== undefined && taxOptInOffered(settings, opts.now()),
       ...(query.giftPaise !== undefined &&
         fee !== null && { feePaise: fee, amountPaise: query.giftPaise + fee }),
     };
@@ -136,6 +152,15 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
     }
     const account = bankAccount(settings);
     if (bank && !account) problems.push({ path: 'channel', issue: 'not_offered' });
+    let pan: string | null = null;
+    if (body.taxOptIn) {
+      if (!opts.encryption || !taxOptInOffered(settings, opts.now())) {
+        problems.push({ path: 'taxOptIn', issue: 'not_offered' });
+      } else {
+        pan = normalizePan(body.taxOptIn.pan);
+        if (!pan) problems.push({ path: 'taxOptIn.pan', issue: 'invalid' });
+      }
+    }
 
     let programmeId: string | null = null;
     if (body.programme && body.programme !== 'general') {
@@ -188,6 +213,22 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       consentAt: opts.now(),
       channel: bank ? 'BANK_TRANSFER' : 'CHECKOUT',
     });
+
+    // Tax opt-in (#34): private identity record, PAN and address encrypted at rest.
+    if (body.taxOptIn && pan && opts.encryption) {
+      const { key, version } = opts.encryption;
+      await db.$transaction([
+        db.donorIdentityRecord.create({
+          data: {
+            donationIntentId: intent.id,
+            fullName: body.donorName,
+            addressLine: sealAddress(body.taxOptIn.address, key),
+            ...sealPan(pan, key, version),
+          },
+        }),
+        db.donationIntent.update({ where: { id: intent.id }, data: { wantsTaxCertificate: true } }),
+      ]);
+    }
 
     // Bank transfer: no provider order. The owner confirms the credit from the bank statement.
     if (bank && account) return reply.code(201).send(bankResponse(intent, account));
