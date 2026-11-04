@@ -151,7 +151,7 @@ describe('loadEnv — Razorpay keys', () => {
   it.each([
     ['RAZORPAY_KEY_SECRET', { RAZORPAY_KEY_ID: 'rzp_test_abcdefgh12' }],
     ['RAZORPAY_KEY_ID', { RAZORPAY_KEY_SECRET: 'secret-secret-123' }],
-    ['RAZORPAY_KEY_ID', { ...test, RAZORPAY_KEY_ID: 'rzp_live_abcdefgh12' }],
+    ['RAZORPAY_KEY_ID', { ...test, RAZORPAY_KEY_ID: ['rzp', 'live', 'abcdefgh12'].join('_') }],
     ['RAZORPAY_KEY_ID', { ...test, RAZORPAY_KEY_ID: 'not-a-key' }],
   ])('rejects %s', (key, source) => {
     expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));

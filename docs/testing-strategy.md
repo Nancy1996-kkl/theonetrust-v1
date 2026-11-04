@@ -39,8 +39,31 @@ Vitest `requireAssertions` fails tests that assert nothing.
     when production source changes.
   - _Stop_ — runs `pnpm verify:quick` before Claude finishes; on failure Claude must fix it.
 - **CI** (`.github/workflows/ci.yml`): format → lint → typecheck → script tests → unit + coverage →
-  tests-required → diff check → build → bundle secret scan → Playwright (5 viewports) with
+  tests-required → no live payment keys → diff check → build → bundle secret scan → Playwright (5 viewports) with
   `failOnFlakyTests`. Reports and traces are uploaded on failure.
+
+## Payment test suite (#28)
+
+Razorpay **test mode only**. `pnpm check:no-live-keys` (in `verify` and CI) fails on any tracked
+live key ID (`rzp_live_…`), a filled-in Razorpay secret outside test files, or a committed `.env`;
+the API also refuses a live key outside production. API tests stub the Razorpay HTTP API but use
+the production signature code; they run in the CI `database` job against PostgreSQL 16.
+
+| Case                                             | API (`apps/api/src/modules/…`)                                                    | Browser (`apps/web/e2e/donate.spec.ts`)               |
+| ------------------------------------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Success (callback, webhook first, re-check only) | `payments/payment-suite.db.test.ts` › success; `verify.db.test.ts`                | success only after verification (en/ta)               |
+| Cancel                                           | payment-suite › cancel and failure                                                | cancelled checkout keeps need and amount              |
+| Failure, retry as a new order                    | payment-suite › cancel and failure; `webhook.db.test.ts`                          | failed payment offers try again; UPI limit            |
+| Duplicate webhook                                | payment-suite › duplicate…; `webhook.db.test.ts`                                  | —                                                     |
+| Delayed webhook (after callback / after failure) | payment-suite › success, duplicate…                                               | pending verification never shows success              |
+| Out-of-order events                              | payment-suite › duplicate…; `webhook.db.test.ts`; `transitions.test.ts`           | —                                                     |
+| Amount / currency / order mismatch               | payment-suite › mismatches; `verify.db.test.ts`                                   | —                                                     |
+| Bad signatures (callback and webhook)            | payment-suite › bad signatures; `webhook.db.test.ts`                              | —                                                     |
+| Refresh / back button                            | payment-suite › refresh and back button; `donations.db.test.ts` (Idempotency-Key) | refresh while confirming; back button after a payment |
+| ₹1 donation, limit errors                        | payment-suite › amounts; `donations.db.test.ts`                                   | ₹1 donation; amount limits                            |
+| Unmatched bank-transfer credit                   | payment-suite › unmatched…; `bank.db.test.ts` (owner-recorded credit)             | bank transfer "not confirmed yet"                     |
+| Refunds                                          | `webhook.db.test.ts` › refunds                                                    | —                                                     |
+| Monthly giving                                   | later (subscriptions issue)                                                       | later                                                 |
 
 ## How an engineer (or Claude) works an issue
 
@@ -53,5 +76,5 @@ Vitest `requireAssertions` fails tests that assert nothing.
 ## Planned additions (tracked in issues)
 
 Visual regression baselines and Tamil/English screenshot matrix (#37), Lighthouse budgets (#16),
-API integration tests against a real PostgreSQL in CI (#18), Razorpay sandbox payment matrix (#28),
+API integration tests against a real PostgreSQL in CI (#18),
 security scanning (#38).
