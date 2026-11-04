@@ -1,9 +1,10 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import type {
-  AdminSessionUser,
-  AuditListResponse,
-  UpdateAdminPreferencesRequest,
+import {
+  SITE_TEXT_KEYS,
+  type AdminSessionUser,
+  type AuditListResponse,
+  type UpdateAdminPreferencesRequest,
 } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
 import { AppError, errorBody } from '../../http/errors.ts';
@@ -18,6 +19,10 @@ import { taxAdminRoutes } from '../tax/admin-routes.ts';
 import { taxFilingRoutes } from '../tax/filing-routes.ts';
 import { notificationAdminRoutes } from '../notifications/admin-routes.ts';
 import { bankAdminRoutes } from '../payments/bank-admin-routes.ts';
+import { cmsAdminRoutes } from '../cms/admin-routes.ts';
+import { documentAdminRoutes } from '../cms/document-routes.ts';
+import { settingsAdminRoutes, type PaymentConfigStatus } from '../cms/settings-routes.ts';
+import type { DocumentStore } from '../cms/storage.ts';
 import type { AdminGuard } from './guard.ts';
 
 type ScopedEntry = Omit<AuditEntry, 'actorId' | 'correlationId'>;
@@ -51,6 +56,16 @@ export interface AdminRouteOptions {
   /** AES key for PAN/address — used only by the audited Form 113 export (#35). */
   encryptionKey?: Buffer | undefined;
   staleAfterMinutes?: number;
+  /** Transparency documents (#36). */
+  documents?: {
+    store?: DocumentStore | undefined;
+    maxBytes: number;
+    publicBaseUrl?: string | undefined;
+  };
+  /** OWNER_NOTIFICATION_EMAIL, shown as the fallback owner address (#36). */
+  ownerEmail?: string | undefined;
+  /** Payment configuration, status only (#36). */
+  paymentStatus?: PaymentConfigStatus;
   now?: () => Date;
 }
 
@@ -149,6 +164,25 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
       db: opts.db,
       encryptionKey: opts.encryptionKey,
       now: opts.now ?? (() => new Date()),
+    });
+    const now = opts.now ?? (() => new Date());
+    await cmsAdminRoutes(app, { db: opts.db, now, textKeys: SITE_TEXT_KEYS });
+    await documentAdminRoutes(app, {
+      db: opts.db,
+      now,
+      store: opts.documents?.store,
+      maxBytes: opts.documents?.maxBytes ?? 10_485_760,
+      publicBaseUrl: opts.documents?.publicBaseUrl,
+    });
+    await settingsAdminRoutes(app, {
+      db: opts.db,
+      ownerEmail: opts.ownerEmail,
+      payment: opts.paymentStatus ?? {
+        keyId: undefined,
+        keySecretSet: false,
+        webhookSecretSet: false,
+        subscriptionsEnabled: false,
+      },
     });
     await ledgerAdminRoutes(app, {
       db: opts.db,

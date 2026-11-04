@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 import { Button } from '../components/ui/Button.tsx';
 import { useAdmin } from './admin-context.ts';
+import { CMS_STRINGS } from './cms-strings.ts';
 import { LEDGER_STRINGS } from './ledger-strings.ts';
 
 /** Navigation for signed-in dashboard pages, with sign-out. */
 export function AdminNav() {
   const { api, t, lang, session, setSession } = useAdmin();
   const l = LEDGER_STRINGS[lang];
+  const c = CMS_STRINGS[lang];
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
@@ -46,6 +48,21 @@ export function AdminNav() {
             </li>
             <li>
               <NavLink to="/admin/tax">{l.navTax}</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/programmes">{c.navProgrammes}</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/content">{c.navContent}</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/metrics">{c.navMetrics}</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/transparency">{c.navDocuments}</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/settings">{c.navSettings}</NavLink>
             </li>
             <li>
               <NavLink to="/admin/help-requests">{t.navHelp}</NavLink>

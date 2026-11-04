@@ -14,6 +14,11 @@ import { ExceptionsPage } from '../admin/ExceptionsPage.tsx';
 import { ReceiptsPage } from '../admin/ReceiptsPage.tsx';
 import { MonthlyGivingPage } from '../admin/MonthlyGivingPage.tsx';
 import { TaxSettingsPage } from '../admin/TaxSettingsPage.tsx';
+import { ContentPage } from '../admin/ContentPage.tsx';
+import { DocumentsPage } from '../admin/DocumentsPage.tsx';
+import { MetricsPage } from '../admin/MetricsPage.tsx';
+import { ProgrammesPage } from '../admin/ProgrammesPage.tsx';
+import { SiteSettingsPage } from '../admin/SiteSettingsPage.tsx';
 import { RequireAdmin } from '../admin/RequireAdmin.tsx';
 import { RootLayout } from './RootLayout.tsx';
 import { RouteErrorPage } from '../routes/error/RouteErrorPage.tsx';
@@ -66,6 +71,11 @@ export const routes: RouteObject[] = [
               { path: 'receipts', element: <ReceiptsPage /> },
               { path: 'monthly-giving', element: <MonthlyGivingPage /> },
               { path: 'tax', element: <TaxSettingsPage /> },
+              { path: 'programmes', element: <ProgrammesPage /> },
+              { path: 'content', element: <ContentPage /> },
+              { path: 'metrics', element: <MetricsPage /> },
+              { path: 'transparency', element: <DocumentsPage /> },
+              { path: 'settings', element: <SiteSettingsPage /> },
               { path: 'audit-log', element: <AuditLogPage /> },
             ],
           },

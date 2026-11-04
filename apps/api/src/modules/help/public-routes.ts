@@ -12,6 +12,7 @@ import {
   type HelpRequestAccepted,
 } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
+import { ownerEmailFor } from '../../db/repositories/trust-settings.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { newHelpReference } from './reference.ts';
@@ -131,7 +132,7 @@ export async function helpPublicRoutes(app: FastifyInstance, opts: HelpPublicOpt
               correlationId: requestId,
             },
           });
-          if (opts.ownerEmail) {
+          if (await ownerEmailFor(tx, opts.ownerEmail)) {
             // The worker looks the request up by reference; no personal data in the outbox.
             await tx.notificationOutbox.create({
               data: {

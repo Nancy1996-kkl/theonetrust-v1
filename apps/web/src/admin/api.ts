@@ -1,5 +1,17 @@
 import {
   CSRF_HEADER,
+  type AdminDocument,
+  type AdminDocumentList,
+  type AdminMetric,
+  type AdminProgramme,
+  type AdminSection,
+  type AdminTrustSettings,
+  type ContentPreview,
+  type DocumentUpload,
+  type MetricInput,
+  type ProgrammeInput,
+  type SectionDraftInput,
+  type TrustSettingsInput,
   isApiErrorCode,
   type AdminSessionResponse,
   type AdminSessionUser,
@@ -64,7 +76,7 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
   let csrfToken: string | undefined;
 
   async function call<T>(
-    method: 'GET' | 'POST' | 'PATCH',
+    method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
     path: string,
     body?: unknown,
   ): Promise<T> {
@@ -208,6 +220,50 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
         `/admin/notifications/${encodeURIComponent(id)}/retry`,
         {},
       ),
+    // ── Content management (#36) ──
+    programmes: () => call<{ items: AdminProgramme[] }>('GET', '/admin/programmes'),
+    createProgramme: (body: ProgrammeInput) =>
+      call<AdminProgramme>('POST', '/admin/programmes', body),
+    updateProgramme: (id: string, body: ProgrammeInput) =>
+      call<AdminProgramme>('PATCH', `/admin/programmes/${encodeURIComponent(id)}`, body),
+    deleteProgramme: (id: string, reason: string) =>
+      call<{ deleted: true }>('DELETE', `/admin/programmes/${encodeURIComponent(id)}`, { reason }),
+    contentSections: () => call<{ items: AdminSection[] }>('GET', '/admin/content'),
+    contentPreview: (locale: 'ta' | 'en') =>
+      call<ContentPreview>('GET', `/admin/content/preview?locale=${locale}`),
+    saveSectionDraft: (key: string, body: SectionDraftInput) =>
+      call<AdminSection>('PUT', `/admin/content/${encodeURIComponent(key)}`, body),
+    publishSection: (key: string, reason: string) =>
+      call<AdminSection>('POST', `/admin/content/${encodeURIComponent(key)}/publish`, { reason }),
+    unpublishSection: (key: string, reason: string) =>
+      call<AdminSection>('POST', `/admin/content/${encodeURIComponent(key)}/unpublish`, {
+        reason,
+      }),
+    metrics: () => call<{ items: AdminMetric[] }>('GET', '/admin/metrics'),
+    createMetric: (body: MetricInput) => call<AdminMetric>('POST', '/admin/metrics', body),
+    updateMetric: (id: string, body: MetricInput) =>
+      call<AdminMetric>('PATCH', `/admin/metrics/${encodeURIComponent(id)}`, body),
+    publishMetric: (id: string, reason: string) =>
+      call<AdminMetric>('POST', `/admin/metrics/${encodeURIComponent(id)}/publish`, { reason }),
+    unpublishMetric: (id: string, reason: string) =>
+      call<AdminMetric>('POST', `/admin/metrics/${encodeURIComponent(id)}/unpublish`, { reason }),
+    deleteMetric: (id: string, reason: string) =>
+      call<{ deleted: true }>('DELETE', `/admin/metrics/${encodeURIComponent(id)}`, { reason }),
+    documents: () => call<AdminDocumentList>('GET', '/admin/documents'),
+    uploadDocument: (body: DocumentUpload) => call<AdminDocument>('POST', '/admin/documents', body),
+    publishDocument: (id: string, reason: string) =>
+      call<AdminDocument>('POST', `/admin/documents/${encodeURIComponent(id)}/publish`, {
+        reason,
+      }),
+    unpublishDocument: (id: string, reason: string) =>
+      call<AdminDocument>('POST', `/admin/documents/${encodeURIComponent(id)}/unpublish`, {
+        reason,
+      }),
+    deleteDocument: (id: string, reason: string) =>
+      call<{ deleted: true }>('DELETE', `/admin/documents/${encodeURIComponent(id)}`, { reason }),
+    trustSettings: () => call<AdminTrustSettings>('GET', '/admin/settings'),
+    updateTrustSettings: (body: TrustSettingsInput) =>
+      call<AdminTrustSettings>('PATCH', '/admin/settings', body),
     logout: async () => {
       await call<undefined>('POST', '/auth/logout');
       csrfToken = undefined;

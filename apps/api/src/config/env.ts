@@ -96,7 +96,18 @@ const EnvSchema = z
     /** Browser/CDN cache lifetime for public content responses. */
     PUBLIC_CACHE_SECONDS: z.coerce.number().int().min(0).max(86_400).default(300),
     /**
-     * Public base URL of approved transparency files (storage arrives with #36). Without it the
+     * Private folder for uploaded transparency documents (#36), outside the web root. Unset =
+     * uploads are switched off. Published files are served only through the API.
+     */
+    DOCUMENT_STORAGE_DIR: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.string().min(1).optional(),
+    ),
+    /** Largest transparency document accepted (default 10 MB). */
+    DOCUMENT_MAX_BYTES: z.coerce.number().int().min(1024).max(20_971_520).default(10_485_760),
+    /**
+     * Public base URL of approved transparency files. With the built-in storage (#36) this is
+     * `<api origin>/api/v1/documents`. Without it the
      * documents endpoint returns an empty list — never a link that does not work.
      */
     PUBLIC_DOCUMENTS_BASE_URL: z.preprocess(

@@ -127,11 +127,17 @@ describe('loadEnv — public content', () => {
     const env = loadEnv({ PUBLIC_DOCUMENTS_BASE_URL: '' });
     expect(env.PUBLIC_CACHE_SECONDS).toBe(300);
     expect(env.PUBLIC_DOCUMENTS_BASE_URL).toBeUndefined();
+    expect(env.DOCUMENT_STORAGE_DIR).toBeUndefined();
+    expect(env.DOCUMENT_MAX_BYTES).toBe(10_485_760);
+    expect(loadEnv({ DOCUMENT_STORAGE_DIR: '/var/tot/docs' }).DOCUMENT_STORAGE_DIR).toBe(
+      '/var/tot/docs',
+    );
   });
 
   it.each([
     ['PUBLIC_DOCUMENTS_BASE_URL', { PUBLIC_DOCUMENTS_BASE_URL: 'ftp://files.example' }],
     ['PUBLIC_CACHE_SECONDS', { PUBLIC_CACHE_SECONDS: '-1' }],
+    ['DOCUMENT_MAX_BYTES', { DOCUMENT_MAX_BYTES: '100' }],
   ])('rejects invalid %s', (key, source) => {
     expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
   });

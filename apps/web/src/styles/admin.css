@@ -282,3 +282,20 @@
 .admin-receipt-actions .ui-button {
   text-decoration: none;
 }
+
+/* Owner content forms (#36) */
+.admin-textarea {
+  min-height: calc(var(--control-height) * 3);
+  resize: vertical;
+}
+
+.admin-bilingual {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (min-width: 48rem) {
+  .admin-bilingual {
+    grid-template-columns: 1fr 1fr;
+  }
+}

@@ -12,6 +12,8 @@ import { registerRawBodyJsonParser } from './http/raw-body.ts';
 import { registerSecurityHeaders } from './http/security.ts';
 import { adminGuard } from './modules/admin/guard.ts';
 import { adminRoutes } from './modules/admin/routes.ts';
+import { documentFileRoutes } from './modules/cms/document-routes.ts';
+import { localDocumentStore, type DocumentStore } from './modules/cms/storage.ts';
 import type { AuthHttpContext } from './modules/auth/http.ts';
 import { authRepository } from './modules/auth/repository.ts';
 import { authRoutes, unavailableAuthRoutes } from './modules/auth/routes.ts';
@@ -71,6 +73,8 @@ export interface BuildAppOptions {
   paymentProvider?: PaymentProvider;
   /** Razorpay Subscriptions (#32); defaults to Razorpay when keys are set and it is enabled. */
   subscriptionProvider?: SubscriptionProvider;
+  /** Private transparency-document storage (#36); defaults to DOCUMENT_STORAGE_DIR when set. */
+  documentStore?: DocumentStore;
 }
 
 export const TOTP_ISSUER = 'Theonetrust.in';
@@ -238,6 +242,17 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     ...(env.PUBLIC_DOCUMENTS_BASE_URL && { documentsBaseUrl: env.PUBLIC_DOCUMENTS_BASE_URL }),
   });
 
+  // Transparency files (#36): only PUBLISHED documents are ever served from private storage.
+  const documentStore =
+    options.documentStore ??
+    (env.DOCUMENT_STORAGE_DIR ? localDocumentStore(env.DOCUMENT_STORAGE_DIR) : undefined);
+  app.register(documentFileRoutes, {
+    prefix: `${API_V1_PREFIX}/documents`,
+    cacheSeconds: env.PUBLIC_CACHE_SECONDS,
+    db: options.db,
+    store: documentStore,
+  });
+
   // Owner sign-in (#19). Needs both a database and AUTH_SECRET_KEY; otherwise it is closed (503).
   app.register(cookie);
   const auth =
@@ -277,6 +292,18 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     paymentProvider,
     ...(keys && { receiptKey: keys.receipt, encryptionKey: keys.encryption }),
     staleAfterMinutes: env.ADMIN_STALE_PENDING_MINUTES,
+    documents: {
+      store: documentStore,
+      maxBytes: env.DOCUMENT_MAX_BYTES,
+      publicBaseUrl: env.PUBLIC_DOCUMENTS_BASE_URL,
+    },
+    ownerEmail: env.OWNER_NOTIFICATION_EMAIL,
+    paymentStatus: {
+      keyId: env.RAZORPAY_KEY_ID,
+      keySecretSet: Boolean(env.RAZORPAY_KEY_SECRET),
+      webhookSecretSet: Boolean(env.RAZORPAY_WEBHOOK_SECRET),
+      subscriptionsEnabled: env.RAZORPAY_SUBSCRIPTIONS_ENABLED,
+    },
     now: options.now ?? (() => new Date()),
     ...(auth && options.db && { db: options.db }),
   });
