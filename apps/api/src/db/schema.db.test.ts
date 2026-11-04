@@ -27,6 +27,8 @@ describe('migration from an empty database', () => {
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`;
     expect(rows.map((r) => r.table_name)).toEqual([
       '_prisma_migrations',
+      'admin_recovery_codes',
+      'admin_sessions',
       'admin_users',
       'audit_logs',
       'bank_transfer_records',

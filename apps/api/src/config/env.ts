@@ -41,10 +41,30 @@ const EnvSchema = z
     DATABASE_URL: optionalPostgresUrl,
     /** Migrations/admin tools only (Neon: direct/unpooled). Read by prisma.config.ts, not the app. */
     DIRECT_URL: optionalPostgresUrl,
+    /**
+     * 32 random bytes, base64 (`openssl rand -base64 32`). Encrypts authenticator secrets and
+     * signs CSRF tokens. Required in production; without it, sign-in answers 503.
+     */
+    AUTH_SECRET_KEY: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .regex(/^[A-Za-z0-9+/]{43}=$/)
+        .optional(),
+    ),
+    /** Signed-in session ends after this much inactivity… */
+    SESSION_IDLE_MINUTES: z.coerce.number().int().min(5).max(240).default(30),
+    /** …and always after this long, active or not. */
+    SESSION_MAX_HOURS: z.coerce.number().int().min(1).max(24).default(12),
+    /** Wrong passwords or codes in a row before the account is locked. */
+    LOGIN_MAX_FAILURES: z.coerce.number().int().min(3).max(20).default(5),
+    LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
   })
   .superRefine((env, ctx) => {
-    if (env.NODE_ENV === 'production' && !env.DATABASE_URL) {
-      ctx.addIssue({ code: 'custom', path: ['DATABASE_URL'], message: 'required in production' });
+    if (env.NODE_ENV !== 'production') return;
+    for (const key of ['DATABASE_URL', 'AUTH_SECRET_KEY'] as const) {
+      if (!env[key])
+        ctx.addIssue({ code: 'custom', path: [key], message: 'required in production' });
     }
   });
 

@@ -14,10 +14,17 @@ export default defineConfig({
       exclude: [
         'src/**/*.test.ts',
         'src/server.ts',
+        'src/cli/set-owner-password.ts',
         'src/generated/**',
-        // Covered by the database suite, which has its own thresholds.
+        // Need PostgreSQL: covered by the database suite, which has its own thresholds.
         'src/db/repositories/**',
         'src/db/seed.ts',
+        'src/modules/auth/http.ts',
+        'src/modules/auth/repository.ts',
+        'src/modules/auth/routes.ts',
+        'src/modules/auth/service.ts',
+        'src/modules/admin/**',
+        'src/cli/owner-account.ts',
         'src/test/db-global-setup.ts',
         'src/test/db.ts',
       ],

@@ -29,8 +29,8 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
 | `/refund-policy` | `/ta/refund-policy` | Refund, cancellation and correction policy, incl. "shipping: not applicable — donations only" (Razorpay requirement) | Donors | Public | Index | #14 | Built |
 | `/receipt/:token` | `/ta/receipt/:token` | Donation acknowledgement (minimal fields) + PDF download + verification QR target; link sent by email or shown in the donate panel | Donor and anyone they share it with | Private random token | No index | #29 | Planned |
 | `/manage/:token` | `/ta/manage/:token` | See and cancel monthly giving without logging in; pause only where Razorpay supports it for that method (UPI mandates are paused in the donor's UPI app) | Monthly donor | Private random token | No index | #32, #33 | Planned |
-| `/admin/login` | — | Owner sign-in with authenticator-app second factor | Trust owner | Public page, rate-limited | No index | #19 | Planned |
-| `/admin` | — | Overview: verified totals, pending, failed, refunds, recent activity, exceptions | Trust owner | Owner session | No index | #31 | Planned |
+| `/admin/login` | — | Owner sign-in with authenticator-app second factor | Trust owner | Public page, rate-limited | No index | #19 | Built |
+| `/admin` | — | Overview: verified totals, pending, failed, refunds, recent activity, exceptions | Trust owner | Owner session | No index | #19 (shell), #31 | Built (shell) |
 | `/admin/donations` | — | Donations ledger with filters and CSV export | Trust owner | Owner session | No index | #31 | Planned |
 | `/admin/donations/:id` | — | One donation: payment attempts, webhook history, receipt, notifications | Trust owner | Owner session | No index | #31 | Planned |
 | `/admin/exceptions` | — | Payment exceptions and reconciliation (pending too long, mismatch, bank transfers) | Trust owner | Owner session | No index | #25, #31 | Planned |

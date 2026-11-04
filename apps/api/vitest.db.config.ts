@@ -15,7 +15,7 @@ export default defineConfig({
     expect: { requireAssertions: true },
     coverage: {
       provider: 'v8',
-      include: ['src/db/**/*.ts'],
+      include: ['src/db/**/*.ts', 'src/modules/**/*.ts', 'src/cli/owner-account.ts'],
       exclude: ['src/**/*.test.ts'],
       reportsDirectory: 'coverage/db',
       thresholds: { lines: 90, functions: 90, branches: 85, statements: 90 },

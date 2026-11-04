@@ -1,14 +1,23 @@
 import { randomUUID } from 'node:crypto';
 import type { Writable } from 'node:stream';
+import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
-import { API_V1_PREFIX } from '@theonetrust/contracts';
+import { API_V1_PREFIX, CSRF_HEADER } from '@theonetrust/contracts';
 import type { Env } from './config/env.ts';
+import type { Db } from './db/client.ts';
 import { AppError, codeFor, errorBody } from './http/errors.ts';
 import { registerRawBodyJsonParser } from './http/raw-body.ts';
 import { registerSecurityHeaders } from './http/security.ts';
+import { adminGuard } from './modules/admin/guard.ts';
+import { adminRoutes } from './modules/admin/routes.ts';
+import type { AuthHttpContext } from './modules/auth/http.ts';
+import { authRepository } from './modules/auth/repository.ts';
+import { authRoutes, unavailableAuthRoutes } from './modules/auth/routes.ts';
+import { authService } from './modules/auth/service.ts';
 import { healthRoutes } from './routes/health.ts';
+import { deriveAuthKeys } from './security/crypto.ts';
 
 export const APP_VERSION = '0.0.0';
 
@@ -41,7 +50,13 @@ export const REDACT_PATHS = [
 export interface BuildAppOptions {
   /** Tests capture log lines here to assert on redaction. Defaults to stdout. */
   logStream?: Writable;
+  /** Database client (from src/db/client.ts). Without it, sign-in answers 503. */
+  db?: Db;
+  /** Clock, injectable for session-expiry and authenticator tests. */
+  now?: () => Date;
 }
+
+export const TOTP_ISSUER = 'Theonetrust.in';
 
 /** Logs the path only: a query string could carry personal data even though we never put it there. */
 function serializeRequest(request: FastifyRequest) {
@@ -88,7 +103,7 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
       callback(null, origin === undefined || env.CORS_ORIGINS.includes(origin));
     },
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    allowedHeaders: ['content-type', CORRELATION_HEADER, 'idempotency-key'],
+    allowedHeaders: ['content-type', CORRELATION_HEADER, CSRF_HEADER, 'idempotency-key'],
     exposedHeaders: [CORRELATION_HEADER, 'retry-after'],
     credentials: true,
     maxAge: 600,
@@ -115,6 +130,45 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   });
 
   app.register(healthRoutes, { prefix: API_V1_PREFIX, version: APP_VERSION });
+
+  // Owner sign-in (#19). Needs both a database and AUTH_SECRET_KEY; otherwise it is closed (503).
+  app.register(cookie);
+  const keys = env.AUTH_SECRET_KEY ? deriveAuthKeys(env.AUTH_SECRET_KEY) : undefined;
+  const auth =
+    options.db && keys
+      ? (() => {
+          const ctx: AuthHttpContext = { production, allowedOrigins: env.CORS_ORIGINS, keys };
+          const repo = authRepository(options.db);
+          const service = authService(
+            repo,
+            {
+              keys,
+              idleMs: env.SESSION_IDLE_MINUTES * 60_000,
+              maxMs: env.SESSION_MAX_HOURS * 3_600_000,
+              pendingMs: 10 * 60_000,
+              maxFailures: env.LOGIN_MAX_FAILURES,
+              lockoutMs: env.LOGIN_LOCKOUT_MINUTES * 60_000,
+              issuer: TOTP_ISSUER,
+            },
+            options.now ?? (() => new Date()),
+          );
+          return { ctx, service, repo };
+        })()
+      : undefined;
+  if (auth) {
+    app.register(authRoutes, {
+      prefix: `${API_V1_PREFIX}/auth`,
+      ctx: auth.ctx,
+      service: auth.service,
+    });
+  } else {
+    app.register(unavailableAuthRoutes, { prefix: `${API_V1_PREFIX}/auth` });
+  }
+  app.register(adminRoutes, {
+    prefix: `${API_V1_PREFIX}/admin`,
+    guard: adminGuard(auth && { ctx: auth.ctx, service: auth.service }, production),
+    ...(auth && { findUser: (id: string) => auth.repo.findUserById(id) }),
+  });
 
   return app;
 }

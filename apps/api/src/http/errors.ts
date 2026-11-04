@@ -5,26 +5,38 @@ export const PUBLIC_MESSAGES: Record<ApiErrorCode, string> = {
   BAD_REQUEST: 'The request was invalid.',
   VALIDATION_ERROR: 'Some fields are missing or invalid.',
   UNAUTHORIZED: 'Please sign in to continue.',
+  // Deliberately the same for a wrong email, a wrong password and a locked account.
+  INVALID_CREDENTIALS:
+    'Email or password is incorrect, or the account is locked for a while after too many attempts.',
+  MFA_REQUIRED: 'Enter the code from your authenticator app to continue.',
+  INVALID_CODE: 'That code is not valid. Check your authenticator app and try again.',
   FORBIDDEN: 'You do not have access to this.',
+  CSRF_FAILED: 'This request could not be verified. Reload the page and try again.',
   NOT_FOUND: 'Resource not found',
   CONFLICT: 'This request conflicts with the current state.',
   PAYLOAD_TOO_LARGE: 'The request is too large.',
   UNSUPPORTED_MEDIA_TYPE: 'This content type is not supported.',
   RATE_LIMITED: 'Too many requests. Please wait a moment and try again.',
   INTERNAL_ERROR: 'Something went wrong. Please try again.',
+  SERVICE_UNAVAILABLE: 'This service is not available right now. Please try again later.',
 };
 
 const STATUS_FOR: Record<ApiErrorCode, number> = {
   BAD_REQUEST: 400,
   VALIDATION_ERROR: 400,
   UNAUTHORIZED: 401,
+  INVALID_CREDENTIALS: 401,
+  MFA_REQUIRED: 401,
+  INVALID_CODE: 401,
   FORBIDDEN: 403,
+  CSRF_FAILED: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
   PAYLOAD_TOO_LARGE: 413,
   UNSUPPORTED_MEDIA_TYPE: 415,
   RATE_LIMITED: 429,
   INTERNAL_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
 };
 
 /** Throw from a route to return a stable error code. The message is always the public one. */
