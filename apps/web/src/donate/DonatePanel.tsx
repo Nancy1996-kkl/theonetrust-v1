@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
   formatInr,
+  MONTHLY_CONSENT_VERSION,
   normalizeIndianMobile,
   type BankTransferIntentResponse,
   type DonationEstimateResponse,
@@ -23,6 +24,8 @@ import { useLang } from '../i18n/use-lang.ts';
 import { PolicyNotice } from '../routes/policy/PolicyNotice.tsx';
 import { useDonationDraft } from '../state/donation-draft.ts';
 import { newIdempotencyKey, useDonateClient, type CheckoutOutcome } from './donate-client.ts';
+import { MonthlyConsent } from './MonthlyConsent.tsx';
+import { useMonthlyClient } from './monthly-client.ts';
 import {
   DONATE_MESSAGES,
   DONATE_PRESETS_RUPEES,
@@ -45,7 +48,9 @@ type Screen =
   | 'wait'
   | 'network'
   | 'bank'
-  | 'bank-sent';
+  | 'bank-sent'
+  | 'monthly-done'
+  | 'monthly-pending';
 const STEPS: Step[] = ['need', 'amount', 'details', 'review'];
 const STEP_LABELS: DonateMessageKey[] = ['stepNeed', 'stepAmount', 'stepDetails', 'stepPay'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -132,6 +137,11 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const [utr, setUtr] = useState('');
   const [utrError, setUtrError] = useState(false);
   const [receiptToken, setReceiptToken] = useState<string | null>(null);
+  const monthlyClient = useMonthlyClient();
+  const [mandateConsent, setMandateConsent] = useState(false);
+  const [mandateError, setMandateError] = useState(false);
+  const [manageToken, setManageToken] = useState<string | null>(null);
+  const monthlyKey = useRef<string | null>(null);
   const attemptKey = useRef<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -139,6 +149,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     draft.programme ?? (programmes.some((p) => p.slug === 'general') ? 'general' : null);
   const chosen = programmes.find((p) => p.slug === programme);
   const gift = draft.amountPaise;
+  /** Monthly giving (#32) only when the server says it is switched on. */
+  const monthly = draft.frequency === 'monthly' && limits?.monthlyOffered === true;
 
   // Limits and the fee estimate come from the server; nothing is assumed here.
   useEffect(() => {
@@ -176,7 +188,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
 
   function close() {
     navigate({ pathname: location.pathname, search: location.search }, { replace: true });
-    if (screen === 'paid' || screen === 'bank-sent') {
+    if (screen === 'paid' || screen === 'bank-sent' || screen === 'monthly-done') {
       setScreen('form');
       setStep('need');
       setCancelled(false);
@@ -292,7 +304,73 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     setScreen(ok ? 'bank-sent' : 'network');
   }
 
+  /** Monthly (#32): consent → server subscription → Checkout mandate → server verification. */
+  async function payMonthly() {
+    if (busy || !gift || !programme) return;
+    if (!mandateConsent) return setMandateError(true);
+    setMandateError(false);
+    setBusy(true);
+    setCancelled(false);
+    monthlyKey.current ??= newIdempotencyKey();
+    const mobile = details.mobile.trim() ? normalizeIndianMobile(details.mobile) : null;
+    const started = await monthlyClient.start(
+      {
+        amountPaise: gift,
+        currency: 'INR',
+        programme,
+        donorName: details.name.trim(),
+        donorEmail: details.email.trim() || null,
+        donorPhone: mobile,
+        consent: true,
+        mandateConsent: true,
+        consentVersion: MONTHLY_CONSENT_VERSION,
+        locale: lang,
+      },
+      monthlyKey.current,
+    );
+    if (!started.ok) {
+      setBusy(false);
+      setScreen(
+        started.reason === 'invalid'
+          ? 'invalid'
+          : started.reason === 'rate_limited'
+            ? 'wait'
+            : 'network',
+      );
+      return;
+    }
+    setReference(started.subscription.publicReference);
+    const outcome = await monthlyClient.checkout(started.subscription, {
+      name: details.name.trim(),
+      ...(details.email.trim() && { email: details.email.trim() }),
+      ...(mobile && { contact: mobile }),
+      lang,
+    });
+    if (outcome.kind === 'dismissed') {
+      setBusy(false);
+      setCancelled(true);
+      return;
+    }
+    if (outcome.kind === 'failed') {
+      setBusy(false);
+      monthlyKey.current = null;
+      setScreen('failed');
+      return;
+    }
+    setScreen('confirming');
+    const result = await monthlyClient.verify(started.subscription, outcome);
+    setBusy(false);
+    monthlyKey.current = null;
+    if (result?.status === 'ACTIVE') {
+      setManageToken(result.manageToken ?? null);
+      setScreen('monthly-done');
+    } else {
+      setScreen('monthly-pending');
+    }
+  }
+
   async function pay() {
+    if (monthly) return payMonthly();
     if (busy || !gift || !programme) return;
     setBusy(true);
     setCancelled(false);
@@ -371,6 +449,35 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         {heading(t.confirming)}
         <p>{t.dontClose}</p>
       </div>
+    );
+  } else if (screen === 'monthly-done' || screen === 'monthly-pending') {
+    const done = screen === 'monthly-done';
+    body = (
+      <>
+        {heading(done ? t.monthlyDone : t.monthlyPending)}
+        <Callout tone={done ? 'success' : 'warning'}>
+          {done ? fill(t.monthlyDoneText, { amount: money(gift ?? 0) }) : t.monthlyPendingText}
+        </Callout>
+        {reference && (
+          <dl className="donate__summary">
+            <div>
+              <dt>{t.reference}</dt>
+              <dd>{reference}</dd>
+            </div>
+          </dl>
+        )}
+        {done && manageToken && (
+          <p>
+            <Link to={localizedPath(`/manage/${manageToken}`, lang)}>{t.manageLink}</Link>
+          </p>
+        )}
+        {done && <p className="donate__muted">{t.manageHelp}</p>}
+      </>
+    );
+    footer = (
+      <Button fullWidth onClick={close}>
+        {t.backToPage}
+      </Button>
     );
   } else if (screen === 'paid' || screen === 'pending' || screen === 'failed') {
     const isPaid = screen === 'paid';
@@ -597,6 +704,22 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         <form id="donate-step" onSubmit={next} noValidate>
           {stepper}
           {heading(t.howMuch)}
+          {limits?.monthlyOffered && (
+            <RadioCardGroup
+              legend={t.howOften}
+              name="donate-frequency"
+              value={draft.frequency}
+              onChange={(value) => {
+                setMandateConsent(false);
+                monthlyKey.current = null;
+                updateDraft({ frequency: value === 'monthly' ? 'monthly' : 'once' });
+              }}
+              options={[
+                { value: 'once', label: t.once },
+                { value: 'monthly', label: t.monthly, description: t.monthlyHint },
+              ]}
+            />
+          )}
           <AmountPicker
             legend={t.howMuch}
             // Its own radio group: the page's final call-to-action has an amount picker too.
@@ -621,7 +744,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             }
             required
           />
-          {fee !== null && fee > 0 && (
+          {fee !== null && fee > 0 && !monthly && (
             <Checkbox
               label={fill(t.coverFee, { fee: money(fee) })}
               hint={t.coverFeeHint}
@@ -729,8 +852,19 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
               <dd>{details.name.trim()}</dd>
             </div>
           </dl>
+          {monthly && gift && (
+            <MonthlyConsent
+              amountPaise={gift}
+              checked={mandateConsent}
+              error={mandateError}
+              onChange={(value) => {
+                setMandateConsent(value);
+                if (value) setMandateError(false);
+              }}
+            />
+          )}
           <p className="donate__muted">{t.trustLine}</p>
-          {limits?.bankTransferOffered && (
+          {limits?.bankTransferOffered && !monthly && (
             <Button variant="ghost" loading={busy} onClick={() => void startBank()}>
               {t.bankTransferLink}
             </Button>
@@ -742,7 +876,9 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       <div className="donate__actions">
         {step === 'review' ? (
           <Button variant="donate" fullWidth loading={busy} onClick={() => void pay()}>
-            {fill(t.payNow, { amount: money(total) })}
+            {monthly
+              ? fill(t.setUpMonthly, { amount: money(gift ?? 0) })
+              : fill(t.payNow, { amount: money(total) })}
           </Button>
         ) : (
           <Button type="submit" form="donate-step" fullWidth>

@@ -61,6 +61,8 @@ export interface DonationRouteOptions {
   provider?: PaymentProvider;
   perHour: number;
   now: () => Date;
+  /** Monthly giving is switched on and configured (#32). */
+  monthlyOffered?: boolean;
 }
 
 /**
@@ -103,6 +105,7 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       receiptMinPaise: settings.receiptMinPaise,
       feeCoverOffered: table !== null && opts.provider !== undefined,
       bankTransferOffered: bankAccount(settings) !== null,
+      monthlyOffered: opts.monthlyOffered === true,
       ...(query.giftPaise !== undefined &&
         fee !== null && { feePaise: fee, amountPaise: query.giftPaise + fee }),
     };

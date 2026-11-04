@@ -137,6 +137,14 @@ const EnvSchema = z
         )
         .optional(),
     ),
+    /**
+     * Monthly giving (#32). Off until the trust confirms Razorpay Subscriptions and UPI AutoPay
+     * are enabled on its account [CONFIRM].
+     */
+    RAZORPAY_SUBSCRIPTIONS_ENABLED: z
+      .enum(['true', 'false', ''])
+      .default('false')
+      .transform((v) => v === 'true'),
     /** A checkout payment still unsettled after this many minutes is listed for the owner (#31). */
     ADMIN_STALE_PENDING_MINUTES: z.coerce.number().int().min(5).max(10_080).default(30),
     /** How often the outbox worker looks for due emails. */

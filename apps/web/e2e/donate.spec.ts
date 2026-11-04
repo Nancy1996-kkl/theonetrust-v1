@@ -226,3 +226,50 @@ test('back button after a payment closes the panel; reopening never repeats the 
   await expect(reopened.getByRole('button', { name: T.en.pay })).toHaveCount(0);
   await expect(reopened.getByRole('heading', { name: T.en.pending })).toHaveCount(0);
 });
+
+// ── Monthly giving (#32) with the mock adapter ───────────────────────────────────────────
+
+test('monthly giving: consent with amount, start and how to cancel → manage link → cancel', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.getByRole('banner').getByRole('link', { name: 'Donate', exact: true }).click();
+  const panel = page.getByRole('dialog');
+  await panel.getByRole('button', { name: 'Continue' }).click();
+  await panel.getByText('Every month', { exact: true }).click();
+  await panel.getByText('₹1,000', { exact: true }).click();
+  await panel.getByRole('button', { name: 'Continue' }).click();
+  await panel.getByRole('textbox', { name: 'Full name' }).fill('Synthetic Donor');
+  await panel.getByRole('textbox', { name: 'Email' }).fill('donor@example.org');
+  await panel.getByText('The trust may keep these details to record my donation.').click();
+  await panel.getByRole('button', { name: 'Continue' }).click();
+  const consent = panel.getByRole('region', { name: 'Please check before you agree' });
+  await expect(consent).toContainText('₹1,000 every month, until you cancel');
+  await expect(consent).toContainText('manage');
+  await panel.getByRole('button', { name: 'Set up ₹1,000 every month' }).click();
+  await expect(panel.getByText('Please tick this box to set up monthly giving.')).toBeVisible();
+  await panel.getByText('I agree to a monthly donation of ₹1,000 until I cancel.').click();
+  await panel.getByRole('button', { name: 'Set up ₹1,000 every month' }).click();
+  await expect(
+    panel.getByRole('heading', { name: 'Thank you — monthly giving is set up' }),
+  ).toBeVisible();
+  await panel.getByRole('link', { name: 'See or cancel your monthly giving' }).click();
+  await expect(page).toHaveURL(/\/manage\/Q{43}$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Your monthly giving' })).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
+  await page.getByRole('button', { name: 'Cancel monthly giving' }).click();
+  await page.getByRole('button', { name: 'Yes, cancel it' }).click();
+  await expect(
+    page.getByText('Monthly giving is cancelled. No more donations will be taken.'),
+  ).toBeVisible();
+});
+
+test('manage page in Tamil; unknown link shows "not found"', async ({ page }) => {
+  await page.goto(`/ta/manage/${'Q'.repeat(43)}`);
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'உங்கள் மாதாந்திர நன்கொடை' }),
+  ).toBeVisible();
+  await expect(page.getByText('செயலில்')).toBeVisible();
+  await page.goto(`/manage/${'Z'.repeat(43)}`);
+  await expect(page.getByRole('heading', { name: 'Link not found' })).toBeVisible();
+});

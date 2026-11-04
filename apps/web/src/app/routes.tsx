@@ -19,6 +19,7 @@ import { HomePage } from '../routes/home/HomePage.tsx';
 import { NotFoundPage } from '../routes/not-found/NotFoundPage.tsx';
 import { PolicyPage } from '../routes/policy/PolicyPage.tsx';
 import { ReceiptPage } from '../receipt/ReceiptPage.tsx';
+import { ManagePage } from '../manage/ManagePage.tsx';
 
 /** Razorpay-required policy pages (ADR 0005), mirrored under /ta/. */
 const policyRoutes: RouteObject[] = [
@@ -29,6 +30,9 @@ const policyRoutes: RouteObject[] = [
 
 /** Private acknowledgement link (#29): random token, never indexed. */
 const receiptRoute: RouteObject = { path: 'receipt/:token', element: <ReceiptPage /> };
+
+/** Private manage link for monthly giving (#32): random token, never indexed. */
+const manageRoute: RouteObject = { path: 'manage/:token', element: <ManagePage /> };
 
 /**
  * Route table shared by the browser router and tests.
@@ -78,11 +82,13 @@ export const routes: RouteObject[] = [
           { index: true, element: <HomePage /> },
           ...policyRoutes,
           receiptRoute,
+          manageRoute,
           { path: '*', element: <NotFoundPage /> },
         ],
       },
       ...policyRoutes,
       receiptRoute,
+      manageRoute,
       { path: '*', element: <NotFoundPage /> },
     ],
   },

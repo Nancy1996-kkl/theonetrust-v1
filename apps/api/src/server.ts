@@ -11,6 +11,7 @@ async function main(): Promise<void> {
   const app = buildApp(env, db ? { db } : {});
   // Notification outbox (#30): sends queued emails outside any payment transaction.
   const provider = selectEmailProvider(env);
+  const keys = env.AUTH_SECRET_KEY ? deriveAuthKeys(env.AUTH_SECRET_KEY) : undefined;
   const stopWorker =
     db && provider
       ? startOutboxWorker(
@@ -19,9 +20,8 @@ async function main(): Promise<void> {
             provider,
             ownerEmail: env.OWNER_NOTIFICATION_EMAIL,
             siteUrl: env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173',
-            receiptKey: env.AUTH_SECRET_KEY
-              ? deriveAuthKeys(env.AUTH_SECRET_KEY).receipt
-              : undefined,
+            receiptKey: keys?.receipt,
+            manageKey: keys?.manage,
             now: () => new Date(),
           },
           env.EMAIL_WORKER_INTERVAL_MS,

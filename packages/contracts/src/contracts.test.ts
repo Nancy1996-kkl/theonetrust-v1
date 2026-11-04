@@ -113,3 +113,16 @@ describe('receipt contracts (#29)', () => {
     expect(RECEIPT_METHODS).toContain('bank_transfer');
   });
 });
+
+describe('monthly giving contracts (#32)', () => {
+  it('routes by amount and never starts on the 29th–31st (IST)', async () => {
+    const { methodRouteFor, methodsFor, monthlyStartDate } = await import('./index.ts');
+    expect(methodRouteFor(1_500_000)).toBe('upi_autopay');
+    expect(methodRouteFor(1_500_001)).toBe('emandate_card');
+    expect(methodsFor('emandate_card')).toEqual(['emandate', 'card']);
+    expect(methodsFor('upi_autopay')).toEqual(['upi', 'emandate', 'card']);
+    expect(monthlyStartDate(new Date('2026-11-28T18:29:59Z'))).toBeNull();
+    expect(monthlyStartDate(new Date('2026-11-28T18:30:00Z'))).toBe('2026-12-01');
+    expect(monthlyStartDate(new Date('2026-12-30T05:00:00Z'))).toBe('2027-01-01');
+  });
+});

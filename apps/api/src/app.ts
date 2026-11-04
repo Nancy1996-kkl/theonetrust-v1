@@ -24,6 +24,11 @@ import { paymentVerifyRoutes } from './modules/payments/verify-routes.ts';
 import { razorpayWebhookRoutes } from './modules/payments/webhook-routes.ts';
 import { razorpayProvider, type PaymentProvider } from './modules/donations/provider.ts';
 import { receiptRoutes } from './modules/receipts/routes.ts';
+import {
+  razorpaySubscriptions,
+  type SubscriptionProvider,
+} from './modules/subscriptions/provider.ts';
+import { subscriptionRoutes } from './modules/subscriptions/routes.ts';
 import { healthRoutes } from './routes/health.ts';
 import { deriveAuthKeys } from './security/crypto.ts';
 
@@ -64,6 +69,8 @@ export interface BuildAppOptions {
   now?: () => Date;
   /** Payment provider; defaults to Razorpay when its keys are configured. */
   paymentProvider?: PaymentProvider;
+  /** Razorpay Subscriptions (#32); defaults to Razorpay when keys are set and it is enabled. */
+  subscriptionProvider?: SubscriptionProvider;
 }
 
 export const TOTP_ISSUER = 'Theonetrust.in';
@@ -150,7 +157,33 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     (env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
       ? razorpayProvider({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
       : undefined);
+  // Monthly giving (#32): only when switched on [CONFIRM] and fully configured.
+  const subscriptionProvider =
+    options.subscriptionProvider ??
+    (env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
+      ? razorpaySubscriptions({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
+      : undefined);
+  const subscriptionKeyId = paymentProvider?.publicKeyId ?? env.RAZORPAY_KEY_ID;
+  const monthlyOffered = Boolean(
+    env.RAZORPAY_SUBSCRIPTIONS_ENABLED &&
+    options.db &&
+    keys &&
+    subscriptionProvider &&
+    subscriptionKeyId,
+  );
+  app.register(subscriptionRoutes, {
+    prefix: `${API_V1_PREFIX}/subscriptions`,
+    enabled: monthlyOffered,
+    perHour: env.DONATION_RATE_LIMIT_PER_HOUR,
+    now: options.now ?? (() => new Date()),
+    ...(options.db && { db: options.db }),
+    ...(subscriptionProvider && { provider: subscriptionProvider }),
+    ...(subscriptionKeyId && { keyId: subscriptionKeyId }),
+    ...(keys && { manageKey: keys.manage }),
+  });
+
   app.register(donationRoutes, {
+    monthlyOffered,
     prefix: `${API_V1_PREFIX}/donation-intents`,
     perHour: env.DONATION_RATE_LIMIT_PER_HOUR,
     now: options.now ?? (() => new Date()),
