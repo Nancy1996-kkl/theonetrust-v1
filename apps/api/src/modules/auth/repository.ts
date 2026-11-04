@@ -1,4 +1,5 @@
 import type { Db } from '../../db/client.ts';
+import { auditRow } from '../audit/audit.ts';
 
 export interface AuditEntry {
   actorId: string | null;
@@ -107,14 +108,14 @@ export function authRepository(db: Db) {
 
     audit(entry: AuditEntry) {
       return db.auditLog.create({
-        data: {
+        data: auditRow({
           actorId: entry.actorId,
           action: entry.action,
           entityType: 'admin_user',
           entityId: entry.actorId,
           changedFields: entry.changedFields ?? [],
           correlationId: entry.correlationId,
-        },
+        }),
       });
     },
   };

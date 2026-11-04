@@ -2,6 +2,8 @@ import type { RouteObject } from 'react-router';
 import { AdminHomePage } from '../admin/AdminHomePage.tsx';
 import { AdminLayout } from '../admin/AdminLayout.tsx';
 import { AdminLoginPage } from '../admin/AdminLoginPage.tsx';
+import { AdminNav } from '../admin/AdminNav.tsx';
+import { AuditLogPage } from '../admin/AuditLogPage.tsx';
 import { RequireAdmin } from '../admin/RequireAdmin.tsx';
 import { RootLayout } from './RootLayout.tsx';
 import { RouteErrorPage } from '../routes/error/RouteErrorPage.tsx';
@@ -29,7 +31,18 @@ export const routes: RouteObject[] = [
     errorElement: <RouteErrorPage />,
     children: [
       { path: 'login', element: <AdminLoginPage /> },
-      { element: <RequireAdmin />, children: [{ index: true, element: <AdminHomePage /> }] },
+      {
+        element: <RequireAdmin />,
+        children: [
+          {
+            element: <AdminNav />,
+            children: [
+              { index: true, element: <AdminHomePage /> },
+              { path: 'audit-log', element: <AuditLogPage /> },
+            ],
+          },
+        ],
+      },
     ],
   },
   {

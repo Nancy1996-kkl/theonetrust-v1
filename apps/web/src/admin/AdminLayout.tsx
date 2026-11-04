@@ -46,7 +46,12 @@ export function AdminLayout({ api: injected }: AdminLayoutProps) {
     let cancelled = false;
     api
       .session()
-      .then((s) => !cancelled && setSession(s))
+      .then((s) => {
+        if (cancelled) return;
+        setSession(s);
+        // The owner's saved dashboard language wins over this browser's preference.
+        if (s.user?.locale) setLang(s.user.locale);
+      })
       .catch(() => !cancelled && setSession({ stage: 'SIGNED_OUT' }));
     return () => {
       cancelled = true;
@@ -74,6 +79,10 @@ export function AdminLayout({ api: injected }: AdminLayoutProps) {
             onChange={(next) => {
               saveLangPreference(next, storage());
               setLang(next);
+              if (session?.stage === 'ACTIVE') {
+                // Saved to the account so it is the same on every device; failure is harmless.
+                api.updatePreferences(next).catch(() => undefined);
+              }
             }}
           />
         </header>

@@ -70,20 +70,61 @@
   list-style: none;
 }
 
-.admin-page__bar {
+.admin-page--wide {
+  max-width: none;
+}
+
+.admin-nav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3) var(--space-6);
-  margin-block-end: var(--space-6);
+  margin-block-end: var(--space-8);
+  padding-block-end: var(--space-4);
+  border-block-end: var(--border-width) solid var(--color-border-subtle);
 }
 
-.admin-page__bar h1 {
+.admin-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
   margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.admin-page__who {
+.admin-nav__list a {
+  display: inline-block;
+  padding-block: var(--space-2);
+  color: var(--color-text-heading);
+}
+
+.admin-nav__list a[aria-current='page'] {
+  font-weight: 700;
+  text-decoration-thickness: 0.15em;
+}
+
+.admin-nav__who {
   margin: 0;
   margin-inline-end: auto;
+  overflow-wrap: anywhere;
+}
+
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-4);
+  margin-block: var(--space-6);
+}
+
+.admin-filters > .ui-field {
+  flex: 1 1 12rem;
+}
+
+.admin-audit__code {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
   overflow-wrap: anywhere;
 }

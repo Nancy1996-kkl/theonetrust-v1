@@ -44,6 +44,33 @@ async function mockApi(page: Page, firstStage: 'MFA_SETUP' | 'MFA_VERIFY') {
   });
 }
 
+async function mockAdminApi(page: Page) {
+  await page.route('**/api/v1/admin/**', (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === '/api/v1/admin/audit-log') {
+      return route.fulfill({
+        json: {
+          items: Array.from({ length: 3 }, (_, i) => ({
+            id: `0000000${i}-0000-4000-8000-000000000000`,
+            createdAt: `2026-11-0${i + 1}T10:30:00.000Z`,
+            actorEmail: i === 2 ? null : 'owner@example.org',
+            action: ['auth.mfa.verified', 'admin.preferences.update', 'auth.login.unknown_account'][
+              i
+            ],
+            entityType: 'admin_user',
+            entityId: i === 2 ? null : '22222222-2222-4222-8222-222222222222',
+            reason: null,
+            changedFields: i === 1 ? ['locale'] : [],
+            correlationId: 'req',
+          })),
+          nextCursor: null,
+        },
+      });
+    }
+    return route.fulfill({ json: USER });
+  });
+}
+
 async function signIn(page: Page) {
   await page.getByLabel('Email').fill('owner@example.org');
   await page.getByLabel('Password').fill('river mango lamp seventeen');
@@ -95,4 +122,21 @@ test('Tamil sign-in page fits the viewport', async ({ page }) => {
   await page.getByRole('button', { name: 'தமிழ்' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'உரிமையாளர் உள்நுழைவு' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ta');
+});
+
+test('audit log: read-only table with filters, fits every viewport', async ({ page }) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await mockAdminApi(page);
+  await page.goto('/admin/login');
+  await signIn(page);
+  await page.getByLabel('6-digit code').fill('654321');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('link', { name: 'Audit log' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Audit log' })).toBeVisible();
+  const table = page.getByRole('table', { name: 'Audit entries, newest first' });
+  await expect(table).toContainText('Dashboard language changed');
+  await expect(table).toContainText('System / unknown');
+  await page.getByLabel('Type of event').selectOption('auth');
+  await page.getByRole('button', { name: 'Show' }).click();
+  await expect(table).toBeVisible();
 });
