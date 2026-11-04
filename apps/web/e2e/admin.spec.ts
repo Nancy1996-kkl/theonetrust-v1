@@ -10,6 +10,23 @@ const USER = { email: 'owner@example.org', role: 'OWNER', locale: 'en' };
 
 async function mockApi(page: Page, firstStage: 'MFA_SETUP' | 'MFA_VERIFY') {
   let stage = 'SIGNED_OUT';
+  // The dashboard home loads the overview (#31); an empty one unless a test mocks more.
+  await page.route('**/api/v1/admin/overview', (route) => {
+    const zero = { grossPaise: 0, refundedPaise: 0, netPaise: 0, count: 0 };
+    return route.fulfill({
+      json: {
+        today: zero,
+        month: zero,
+        lifetime: zero,
+        pending: { count: 0, amountPaise: 0 },
+        failed: { count: 0 },
+        refunds: { count: 0, amountPaise: 0 },
+        openExceptions: 0,
+        stalePending: 0,
+        manualReview: 0,
+      },
+    });
+  });
   await page.route('**/api/v1/auth/**', async (route) => {
     const path = new URL(route.request().url()).pathname.replace('/api/v1/auth', '');
     const reply = (body: unknown) => route.fulfill({ json: body });
@@ -130,6 +147,87 @@ async function mockAdminApi(page: Page) {
       });
     }
     if (path.endsWith('/retry')) return route.fulfill({ json: { id: 'n2', status: 'PENDING' } });
+    // Owner ledger (#31)
+    const zero = { grossPaise: 0, refundedPaise: 0, netPaise: 0, count: 0 };
+    const item = {
+      id: '33333333-3333-4333-8333-333333333333',
+      reference: 'TOT-D-ABCDEFGHJKMN',
+      createdAt: '2026-11-04T10:00:00Z',
+      paidAt: null,
+      amountPaise: 60_000,
+      refundedPaise: 0,
+      status: 'PENDING',
+      channel: 'CHECKOUT',
+      method: 'upi',
+      programme: null,
+      donorName: 'Synthetic Donor',
+      receipt: null,
+    };
+    if (path === '/api/v1/admin/overview') {
+      return route.fulfill({
+        json: {
+          today: { grossPaise: 200_000, refundedPaise: 50_000, netPaise: 150_000, count: 1 },
+          month: zero,
+          lifetime: zero,
+          pending: { count: 1, amountPaise: 60_000 },
+          failed: { count: 0 },
+          refunds: { count: 0, amountPaise: 0 },
+          openExceptions: 0,
+          stalePending: 1,
+          manualReview: 0,
+        },
+      });
+    }
+    if (path === '/api/v1/admin/donations') {
+      return route.fulfill({ json: { items: [item], page: 1, pageSize: 25, total: 1 } });
+    }
+    if (path === `/api/v1/admin/donations/${item.id}/recheck`) {
+      return route.fulfill({ json: { id: item.id, status: 'PAID', outcome: 'provider_captured' } });
+    }
+    if (path === `/api/v1/admin/donations/${item.id}`) {
+      return route.fulfill({
+        json: {
+          ...item,
+          giftPaise: 60_000,
+          feePaise: 0,
+          locale: 'en',
+          donorEmailMasked: 'd•••@example.org',
+          donorPhoneMasked: '••••••3210',
+          wantsReceipt: false,
+          hideNamePublicly: true,
+          attempts: [],
+          statusHistory: [],
+          webhooks: [],
+          bankTransfers: [],
+          receipts: [],
+          notifications: [],
+          exceptions: [],
+        },
+      });
+    }
+    if (path === '/api/v1/admin/exceptions') {
+      return route.fulfill({
+        json: {
+          staleAfterMinutes: 30,
+          items: [
+            {
+              key: `STALE_PENDING:${item.id}`,
+              kind: 'STALE_PENDING',
+              exceptionId: null,
+              donationId: item.id,
+              reference: item.reference,
+              amountPaise: 60_000,
+              providerPaymentId: null,
+              createdAt: '2026-11-04T08:00:00Z',
+              actions: ['recheck'],
+            },
+          ],
+        },
+      });
+    }
+    if (path === '/api/v1/admin/receipts') {
+      return route.fulfill({ json: { items: [], page: 1, pageSize: 25, total: 0 } });
+    }
     if (path === '/api/v1/admin/team') {
       return route.fulfill({
         json: {
@@ -301,4 +399,37 @@ test('email delivery: sent and failed emails, send a failed one again', async ({
   await expect(table).toContainText('http_503');
   await table.getByRole('button', { name: /Send again/ }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Queued again' })).toBeVisible();
+});
+
+test('owner ledger: overview → find a donation → re-check it with a reason; exceptions; receipts', async ({
+  page,
+}) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await mockAdminApi(page);
+  await page.goto('/admin/login');
+  await signIn(page);
+  await page.getByLabel('6-digit code').fill('654321');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('heading', { level: 2, name: 'Today' })).toBeVisible();
+  await expect(page.getByText('₹1,500', { exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Donations', exact: true }).click();
+  await page
+    .getByLabel('Receipt number, reference, Razorpay ID or bank reference')
+    .fill('TOT-D-ABCDEFGHJKMN');
+  await page.getByRole('button', { name: 'Show' }).click();
+  await expect(page).toHaveURL(/q=TOT-D-ABCDEFGHJKMN/);
+  await page.getByRole('link', { name: 'TOT-D-ABCDEFGHJKMN' }).click();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Donation TOT-D-ABCDEFGHJKMN' }),
+  ).toBeVisible();
+  await expect(page.getByText('d•••@example.org · ••••••3210')).toBeVisible();
+  await page.getByLabel('Reason (kept in the audit log)').fill('Donor says it was paid');
+  await page.getByRole('button', { name: 'Re-check with Razorpay' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Re-checked' })).toBeVisible();
+  await page.getByRole('link', { name: 'Exceptions', exact: true }).click();
+  await expect(
+    page.getByRole('table', { name: 'Open items, oldest problems first' }),
+  ).toContainText('Pending too long');
+  await page.getByRole('link', { name: 'Receipts', exact: true }).click();
+  await expect(page.getByText('No acknowledgements yet.')).toBeVisible();
 });

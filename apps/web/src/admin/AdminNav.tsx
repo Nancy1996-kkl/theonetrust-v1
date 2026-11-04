@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 import { Button } from '../components/ui/Button.tsx';
 import { useAdmin } from './admin-context.ts';
+import { LEDGER_STRINGS } from './ledger-strings.ts';
 
 /** Navigation for signed-in dashboard pages, with sign-out. */
 export function AdminNav() {
-  const { api, t, session, setSession } = useAdmin();
+  const { api, t, lang, session, setSession } = useAdmin();
+  const l = LEDGER_STRINGS[lang];
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
 
@@ -29,6 +31,15 @@ export function AdminNav() {
               <NavLink to="/admin" end>
                 {t.navOverview}
               </NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/donations">{l.navDonations}</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/exceptions">{l.navExceptions}</NavLink>
+            </li>
+            <li>
+              <NavLink to="/admin/receipts">{l.navReceipts}</NavLink>
             </li>
             <li>
               <NavLink to="/admin/help-requests">{t.navHelp}</NavLink>

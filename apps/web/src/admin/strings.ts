@@ -37,8 +37,6 @@ const en = {
   signOut: 'Sign out',
   signedInAs: 'Signed in as',
   overviewTitle: 'Overview',
-  overviewEmptyTitle: 'Nothing to show yet',
-  overviewEmpty: 'The dashboard modules (donations, receipts, help requests) are added next.',
   navLabel: 'Dashboard',
   navOverview: 'Overview',
   navAuditLog: 'Audit log',
@@ -231,9 +229,6 @@ const ta: AdminStrings = {
   signOut: 'வெளியேறு',
   signedInAs: 'உள்நுழைந்தவர்',
   overviewTitle: 'மேலோட்டம்',
-  overviewEmptyTitle: 'இன்னும் காட்ட எதுவும் இல்லை',
-  overviewEmpty:
-    'பலகைப் பகுதிகள் (நன்கொடைகள், ரசீதுகள், உதவிக் கோரிக்கைகள்) அடுத்து சேர்க்கப்படும்.',
   navLabel: 'பலகை',
   navOverview: 'மேலோட்டம்',
   navAuditLog: 'தணிக்கைப் பதிவு',

@@ -201,3 +201,84 @@
   padding: 0;
   list-style: none;
 }
+
+/* Owner ledger (#31) */
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-4);
+  margin-block: var(--space-6);
+}
+
+.admin-card {
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.admin-card h2 {
+  margin-block-start: 0;
+  font-size: var(--text-h3);
+}
+
+.admin-figures {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.admin-figures > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.admin-figures dd {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.admin-figures--grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  column-gap: var(--space-6);
+}
+
+.admin-muted {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.admin-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.admin-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-3) var(--space-4);
+  align-items: end;
+  margin-block: var(--space-4);
+}
+
+.admin-filters__actions,
+.admin-receipt-actions,
+.admin-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-pager {
+  justify-content: space-between;
+  margin-block: var(--space-4);
+}
+
+.admin-receipt-actions .ui-button {
+  text-decoration: none;
+}

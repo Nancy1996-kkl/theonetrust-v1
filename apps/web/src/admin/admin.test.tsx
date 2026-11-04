@@ -17,6 +17,19 @@ import { ADMIN_STRINGS } from './strings.ts';
 const USER = { email: 'owner@example.org', role: 'OWNER' as const, locale: 'en' as const };
 const ACTIVE: AdminSessionResponse = { stage: 'ACTIVE', user: USER, csrfToken: 't' };
 
+const ZERO = { grossPaise: 0, refundedPaise: 0, netPaise: 0, count: 0 };
+const OVERVIEW = {
+  today: ZERO,
+  month: ZERO,
+  lifetime: ZERO,
+  pending: { count: 0, amountPaise: 0 },
+  failed: { count: 0 },
+  refunds: { count: 0, amountPaise: 0 },
+  openExceptions: 0,
+  stalePending: 0,
+  manualReview: 0,
+};
+
 function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
   return {
     session: vi.fn(async () => ({ stage: 'SIGNED_OUT' }) as AdminSessionResponse),
@@ -49,6 +62,15 @@ function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
       sendingEnabled: true,
     })),
     retryNotification: vi.fn(),
+    overview: vi.fn(async () => OVERVIEW),
+    donations: vi.fn(async () => ({ items: [], page: 1, pageSize: 25, total: 0 })),
+    donation: vi.fn(async () => Promise.reject(new AdminApiError('NOT_FOUND'))),
+    recheckDonation: vi.fn(),
+    donationsExportUrl: vi.fn(() => '/api/v1/admin/donations/export.csv'),
+    exceptionQueue: vi.fn(async () => ({ items: [], staleAfterMinutes: 30 })),
+    receipts: vi.fn(async () => ({ items: [], page: 1, pageSize: 25, total: 0 })),
+    resendReceipt: vi.fn(),
+    receiptPdfUrl: vi.fn(() => '#'),
     ...overrides,
   };
 }

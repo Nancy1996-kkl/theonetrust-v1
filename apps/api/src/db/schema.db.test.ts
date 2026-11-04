@@ -35,6 +35,7 @@ describe('migration from an empty database', () => {
       'bank_transfer_records',
       'content_sections',
       'donation_intents',
+      'donation_status_events',
       'donation_subscriptions',
       'donor_identity_records',
       'help_request_notes',

@@ -228,6 +228,8 @@ model DonationIntent {
   feePaise            Int             @default(0) @map("fee_paise")
   currency            String          @default("INR") @db.Char(3)
   status              DonationStatus  @default(CREATED)
+  /// First time the donation reached PAID (verified). Null until then; never cleared.
+  paidAt              DateTime?       @map("paid_at") @db.Timestamptz(3)
   /// How the donor pays: Razorpay Checkout, or bank transfer confirmed by the owner (#25).
   channel             DonationChannel @default(CHECKOUT)
   /// Browser-supplied key so a double click or retry never creates a second order.
@@ -254,6 +256,8 @@ model DonationIntent {
   bankTransfers   BankTransferRecord[]
   bankClaims      BankTransferClaim[]
   exceptions      PaymentException[]
+  statusEvents    DonationStatusEvent[]
+  webhookEvents   WebhookEvent[]
 
   @@index([status, createdAt])
   @@index([programmeId, createdAt])
@@ -262,6 +266,22 @@ model DonationIntent {
 }
 
 /// One provider order/payment for an intent. Provider IDs are unique across the ledger.
+/// Every status change of a donation, written by the transition service (#31). Append-only.
+model DonationStatusEvent {
+  id               String         @id @default(uuid()) @db.Uuid
+  donationIntentId String         @map("donation_intent_id") @db.Uuid
+  fromStatus       DonationStatus @map("from_status")
+  toStatus         DonationStatus @map("to_status")
+  /// gateway_verified | owner_bank_evidence | gateway_status | owner_review | donor_report
+  source           String
+  createdAt        DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  donationIntent DonationIntent @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+
+  @@index([donationIntentId, createdAt])
+  @@map("donation_status_events")
+}
+
 model PaymentAttempt {
   id                  String          @id @default(uuid()) @db.Uuid
   donationIntentId    String          @map("donation_intent_id") @db.Uuid
@@ -298,8 +318,13 @@ model WebhookEvent {
   attempts         Int                     @default(0)
   receivedAt       DateTime                @default(now()) @map("received_at") @db.Timestamptz(3)
   processedAt      DateTime?               @map("processed_at") @db.Timestamptz(3)
+  /// The donation this event was applied to (#31 webhook history); null if none matched.
+  donationIntentId String?                 @map("donation_intent_id") @db.Uuid
+
+  donationIntent DonationIntent? @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
 
   @@unique([provider, providerEventId])
+  @@index([donationIntentId])
   @@index([processingStatus, receivedAt])
   @@map("webhook_events")
 }

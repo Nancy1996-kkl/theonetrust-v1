@@ -240,6 +240,10 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     prefix: `${API_V1_PREFIX}/admin`,
     guard: adminGuard(auth && { ctx: auth.ctx, service: auth.service }, production),
     emailSending: env.EMAIL_PROVIDER !== 'none',
+    paymentProvider,
+    ...(keys && { receiptKey: keys.receipt }),
+    staleAfterMinutes: env.ADMIN_STALE_PENDING_MINUTES,
+    now: options.now ?? (() => new Date()),
     ...(auth && options.db && { db: options.db }),
   });
 
