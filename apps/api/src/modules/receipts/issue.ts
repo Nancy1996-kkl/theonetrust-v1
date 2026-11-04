@@ -115,6 +115,19 @@ export async function shareTokenFor(db: Db, receipt: Receipt, key: Buffer): Prom
   return token;
 }
 
+/** A donation's current, valid acknowledgement (the newest in its chain), if any. */
+export async function currentReceipt(db: Db, intentId: string): Promise<Receipt | null> {
+  const originals = await db.receipt.findMany({
+    where: { donationIntentId: intentId, replacesId: null },
+    orderBy: { issuedAt: 'asc' },
+  });
+  for (const original of originals) {
+    const current = await latestInChain(db, original);
+    if (!current.voidedAt) return current;
+  }
+  return null;
+}
+
 /** The donor-facing link token for a PAID donation's current, valid acknowledgement. */
 export async function currentReceiptToken(
   db: Db,
@@ -122,13 +135,6 @@ export async function currentReceiptToken(
   key: Buffer | undefined,
 ): Promise<string | undefined> {
   if (!key) return undefined;
-  const originals = await db.receipt.findMany({
-    where: { donationIntentId: intentId, replacesId: null },
-    orderBy: { issuedAt: 'asc' },
-  });
-  for (const original of originals) {
-    const current = await latestInChain(db, original);
-    if (!current.voidedAt) return shareTokenFor(db, current, key);
-  }
-  return undefined;
+  const receipt = await currentReceipt(db, intentId);
+  return receipt ? shareTokenFor(db, receipt, key) : undefined;
 }

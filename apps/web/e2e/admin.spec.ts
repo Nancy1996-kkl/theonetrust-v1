@@ -95,6 +95,41 @@ async function mockAdminApi(page: Page) {
       });
     }
     if (path.endsWith('/confirm')) return route.fulfill({ json: { status: 'MATCHED' } });
+    if (path === '/api/v1/admin/notifications') {
+      return route.fulfill({
+        json: {
+          items: [
+            {
+              id: 'n1',
+              template: 'owner_donation_paid',
+              audience: 'owner',
+              status: 'SENT',
+              reference: 'TOT-D-ABCDEFGHJKMN',
+              attempts: 1,
+              lastError: null,
+              createdAt: '2026-11-04T10:00:00Z',
+              nextAttemptAt: null,
+              sentAt: '2026-11-04T10:00:30Z',
+            },
+            {
+              id: 'n2',
+              template: 'donor_donation_paid',
+              audience: 'donor',
+              status: 'FAILED',
+              reference: 'TOT-D-ABCDEFGHJKMN',
+              attempts: 6,
+              lastError: 'http_503',
+              createdAt: '2026-11-04T10:00:00Z',
+              nextAttemptAt: null,
+              sentAt: null,
+            },
+          ],
+          counts: { PENDING: 0, SENT: 1, FAILED: 1, CANCELLED: 0 },
+          sendingEnabled: true,
+        },
+      });
+    }
+    if (path.endsWith('/retry')) return route.fulfill({ json: { id: 'n2', status: 'PENDING' } });
     if (path === '/api/v1/admin/team') {
       return route.fulfill({
         json: {
@@ -250,4 +285,20 @@ test('bank transfers: confirm a credit with a reason and the retyped reference',
   await page.getByLabel('Type the donation reference again to confirm').fill('TOT-D-ABCDEFGHJKMN');
   await page.getByRole('button', { name: 'Confirm: mark donation paid' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
+});
+
+test('email delivery: sent and failed emails, send a failed one again', async ({ page }) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await mockAdminApi(page);
+  await page.goto('/admin/login');
+  await signIn(page);
+  await page.getByLabel('6-digit code').fill('654321');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('link', { name: 'Email delivery' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Email delivery' })).toBeVisible();
+  const table = page.getByRole('table', { name: 'Emails, newest first' });
+  await expect(table).toContainText('Donation verified');
+  await expect(table).toContainText('http_503');
+  await table.getByRole('button', { name: /Send again/ }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Queued again' })).toBeVisible();
 });

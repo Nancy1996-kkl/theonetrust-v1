@@ -43,6 +43,12 @@ function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
     confirmBankCredit: vi.fn(),
     rejectBankCredit: vi.fn(),
     resolveException: vi.fn(),
+    notifications: vi.fn(async () => ({
+      items: [],
+      counts: { PENDING: 0, SENT: 0, FAILED: 0, CANCELLED: 0 },
+      sendingEnabled: true,
+    })),
+    retryNotification: vi.fn(),
     ...overrides,
   };
 }

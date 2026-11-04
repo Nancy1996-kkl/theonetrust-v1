@@ -15,6 +15,8 @@ import {
   type HelpCaseUpdate,
   type MfaEnableResponse,
   type MfaSetupResponse,
+  type NotificationListResponse,
+  type NotificationStatusDto,
 } from '@theonetrust/contracts';
 import { apiUrl } from '../lib/api-url.ts';
 
@@ -132,6 +134,17 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
         'POST',
         `/admin/payment-exceptions/${encodeURIComponent(id)}/resolve`,
         { reason },
+      ),
+    notifications: (status?: NotificationStatusDto) =>
+      call<NotificationListResponse>(
+        'GET',
+        `/admin/notifications${status ? `?status=${encodeURIComponent(status)}` : ''}`,
+      ),
+    retryNotification: (id: string) =>
+      call<{ id: string; status: string }>(
+        'POST',
+        `/admin/notifications/${encodeURIComponent(id)}/retry`,
+        {},
       ),
     logout: async () => {
       await call<undefined>('POST', '/auth/logout');

@@ -7,6 +7,7 @@ import { AuditLogPage } from '../admin/AuditLogPage.tsx';
 import { BankTransfersPage } from '../admin/BankTransfersPage.tsx';
 import { HelpInboxPage } from '../admin/HelpInboxPage.tsx';
 import { HelpRequestPage } from '../admin/HelpRequestPage.tsx';
+import { NotificationsPage } from '../admin/NotificationsPage.tsx';
 import { RequireAdmin } from '../admin/RequireAdmin.tsx';
 import { RootLayout } from './RootLayout.tsx';
 import { RouteErrorPage } from '../routes/error/RouteErrorPage.tsx';
@@ -48,6 +49,7 @@ export const routes: RouteObject[] = [
               { path: 'help-requests', element: <HelpInboxPage /> },
               { path: 'help-requests/:id', element: <HelpRequestPage /> },
               { path: 'bank-transfers', element: <BankTransfersPage /> },
+              { path: 'notifications', element: <NotificationsPage /> },
               { path: 'audit-log', element: <AuditLogPage /> },
             ],
           },

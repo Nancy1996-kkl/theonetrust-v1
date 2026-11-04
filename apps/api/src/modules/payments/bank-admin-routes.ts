@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Db } from '../../db/client.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
+import { enqueueDonationPaid } from '../notifications/outbox.ts';
 import { issueReceiptIfEligible } from '../receipts/issue.ts';
 import { transitionDonation } from './transitions.ts';
 
@@ -201,13 +202,14 @@ export async function bankAdminRoutes(app: FastifyInstance, opts: { db: Db }) {
         });
         if (updated.count !== 1) throw new AppError('CONFLICT');
         await transitionDonation(tx, intent.id, 'PAID', 'owner_bank_evidence');
-        await issueReceiptIfEligible(
+        const receipt = await issueReceiptIfEligible(
           tx,
           intent.id,
           { bankTransferRecordId: id },
           credit.amountPaise,
           new Date(),
         );
+        await enqueueDonationPaid(tx, intent.id, receipt !== null);
       },
     );
     return {
