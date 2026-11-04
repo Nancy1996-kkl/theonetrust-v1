@@ -11,6 +11,8 @@
 @import './landing.css';
 @import './proof.css';
 @import './admin.css';
+@import './policy.css';
+@import './help.css';
 
 *,
 *::before,
