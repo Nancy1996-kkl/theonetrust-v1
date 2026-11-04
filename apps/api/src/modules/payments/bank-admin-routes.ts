@@ -4,6 +4,7 @@ import type { Db } from '../../db/client.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { enqueueDonationPaid } from '../notifications/outbox.ts';
+import { ensureTaxTracking } from '../tax/tracking.ts';
 import { issueReceiptIfEligible } from '../receipts/issue.ts';
 import { transitionDonation } from './transitions.ts';
 
@@ -210,6 +211,7 @@ export async function bankAdminRoutes(app: FastifyInstance, opts: { db: Db }) {
           new Date(),
         );
         await enqueueDonationPaid(tx, intent.id, receipt !== null);
+        await ensureTaxTracking(tx, intent.id, new Date());
       },
     );
     return {

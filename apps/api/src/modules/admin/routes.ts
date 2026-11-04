@@ -15,6 +15,7 @@ import type { PaymentProvider } from '../donations/provider.ts';
 import { ledgerAdminRoutes } from '../ledger/admin-routes.ts';
 import { subscriptionAdminRoutes } from '../subscriptions/admin-routes.ts';
 import { taxAdminRoutes } from '../tax/admin-routes.ts';
+import { taxFilingRoutes } from '../tax/filing-routes.ts';
 import { notificationAdminRoutes } from '../notifications/admin-routes.ts';
 import { bankAdminRoutes } from '../payments/bank-admin-routes.ts';
 import type { AdminGuard } from './guard.ts';
@@ -47,6 +48,8 @@ export interface AdminRouteOptions {
   /** For the owner's audited "re-check with Razorpay" (#31). */
   paymentProvider?: PaymentProvider | undefined;
   receiptKey?: Buffer | undefined;
+  /** AES key for PAN/address — used only by the audited Form 113 export (#35). */
+  encryptionKey?: Buffer | undefined;
   staleAfterMinutes?: number;
   now?: () => Date;
 }
@@ -142,6 +145,11 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
     await notificationAdminRoutes(app, { db: opts.db, sendingEnabled: opts.emailSending ?? false });
     await subscriptionAdminRoutes(app, { db: opts.db });
     await taxAdminRoutes(app, { db: opts.db, now: opts.now ?? (() => new Date()) });
+    await taxFilingRoutes(app, {
+      db: opts.db,
+      encryptionKey: opts.encryptionKey,
+      now: opts.now ?? (() => new Date()),
+    });
     await ledgerAdminRoutes(app, {
       db: opts.db,
       provider: opts.paymentProvider,

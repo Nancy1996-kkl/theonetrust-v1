@@ -75,6 +75,11 @@ function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
     subscription: vi.fn(),
     taxSettings: vi.fn(),
     updateTaxSettings: vi.fn(),
+    taxSummary: vi.fn(),
+    taxTracking: vi.fn(),
+    form113Url: vi.fn(() => '#'),
+    updateTaxStatus: vi.fn(),
+    markForm113Filed: vi.fn(),
     ...overrides,
   };
 }

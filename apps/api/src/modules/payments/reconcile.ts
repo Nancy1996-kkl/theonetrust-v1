@@ -2,6 +2,7 @@ import type { DonationStatus } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
 import type { ProviderPayment } from '../donations/provider.ts';
 import { enqueueDonationPaid } from '../notifications/outbox.ts';
+import { ensureTaxTracking } from '../tax/tracking.ts';
 import { adjustReceiptForRefund, issueReceiptIfEligible } from '../receipts/issue.ts';
 import { canTransition, transitionDonation } from './transitions.ts';
 
@@ -94,6 +95,8 @@ export async function applyProviderPayment(
       );
       // Emails are queued here and sent later: a send failure can never undo PAID (#30).
       await enqueueDonationPaid(tx, intent.id, receipt !== null);
+      // Tax opt-in donations need Form 113 reporting (#35).
+      await ensureTaxTracking(tx, intent.id, now);
     }
     return target;
   });
