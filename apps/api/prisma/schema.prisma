@@ -626,6 +626,9 @@ model TransparencyDocument {
   status       PublicationStatus @default(DRAFT)
   approvedById String?           @map("approved_by_id") @db.Uuid
   approvedAt   DateTime?         @map("approved_at") @db.Timestamptz(3)
+  /// SHA-256 of the stored file, recorded at upload (#36).
+  sha256       String?           @db.Char(64)
+  uploadedById String?           @map("uploaded_by_id") @db.Uuid
   uploadedAt   DateTime          @default(now()) @map("uploaded_at") @db.Timestamptz(3)
 
   @@index([status, locale])
@@ -655,6 +658,8 @@ model TrustSettings {
   bankIfsc           String?   @map("bank_ifsc") @db.Char(11)
   bankName           String?   @map("bank_name")
   foreignDonations   Boolean   @default(false) @map("foreign_donations")
+  /// Owner notifications (#36). Null = the server's OWNER_NOTIFICATION_EMAIL, if any.
+  ownerEmail         String?   @map("owner_email")
   updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   @@map("trust_settings")

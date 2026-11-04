@@ -1,6 +1,7 @@
 import type { ReceiptMethod } from '@theonetrust/contracts';
 import { RECEIPT_METHODS } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
+import { ownerEmailFor } from '../../db/repositories/trust-settings.ts';
 import type { NotificationOutbox } from '../../generated/prisma/client.ts';
 import { currentReceipt, shareTokenFor } from '../receipts/issue.ts';
 import { verifyUrl } from '../receipts/routes.ts';
@@ -103,14 +104,15 @@ async function donationContext(
 export async function buildEmail(deps: WorkerDeps, row: NotificationOutbox): Promise<Built> {
   const [kind, id = ''] = row.entityRef.split(':');
   if (row.template === 'owner_help_request_new' && kind === 'help_request') {
-    if (!deps.ownerEmail) return { cancel: 'no_owner_email' };
+    const ownerEmail = await ownerEmailFor(deps.db, deps.ownerEmail);
+    if (!ownerEmail) return { cancel: 'no_owner_email' };
     const help = await deps.db.helpRequest.findUnique({
       where: { id },
       select: { id: true, reference: true, kind: true },
     });
     if (!help) return { cancel: 'entity_missing' };
     return {
-      to: deps.ownerEmail,
+      to: ownerEmail,
       email: renderOwnerHelpRequest({
         reference: help.reference,
         kind: help.kind,
@@ -122,12 +124,15 @@ export async function buildEmail(deps: WorkerDeps, row: NotificationOutbox): Pro
     kind === 'donation_intent' &&
     (row.template === 'owner_donation_paid' || row.template === 'donor_donation_paid')
   ) {
-    if (row.template === 'owner_donation_paid' && !deps.ownerEmail)
-      return { cancel: 'no_owner_email' };
+    const ownerEmail =
+      row.template === 'owner_donation_paid'
+        ? await ownerEmailFor(deps.db, deps.ownerEmail)
+        : undefined;
+    if (row.template === 'owner_donation_paid' && !ownerEmail) return { cancel: 'no_owner_email' };
     const found = await donationContext(deps, id);
     if (!found) return { cancel: 'entity_missing' };
     if (row.template === 'owner_donation_paid') {
-      return { to: deps.ownerEmail ?? '', email: renderOwnerDonationPaid(found.ctx) };
+      return { to: ownerEmail ?? '', email: renderOwnerDonationPaid(found.ctx) };
     }
     if (!found.email || !EMAIL.test(found.email)) return { cancel: 'no_donor_email' };
     // A refund before sending: do not thank the donor for money that went back.

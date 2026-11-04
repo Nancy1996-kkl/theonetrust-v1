@@ -40,11 +40,12 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
 | `/admin/help-requests` | — | Help request inbox: New → Contacted → Verifying → Helping → Closed | Trust owner | Owner session | No index | #22 | Built |
 | `/admin/help-requests/:id` | — | One help request with private notes and status history | Trust owner | Owner session | No index | #22 | Built |
 | `/admin/monthly-giving` | — | Monthly giving subscriptions and their charge history | Trust owner | Owner session | No index | #33 | Built |
-| `/admin/programmes` | — | Ways we help: create, edit, pause (bilingual) | Trust owner | Owner session | No index | #36 | Planned |
-| `/admin/content` | — | Site sections, FAQ, impact metrics, stories (draft → preview → publish) | Trust owner | Owner session | No index | #36 | Planned |
-| `/admin/transparency` | — | Transparency documents upload and publishing | Trust owner | Owner session | No index | #36 | Planned |
+| `/admin/programmes` | — | Ways we help: create, edit, pause (bilingual) | Trust owner | Owner session | No index | #36 | Built |
+| `/admin/content` | — | Site sections, FAQ and stories (draft → preview → publish, both languages) | Trust owner | Owner session | No index | #36 | Built |
+| `/admin/metrics` | — | Impact figures: source, period and date required before publishing | Trust owner | Owner session | No index | #36 | Built |
+| `/admin/transparency` | — | Transparency documents upload and publishing | Trust owner | Owner session | No index | #36 | Built |
 | `/admin/tax` | — | Tax & compliance: approval details, Form 113 export, 31 May reminder | Trust owner | Owner session | No index | #34, #35 | Built (tax profile; Form 113 in #35) |
-| `/admin/settings` | — | Trust profile, receipt threshold, owner email, fee table, payment config status | Trust owner | Owner session | No index | #36 | Planned |
+| `/admin/settings` | — | Trust profile, receipt threshold, owner email, fee table, payment config status | Trust owner | Owner session | No index | #36 | Built |
 | `/admin/audit-log` | — | Append-only audit log | Trust owner | Owner session | No index | #20 | Built |
 | `*` | `/ta/*` | Not found page with a link home | Everyone | Public | No index | #2 | Built |
 <!-- prettier-ignore-end -->

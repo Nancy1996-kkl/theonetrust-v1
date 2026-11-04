@@ -126,3 +126,10 @@ describe('monthly giving contracts (#32)', () => {
     expect(monthlyStartDate(new Date('2026-12-30T05:00:00Z'))).toBe('2027-01-01');
   });
 });
+
+describe('content management contracts (#36)', () => {
+  it('allows only documents, never executables', async () => {
+    const { DOCUMENT_FILE_TYPES } = await import('./index.ts');
+    expect(DOCUMENT_FILE_TYPES).toEqual(['application/pdf', 'image/png', 'image/jpeg']);
+  });
+});
