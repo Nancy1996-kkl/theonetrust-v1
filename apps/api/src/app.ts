@@ -16,6 +16,8 @@ import type { AuthHttpContext } from './modules/auth/http.ts';
 import { authRepository } from './modules/auth/repository.ts';
 import { authRoutes, unavailableAuthRoutes } from './modules/auth/routes.ts';
 import { authService } from './modules/auth/service.ts';
+import { publicContentRepository } from './modules/public-content/repository.ts';
+import { publicContentRoutes } from './modules/public-content/routes.ts';
 import { healthRoutes } from './routes/health.ts';
 import { deriveAuthKeys } from './security/crypto.ts';
 
@@ -130,6 +132,14 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   });
 
   app.register(healthRoutes, { prefix: API_V1_PREFIX, version: APP_VERSION });
+
+  // Public content for the landing page (#21): published records only.
+  app.register(publicContentRoutes, {
+    prefix: `${API_V1_PREFIX}/public`,
+    cacheSeconds: env.PUBLIC_CACHE_SECONDS,
+    ...(options.db && { repo: publicContentRepository(options.db) }),
+    ...(env.PUBLIC_DOCUMENTS_BASE_URL && { documentsBaseUrl: env.PUBLIC_DOCUMENTS_BASE_URL }),
+  });
 
   // Owner sign-in (#19). Needs both a database and AUTH_SECRET_KEY; otherwise it is closed (503).
   app.register(cookie);

@@ -25,6 +25,7 @@ export default defineConfig({
         'src/modules/auth/service.ts',
         'src/modules/admin/**',
         'src/modules/audit/query.ts',
+        'src/modules/public-content/repository.ts',
         'src/cli/owner-account.ts',
         'src/test/db-global-setup.ts',
         'src/test/db.ts',

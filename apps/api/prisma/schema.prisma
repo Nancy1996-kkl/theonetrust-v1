@@ -421,15 +421,22 @@ model ContentSection {
   @@map("content_sections")
 }
 
-/// Published only with a source/evidence link and owner approval — never invented.
+/// Published only with a source, a period and an "as of" date, plus owner approval — never invented.
 model ImpactMetric {
   id           String            @id @default(uuid()) @db.Uuid
   labelTa      String            @map("label_ta")
   labelEn      String            @map("label_en")
   value        BigInt
   valueFormat  String            @default("count") @map("value_format")
+  /// Where the figure comes from, e.g. "Trust accounts 2025-26 (audited)".
+  sourceTa     String?           @map("source_ta")
+  sourceEn     String?           @map("source_en")
+  /// The period it covers, e.g. "April 2025 – March 2026".
+  periodTa     String?           @map("period_ta")
+  periodEn     String?           @map("period_en")
+  /// The date the figure is correct as of.
+  asOf         DateTime?         @map("as_of") @db.Date
   evidenceUrl  String?           @map("evidence_url")
-  periodLabel  String?           @map("period_label")
   status       PublicationStatus @default(DRAFT)
   approvedById String?           @map("approved_by_id") @db.Uuid
   approvedAt   DateTime?         @map("approved_at") @db.Timestamptz(3)

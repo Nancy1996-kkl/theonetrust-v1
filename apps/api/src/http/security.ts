@@ -21,7 +21,10 @@ export const HSTS_HEADER = 'max-age=63072000; includeSubDomains';
 
 export function registerSecurityHeaders(app: FastifyInstance, production: boolean): void {
   app.addHook('onSend', async (_request, reply) => {
+    // Routes may opt into caching (public content); everything else is never cached.
+    const cacheControl = reply.getHeader('cache-control');
     reply.headers(SECURITY_HEADERS);
+    if (cacheControl !== undefined) reply.header('cache-control', cacheControl);
     if (production) reply.header('strict-transport-security', HSTS_HEADER);
   });
 }

@@ -59,6 +59,16 @@ const EnvSchema = z
     /** Wrong passwords or codes in a row before the account is locked. */
     LOGIN_MAX_FAILURES: z.coerce.number().int().min(3).max(20).default(5),
     LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+    /** Browser/CDN cache lifetime for public content responses. */
+    PUBLIC_CACHE_SECONDS: z.coerce.number().int().min(0).max(86_400).default(300),
+    /**
+     * Public base URL of approved transparency files (storage arrives with #36). Without it the
+     * documents endpoint returns an empty list — never a link that does not work.
+     */
+    PUBLIC_DOCUMENTS_BASE_URL: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.url({ protocol: /^https?$/ }).optional(),
+    ),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV !== 'production') return;

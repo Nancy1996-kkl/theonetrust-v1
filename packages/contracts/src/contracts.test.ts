@@ -93,3 +93,11 @@ describe('admin session stages', () => {
     expect(CSRF_HEADER).toBe(CSRF_HEADER.toLowerCase());
   });
 });
+
+describe('site text keys', () => {
+  it('are unique section.slot names', async () => {
+    const { SITE_TEXT_KEYS } = await import('./index.ts');
+    expect(new Set(SITE_TEXT_KEYS).size).toBe(SITE_TEXT_KEYS.length);
+    for (const key of SITE_TEXT_KEYS) expect(key).toMatch(/^[a-z_]+\.[a-z_]+$/);
+  });
+});
