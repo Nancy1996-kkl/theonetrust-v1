@@ -73,9 +73,9 @@ export function HeroSection({ content, facts, showDrafts }: SectionProps) {
             <a className="ui-button ui-button--donate" href={`${home}#donate`}>
               {hero.donateCta[lang]}
             </a>
-            <a className="ui-button ui-button--secondary" href={`${home}#get-help`}>
+            <Link className="ui-button ui-button--secondary" to={`${home}#get-help`}>
               {hero.getHelpCta[lang]}
-            </a>
+            </Link>
           </div>
           <GatedText
             item={visible(hero.paymentNote, showDrafts)}

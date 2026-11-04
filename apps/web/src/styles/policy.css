@@ -1,0 +1,38 @@
+/* Policy pages and the policy notice under forms (issue #14). Tokens only. */
+.policy h2 {
+  margin-block-start: var(--space-8);
+  font-size: var(--text-h3);
+}
+
+.policy__intro {
+  font-size: var(--text-body);
+  color: var(--color-text-muted);
+}
+
+.policy__notice {
+  margin-block: var(--space-4);
+}
+
+.policy__others {
+  margin-block-start: var(--space-10);
+  padding-block-start: var(--space-4);
+  border-block-start: var(--border-width) solid var(--color-border-subtle);
+}
+
+.policy__others a,
+.policy li a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+}
+
+.policy-notice {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.policy-notice a {
+  display: inline-block;
+  padding-block: var(--space-2);
+}
