@@ -3,6 +3,14 @@ import { RootLayout } from './RootLayout.tsx';
 import { RouteErrorPage } from '../routes/error/RouteErrorPage.tsx';
 import { HomePage } from '../routes/home/HomePage.tsx';
 import { NotFoundPage } from '../routes/not-found/NotFoundPage.tsx';
+import { PolicyPage } from '../routes/policy/PolicyPage.tsx';
+
+/** Razorpay-required policy pages (ADR 0005), mirrored under /ta/. */
+const policyRoutes: RouteObject[] = [
+  { path: 'terms', element: <PolicyPage id="terms" /> },
+  { path: 'privacy', element: <PolicyPage id="privacy" /> },
+  { path: 'refund-policy', element: <PolicyPage id="refund" /> },
+];
 
 /**
  * Route table shared by the browser router and tests.
@@ -21,9 +29,11 @@ export const routes: RouteObject[] = [
         path: 'ta',
         children: [
           { index: true, element: <HomePage /> },
+          ...policyRoutes,
           { path: '*', element: <NotFoundPage /> },
         ],
       },
+      ...policyRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],
   },
