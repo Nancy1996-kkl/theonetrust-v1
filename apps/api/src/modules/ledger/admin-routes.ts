@@ -299,6 +299,7 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
         include: {
           donationIntent: { select: { id: true, publicReference: true, amountPaise: true } },
           bankTransferRecord: { select: { amountPaise: true } },
+          subscription: { select: { publicReference: true, amountPaise: true } },
         },
       }),
       db.donationIntent.findMany({
@@ -343,8 +344,12 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
         kind: x.kind,
         exceptionId: x.id,
         donationId: x.donationIntent?.id ?? null,
-        reference: x.donationIntent?.publicReference ?? null,
-        amountPaise: x.donationIntent?.amountPaise ?? x.bankTransferRecord?.amountPaise ?? null,
+        reference: x.donationIntent?.publicReference ?? x.subscription?.publicReference ?? null,
+        amountPaise:
+          x.donationIntent?.amountPaise ??
+          x.bankTransferRecord?.amountPaise ??
+          x.subscription?.amountPaise ??
+          null,
         providerPaymentId: x.providerPaymentId,
         createdAt: x.createdAt.toISOString(),
         actions: ['resolve'] as Array<'recheck' | 'resolve'>,

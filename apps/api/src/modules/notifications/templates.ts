@@ -10,7 +10,8 @@ export type TemplateId =
   | 'owner_donation_paid'
   | 'donor_donation_paid'
   | 'owner_help_request_new'
-  | 'donor_subscription_started';
+  | 'donor_subscription_started'
+  | 'donor_subscription_problem';
 export type Lang = 'en' | 'ta';
 
 export interface RenderedEmail {
@@ -89,6 +90,13 @@ export const EMAIL_STRINGS = {
     monthlyUpi: 'If you used UPI AutoPay, you can also pause or cancel it in your UPI app.',
     monthlyKeep: 'Keep this link private — anyone with it can cancel your monthly giving.',
     monthlyWhy: 'You are receiving this because you set up monthly giving.',
+    problemSubject: 'Your monthly donation to {trust} could not be taken',
+    problemRetry:
+      'We could not take your monthly donation of {amount} this time. Your bank or UPI app may try again in the next few days — you do not need to do anything if your account has enough balance.',
+    problemHalted:
+      'Your monthly donation of {amount} is on hold: the last tries did not go through. Please check your UPI app or bank, or set up monthly giving again on our website.',
+    problemNote:
+      'No money was taken for the failed tries. To change the amount, cancel and set up a new monthly gift.',
     helpSubject: 'New help request {reference}',
     helpLead: 'A new help request arrived. Details are in the dashboard only.',
     helpReference: 'Request reference',
@@ -130,6 +138,13 @@ export const EMAIL_STRINGS = {
     monthlyKeep:
       'இந்த இணைப்பைத் தனிப்பட்டதாக வைத்திருங்கள் — இது உள்ள எவரும் உங்கள் மாதாந்திர நன்கொடையை ரத்து செய்ய முடியும்.',
     monthlyWhy: 'மாதாந்திர நன்கொடை அமைத்ததால் இதைப் பெறுகிறீர்கள்.',
+    problemSubject: '{trust}-க்கான உங்கள் மாதாந்திர நன்கொடையை எடுக்க முடியவில்லை',
+    problemRetry:
+      'இந்த முறை உங்கள் {amount} மாதாந்திர நன்கொடையை எடுக்க முடியவில்லை. உங்கள் வங்கி அல்லது UPI செயலி அடுத்த சில நாட்களில் மீண்டும் முயலலாம் — கணக்கில் போதுமான இருப்பு இருந்தால் நீங்கள் எதுவும் செய்ய வேண்டியதில்லை.',
+    problemHalted:
+      'உங்கள் {amount} மாதாந்திர நன்கொடை நிறுத்தி வைக்கப்பட்டுள்ளது: கடைசி முயற்சிகள் நிறைவேறவில்லை. உங்கள் UPI செயலி அல்லது வங்கியைச் சரிபார்க்கவும், அல்லது எங்கள் இணையதளத்தில் மாதாந்திர நன்கொடையை மீண்டும் அமைக்கவும்.',
+    problemNote:
+      'தோல்வியடைந்த முயற்சிகளுக்குப் பணம் எடுக்கப்படவில்லை. தொகையை மாற்ற, ரத்து செய்து புதிய மாதாந்திர நன்கொடையை அமைக்கவும்.',
     helpSubject: 'புதிய உதவிக் கோரிக்கை {reference}',
     helpLead: 'புதிய உதவிக் கோரிக்கை வந்துள்ளது. விவரங்கள் நிர்வாகப் பக்கத்தில் மட்டும்.',
     helpReference: 'கோரிக்கை குறிப்பு எண்',
@@ -310,6 +325,38 @@ export function renderDonorSubscriptionStarted(
     html: wrapHtml(
       lang,
       lines.map((line) => `<p>${escapeHtml(line).replace('{url}', link)}</p>`).join('\n'),
+    ),
+  };
+}
+
+export function renderDonorSubscriptionProblem(
+  ctx: {
+    donorName: string;
+    amountPaise: number;
+    halted: boolean;
+    manageUrl: string | null;
+    trustName: string;
+  },
+  lang: Lang,
+): RenderedEmail {
+  const t = EMAIL_STRINGS[lang];
+  const amount = money(ctx.amountPaise, lang);
+  const lines = [
+    fill(t.donorGreeting, { name: ctx.donorName }),
+    fill(ctx.halted ? t.problemHalted : t.problemRetry, { amount }),
+    t.problemNote,
+    ...(ctx.manageUrl ? [fill(t.monthlyManage, { url: '{url}' })] : []),
+    t.monthlyWhy,
+  ];
+  const link = ctx.manageUrl
+    ? `<a href="${escapeHtml(ctx.manageUrl)}">${escapeHtml(ctx.manageUrl)}</a>`
+    : '';
+  return {
+    subject: fill(t.problemSubject, { trust: ctx.trustName }),
+    text: lines.map((l) => l.replace('{url}', ctx.manageUrl ?? '')).join('\n\n'),
+    html: wrapHtml(
+      lang,
+      lines.map((l) => `<p>${escapeHtml(l).replace('{url}', link)}</p>`).join('\n'),
     ),
   };
 }

@@ -13,6 +13,29 @@ const en = {
   navDonations: 'Donations',
   navExceptions: 'Exceptions',
   navReceipts: 'Receipts',
+  navMonthly: 'Monthly giving',
+  monthlyTitle: 'Monthly giving',
+  monthlyIntro:
+    'Each monthly gift with its status as Razorpay last reported it — including pauses or cancels the donor made in their UPI app. Each charge is its own donation with its own acknowledgement.',
+  monthlyCaption: 'Monthly gifts, newest first',
+  colCharges: 'Charges (paid / all)',
+  colLastCharge: 'Last paid charge',
+  colOpen: 'Open problems',
+  showDetail: 'Show history',
+  monthlyHistory: 'History of {reference}',
+  monthlyCharges: 'Charges',
+  monthlyEmpty: 'No monthly gifts yet.',
+  routeUpi: 'UPI AutoPay / eMandate / card',
+  routeMandate: 'eMandate / card',
+  subStatuses: {
+    CREATED: 'Waiting for approval',
+    AUTHENTICATED: 'Approved',
+    ACTIVE: 'Active',
+    PAUSED: 'Paused',
+    HALTED: 'Halted (charges failed)',
+    CANCELLED: 'Cancelled',
+    COMPLETED: 'Ended',
+  },
   // Overview
   overviewIntro:
     'Only verified payments count. Refunds are shown separately from the gross amount.',
@@ -173,6 +196,8 @@ const en = {
     UNMATCHED_CREDIT: 'Credit matches no donation',
     AMOUNT_MISMATCH: 'Amount differs from the donation',
     ALREADY_PAID: 'Donation was already paid',
+    SUBSCRIPTION_CHARGE_FAILED: 'Monthly charge failed (Razorpay is retrying)',
+    SUBSCRIPTION_HALTED: 'Monthly giving halted (retries used up)',
   } satisfies Record<ExceptionQueueKind, string>,
 };
 
@@ -182,6 +207,29 @@ const ta: LedgerStrings = {
   navDonations: 'நன்கொடைகள்',
   navExceptions: 'விதிவிலக்குகள்',
   navReceipts: 'ஒப்புகைகள்',
+  navMonthly: 'மாதாந்திர நன்கொடை',
+  monthlyTitle: 'மாதாந்திர நன்கொடை',
+  monthlyIntro:
+    'ஒவ்வொரு மாதாந்திர நன்கொடையும், Razorpay கடைசியாகத் தெரிவித்த நிலையுடன் — நன்கொடையாளர் UPI செயலியில் செய்த இடைநிறுத்தம் அல்லது ரத்து உட்பட. ஒவ்வொரு பிடித்தமும் தனி நன்கொடை, தனி ஒப்புகையுடன்.',
+  monthlyCaption: 'மாதாந்திர நன்கொடைகள், புதியவை முதலில்',
+  colCharges: 'பிடித்தங்கள் (செலுத்தியவை / மொத்தம்)',
+  colLastCharge: 'கடைசியாகச் செலுத்திய பிடித்தம்',
+  colOpen: 'திறந்த சிக்கல்கள்',
+  showDetail: 'வரலாற்றைக் காட்டு',
+  monthlyHistory: '{reference} வரலாறு',
+  monthlyCharges: 'பிடித்தங்கள்',
+  monthlyEmpty: 'இன்னும் மாதாந்திர நன்கொடைகள் இல்லை.',
+  routeUpi: 'UPI AutoPay / eMandate / கார்டு',
+  routeMandate: 'eMandate / கார்டு',
+  subStatuses: {
+    CREATED: 'அனுமதிக்காகக் காத்திருக்கிறது',
+    AUTHENTICATED: 'அனுமதிக்கப்பட்டது',
+    ACTIVE: 'செயலில்',
+    PAUSED: 'இடைநிறுத்தப்பட்டது',
+    HALTED: 'நிறுத்தப்பட்டது (பிடித்தங்கள் தோல்வி)',
+    CANCELLED: 'ரத்து செய்யப்பட்டது',
+    COMPLETED: 'முடிந்தது',
+  },
   overviewIntro:
     'சரிபார்க்கப்பட்ட கட்டணங்கள் மட்டுமே கணக்கில் சேரும். திருப்பி அளித்தவை மொத்தத் தொகையிலிருந்து தனியாகக் காட்டப்படும்.',
   periodToday: 'இன்று',
@@ -337,6 +385,8 @@ const ta: LedgerStrings = {
     UNMATCHED_CREDIT: 'எந்த நன்கொடையுடனும் பொருந்தாத வரவு',
     AMOUNT_MISMATCH: 'தொகை நன்கொடையிலிருந்து வேறுபடுகிறது',
     ALREADY_PAID: 'நன்கொடை ஏற்கெனவே செலுத்தப்பட்டது',
+    SUBSCRIPTION_CHARGE_FAILED: 'மாதாந்திரப் பிடித்தம் தோல்வி (Razorpay மீண்டும் முயல்கிறது)',
+    SUBSCRIPTION_HALTED: 'மாதாந்திர நன்கொடை நிறுத்தப்பட்டது (முயற்சிகள் முடிந்தன)',
   },
 };
 

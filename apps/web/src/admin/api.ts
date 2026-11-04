@@ -17,6 +17,8 @@ import {
   type MfaSetupResponse,
   type AdminOverview,
   type AdminReceiptList,
+  type AdminSubscriptionDetail,
+  type AdminSubscriptionList,
   type DonationDetail,
   type ExceptionQueue,
   type LedgerFilters,
@@ -165,6 +167,10 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
       ),
     receiptPdfUrl: (token: string, lang: 'ta' | 'en') =>
       apiUrl(baseUrl, `/receipts/${encodeURIComponent(token)}/pdf?lang=${lang}`),
+    subscriptions: (status?: string, page = 1) =>
+      call<AdminSubscriptionList>('GET', `/admin/subscriptions?${query({ status, page })}`),
+    subscription: (id: string) =>
+      call<AdminSubscriptionDetail>('GET', `/admin/subscriptions/${encodeURIComponent(id)}`),
     notifications: (status?: NotificationStatusDto) =>
       call<NotificationListResponse>(
         'GET',

@@ -47,6 +47,7 @@ describe('migration from an empty database', () => {
       'programmes',
       'receipts',
       'subscription_plans',
+      'subscription_status_events',
       'tax_certificate_tracking',
       'transparency_documents',
       'trust_settings',

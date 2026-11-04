@@ -225,6 +225,30 @@ async function mockAdminApi(page: Page) {
         },
       });
     }
+    if (path === '/api/v1/admin/subscriptions') {
+      return route.fulfill({
+        json: {
+          items: [
+            {
+              id: '66666666-6666-4666-8666-666666666666',
+              reference: 'TOT-M-ABCDEFGHJKMN',
+              amountPaise: 100_000,
+              status: 'HALTED',
+              methodRoute: 'upi_autopay',
+              donorName: 'Synthetic Donor',
+              createdAt: '2026-11-04T10:00:00Z',
+              charges: 2,
+              paidCharges: 1,
+              lastChargeAt: '2026-11-04T10:00:00Z',
+              openExceptions: 1,
+            },
+          ],
+          page: 1,
+          pageSize: 25,
+          total: 1,
+        },
+      });
+    }
     if (path === '/api/v1/admin/receipts') {
       return route.fulfill({ json: { items: [], page: 1, pageSize: 25, total: 0 } });
     }
@@ -432,4 +456,17 @@ test('owner ledger: overview → find a donation → re-check it with a reason; 
   ).toContainText('Pending too long');
   await page.getByRole('link', { name: 'Receipts', exact: true }).click();
   await expect(page.getByText('No acknowledgements yet.')).toBeVisible();
+});
+
+test('monthly giving: owner sees status from Razorpay, charges and problems', async ({ page }) => {
+  await mockApi(page, 'MFA_VERIFY');
+  await mockAdminApi(page);
+  await page.goto('/admin/login');
+  await signIn(page);
+  await page.getByLabel('6-digit code').fill('654321');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('link', { name: 'Monthly giving', exact: true }).click();
+  const table = page.getByRole('table', { name: 'Monthly gifts, newest first' });
+  await expect(table).toContainText('Halted (charges failed)');
+  await expect(table).toContainText('1 / 2');
 });

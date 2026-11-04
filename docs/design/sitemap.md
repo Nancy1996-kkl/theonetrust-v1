@@ -39,7 +39,7 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
 | `/admin/receipts` | — | Receipts: copy link, download, resend | Trust owner | Owner session | No index | #31 | Built |
 | `/admin/help-requests` | — | Help request inbox: New → Contacted → Verifying → Helping → Closed | Trust owner | Owner session | No index | #22 | Built |
 | `/admin/help-requests/:id` | — | One help request with private notes and status history | Trust owner | Owner session | No index | #22 | Built |
-| `/admin/monthly-giving` | — | Monthly giving subscriptions and their charge history | Trust owner | Owner session | No index | #33 | Planned |
+| `/admin/monthly-giving` | — | Monthly giving subscriptions and their charge history | Trust owner | Owner session | No index | #33 | Built |
 | `/admin/programmes` | — | Ways we help: create, edit, pause (bilingual) | Trust owner | Owner session | No index | #36 | Planned |
 | `/admin/content` | — | Site sections, FAQ, impact metrics, stories (draft → preview → publish) | Trust owner | Owner session | No index | #36 | Planned |
 | `/admin/transparency` | — | Transparency documents upload and publishing | Trust owner | Owner session | No index | #36 | Planned |

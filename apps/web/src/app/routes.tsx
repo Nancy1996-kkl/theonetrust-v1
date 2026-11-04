@@ -12,6 +12,7 @@ import { DonationDetailPage } from '../admin/DonationDetailPage.tsx';
 import { DonationsPage } from '../admin/DonationsPage.tsx';
 import { ExceptionsPage } from '../admin/ExceptionsPage.tsx';
 import { ReceiptsPage } from '../admin/ReceiptsPage.tsx';
+import { MonthlyGivingPage } from '../admin/MonthlyGivingPage.tsx';
 import { RequireAdmin } from '../admin/RequireAdmin.tsx';
 import { RootLayout } from './RootLayout.tsx';
 import { RouteErrorPage } from '../routes/error/RouteErrorPage.tsx';
@@ -62,6 +63,7 @@ export const routes: RouteObject[] = [
               { path: 'donations/:id', element: <DonationDetailPage /> },
               { path: 'exceptions', element: <ExceptionsPage /> },
               { path: 'receipts', element: <ReceiptsPage /> },
+              { path: 'monthly-giving', element: <MonthlyGivingPage /> },
               { path: 'audit-log', element: <AuditLogPage /> },
             ],
           },

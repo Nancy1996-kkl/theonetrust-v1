@@ -17,6 +17,7 @@ import type { DonationSubscription } from '../../generated/prisma/client.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { PaymentProviderError } from '../donations/provider.ts';
+import { moveSubscription } from './lifecycle.ts';
 import type { SubscriptionProvider } from './provider.ts';
 import {
   TOTAL_COUNT,
@@ -229,12 +230,9 @@ export async function subscriptionRoutes(app: FastifyInstance, opts: Subscriptio
       status = nextStatus(row.status, remote.status);
       if (status !== row.status) {
         await db.$transaction(async (tx) => {
-          const moved = await tx.donationSubscription.updateMany({
-            where: { id: row.id, status: row.status },
-            data: { status, ...(status === 'CANCELLED' && { cancelledAt: opts.now() }) },
-          });
+          const moved = await moveSubscription(tx, row, status, 'checkout_verify', opts.now());
           // First authorisation: email the private manage link (donors with an email only).
-          if (moved.count === 1 && donorStatus(status) === 'ACTIVE' && row.donorEmail) {
+          if (moved && donorStatus(status) === 'ACTIVE' && row.donorEmail) {
             await tx.notificationOutbox.createMany({
               data: [
                 {
@@ -312,10 +310,7 @@ export async function subscriptionRoutes(app: FastifyInstance, opts: Subscriptio
     }
     if (remote.status !== 'cancelled') throw new AppError('SERVICE_UNAVAILABLE');
     const now = opts.now();
-    await db.donationSubscription.updateMany({
-      where: { id: row.id, status: { notIn: ['CANCELLED', 'COMPLETED'] } },
-      data: { status: 'CANCELLED', cancelledAt: now },
-    });
+    await db.$transaction((tx) => moveSubscription(tx, row, 'CANCELLED', 'manage_link', now));
     return view({ ...row, status: 'CANCELLED', cancelledAt: now });
   });
 }

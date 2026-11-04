@@ -9,6 +9,7 @@ import { EmailSendError, type EmailProvider } from './provider.ts';
 import {
   renderDonorDonationPaid,
   renderDonorSubscriptionStarted,
+  renderDonorSubscriptionProblem,
   renderOwnerDonationPaid,
   renderOwnerHelpRequest,
   type DonationPaidContext,
@@ -155,6 +156,33 @@ export async function buildEmail(deps: WorkerDeps, row: NotificationOutbox): Pro
             ? new Date(sub.startAt.getTime() + 330 * 60_000).toISOString().slice(0, 10)
             : null,
           manageUrl: site(deps, `${lang === 'ta' ? '/ta' : ''}/manage/${token}`),
+          trustName: settings?.legalName ?? SITE_NAME,
+        },
+        lang,
+      ),
+    };
+  }
+  if (row.template === 'donor_subscription_problem' && kind === 'donation_subscription') {
+    const sub = await deps.db.donationSubscription.findUnique({ where: { id } });
+    if (!sub) return { cancel: 'entity_missing' };
+    if (!sub.donorEmail || !EMAIL.test(sub.donorEmail)) return { cancel: 'no_donor_email' };
+    // Already fixed or ended by the time we send: no alarming email.
+    if (sub.status !== 'ACTIVE' && sub.status !== 'HALTED') return { cancel: 'not_active' };
+    const lang = row.locale === 'ta' ? 'ta' : 'en';
+    const settings = await deps.db.trustSettings.findUnique({ where: { id: 1 } });
+    return {
+      to: sub.donorEmail,
+      email: renderDonorSubscriptionProblem(
+        {
+          donorName: sub.donorName,
+          amountPaise: sub.amountPaise,
+          halted: sub.status === 'HALTED',
+          manageUrl: deps.manageKey
+            ? site(
+                deps,
+                `${lang === 'ta' ? '/ta' : ''}/manage/${manageToken(deps.manageKey, sub.manageTokenSalt)}`,
+              )
+            : null,
           trustName: settings?.legalName ?? SITE_NAME,
         },
         lang,

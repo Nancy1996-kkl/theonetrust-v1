@@ -7,6 +7,7 @@ export const NOTIFICATION_TEMPLATES = [
   'donor_donation_paid',
   'owner_help_request_new',
   'donor_subscription_started',
+  'donor_subscription_problem',
 ] as const;
 export type NotificationTemplate = (typeof NOTIFICATION_TEMPLATES)[number];
 

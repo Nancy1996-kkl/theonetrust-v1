@@ -117,6 +117,10 @@ enum PaymentExceptionKind {
   PAYMENT_MISMATCH
   /// A second payment arrived for an order that already has one — #26.
   DUPLICATE_PAYMENT
+  /// A monthly charge failed and Razorpay is retrying (subscription.pending) — #33.
+  SUBSCRIPTION_CHARGE_FAILED
+  /// Razorpay stopped retrying a monthly mandate (subscription.halted) — #33.
+  SUBSCRIPTION_HALTED
 }
 
 enum ExceptionStatus {
@@ -360,11 +364,29 @@ model DonationSubscription {
   updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
   cancelledAt            DateTime?          @map("cancelled_at") @db.Timestamptz(3)
 
-  programme Programme?       @relation(fields: [programmeId], references: [id], onDelete: Restrict)
-  charges   DonationIntent[]
+  programme  Programme?                @relation(fields: [programmeId], references: [id], onDelete: Restrict)
+  charges    DonationIntent[]
+  exceptions PaymentException[]
+  events     SubscriptionStatusEvent[]
 
   @@index([status])
   @@map("donation_subscriptions")
+}
+
+/// Every status change of a monthly gift, from the webhook or the manage link (#33). Append-only.
+model SubscriptionStatusEvent {
+  id             String             @id @default(uuid()) @db.Uuid
+  subscriptionId String             @map("subscription_id") @db.Uuid
+  fromStatus     SubscriptionStatus @map("from_status")
+  toStatus       SubscriptionStatus @map("to_status")
+  /// webhook:<event type> | manage_link | checkout_verify
+  source         String
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  subscription DonationSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+
+  @@index([subscriptionId, createdAt])
+  @@map("subscription_status_events")
 }
 
 /// One Razorpay plan per fixed monthly amount, created once and reused (#32).
@@ -450,15 +472,19 @@ model PaymentException {
   bankTransferRecordId String?              @map("bank_transfer_record_id") @db.Uuid
   /// Provider payment ID involved (no card or UPI details).
   providerPaymentId    String?              @map("provider_payment_id")
+  /// Monthly giving the exception is about (#33).
+  subscriptionId       String?              @map("subscription_id") @db.Uuid
   createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
   resolvedAt           DateTime?            @map("resolved_at") @db.Timestamptz(3)
   resolvedById         String?              @map("resolved_by_id") @db.Uuid
   resolution           String?
 
-  donationIntent     DonationIntent?     @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
-  bankTransferRecord BankTransferRecord? @relation(fields: [bankTransferRecordId], references: [id], onDelete: Restrict)
+  donationIntent     DonationIntent?       @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+  bankTransferRecord BankTransferRecord?   @relation(fields: [bankTransferRecordId], references: [id], onDelete: Restrict)
+  subscription       DonationSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
 
   @@index([status, createdAt])
+  @@index([subscriptionId])
   @@map("payment_exceptions")
 }
 

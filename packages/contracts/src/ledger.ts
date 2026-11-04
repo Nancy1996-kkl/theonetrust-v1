@@ -126,6 +126,8 @@ export const EXCEPTION_QUEUE_KINDS = [
   'UNMATCHED_CREDIT',
   'AMOUNT_MISMATCH',
   'ALREADY_PAID',
+  'SUBSCRIPTION_CHARGE_FAILED',
+  'SUBSCRIPTION_HALTED',
 ] as const;
 export type ExceptionQueueKind = (typeof EXCEPTION_QUEUE_KINDS)[number];
 
@@ -174,4 +176,32 @@ export interface AdminReceiptList {
 /** Body for every owner action on this page: a reason (kept in the audit log). */
 export interface ReasonRequest {
   reason: string;
+}
+
+/** Owner's monthly-giving list (#33). */
+export interface AdminSubscriptionItem {
+  id: string;
+  reference: string;
+  amountPaise: number;
+  status: 'CREATED' | 'AUTHENTICATED' | 'ACTIVE' | 'PAUSED' | 'HALTED' | 'CANCELLED' | 'COMPLETED';
+  methodRoute: 'upi_autopay' | 'emandate_card';
+  donorName: string;
+  createdAt: string;
+  charges: number;
+  paidCharges: number;
+  lastChargeAt: string | null;
+  openExceptions: number;
+}
+
+export interface AdminSubscriptionList {
+  items: AdminSubscriptionItem[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface AdminSubscriptionDetail extends AdminSubscriptionItem {
+  history: Array<{ from: string; to: string; source: string; at: string }>;
+  chargeList: LedgerItem[];
+  exceptions: Array<{ id: string; kind: string; status: 'OPEN' | 'RESOLVED'; createdAt: string }>;
 }
