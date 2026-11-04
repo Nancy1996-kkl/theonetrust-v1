@@ -73,6 +73,8 @@ export interface DonationEstimateResponse {
   feeCoverOffered: boolean;
   /** True when the trust's bank details are confirmed and bank transfer is offered. */
   bankTransferOffered: boolean;
+  /** Monthly giving (#32) is switched on: Razorpay Subscriptions enabled [CONFIRM]. */
+  monthlyOffered?: boolean;
   /** Present when a gift was given and fee cover is offered for the method. */
   feePaise?: number;
   amountPaise?: number;

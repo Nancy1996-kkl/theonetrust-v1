@@ -331,17 +331,30 @@ model WebhookEvent {
 
 model DonationSubscription {
   id                     String             @id @default(uuid()) @db.Uuid
+  /// Unguessable public reference shown to the donor (TOT-M-…); never the UUID.
+  publicReference        String             @unique @map("public_reference")
   providerSubscriptionId String             @unique @map("provider_subscription_id")
   providerPlanId         String?            @map("provider_plan_id")
   programmeId            String?            @map("programme_id") @db.Uuid
   amountPaise            Int                @map("amount_paise")
   interval               String             @default("monthly")
+  /// upi_autopay (≤ ₹15,000/month) or emandate_card (above) — routed by amount (#32).
+  methodRoute            String             @map("method_route")
   status                 SubscriptionStatus @default(CREATED)
   donorName              String             @map("donor_name")
   donorEmail             String?            @map("donor_email")
   donorPhone             String?            @map("donor_phone")
+  /// Random salt; the manage token is HMAC(key, salt) and is never stored.
+  manageTokenSalt        String             @map("manage_token_salt")
   /// SHA-256 of the manage-link token; the token itself is never stored.
   manageTokenHash        String             @unique @map("manage_token_hash")
+  /// Browser-supplied key so a double click or retry never creates a second subscription.
+  idempotencyKey         String?            @unique @map("idempotency_key")
+  /// The donor ticked the mandate consent shown with amount, frequency, start date and how to cancel.
+  consentAt              DateTime           @map("consent_at") @db.Timestamptz(3)
+  consentVersion         String             @map("consent_version")
+  /// First charge date (IST); never on the 29th–31st so every month has the day.
+  startAt                DateTime?          @map("start_at") @db.Timestamptz(3)
   locale                 Locale             @default(en)
   createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -352,6 +365,20 @@ model DonationSubscription {
 
   @@index([status])
   @@map("donation_subscriptions")
+}
+
+/// One Razorpay plan per fixed monthly amount, created once and reused (#32).
+model SubscriptionPlan {
+  id             String          @id @default(uuid()) @db.Uuid
+  provider       PaymentProvider @default(RAZORPAY)
+  providerPlanId String          @unique @map("provider_plan_id")
+  amountPaise    Int             @map("amount_paise")
+  period         String          @default("monthly")
+  interval       Int             @default(1)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([provider, amountPaise, period, interval])
+  @@map("subscription_plans")
 }
 
 /// Private identity for tax opt-in. PAN is stored only encrypted (app-level, key outside the DB).

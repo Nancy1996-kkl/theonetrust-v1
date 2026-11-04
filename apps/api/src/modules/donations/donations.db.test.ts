@@ -285,6 +285,7 @@ describe('GET /donation-intents/estimate', () => {
       receiptMinPaise: 50_000,
       feeCoverOffered: true,
       bankTransferOffered: false,
+      monthlyOffered: false,
       feePaise: 2_418,
       amountPaise: 102_418,
     });
@@ -295,6 +296,7 @@ describe('GET /donation-intents/estimate', () => {
       receiptMinPaise: 50_000,
       feeCoverOffered: true,
       bankTransferOffered: false,
+      monthlyOffered: false,
     });
     const bad = await app.inject({
       method: 'GET',

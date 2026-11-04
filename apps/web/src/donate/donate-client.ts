@@ -321,6 +321,7 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
         receiptMinPaise: 50_000,
         feeCoverOffered: false,
         bankTransferOffered: true,
+        monthlyOffered: true,
       }),
     startBankTransfer: (request) =>
       wait({
