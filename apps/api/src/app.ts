@@ -19,6 +19,8 @@ import { authService } from './modules/auth/service.ts';
 import { publicContentRepository } from './modules/public-content/repository.ts';
 import { publicContentRoutes } from './modules/public-content/routes.ts';
 import { helpPublicRoutes } from './modules/help/public-routes.ts';
+import { donationRoutes } from './modules/donations/routes.ts';
+import { razorpayProvider, type PaymentProvider } from './modules/donations/provider.ts';
 import { healthRoutes } from './routes/health.ts';
 import { deriveAuthKeys } from './security/crypto.ts';
 
@@ -57,6 +59,8 @@ export interface BuildAppOptions {
   db?: Db;
   /** Clock, injectable for session-expiry and authenticator tests. */
   now?: () => Date;
+  /** Payment provider; defaults to Razorpay when its keys are configured. */
+  paymentProvider?: PaymentProvider;
 }
 
 export const TOTP_ISSUER = 'Theonetrust.in';
@@ -133,6 +137,20 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   });
 
   app.register(healthRoutes, { prefix: API_V1_PREFIX, version: APP_VERSION });
+
+  // Donations (#23): the server owns intents, amounts and Razorpay orders.
+  const paymentProvider =
+    options.paymentProvider ??
+    (env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
+      ? razorpayProvider({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
+      : undefined);
+  app.register(donationRoutes, {
+    prefix: `${API_V1_PREFIX}/donation-intents`,
+    perHour: env.DONATION_RATE_LIMIT_PER_HOUR,
+    now: options.now ?? (() => new Date()),
+    ...(options.db && { db: options.db }),
+    ...(paymentProvider && { provider: paymentProvider }),
+  });
 
   // Get Help (#22): public submissions, rate-limited, honeypot, validated with the form's rules.
   app.register(helpPublicRoutes, {

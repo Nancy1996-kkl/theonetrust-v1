@@ -4,7 +4,12 @@ import type { Locale } from '../../generated/prisma/enums.ts';
 import { newDonationReference } from '../references.ts';
 
 export interface NewDonationIntent {
-  amountPaise: Paise;
+  /** The donation the donor chose. */
+  giftPaise: Paise;
+  /** Optional fee cover (integer paise ≥ 0), computed by the server from the fee table. */
+  feePaise?: number;
+  idempotencyKey?: string | null;
+  consentAt?: Date | null;
   donorName: string;
   donorEmail?: string | null;
   donorPhone?: string | null;
@@ -28,9 +33,17 @@ export interface NewPaymentAttempt {
  */
 export function donationRepository(db: Db) {
   return {
+    /** The charged amount is always gift + fee, computed here — never taken from a client. */
     createIntent(input: NewDonationIntent) {
+      const feePaise = input.feePaise ?? 0;
       return db.donationIntent.create({
-        data: { ...input, publicReference: newDonationReference(), status: 'CREATED' },
+        data: {
+          ...input,
+          feePaise,
+          amountPaise: input.giftPaise + feePaise,
+          publicReference: newDonationReference(),
+          status: 'CREATED',
+        },
       });
     },
 

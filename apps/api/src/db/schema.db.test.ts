@@ -17,7 +17,7 @@ async function pgError(promise: Promise<unknown>): Promise<string> {
 }
 
 function newIntent() {
-  return donations.createIntent({ amountPaise: rupeesToPaise(500), donorName: 'Synthetic Donor' });
+  return donations.createIntent({ giftPaise: rupeesToPaise(500), donorName: 'Synthetic Donor' });
 }
 
 describe('migration from an empty database', () => {
@@ -74,16 +74,37 @@ describe('money constraints', () => {
   it('rejects a donation below ₹1 (100 paise)', async () => {
     const err = await pgError(
       db.donationIntent.create({
-        data: { publicReference: unique('ref'), amountPaise: 99, donorName: 'X' },
+        data: { publicReference: unique('ref'), amountPaise: 99, giftPaise: 99, donorName: 'X' },
       }),
     );
-    expect(err).toContain('donation_intents_amount_min');
+    expect(err).toMatch(/donation_intents_amount_min|donation_intents_amount_is_gift_plus_fee/);
+  });
+
+  it('rejects an amount that is not gift + fee', async () => {
+    const err = await pgError(
+      db.donationIntent.create({
+        data: {
+          publicReference: unique('ref'),
+          amountPaise: 500,
+          giftPaise: 400,
+          feePaise: 50,
+          donorName: 'X',
+        },
+      }),
+    );
+    expect(err).toContain('donation_intents_amount_is_gift_plus_fee');
   });
 
   it('rejects non-INR currency', async () => {
     const err = await pgError(
       db.donationIntent.create({
-        data: { publicReference: unique('ref'), amountPaise: 100, donorName: 'X', currency: 'USD' },
+        data: {
+          publicReference: unique('ref'),
+          amountPaise: 100,
+          giftPaise: 100,
+          donorName: 'X',
+          currency: 'USD',
+        },
       }),
     );
     expect(err).toContain('donation_intents_currency_inr');

@@ -136,3 +136,30 @@ describe('loadEnv — public content', () => {
     expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
   });
 });
+
+describe('loadEnv — Razorpay keys', () => {
+  const test = { RAZORPAY_KEY_ID: 'rzp_test_abcdefgh12', RAZORPAY_KEY_SECRET: 'secret-secret-123' };
+
+  it('accepts a test key pair, and neither', () => {
+    expect(loadEnv(test).RAZORPAY_KEY_ID).toBe('rzp_test_abcdefgh12');
+    expect(
+      loadEnv({ RAZORPAY_KEY_ID: '', RAZORPAY_KEY_SECRET: '' }).RAZORPAY_KEY_ID,
+    ).toBeUndefined();
+    expect(loadEnv({}).DONATION_RATE_LIMIT_PER_HOUR).toBe(20);
+  });
+
+  it.each([
+    ['RAZORPAY_KEY_SECRET', { RAZORPAY_KEY_ID: 'rzp_test_abcdefgh12' }],
+    ['RAZORPAY_KEY_ID', { RAZORPAY_KEY_SECRET: 'secret-secret-123' }],
+    ['RAZORPAY_KEY_ID', { ...test, RAZORPAY_KEY_ID: 'rzp_live_abcdefgh12' }],
+    ['RAZORPAY_KEY_ID', { ...test, RAZORPAY_KEY_ID: 'not-a-key' }],
+  ])('rejects %s', (key, source) => {
+    expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
+  });
+
+  it('never echoes the secret', () => {
+    expect(() => loadEnv({ RAZORPAY_KEY_SECRET: 'super-secret-value-1' })).toThrow(
+      expect.objectContaining({ message: expect.not.stringContaining('super-secret') }),
+    );
+  });
+});

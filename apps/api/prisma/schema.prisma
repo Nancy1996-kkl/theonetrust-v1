@@ -199,9 +199,17 @@ model DonationIntent {
   /// Unguessable public reference shown to the donor; never the UUID.
   publicReference     String         @unique @map("public_reference")
   programmeId         String?        @map("programme_id") @db.Uuid
+  /// What the payment provider is asked to collect: giftPaise + feePaise. Server-computed only.
   amountPaise         Int            @map("amount_paise")
+  /// The donation itself, as chosen by the donor.
+  giftPaise           Int            @map("gift_paise")
+  /// Optional fee cover the donor chose to add (0 when not chosen). Estimate from the fee table.
+  feePaise            Int            @default(0) @map("fee_paise")
   currency            String         @default("INR") @db.Char(3)
   status              DonationStatus @default(CREATED)
+  /// Browser-supplied key so a double click or retry never creates a second order.
+  idempotencyKey      String?        @unique @map("idempotency_key")
+  consentAt           DateTime?      @map("consent_at") @db.Timestamptz(3)
   donorName           String         @map("donor_name")
   donorEmail          String?        @map("donor_email")
   donorPhone          String?        @map("donor_phone")
@@ -473,6 +481,11 @@ model TrustSettings {
   section354Approval String?   @map("section_354_approval")
   approvalValidUntil DateTime? @map("approval_valid_until") @db.Date
   receiptMinPaise    Int       @default(50000) @map("receipt_min_paise")
+  /// Largest single online donation accepted [CONFIRM with the trust]; larger gifts use bank transfer (#25).
+  maxDonationPaise   Int       @default(50000000) @map("max_donation_paise")
+  /// Fee table for the optional "cover the fee" estimate (see modules/donations/fees.ts).
+  /// Null = fee cover is not offered (the default until the trust confirms its pricing).
+  feeTable           Json?     @map("fee_table")
   foreignDonations   Boolean   @default(false) @map("foreign_donations")
   updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 

@@ -59,6 +59,23 @@ const EnvSchema = z
     /** Wrong passwords or codes in a row before the account is locked. */
     LOGIN_MAX_FAILURES: z.coerce.number().int().min(3).max(20).default(5),
     LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+    /**
+     * Razorpay API keys — backend only, never VITE_*. Test keys (rzp_test_) until launch (#39):
+     * outside production a live key is refused. Without keys, donations answer 503.
+     */
+    RAZORPAY_KEY_ID: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .regex(/^rzp_(test|live)_[A-Za-z0-9]{8,32}$/)
+        .optional(),
+    ),
+    RAZORPAY_KEY_SECRET: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.string().min(16).max(128).optional(),
+    ),
+    /** Donation intents allowed per IP per hour. */
+    DONATION_RATE_LIMIT_PER_HOUR: z.coerce.number().int().min(1).max(500).default(20),
     /** Get Help submissions allowed per IP per hour (plan §5 anti-spam). */
     HELP_RATE_LIMIT_PER_HOUR: z.coerce.number().int().min(1).max(100).default(5),
     /** A repeat from the same phone within this window returns the first reference. */
@@ -83,6 +100,21 @@ const EnvSchema = z
     ),
   })
   .superRefine((env, ctx) => {
+    if (Boolean(env.RAZORPAY_KEY_ID) !== Boolean(env.RAZORPAY_KEY_SECRET)) {
+      const missing = env.RAZORPAY_KEY_ID ? 'RAZORPAY_KEY_SECRET' : 'RAZORPAY_KEY_ID';
+      ctx.addIssue({
+        code: 'custom',
+        path: [missing],
+        message: 'set both Razorpay keys or neither',
+      });
+    }
+    if (env.NODE_ENV !== 'production' && env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['RAZORPAY_KEY_ID'],
+        message: 'live key outside production',
+      });
+    }
     if (env.NODE_ENV !== 'production') return;
     for (const key of ['DATABASE_URL', 'AUTH_SECRET_KEY'] as const) {
       if (!env[key])

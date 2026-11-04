@@ -14,7 +14,7 @@ describe('donationRepository', () => {
 
   it('creates an intent in CREATED with an unguessable public reference', async () => {
     const intent = await donations.createIntent({
-      amountPaise: rupeesToPaise(1),
+      giftPaise: rupeesToPaise(1),
       donorName: 'Synthetic Donor',
       locale: 'ta',
     });
@@ -30,7 +30,7 @@ describe('donationRepository', () => {
 
   it('records a payment attempt and finds it by provider order ID', async () => {
     const intent = await donations.createIntent({
-      amountPaise: rupeesToPaise(250),
+      giftPaise: rupeesToPaise(250),
       donorName: 'Synthetic Donor',
     });
     const orderId = unique('order_SYN');
