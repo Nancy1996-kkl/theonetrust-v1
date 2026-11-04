@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   /** Get Help adapter: 'api' (live, #22), 'mock' (dev/e2e only) or 'unavailable'. */
   /** Get Help adapter: 'mock' (dev/e2e only) or 'unavailable' (live default until the API, #22). */
   readonly VITE_HELP_ADAPTER?: string;
+  /** Donate panel adapter: 'api' (live, #24/#26), 'mock' (dev/e2e only) or 'unavailable'. */
+  readonly VITE_DONATE_ADAPTER?: string;
 }
 
 interface ImportMeta {

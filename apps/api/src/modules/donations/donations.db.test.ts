@@ -279,12 +279,18 @@ describe('GET /donation-intents/estimate', () => {
     expect(res.json()).toEqual({
       minPaise: 100,
       maxPaise: 50_000_000,
+      receiptMinPaise: 50_000,
       feeCoverOffered: true,
       feePaise: 2_418,
       amountPaise: 102_418,
     });
     const bare = await app.inject({ method: 'GET', url: '/api/v1/donation-intents/estimate' });
-    expect(bare.json()).toEqual({ minPaise: 100, maxPaise: 50_000_000, feeCoverOffered: true });
+    expect(bare.json()).toEqual({
+      minPaise: 100,
+      maxPaise: 50_000_000,
+      receiptMinPaise: 50_000,
+      feeCoverOffered: true,
+    });
     const bad = await app.inject({
       method: 'GET',
       url: '/api/v1/donation-intents/estimate?giftPaise=5',

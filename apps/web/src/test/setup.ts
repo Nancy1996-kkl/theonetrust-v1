@@ -24,6 +24,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // The donation draft lives in sessionStorage (#24); each test starts with a fresh tab.
+  if (typeof sessionStorage !== 'undefined') sessionStorage.clear();
   cleanup();
   vi.restoreAllMocks();
   consoleGuard.assertClean();

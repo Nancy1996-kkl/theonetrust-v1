@@ -1,0 +1,67 @@
+/* Donate panel (#24). Tokens only. */
+.donate {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.donate form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.donate__heading {
+  margin: 0;
+  font-size: var(--text-h3);
+}
+
+.donate__muted {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.donate__note {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.donate__note p {
+  margin: var(--space-1) 0 0;
+}
+
+.donate__callout {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  overflow-wrap: anywhere;
+}
+
+.donate__summary {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.donate__summary > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  border-block-end: var(--border-width) solid var(--color-border-subtle);
+}
+
+.donate__summary dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.donate__actions {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
