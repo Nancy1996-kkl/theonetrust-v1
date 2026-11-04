@@ -19,7 +19,9 @@ describe('deriveAuthKeys', () => {
     const b = deriveAuthKeys(secret);
     expect(a.encryption).toHaveLength(32);
     expect(a.csrf).toHaveLength(32);
+    expect(a.receipt).toHaveLength(32);
     expect(a.encryption.equals(a.csrf)).toBe(false);
+    expect(a.receipt.equals(a.csrf) || a.receipt.equals(a.encryption)).toBe(false);
     expect(a.encryption.equals(b.encryption)).toBe(true);
     expect(a.version).toBe(CURRENT_KEY_VERSION);
   });

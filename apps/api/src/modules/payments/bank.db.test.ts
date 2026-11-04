@@ -231,6 +231,10 @@ describe('owner records a bank credit', () => {
     });
     const intent = await db.donationIntent.findUniqueOrThrow({ where: { publicReference } });
     expect(intent.status).toBe('PAID');
+    // #29: the owner-confirmed credit gets exactly one acknowledgement, for the credited amount.
+    const receipts = await db.receipt.findMany({ where: { donationIntentId: intent.id } });
+    expect(receipts).toHaveLength(1);
+    expect(receipts[0]).toMatchObject({ bankTransferRecordId: id, amountPaise: 7_500_000 });
     const entries = await db.auditLog.findMany({
       where: { actorId: ownerId, action: { startsWith: 'bank_transfer.' } },
     });
@@ -247,6 +251,7 @@ describe('owner records a bank credit', () => {
       confirmReference: publicReference,
     });
     expect(again.statusCode).toBe(409);
+    expect(await db.receipt.count({ where: { donationIntentId: intent.id } })).toBe(1);
   });
 
   it('an unmatched credit raises an exception and pays nothing', async () => {

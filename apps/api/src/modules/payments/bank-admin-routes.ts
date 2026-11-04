@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { Db } from '../../db/client.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
+import { issueReceiptIfEligible } from '../receipts/issue.ts';
 import { transitionDonation } from './transitions.ts';
 
 const reference = z.string().regex(/^TOT-D-[0-9A-HJKMNP-TV-Z]{12}$/);
@@ -200,6 +201,13 @@ export async function bankAdminRoutes(app: FastifyInstance, opts: { db: Db }) {
         });
         if (updated.count !== 1) throw new AppError('CONFLICT');
         await transitionDonation(tx, intent.id, 'PAID', 'owner_bank_evidence');
+        await issueReceiptIfEligible(
+          tx,
+          intent.id,
+          { bankTransferRecordId: id },
+          credit.amountPaise,
+          new Date(),
+        );
       },
     );
     return {

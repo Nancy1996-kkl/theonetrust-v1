@@ -199,8 +199,14 @@ describe('uniqueness of provider and receipt identifiers', () => {
       providerOrderId: unique('order'),
       amountPaise: rupeesToPaise(500),
     });
-    const number = unique('TOT-R');
-    const base = { donationIntentId: intent.id, templateVersion: 'v1' };
+    const num = () => `TOT-R-2026-27-${String(Math.floor(Math.random() * 1e9)).padStart(9, '0')}`;
+    const number = num();
+    const base = {
+      donationIntentId: intent.id,
+      templateVersion: 'v1',
+      amountPaise: 50_000,
+      tokenSalt: unique('salt-salt-salt-salt'),
+    };
     await db.receipt.create({
       data: {
         ...base,
@@ -215,7 +221,7 @@ describe('uniqueness of provider and receipt identifiers', () => {
           data: {
             ...base,
             paymentAttemptId: attempt.id,
-            receiptNumber: unique('n'),
+            receiptNumber: num(),
             tokenHash: unique('h'),
           },
         }),

@@ -103,6 +103,16 @@ const EnvSchema = z
       (value) => (value === '' ? undefined : value),
       z.url({ protocol: /^https?$/ }).optional(),
     ),
+    /**
+     * Public site origin used in acknowledgement links and the PDF verification QR (#29).
+     * Defaults to the first CORS origin.
+     */
+    PUBLIC_SITE_URL: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.url({ protocol: /^https?$/ }).optional(),
+    ),
+    /** Acknowledgement page + PDF requests per IP per hour. */
+    RECEIPT_RATE_LIMIT_PER_HOUR: z.coerce.number().int().min(1).max(1000).default(60),
   })
   .superRefine((env, ctx) => {
     if (Boolean(env.RAZORPAY_KEY_ID) !== Boolean(env.RAZORPAY_KEY_SECRET)) {

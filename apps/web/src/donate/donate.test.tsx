@@ -64,6 +64,7 @@ function client(overrides: Partial<DonateClient> = {}): DonateClient {
     })),
     verify: vi.fn(async () => 'PAID' as const),
     status: vi.fn(async () => 'PAID' as const),
+    receipt: vi.fn(async () => null),
     ...overrides,
   };
 }
@@ -140,7 +141,39 @@ describe('donate panel', () => {
       signature: 'sig',
     });
     expect(sessionStorage.getItem(PENDING_KEY)).toBeNull();
+    // No acknowledgement issued (declined / below the threshold): no link.
+    expect(within(dialog).queryByRole('link', { name: t.viewReceipt })).toBeNull();
     await user.click(within(dialog).getByRole('button', { name: t.backToPage }));
+  });
+
+  it('after PAID, links to the acknowledgement when the server issued one (#29)', async () => {
+    const user = userEvent.setup();
+    const token = 'T'.repeat(43);
+    const receipt = vi.fn(async () => token);
+    renderAt('/#donate', client({ receipt }));
+    const dialog = await toReview(user);
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    const link = await within(dialog).findByRole('link', { name: t.viewReceipt });
+    expect(link).toHaveAttribute('href', `/receipt/${token}`);
+    expect(receipt).toHaveBeenCalledWith(INTENT.publicReference);
+  });
+
+  it('never asks for an acknowledgement before the server says PAID', async () => {
+    const user = userEvent.setup();
+    const receipt = vi.fn(async () => 'T'.repeat(43));
+    renderAt(
+      '/#donate',
+      client({
+        verify: vi.fn(async () => 'UNKNOWN' as const),
+        status: vi.fn(async () => 'PENDING' as const),
+        receipt,
+      }),
+    );
+    const dialog = await toReview(user);
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    expect(await within(dialog).findByRole('heading', { name: t.pending })).toBeVisible();
+    expect(receipt).not.toHaveBeenCalled();
+    expect(within(dialog).queryByRole('link', { name: t.viewReceipt })).toBeNull();
   });
 
   it('never shows success when verification is not PAID (pending → check again)', async () => {
@@ -392,6 +425,25 @@ describe('createApiDonateClient', () => {
     });
   });
 
+  it('receipt(): the token only for a PAID donation that has one; null otherwise', async () => {
+    const token = 'T'.repeat(43);
+    const reply = (body: unknown, status = 200) =>
+      createApiDonateClient(
+        '',
+        vi.fn(async () => ok(body, status)),
+      ).receipt('TOT-D-X');
+    expect(await reply({ status: 'PAID', receiptToken: token })).toBe(token);
+    expect(await reply({ status: 'PAID' })).toBeNull();
+    expect(await reply({ status: 'PENDING', receiptToken: token })).toBeNull();
+    expect(await reply({}, 404)).toBeNull();
+    expect(
+      await createApiDonateClient(
+        '',
+        vi.fn(async () => Promise.reject(new TypeError('x'))),
+      ).receipt('r'),
+    ).toBeNull();
+  });
+
   it.each([
     [400, 'invalid'],
     [409, 'invalid'],
@@ -553,6 +605,11 @@ describe('helpers and adapters', () => {
     delete g.__donateMock;
     expect((await mock.start({ giftPaise: 500 } as never, 'k')).ok).toBe(true);
     expect(await mock.status('r')).toBe('PAID');
+    expect(await mock.receipt('r')).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    g.__donateMock = 'no-receipt';
+    expect(await mock.receipt('r')).toBeNull();
+    delete g.__donateMock;
+    expect(await unavailableDonateClient.receipt('r')).toBeNull();
     expect(await mock.estimate()).toMatchObject({ feeCoverOffered: false });
     expect(await unavailableDonateClient.checkout(INTENT, { name: 'A', lang: 'en' })).toEqual({
       kind: 'dismissed',

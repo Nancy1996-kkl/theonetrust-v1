@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import {
   formatInr,
   normalizeIndianMobile,
@@ -18,6 +18,7 @@ import { Stepper } from '../components/ui/Stepper.tsx';
 import { TextField } from '../components/ui/TextField.tsx';
 import type { Programme } from '../content/landing.ts';
 import { usePublicContent } from '../content/use-public-content.ts';
+import { localizedPath } from '../i18n/lang.ts';
 import { useLang } from '../i18n/use-lang.ts';
 import { PolicyNotice } from '../routes/policy/PolicyNotice.tsx';
 import { useDonationDraft } from '../state/donation-draft.ts';
@@ -130,6 +131,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const [bankIntent, setBankIntent] = useState<BankTransferIntentResponse | null>(null);
   const [utr, setUtr] = useState('');
   const [utrError, setUtrError] = useState(false);
+  const [receiptToken, setReceiptToken] = useState<string | null>(null);
   const attemptKey = useRef<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -187,6 +189,9 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       attemptKey.current = null;
       setIntent(null);
       setScreen('paid');
+      // The acknowledgement link (#29) is offered only after the server said PAID.
+      setReceiptToken(null);
+      void client.receipt(ref).then(setReceiptToken);
     } else if (status === 'FAILED') {
       session()?.removeItem(PENDING_KEY);
       attemptKey.current = null;
@@ -386,6 +391,16 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
               <dd>{reference}</dd>
             </div>
           </dl>
+        )}
+        {isPaid && receiptToken && (
+          <p>
+            <Link
+              className="donate__receipt-link"
+              to={localizedPath(`/receipt/${receiptToken}`, lang)}
+            >
+              {t.viewReceipt}
+            </Link>
+          </p>
         )}
         {!isPaid && (
           <p className="donate__muted">{screen === 'pending' ? t.pendingHelp : t.failedHelp}</p>

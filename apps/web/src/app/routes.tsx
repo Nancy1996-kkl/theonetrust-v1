@@ -13,6 +13,7 @@ import { RouteErrorPage } from '../routes/error/RouteErrorPage.tsx';
 import { HomePage } from '../routes/home/HomePage.tsx';
 import { NotFoundPage } from '../routes/not-found/NotFoundPage.tsx';
 import { PolicyPage } from '../routes/policy/PolicyPage.tsx';
+import { ReceiptPage } from '../receipt/ReceiptPage.tsx';
 
 /** Razorpay-required policy pages (ADR 0005), mirrored under /ta/. */
 const policyRoutes: RouteObject[] = [
@@ -20,6 +21,9 @@ const policyRoutes: RouteObject[] = [
   { path: 'privacy', element: <PolicyPage id="privacy" /> },
   { path: 'refund-policy', element: <PolicyPage id="refund" /> },
 ];
+
+/** Private acknowledgement link (#29): random token, never indexed. */
+const receiptRoute: RouteObject = { path: 'receipt/:token', element: <ReceiptPage /> };
 
 /**
  * Route table shared by the browser router and tests.
@@ -63,10 +67,12 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <HomePage /> },
           ...policyRoutes,
+          receiptRoute,
           { path: '*', element: <NotFoundPage /> },
         ],
       },
       ...policyRoutes,
+      receiptRoute,
       { path: '*', element: <NotFoundPage /> },
     ],
   },

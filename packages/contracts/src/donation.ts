@@ -91,4 +91,6 @@ export interface DonationStatusResponse {
   publicReference: string;
   status: 'PAID' | 'PENDING' | 'FAILED';
   amountPaise: number;
+  /** Share token of the donation acknowledgement, once one exists (#29). PAID only. */
+  receiptToken?: string;
 }

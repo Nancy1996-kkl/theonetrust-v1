@@ -7,3 +7,4 @@ export * from './public-content.ts';
 export * from './help.ts';
 export * from './help-admin.ts';
 export * from './donation.ts';
+export * from './receipt.ts';

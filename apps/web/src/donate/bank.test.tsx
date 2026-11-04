@@ -46,6 +46,7 @@ function client(overrides: Partial<DonateClient> = {}): DonateClient {
     checkout: vi.fn(async () => ({ kind: 'failed' as const, reason: 'upi_limit' as const })),
     verify: vi.fn(),
     status: vi.fn(),
+    receipt: vi.fn(async () => null),
     startBankTransfer: vi.fn(async () => ({ ok: true as const, intent: BANK })),
     claimBankTransfer: vi.fn(async () => true),
     ...overrides,
