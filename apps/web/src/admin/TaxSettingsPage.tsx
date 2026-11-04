@@ -8,6 +8,7 @@ import { TextField } from '../components/ui/TextField.tsx';
 import { errorText, useAdmin } from './admin-context.ts';
 import { AdminApiError } from './api.ts';
 import { LEDGER_STRINGS } from './ledger-strings.ts';
+import { TaxFilingSection } from './TaxFilingSection.tsx';
 
 /**
  * `/admin/tax` (#34): the trust's tax profile. Off by default; switching on needs the RNPO
@@ -154,6 +155,7 @@ export function TaxSettingsPage() {
           {l.taxSave}
         </Button>
       </form>
+      <TaxFilingSection />
     </div>
   );
 }

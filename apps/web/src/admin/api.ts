@@ -20,6 +20,9 @@ import {
   type AdminSubscriptionDetail,
   type AdminSubscriptionList,
   type TaxSettings,
+  type TaxStatusUpdate,
+  type TaxTrackingItem,
+  type TaxYearSummary,
   type TaxSettingsUpdate,
   type DonationDetail,
   type ExceptionQueue,
@@ -176,6 +179,24 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
     taxSettings: () => call<TaxSettings>('GET', '/admin/tax-settings'),
     updateTaxSettings: (body: TaxSettingsUpdate) =>
       call<TaxSettings>('PATCH', '/admin/tax-settings', body),
+    taxSummary: (fy?: string) => call<TaxYearSummary>('GET', `/admin/tax/summary?${query({ fy })}`),
+    taxTracking: (fy: string, status?: string) =>
+      call<{ items: TaxTrackingItem[] }>('GET', `/admin/tax/tracking?${query({ fy, status })}`),
+    /** Plain link: the browser downloads it with the session cookie (GET, audited by the API). */
+    form113Url: (fy: string, reason: string) =>
+      apiUrl(baseUrl, `/admin/tax/form113.csv?${query({ fy, reason })}`),
+    updateTaxStatus: (id: string, body: TaxStatusUpdate) =>
+      call<{ id: string; status: string }>(
+        'POST',
+        `/admin/tax/tracking/${encodeURIComponent(id)}/status`,
+        body,
+      ),
+    markForm113Filed: (fy: string, form113Reference: string, reason: string) =>
+      call<{ updated: number }>('POST', '/admin/tax/form113-filed', {
+        fy,
+        form113Reference,
+        reason,
+      }),
     notifications: (status?: NotificationStatusDto) =>
       call<NotificationListResponse>(
         'GET',

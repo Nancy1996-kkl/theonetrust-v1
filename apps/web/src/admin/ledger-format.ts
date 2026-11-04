@@ -35,3 +35,13 @@ export function filtersFrom(params: URLSearchParams): LedgerFilters {
   }
   return out as LedgerFilters;
 }
+
+/** The last few financial years, newest first ("2026-27"). */
+export function recentYears(now: Date, count = 4): string[] {
+  const ist = new Date(now.getTime() + 330 * 60_000);
+  const start = ist.getUTCMonth() >= 3 ? ist.getUTCFullYear() : ist.getUTCFullYear() - 1;
+  return Array.from(
+    { length: count },
+    (_, i) => `${start - i}-${String((start - i + 1) % 100).padStart(2, '0')}`,
+  );
+}
