@@ -6,13 +6,15 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env src/server.ts",
-    "build": "tsc -p tsconfig.json && esbuild src/server.ts --bundle --platform=node --target=node22 --format=esm --external:fastify --external:zod --outfile=dist/server.js",
+    "build": "tsc -p tsconfig.json && esbuild src/server.ts --bundle --platform=node --target=node22 --format=esm --external:fastify --external:@fastify/cors --external:@fastify/rate-limit --external:zod --outfile=dist/server.js",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@fastify/cors": "11.4.0",
+    "@fastify/rate-limit": "10.3.0",
     "@theonetrust/contracts": "workspace:*",
     "fastify": "5.12.7",
     "zod": "4.6.7"

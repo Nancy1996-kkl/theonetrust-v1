@@ -20,6 +20,11 @@ const EnvSchema = z.object({
     )
     .pipe(z.array(z.url()).min(1)),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  /** Requests allowed per client IP per window, across all routes (routes may set stricter limits). */
+  RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(120),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
+  /** Largest accepted request body. Forms and webhooks are small; uploads are not handled here. */
+  BODY_LIMIT_BYTES: z.coerce.number().int().min(1024).max(1_048_576).default(65_536),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
