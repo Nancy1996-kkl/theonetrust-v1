@@ -184,6 +184,7 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
 
   app.register(donationRoutes, {
     monthlyOffered,
+    ...(keys && { encryption: { key: keys.encryption, version: keys.version } }),
     prefix: `${API_V1_PREFIX}/donation-intents`,
     perHour: env.DONATION_RATE_LIMIT_PER_HOUR,
     now: options.now ?? (() => new Date()),

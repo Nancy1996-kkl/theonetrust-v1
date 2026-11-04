@@ -74,6 +74,8 @@ export interface DonationDetail extends LedgerItem {
   donorPhoneMasked: string | null;
   wantsReceipt: boolean;
   hideNamePublicly: boolean;
+  /** Tax opt-in (#34): masked PAN only; the address is never sent to the dashboard. */
+  taxOptIn: { panMasked: string | null; hasAddress: boolean } | null;
   attempts: Array<{
     providerOrderId: string;
     providerPaymentId: string | null;

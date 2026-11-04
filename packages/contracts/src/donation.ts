@@ -26,6 +26,8 @@ export interface DonationIntentRequest {
   locale: 'ta' | 'en';
   /** `bank_transfer`: no Razorpay order; the owner confirms the credit (#25). Default checkout. */
   channel?: 'checkout' | 'bank_transfer';
+  /** Only when `taxOptInOffered` (#34). PAN + address are encrypted by the API. */
+  taxOptIn?: { pan: string; address: string; oldRegimeAck: true };
 }
 
 /** The trust's account for NEFT/RTGS/IMPS, shown only when confirmed in settings. */
@@ -75,6 +77,8 @@ export interface DonationEstimateResponse {
   bankTransferOffered: boolean;
   /** Monthly giving (#32) is switched on: Razorpay Subscriptions enabled [CONFIRM]. */
   monthlyOffered?: boolean;
+  /** Tax-benefit opt-in is offered: approval recorded, valid and switched on (#34). */
+  taxOptInOffered?: boolean;
   /** Present when a gift was given and fee cover is offered for the method. */
   feePaise?: number;
   amountPaise?: number;

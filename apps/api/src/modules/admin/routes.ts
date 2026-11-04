@@ -14,6 +14,7 @@ import { helpAdminRoutes } from '../help/admin-routes.ts';
 import type { PaymentProvider } from '../donations/provider.ts';
 import { ledgerAdminRoutes } from '../ledger/admin-routes.ts';
 import { subscriptionAdminRoutes } from '../subscriptions/admin-routes.ts';
+import { taxAdminRoutes } from '../tax/admin-routes.ts';
 import { notificationAdminRoutes } from '../notifications/admin-routes.ts';
 import { bankAdminRoutes } from '../payments/bank-admin-routes.ts';
 import type { AdminGuard } from './guard.ts';
@@ -140,6 +141,7 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
     await bankAdminRoutes(app, { db: opts.db });
     await notificationAdminRoutes(app, { db: opts.db, sendingEnabled: opts.emailSending ?? false });
     await subscriptionAdminRoutes(app, { db: opts.db });
+    await taxAdminRoutes(app, { db: opts.db, now: opts.now ?? (() => new Date()) });
     await ledgerAdminRoutes(app, {
       db: opts.db,
       provider: opts.paymentProvider,

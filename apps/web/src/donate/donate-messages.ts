@@ -77,6 +77,15 @@ const en = {
     "Your bank or UPI app is still confirming the mandate. Don't set it up again — we'll update it automatically.",
   manageLink: 'See or cancel your monthly giving',
   manageHelp: 'Keep this link private. Anyone with it can cancel your monthly giving.',
+  taxOpt: 'I want to claim a tax deduction for this donation',
+  taxExplain:
+    'A deduction is possible only under the old tax regime, and only for donations not paid in cash. The trust needs your PAN and address to report your donation to the Income Tax Department; they are stored encrypted and never shown on receipts, links or emails.',
+  pan: 'PAN',
+  panError: 'Enter your PAN, e.g. ABCDE1234F',
+  address: 'Postal address',
+  addressError: 'Enter your full postal address',
+  taxAck: 'I understand the deduction applies only if I file under the old tax regime.',
+  taxAckError: 'Please tick this box to opt in, or untick the deduction option.',
   viewReceipt: 'View or download your donation acknowledgement',
   pending: "We're confirming your payment",
   dontPayAgain: "Please don't pay again. This can take a few minutes.",
@@ -199,6 +208,16 @@ const ta: Record<DonateMessageKey, string> = {
   manageLink: 'உங்கள் மாதாந்திர நன்கொடையைப் பார்க்க அல்லது ரத்து செய்ய',
   manageHelp:
     'இந்த இணைப்பைத் தனிப்பட்டதாக வைத்திருங்கள். இது உள்ள எவரும் உங்கள் மாதாந்திர நன்கொடையை ரத்து செய்ய முடியும்.',
+  taxOpt: 'இந்த நன்கொடைக்கு வரி விலக்கு கோர விரும்புகிறேன்',
+  taxExplain:
+    'பழைய வரி முறையில் மட்டுமே, ரொக்கமாக அல்லாத நன்கொடைகளுக்கு மட்டுமே விலக்கு பெற முடியும். உங்கள் நன்கொடையை வருமான வரித் துறைக்குத் தெரிவிக்க அறக்கட்டளைக்கு உங்கள் PAN மற்றும் முகவரி தேவை; அவை மறையாக்கம் செய்து சேமிக்கப்படும், ரசீதுகள், இணைப்புகள் அல்லது மின்னஞ்சல்களில் ஒருபோதும் காட்டப்படாது.',
+  pan: 'PAN',
+  panError: 'உங்கள் PAN-ஐ உள்ளிடவும், எ.கா. ABCDE1234F',
+  address: 'அஞ்சல் முகவரி',
+  addressError: 'உங்கள் முழு அஞ்சல் முகவரியை உள்ளிடவும்',
+  taxAck:
+    'பழைய வரி முறையில் தாக்கல் செய்தால் மட்டுமே விலக்கு பொருந்தும் என்பதைப் புரிந்துகொள்கிறேன்.',
+  taxAckError: 'சேர இந்தப் பெட்டியைத் தேர்ந்தெடுக்கவும், அல்லது விலக்கு விருப்பத்தை நீக்கவும்.',
   viewReceipt: 'உங்கள் நன்கொடை ஒப்புகையைப் பார்க்க அல்லது பதிவிறக்க',
   pending: 'உங்கள் கட்டணத்தை உறுதிப்படுத்திக்கொண்டிருக்கிறோம்',
   dontPayAgain: 'மீண்டும் செலுத்த வேண்டாம். இதற்குச் சில நிமிடங்கள் ஆகலாம்.',

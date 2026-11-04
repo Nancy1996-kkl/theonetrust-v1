@@ -15,6 +15,7 @@ import { PaymentProviderError, type PaymentProvider } from '../donations/provide
 import { csvRow, maskPhone, maskText } from '../help/masking.ts';
 import { applyProviderPayment } from '../payments/reconcile.ts';
 import { shareTokenFor } from '../receipts/issue.ts';
+import { maskPan } from '../tax/identity.ts';
 import {
   LedgerQuery,
   currentOf,
@@ -169,6 +170,7 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
         webhookEvents: { orderBy: { receivedAt: 'asc' } },
         bankTransfers: { orderBy: { createdAt: 'asc' } },
         exceptions: { orderBy: { createdAt: 'asc' } },
+        donorIdentity: { select: { panLast4: true, addressLine: true } },
       },
     });
     if (!row) throw new AppError('NOT_FOUND');
@@ -187,6 +189,12 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
       donorPhoneMasked: row.donorPhone ? maskPhone(row.donorPhone) : null,
       wantsReceipt: row.wantsReceipt,
       hideNamePublicly: row.hideNamePublicly,
+      taxOptIn: row.donorIdentity
+        ? {
+            panMasked: maskPan(row.donorIdentity.panLast4),
+            hasAddress: row.donorIdentity.addressLine !== null,
+          }
+        : null,
       attempts: row.paymentAttempts.map((a) => ({
         providerOrderId: a.providerOrderId,
         providerPaymentId: a.providerPaymentId,

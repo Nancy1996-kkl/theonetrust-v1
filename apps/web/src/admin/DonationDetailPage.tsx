@@ -141,6 +141,7 @@ export function DonationDetailPage() {
     [l.contact, [data.donorEmailMasked, data.donorPhoneMasked].filter(Boolean).join(' · ') || '—'],
     [l.language, data.locale === 'ta' ? 'தமிழ்' : 'English'],
     [l.wantsReceipt, data.wantsReceipt ? l.yes : l.no],
+    [l.taxOptIn, data.taxOptIn ? `${l.yes} · PAN ${data.taxOptIn.panMasked ?? '—'}` : l.no],
   ];
 
   return (

@@ -25,6 +25,7 @@ import { PolicyNotice } from '../routes/policy/PolicyNotice.tsx';
 import { useDonationDraft } from '../state/donation-draft.ts';
 import { newIdempotencyKey, useDonateClient, type CheckoutOutcome } from './donate-client.ts';
 import { MonthlyConsent } from './MonthlyConsent.tsx';
+import { TaxOptInFields } from './TaxOptInFields.tsx';
 import { useMonthlyClient } from './monthly-client.ts';
 import {
   DONATE_MESSAGES,
@@ -63,9 +64,15 @@ interface Details {
   hideName: boolean;
   consent: boolean;
   coverFee: boolean;
+  /** Tax-benefit opt-in (#34), only when the server offers it. Never stored in the browser. */
+  taxOptIn: boolean;
+  pan: string;
+  address: string;
+  oldRegimeAck: boolean;
 }
 
-type DetailError = 'name' | 'mobile' | 'email' | 'contact' | 'consent';
+type DetailError = 'name' | 'mobile' | 'email' | 'contact' | 'consent' | 'pan' | 'address' | 'ack';
+const PAN = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
 
 function session(): Storage | undefined {
   try {
@@ -125,6 +132,10 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     hideName: true,
     consent: false,
     coverFee: false,
+    taxOptIn: false,
+    pan: '',
+    address: '',
+    oldRegimeAck: false,
   });
   const [errors, setErrors] = useState<Partial<Record<DetailError, true>>>({});
   const [amountError, setAmountError] = useState(false);
@@ -151,6 +162,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const gift = draft.amountPaise;
   /** Monthly giving (#32) only when the server says it is switched on. */
   const monthly = draft.frequency === 'monthly' && limits?.monthlyOffered === true;
+  /** Tax opt-in (#34): only when the server says the approval is confirmed and switched on. */
+  const taxOffered = limits?.taxOptInOffered === true && !monthly;
 
   // Limits and the fee estimate come from the server; nothing is assumed here.
   useEffect(() => {
@@ -229,6 +242,11 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     if (details.email.trim() && !EMAIL.test(details.email.trim())) found.email = true;
     if (!details.mobile.trim() && !details.email.trim()) found.contact = true;
     if (!details.consent) found.consent = true;
+    if (taxOffered && details.taxOptIn) {
+      if (!PAN.test(details.pan.replace(/\s/g, '').toUpperCase())) found.pan = true;
+      if (details.address.trim().length < 10) found.address = true;
+      if (!details.oldRegimeAck) found.ack = true;
+    }
     setErrors(found);
     return Object.keys(found).length === 0;
   }
@@ -267,6 +285,14 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       coverFee: details.coverFee && fee !== null,
       consent: true as const,
       locale: lang,
+      ...(taxOffered &&
+        details.taxOptIn && {
+          taxOptIn: {
+            pan: details.pan.replace(/\s/g, '').toUpperCase(),
+            address: details.address.trim(),
+            oldRegimeAck: true as const,
+          },
+        }),
     };
   }
 
@@ -813,6 +839,13 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             onChange={(e) => set('consent')(e.target.checked)}
             error={errors.consent ? t.consentError : undefined}
           />
+          {taxOffered && (
+            <TaxOptInFields
+              value={details}
+              errors={errors}
+              onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
+            />
+          )}
           <PolicyNotice />
         </form>
       );

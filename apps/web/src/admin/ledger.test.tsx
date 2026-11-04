@@ -81,6 +81,7 @@ const DETAIL: DonationDetail = {
   donorPhoneMasked: '••••••3210',
   wantsReceipt: true,
   hideNamePublicly: true,
+  taxOptIn: { panMasked: '••••••234F', hasAddress: true },
   attempts: [
     {
       providerOrderId: 'order_ABC123',
@@ -316,6 +317,7 @@ describe('donation detail', () => {
     const summary = sec(l.summary);
     expect(summary).toHaveTextContent('d•••@example.org · ••••••3210');
     expect(summary).toHaveTextContent('தமிழ்');
+    expect(summary).toHaveTextContent('••••••234F');
     expect(sec(l.attempts)).toHaveTextContent('pay_ABC123');
     expect(sec(l.history)).toHaveTextContent(`${l.statuses.CREATED} → ${l.statuses.PAID}`);
     expect(sec(l.webhooks)).toHaveTextContent('payment.captured');
