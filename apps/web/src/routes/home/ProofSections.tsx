@@ -264,9 +264,9 @@ export function ContactSection({ proof, facts }: ProofProps) {
           <h3>{contact.helpTitle[lang]}</h3>
           <p>{contact.helpBody[lang]}</p>
           <div className="proof-contact__actions">
-            <a className="ui-button ui-button--secondary" href={`${home}#get-help`}>
+            <Link className="ui-button ui-button--secondary" to={`${home}#get-help`}>
               {contact.helpCta[lang]}
-            </a>
+            </Link>
             {facts.whatsappUrl && (
               <a
                 className="ui-button ui-button--ghost"

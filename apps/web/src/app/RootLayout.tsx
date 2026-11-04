@@ -11,6 +11,7 @@ import {
 } from '../state/donation-draft.ts';
 import { SiteFooter } from './SiteFooter.tsx';
 import { SiteHeader } from './SiteHeader.tsx';
+import { GetHelpPanel } from '../help/GetHelpPanel.tsx';
 
 function browserStorage(): Storage | undefined {
   try {
@@ -63,6 +64,7 @@ export function RootLayout() {
             <Outlet />
           </main>
           <SiteFooter onLanguageChange={changeLanguage} />
+          <GetHelpPanel />
           {/* New pages open at the top (or at their #anchor); back/forward restore the old position.
               The key ignores the /ta prefix, so switching language keeps the reader's place. */}
           <ScrollRestoration getKey={(loc) => loc.pathname.replace(/^\/ta(?=\/|$)/, '') || '/'} />
