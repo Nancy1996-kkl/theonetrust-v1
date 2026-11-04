@@ -19,6 +19,7 @@
     "test:coverage": "pnpm -r test:coverage",
     "test:scripts": "node --test \"scripts/**/*.test.mjs\" \".claude/**/*.test.mjs\"",
     "test:e2e": "pnpm --filter @theonetrust/web test:e2e",
+    "test:visual": "pnpm --filter @theonetrust/web test:visual",
     "check:tests-required": "node scripts/check-tests-required.mjs",
     "check:no-live-keys": "node scripts/check-no-live-keys.mjs",
     "verify": "node scripts/verify.mjs",

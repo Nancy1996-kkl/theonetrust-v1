@@ -132,21 +132,26 @@ export function ReceiptsPage() {
   }, [api, t, page, attempt]);
 
   if (!data) {
-    return error ? (
-      <StateBlock
-        state="error"
-        title={t.helpErrorTitle}
-        headingLevel={2}
-        action={
-          <Button variant="secondary" onClick={() => setAttempt((n) => n + 1)}>
-            {t.retry}
-          </Button>
-        }
-      >
-        {error}
-      </StateBlock>
-    ) : (
-      <StateBlock state="loading" title={t.loading} headingLevel={2} />
+    return (
+      <div className="admin-page">
+        <h1>{l.receiptsTitle}</h1>
+        {error ? (
+          <StateBlock
+            state="error"
+            title={t.helpErrorTitle}
+            headingLevel={2}
+            action={
+              <Button variant="secondary" onClick={() => setAttempt((n) => n + 1)}>
+                {t.retry}
+              </Button>
+            }
+          >
+            {error}
+          </StateBlock>
+        ) : (
+          <StateBlock state="loading" title={t.loading} headingLevel={2} />
+        )}
+      </div>
     );
   }
 

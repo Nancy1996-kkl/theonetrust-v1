@@ -99,7 +99,7 @@ describe('email delivery page', () => {
   it('lists emails with plain-language status, audience, reference and reason', async () => {
     const { container } = renderPage(api());
     expect(await screen.findByRole('heading', { level: 1, name: t.emailTitle })).toBeVisible();
-    const table = screen.getByRole('table', { name: t.emailCaption });
+    const table = await screen.findByRole('table', { name: t.emailCaption });
     for (const text of [
       t.emailTplowner_donation_paid,
       t.emailTpldonor_donation_paid,

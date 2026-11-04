@@ -656,6 +656,9 @@
 
 /* ── Data table ──────────────────────────────────────────────────── */
 .ui-table__scroll {
+  /* Containing block for visually hidden text in cells, so it scrolls with the table instead
+     of widening the page (found by the #37 visual audit at 360px). */
+  position: relative;
   overflow-x: auto;
   border: var(--border-width) solid var(--color-border-subtle);
   border-radius: var(--radius-lg);

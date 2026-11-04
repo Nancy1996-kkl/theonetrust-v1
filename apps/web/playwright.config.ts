@@ -18,6 +18,8 @@ const viewports = [
 
 export default defineConfig({
   testDir: './e2e',
+  // Visual baselines run on their own (playwright.visual.config.ts, #37).
+  testIgnore: '**/*.visual.ts',
   fullyParallel: true,
   forbidOnly: isCI,
   // One retry captures a trace; a test that only passes on retry still fails the run.

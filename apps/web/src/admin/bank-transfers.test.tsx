@@ -117,7 +117,7 @@ describe('bank transfers page', () => {
   it('lists credits, awaiting donors (UTR marked not proof) and exceptions', async () => {
     const { container } = renderPage(api());
     expect(await screen.findByRole('heading', { level: 1, name: t.bankTitle })).toBeVisible();
-    const credits = screen.getByRole('table', { name: t.bankCreditsCaption });
+    const credits = await screen.findByRole('table', { name: t.bankCreditsCaption });
     expect(credits).toHaveTextContent('UTR111111');
     expect(credits).toHaveTextContent(t.bankStatusMATCHED);
     expect(screen.getByRole('table', { name: t.bankAwaitingCaption })).toHaveTextContent(

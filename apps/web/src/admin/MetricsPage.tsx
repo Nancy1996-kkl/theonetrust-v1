@@ -105,7 +105,7 @@ export function MetricsPage() {
   const columns: Column<AdminMetric>[] = [
     {
       key: 'label',
-      header: c.metricLabelEn,
+      header: lang === 'ta' ? c.metricLabelTa : c.metricLabelEn,
       rowHeader: true,
       cell: (m) => (lang === 'ta' ? m.labelTa : m.labelEn),
     },

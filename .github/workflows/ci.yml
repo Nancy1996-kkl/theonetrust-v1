@@ -152,6 +152,10 @@ jobs:
       - name: Playwright
         run: pnpm test:e2e
 
+      # Visual baselines (#37): rendered on Linux Chromium, so compared here.
+      - name: Visual baselines
+        run: pnpm test:visual
+
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v7

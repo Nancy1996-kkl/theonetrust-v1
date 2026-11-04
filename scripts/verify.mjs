@@ -32,6 +32,7 @@ const steps = [
     : [
         ['build', 'pnpm', ['build']],
         ['e2e (5 viewports + auto bug detector)', 'pnpm', ['test:e2e']],
+        ['visual baselines (5 viewports, en + ta)', 'pnpm', ['test:visual']],
       ]),
 ];
 
