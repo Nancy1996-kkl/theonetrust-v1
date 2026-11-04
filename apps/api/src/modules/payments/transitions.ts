@@ -42,9 +42,14 @@ export async function transitionDonation(
     // Conditional update: a concurrent change makes this a no-op, detected below.
     const result = await tx.donationIntent.updateMany({
       where: { id: intentId, status: intent.status },
-      data: { status: to },
+      // The first verified PAID stamps paid_at (#31 totals); it is never cleared.
+      data: { status: to, ...(to === 'PAID' && !intent.paidAt && { paidAt: new Date() }) },
     });
     if (result.count !== 1) throw new AppError('CONFLICT');
+    // Append-only history for the owner's detail view (#31).
+    await tx.donationStatusEvent.create({
+      data: { donationIntentId: intentId, fromStatus: intent.status, toStatus: to, source },
+    });
   }
   return { from: intent.status, to };
 }

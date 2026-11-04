@@ -11,6 +11,8 @@ import { parseInput } from '../../http/validation.ts';
 import { auditLog, changedFieldNames, type AuditEntry } from '../audit/audit.ts';
 import { AuditQuery, listAuditEntries } from '../audit/query.ts';
 import { helpAdminRoutes } from '../help/admin-routes.ts';
+import type { PaymentProvider } from '../donations/provider.ts';
+import { ledgerAdminRoutes } from '../ledger/admin-routes.ts';
 import { notificationAdminRoutes } from '../notifications/admin-routes.ts';
 import { bankAdminRoutes } from '../payments/bank-admin-routes.ts';
 import type { AdminGuard } from './guard.ts';
@@ -40,6 +42,11 @@ export interface AdminRouteOptions {
   db?: Db;
   /** Whether an email provider is configured (shown on the delivery-status page). */
   emailSending?: boolean;
+  /** For the owner's audited "re-check with Razorpay" (#31). */
+  paymentProvider?: PaymentProvider | undefined;
+  receiptKey?: Buffer | undefined;
+  staleAfterMinutes?: number;
+  now?: () => Date;
 }
 
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -131,6 +138,13 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
     await helpAdminRoutes(app, { db: opts.db });
     await bankAdminRoutes(app, { db: opts.db });
     await notificationAdminRoutes(app, { db: opts.db, sendingEnabled: opts.emailSending ?? false });
+    await ledgerAdminRoutes(app, {
+      db: opts.db,
+      provider: opts.paymentProvider,
+      receiptKey: opts.receiptKey,
+      staleAfterMinutes: opts.staleAfterMinutes ?? 30,
+      now: opts.now ?? (() => new Date()),
+    });
   }
 
   /** Read-only. There is intentionally no PUT/PATCH/DELETE for audit entries. */

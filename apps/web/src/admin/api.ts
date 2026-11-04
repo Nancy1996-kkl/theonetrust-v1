@@ -15,6 +15,12 @@ import {
   type HelpCaseUpdate,
   type MfaEnableResponse,
   type MfaSetupResponse,
+  type AdminOverview,
+  type AdminReceiptList,
+  type DonationDetail,
+  type ExceptionQueue,
+  type LedgerFilters,
+  type LedgerList,
   type NotificationListResponse,
   type NotificationStatusDto,
 } from '@theonetrust/contracts';
@@ -41,9 +47,9 @@ export interface AuditFilters {
   to?: string;
 }
 
-function query(values: Record<string, string | undefined>): string {
+function query(values: Record<string, string | number | undefined>): string {
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(values)) if (value) params.set(key, value);
+  for (const [key, value] of Object.entries(values)) if (value) params.set(key, String(value));
   return params.toString();
 }
 
@@ -135,6 +141,30 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
         `/admin/payment-exceptions/${encodeURIComponent(id)}/resolve`,
         { reason },
       ),
+    overview: () => call<AdminOverview>('GET', '/admin/overview'),
+    donations: (filters: LedgerFilters) =>
+      call<LedgerList>('GET', `/admin/donations?${query({ ...filters })}`),
+    donation: (id: string) =>
+      call<DonationDetail>('GET', `/admin/donations/${encodeURIComponent(id)}`),
+    recheckDonation: (id: string, reason: string) =>
+      call<{ id: string; status: DonationDetail['status']; outcome: string }>(
+        'POST',
+        `/admin/donations/${encodeURIComponent(id)}/recheck`,
+        { reason },
+      ),
+    /** Plain link: the browser downloads it with the session cookie (GET, no CSRF needed). */
+    donationsExportUrl: (filters: LedgerFilters) =>
+      apiUrl(baseUrl, `/admin/donations/export.csv?${query({ ...filters, page: undefined })}`),
+    exceptionQueue: () => call<ExceptionQueue>('GET', '/admin/exceptions'),
+    receipts: (page = 1) => call<AdminReceiptList>('GET', `/admin/receipts?page=${page}`),
+    resendReceipt: (id: string, reason: string) =>
+      call<{ id: string; queued: boolean }>(
+        'POST',
+        `/admin/receipts/${encodeURIComponent(id)}/resend`,
+        { reason },
+      ),
+    receiptPdfUrl: (token: string, lang: 'ta' | 'en') =>
+      apiUrl(baseUrl, `/receipts/${encodeURIComponent(token)}/pdf?lang=${lang}`),
     notifications: (status?: NotificationStatusDto) =>
       call<NotificationListResponse>(
         'GET',

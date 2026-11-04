@@ -12,7 +12,7 @@ export function verifyWebhookSignature(raw: Buffer, signature: unknown, secret: 
   return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
-type Outcome = { status: 'PROCESSED' | 'IGNORED'; note?: string };
+type Outcome = { status: 'PROCESSED' | 'IGNORED'; note?: string; donationIntentId?: string };
 
 interface RazorpayEvent {
   event?: unknown;
@@ -81,7 +81,7 @@ export async function razorpayWebhookRoutes(
     } else {
       await applyProviderPayment(db, attempt.id, payment, opts.now());
     }
-    return { status: 'PROCESSED' };
+    return { status: 'PROCESSED', donationIntentId: attempt.donationIntentId };
   }
 
   app.post('/razorpay', { config: { rawBody: true, rateLimit: false } }, async (request, reply) => {
@@ -137,6 +137,7 @@ export async function razorpayWebhookRoutes(
           processingError: outcome.note ?? null,
           attempts: { increment: 1 },
           processedAt: opts.now(),
+          ...(outcome.donationIntentId && { donationIntentId: outcome.donationIntentId }),
         },
       });
       return reply.code(200).send({ received: true });

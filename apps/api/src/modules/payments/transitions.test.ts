@@ -9,6 +9,7 @@ function tx(status: string | null, count = 1) {
       findUnique: vi.fn(async () => (status ? { id: 'i', status } : null)),
       updateMany: vi.fn(async () => ({ count })),
     },
+    donationStatusEvent: { create: vi.fn(async () => ({})) },
   } as never;
 }
 
@@ -38,6 +39,23 @@ describe('donation state transitions', () => {
     expect(await transitionDonation(t, 'i', 'PAID', 'owner_bank_evidence')).toEqual({
       from: 'PENDING',
       to: 'PAID',
+    });
+    const mock = t as unknown as {
+      donationIntent: { updateMany: ReturnType<typeof vi.fn> };
+      donationStatusEvent: { create: ReturnType<typeof vi.fn> };
+    };
+    // #31: the first PAID stamps paid_at, and every change is written to the history.
+    expect(mock.donationIntent.updateMany).toHaveBeenCalledWith({
+      where: { id: 'i', status: 'PENDING' },
+      data: { status: 'PAID', paidAt: expect.any(Date) },
+    });
+    expect(mock.donationStatusEvent.create).toHaveBeenCalledWith({
+      data: {
+        donationIntentId: 'i',
+        fromStatus: 'PENDING',
+        toStatus: 'PAID',
+        source: 'owner_bank_evidence',
+      },
     });
   });
 

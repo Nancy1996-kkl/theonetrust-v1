@@ -137,6 +137,8 @@ const EnvSchema = z
         )
         .optional(),
     ),
+    /** A checkout payment still unsettled after this many minutes is listed for the owner (#31). */
+    ADMIN_STALE_PENDING_MINUTES: z.coerce.number().int().min(5).max(10_080).default(30),
     /** How often the outbox worker looks for due emails. */
     EMAIL_WORKER_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(30_000),
   })

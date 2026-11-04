@@ -8,6 +8,10 @@ import { BankTransfersPage } from '../admin/BankTransfersPage.tsx';
 import { HelpInboxPage } from '../admin/HelpInboxPage.tsx';
 import { HelpRequestPage } from '../admin/HelpRequestPage.tsx';
 import { NotificationsPage } from '../admin/NotificationsPage.tsx';
+import { DonationDetailPage } from '../admin/DonationDetailPage.tsx';
+import { DonationsPage } from '../admin/DonationsPage.tsx';
+import { ExceptionsPage } from '../admin/ExceptionsPage.tsx';
+import { ReceiptsPage } from '../admin/ReceiptsPage.tsx';
 import { RequireAdmin } from '../admin/RequireAdmin.tsx';
 import { RootLayout } from './RootLayout.tsx';
 import { RouteErrorPage } from '../routes/error/RouteErrorPage.tsx';
@@ -50,6 +54,10 @@ export const routes: RouteObject[] = [
               { path: 'help-requests/:id', element: <HelpRequestPage /> },
               { path: 'bank-transfers', element: <BankTransfersPage /> },
               { path: 'notifications', element: <NotificationsPage /> },
+              { path: 'donations', element: <DonationsPage /> },
+              { path: 'donations/:id', element: <DonationDetailPage /> },
+              { path: 'exceptions', element: <ExceptionsPage /> },
+              { path: 'receipts', element: <ReceiptsPage /> },
               { path: 'audit-log', element: <AuditLogPage /> },
             ],
           },
