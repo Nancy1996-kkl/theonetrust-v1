@@ -3,7 +3,7 @@ import { expect, test } from './fixtures/guard.ts';
 test.describe('public smoke', () => {
   test('home page loads with title, heading and Tamil text', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle('Theonetrust.in');
+    await expect(page).toHaveTitle(/^Theonetrust\.in/);
     await expect(page.getByRole('heading', { level: 1, name: 'Theonetrust.in' })).toBeVisible();
     // The bilingual placeholder was replaced by real sections in #12; Tamil lives under /ta/.
     await page.goto('/ta/');

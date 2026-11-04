@@ -1,3 +1,4 @@
+import { PageMeta } from '../../seo/PageMeta.tsx';
 import { TRUST_FACTS, type TrustFacts } from '../../config/trust-facts.ts';
 import { LANDING_CONTENT, draftsVisible, type LandingContent } from '../../content/landing.ts';
 import { PROOF_CONTENT, type ProofContent } from '../../content/proof.ts';
@@ -47,7 +48,7 @@ export function HomePage({
   };
   return (
     <>
-      <title>Theonetrust.in</title>
+      <PageMeta path="/" organisation />
       <HeroSection {...props} />
       <AboutSection {...props} />
       <WaysWeHelpSection {...props} />

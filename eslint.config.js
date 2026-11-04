@@ -64,11 +64,17 @@ export default tseslint.config(
   },
   // Node code: API, scripts, tooling configs
   {
-    files: ['apps/api/**/*.ts', 'scripts/**/*.mjs', '.claude/**/*.mjs', '**/*.config.{js,ts}'],
+    files: [
+      'apps/api/**/*.ts',
+      'scripts/**/*.mjs',
+      'apps/web/scripts/**/*.mjs',
+      '.claude/**/*.mjs',
+      '**/*.config.{js,ts}',
+    ],
     languageOptions: { globals: globals.node },
   },
   {
-    files: ['scripts/**/*.mjs', '.claude/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'apps/web/scripts/**/*.mjs', '.claude/**/*.mjs'],
     rules: { 'no-console': 'off' },
   },
   // Tests may use non-null assertions for brevity.

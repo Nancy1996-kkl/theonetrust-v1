@@ -17,6 +17,7 @@ import {
 import { homePath } from '../../i18n/lang.ts';
 import { useLang, useMessages } from '../../i18n/use-lang.ts';
 import { useDonationDraft } from '../../state/donation-draft.ts';
+import { PolicyNotice } from '../policy/PolicyNotice.tsx';
 import { Reveal } from './Reveal.tsx';
 
 /** Where a section's data stands. Static content is always ready; API data (#21) uses all three. */
@@ -263,9 +264,9 @@ export function ContactSection({ proof, facts }: ProofProps) {
           <h3>{contact.helpTitle[lang]}</h3>
           <p>{contact.helpBody[lang]}</p>
           <div className="proof-contact__actions">
-            <a className="ui-button ui-button--secondary" href={`${home}#get-help`}>
+            <Link className="ui-button ui-button--secondary" to={`${home}#get-help`}>
               {contact.helpCta[lang]}
-            </a>
+            </Link>
             {facts.whatsappUrl && (
               <a
                 className="ui-button ui-button--ghost"
@@ -315,6 +316,7 @@ export function FinalCtaSection({ proof, landing, showDrafts }: ProofProps) {
           >
             {finalCta.donateCta[lang]}
           </Link>
+          <PolicyNotice />
         </div>
       </Reveal>
     </section>

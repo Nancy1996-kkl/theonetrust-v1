@@ -86,6 +86,9 @@ test('language switch goes to the same page in Tamil and keeps query and hash', 
     .click();
   await expect(page).toHaveURL(/\/\?programme=education#ways-we-help$/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  // Switching language keeps the reader's place, so the page is still scrolled to the footer
+  // with links under the sticky header; axe target-size would report that scroll position.
+  await page.evaluate(() => window.scrollTo(0, 0));
 });
 
 test('Tamil not-found page', async ({ page }) => {

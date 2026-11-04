@@ -1,0 +1,149 @@
+/* Get Help panel (issue #15). Large tap targets, plain layout, tokens only. */
+.help {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.help__heading {
+  margin: 0;
+  font-size: var(--text-h3);
+}
+
+.help__heading:focus {
+  outline: none;
+}
+
+.help__heading:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.help__muted {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.help__actions,
+.help__channels {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.help__channels .ui-button {
+  min-height: var(--control-height);
+}
+
+.help__callout {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-inline-start: var(--space-1) solid var(--color-status-info);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-small);
+}
+
+.help__callout .ui-icon {
+  color: var(--color-status-info);
+}
+
+.help__callout--error {
+  border-inline-start-color: var(--color-status-error);
+}
+
+.help__callout--error .ui-icon {
+  color: var(--color-status-error);
+}
+
+/* The step heading already says it; the group legend stays for screen readers only. */
+.help__visually-legend > legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.help__kinds-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+}
+
+.help__kind--wide {
+  grid-column: 1 / -1;
+}
+
+/* Selected tile: tick + thick border (wireframe C: never one cue alone). */
+.help__kind .ui-radio-card__input:checked + .ui-radio-card__label .ui-radio-card__title::after {
+  content: ' ✓';
+}
+
+.help__textarea {
+  min-height: calc(var(--control-height) * 3);
+  resize: vertical;
+}
+
+.help__counter {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+  text-align: end;
+}
+
+.help__consent {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.help__result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-status-success);
+}
+
+.help__result .help__heading {
+  color: var(--color-text-heading);
+}
+
+.help__reference {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.help__reference dt {
+  font-weight: var(--weight-semibold);
+}
+
+.help__reference dd {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.05em;
+}
+
+.help__trap {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.help__stepper .ui-stepper__label {
+  font-size: var(--text-small);
+}
