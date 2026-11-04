@@ -14,6 +14,15 @@ import { apiUrl } from '../lib/api-url.ts';
  * - `api` (#22): sends to the trust's API. The live site uses this once the API is deployed.
  * - `unavailable`: tells the person online requests are not open yet and offers phone and
  *   WhatsApp instead (live default until the API is configured).
+import type { HelpRequest, HelpRequestAccepted } from '@theonetrust/contracts';
+
+/**
+ * How the Get Help panel sends a request. The real API adapter arrives with #22.
+ *
+ * - `mock`: pretends to accept (dev, tests, e2e). Never used on the live site, because a fake
+ *   "we will call you" would leave a real person waiting for a call that never comes.
+ * - `unavailable` (live default until #22): tells the person online requests are not open yet
+ *   and offers phone and WhatsApp instead.
  */
 export type HelpSubmitResult =
   | ({ ok: true } & HelpRequestAccepted)
@@ -96,6 +105,10 @@ export function selectHelpClient(
   env: { VITE_HELP_ADAPTER?: string; VITE_API_BASE_URL?: string; DEV?: boolean } = import.meta.env,
 ): HelpClient {
   if (env.VITE_HELP_ADAPTER === 'api') return createApiHelpClient(env.VITE_API_BASE_URL);
+/** Picks the adapter from VITE_HELP_ADAPTER (`mock` only for dev/e2e builds). */
+export function selectHelpClient(
+  env: { VITE_HELP_ADAPTER?: string; DEV?: boolean } = import.meta.env,
+): HelpClient {
   if (env.VITE_HELP_ADAPTER === 'mock') return createMockHelpClient();
   if (env.VITE_HELP_ADAPTER === undefined && env.DEV === true) return createMockHelpClient();
   return unavailableHelpClient;
