@@ -30,6 +30,20 @@ const INTENT: DonationIntentResponse = {
   checkout: { provider: 'RAZORPAY', keyId: 'rzp_test_key', orderId: 'order_ABC123' },
 };
 
+const BANK_INTENT = {
+  publicReference: 'TOT-D-BANKBANKBANK',
+  giftPaise: 100_000,
+  feePaise: 0 as const,
+  amountPaise: 100_000,
+  currency: 'INR' as const,
+  bankTransfer: {
+    accountName: 'Synthetic Trust',
+    accountNumber: '000011112222',
+    ifsc: 'SBIN0000000',
+    bankName: 'Synthetic Bank',
+  },
+};
+
 function client(overrides: Partial<DonateClient> = {}): DonateClient {
   return {
     acceptsDonations: true,
@@ -38,8 +52,11 @@ function client(overrides: Partial<DonateClient> = {}): DonateClient {
       maxPaise: 500_000,
       receiptMinPaise: 50_000,
       feeCoverOffered: false,
+      bankTransferOffered: true,
     })),
     start: vi.fn(async () => ({ ok: true as const, intent: INTENT })),
+    startBankTransfer: vi.fn(async () => ({ ok: true as const, intent: BANK_INTENT })),
+    claimBankTransfer: vi.fn(async () => true),
     checkout: vi.fn(async () => ({
       kind: 'completed' as const,
       paymentId: 'pay_1',
@@ -131,7 +148,7 @@ describe('donate panel', () => {
     const status = vi.fn().mockResolvedValueOnce('UNKNOWN').mockResolvedValueOnce('PAID');
     renderAt('/#donate', client({ verify: vi.fn(async () => 'UNKNOWN' as const), status }));
     const dialog = await toReview(user);
-    await user.click(within(dialog).getByRole('button', { name: /Pay/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.pending })).toBeVisible();
     expect(within(dialog).queryByRole('heading', { name: t.thanks })).toBeNull();
     expect(sessionStorage.getItem(PENDING_KEY)).toBe(INTENT.publicReference);
@@ -145,10 +162,10 @@ describe('donate panel', () => {
     const user = userEvent.setup();
     renderAt('/#donate', client({ verify: vi.fn(async () => 'FAILED' as const) }));
     const dialog = await toReview(user);
-    await user.click(within(dialog).getByRole('button', { name: /Pay/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.failed })).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: t.tryAgain }));
-    expect(within(dialog).getByRole('button', { name: /Pay/ })).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' })).toBeVisible();
   });
 
   it('cancel keeps choices and reuses the same order (one idempotency key)', async () => {
@@ -160,9 +177,9 @@ describe('donate panel', () => {
     const donate = client({ checkout });
     renderAt('/#donate', donate);
     const dialog = await toReview(user);
-    await user.click(within(dialog).getByRole('button', { name: /Pay/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByText(new RegExp(t.cancelled))).toBeVisible();
-    await user.click(within(dialog).getByRole('button', { name: /Pay/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.thanks })).toBeVisible();
     expect(donate.start).toHaveBeenCalledTimes(1);
   });
@@ -175,13 +192,13 @@ describe('donate panel', () => {
       .mockResolvedValueOnce({ kind: 'failed', reason: 'other' });
     renderAt('/#donate', client({ checkout }));
     const dialog = await toReview(user);
-    await user.click(within(dialog).getByRole('button', { name: /Pay/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.limitTitle })).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: t.smaller }));
     expect(within(dialog).getByRole('heading', { name: t.howMuch })).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
-    await user.click(within(dialog).getByRole('button', { name: /Pay/ }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.failed })).toBeVisible();
   });
 
@@ -195,7 +212,7 @@ describe('donate panel', () => {
       const user = userEvent.setup();
       renderAt('/#donate', client({ start: vi.fn(async () => ({ ok: false as const, reason })) }));
       const dialog = await toReview(user);
-      await user.click(within(dialog).getByRole('button', { name: /Pay/ }));
+      await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
       expect(await within(dialog).findByRole('heading', { name: title })).toBeVisible();
       await user.click(within(dialog).getByRole('button', { name: t.tryAgain }));
     },
@@ -233,6 +250,7 @@ describe('donate panel', () => {
         maxPaise: 500_000,
         receiptMinPaise: 50_000,
         feeCoverOffered: true,
+        bankTransferOffered: false,
         ...(gift ? { feePaise: 2_418, amountPaise: gift + 2_418 } : {}),
       })),
       start: vi.fn(async () => ({

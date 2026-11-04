@@ -10,6 +10,7 @@ export interface NewDonationIntent {
   feePaise?: number;
   idempotencyKey?: string | null;
   consentAt?: Date | null;
+  channel?: 'CHECKOUT' | 'BANK_TRANSFER';
   donorName: string;
   donorEmail?: string | null;
   donorPhone?: string | null;

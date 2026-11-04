@@ -29,6 +29,7 @@ export default defineConfig({
         'src/modules/help/admin-routes.ts',
         'src/modules/help/public-routes.ts',
         'src/modules/donations/routes.ts',
+        'src/modules/payments/bank-admin-routes.ts',
         'src/cli/owner-account.ts',
         'src/test/db-global-setup.ts',
         'src/test/db.ts',

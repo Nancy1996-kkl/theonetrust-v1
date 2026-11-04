@@ -88,6 +88,11 @@ function api(overrides: Partial<AdminApi> = {}): AdminApi {
       (f) =>
         `/api/v1/admin/help-requests/export.csv?${new URLSearchParams(f as Record<string, string>)}`,
     ),
+    bankTransfers: vi.fn(async () => ({ credits: [], awaiting: [], exceptions: [] })),
+    recordBankCredit: vi.fn(),
+    confirmBankCredit: vi.fn(),
+    rejectBankCredit: vi.fn(),
+    resolveException: vi.fn(),
     ...overrides,
   } as AdminApi;
 }

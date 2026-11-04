@@ -104,6 +104,22 @@ enum BankTransferStatus {
   REJECTED
 }
 
+enum DonationChannel {
+  CHECKOUT
+  BANK_TRANSFER
+}
+
+enum PaymentExceptionKind {
+  UNMATCHED_CREDIT
+  AMOUNT_MISMATCH
+  ALREADY_PAID
+}
+
+enum ExceptionStatus {
+  OPEN
+  RESOLVED
+}
+
 // ── Admin ───────────────────────────────────────────────────────────────────────────────
 
 model AdminUser {
@@ -133,6 +149,7 @@ model AdminUser {
   helpNotes        HelpRequestNote[]
   assignedRequests HelpRequest[]
   bankTransfers    BankTransferRecord[]
+  bankCredits      BankTransferRecord[] @relation("BankCreditRecordedBy")
 
   @@unique([authProvider, authSubject])
   @@map("admin_users")
@@ -195,32 +212,34 @@ model Programme {
 
 /// One donation the donor started. Only server-verified captured payments make it PAID.
 model DonationIntent {
-  id                  String         @id @default(uuid()) @db.Uuid
+  id                  String          @id @default(uuid()) @db.Uuid
   /// Unguessable public reference shown to the donor; never the UUID.
-  publicReference     String         @unique @map("public_reference")
-  programmeId         String?        @map("programme_id") @db.Uuid
+  publicReference     String          @unique @map("public_reference")
+  programmeId         String?         @map("programme_id") @db.Uuid
   /// What the payment provider is asked to collect: giftPaise + feePaise. Server-computed only.
-  amountPaise         Int            @map("amount_paise")
+  amountPaise         Int             @map("amount_paise")
   /// The donation itself, as chosen by the donor.
-  giftPaise           Int            @map("gift_paise")
+  giftPaise           Int             @map("gift_paise")
   /// Optional fee cover the donor chose to add (0 when not chosen). Estimate from the fee table.
-  feePaise            Int            @default(0) @map("fee_paise")
-  currency            String         @default("INR") @db.Char(3)
-  status              DonationStatus @default(CREATED)
+  feePaise            Int             @default(0) @map("fee_paise")
+  currency            String          @default("INR") @db.Char(3)
+  status              DonationStatus  @default(CREATED)
+  /// How the donor pays: Razorpay Checkout, or bank transfer confirmed by the owner (#25).
+  channel             DonationChannel @default(CHECKOUT)
   /// Browser-supplied key so a double click or retry never creates a second order.
-  idempotencyKey      String?        @unique @map("idempotency_key")
-  consentAt           DateTime?      @map("consent_at") @db.Timestamptz(3)
-  donorName           String         @map("donor_name")
-  donorEmail          String?        @map("donor_email")
-  donorPhone          String?        @map("donor_phone")
-  hideNamePublicly    Boolean        @default(true) @map("hide_name_publicly")
-  wantsReceipt        Boolean        @default(false) @map("wants_receipt")
-  wantsTaxCertificate Boolean        @default(false) @map("wants_tax_certificate")
-  coverFee            Boolean        @default(false) @map("cover_fee")
-  locale              Locale         @default(en)
-  subscriptionId      String?        @map("subscription_id") @db.Uuid
-  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt           DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  idempotencyKey      String?         @unique @map("idempotency_key")
+  consentAt           DateTime?       @map("consent_at") @db.Timestamptz(3)
+  donorName           String          @map("donor_name")
+  donorEmail          String?         @map("donor_email")
+  donorPhone          String?         @map("donor_phone")
+  hideNamePublicly    Boolean         @default(true) @map("hide_name_publicly")
+  wantsReceipt        Boolean         @default(false) @map("wants_receipt")
+  wantsTaxCertificate Boolean         @default(false) @map("wants_tax_certificate")
+  coverFee            Boolean         @default(false) @map("cover_fee")
+  locale              Locale          @default(en)
+  subscriptionId      String?         @map("subscription_id") @db.Uuid
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   programme       Programme?              @relation(fields: [programmeId], references: [id], onDelete: Restrict)
   subscription    DonationSubscription?   @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
@@ -229,6 +248,8 @@ model DonationIntent {
   donorIdentity   DonorIdentityRecord?
   taxTracking     TaxCertificateTracking?
   bankTransfers   BankTransferRecord[]
+  bankClaims      BankTransferClaim[]
+  exceptions      PaymentException[]
 
   @@index([status, createdAt])
   @@index([programmeId, createdAt])
@@ -322,23 +343,64 @@ model DonorIdentityRecord {
   @@map("donor_identity_records")
 }
 
-/// Manual NEFT/RTGS reconciliation: only an admin with bank evidence may match it.
+/// A bank credit the OWNER recorded from the trust's bank statement (#25). Only an owner with
+/// this evidence, a second confirmation and a reason can turn it into a paid donation.
 model BankTransferRecord {
   id               String             @id @default(uuid()) @db.Uuid
   donationIntentId String?            @map("donation_intent_id") @db.Uuid
+  /// UTR / bank reference as printed on the statement.
   bankReference    String             @unique @map("bank_reference")
   amountPaise      Int                @map("amount_paise")
   receivedOn       DateTime           @map("received_on") @db.Date
+  /// Where the owner saw it, e.g. "SBI statement 03-11-2026, line 14". No account numbers.
+  evidence         String
   status           BankTransferStatus @default(REPORTED)
+  recordedById     String             @map("recorded_by_id") @db.Uuid
   matchedById      String?            @map("matched_by_id") @db.Uuid
   matchedAt        DateTime?          @map("matched_at") @db.Timestamptz(3)
+  decisionReason   String?            @map("decision_reason")
   createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  donationIntent DonationIntent? @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
-  matchedBy      AdminUser?      @relation(fields: [matchedById], references: [id], onDelete: Restrict)
+  donationIntent DonationIntent?    @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+  recordedBy     AdminUser          @relation("BankCreditRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
+  matchedBy      AdminUser?         @relation(fields: [matchedById], references: [id], onDelete: Restrict)
+  exceptions     PaymentException[]
 
   @@index([status])
   @@map("bank_transfer_records")
+}
+
+/// What a donor says they paid (optional UTR). Never proof of payment — it only helps matching.
+model BankTransferClaim {
+  id               String   @id @default(uuid()) @db.Uuid
+  donationIntentId String   @map("donation_intent_id") @db.Uuid
+  utr              String?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  donationIntent DonationIntent @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+
+  @@index([utr])
+  @@index([donationIntentId])
+  @@map("bank_transfer_claims")
+}
+
+/// Something the owner must look at: unmatched credit, amount mismatch, already paid (#25, #31).
+model PaymentException {
+  id                   String               @id @default(uuid()) @db.Uuid
+  kind                 PaymentExceptionKind
+  status               ExceptionStatus      @default(OPEN)
+  donationIntentId     String?              @map("donation_intent_id") @db.Uuid
+  bankTransferRecordId String?              @map("bank_transfer_record_id") @db.Uuid
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  resolvedAt           DateTime?            @map("resolved_at") @db.Timestamptz(3)
+  resolvedById         String?              @map("resolved_by_id") @db.Uuid
+  resolution           String?
+
+  donationIntent     DonationIntent?     @relation(fields: [donationIntentId], references: [id], onDelete: Restrict)
+  bankTransferRecord BankTransferRecord? @relation(fields: [bankTransferRecordId], references: [id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@map("payment_exceptions")
 }
 
 // ── Receipts and tax ────────────────────────────────────────────────────────────────────
@@ -486,6 +548,11 @@ model TrustSettings {
   /// Fee table for the optional "cover the fee" estimate (see modules/donations/fees.ts).
   /// Null = fee cover is not offered (the default until the trust confirms its pricing).
   feeTable           Json?     @map("fee_table")
+  /// Trust bank account for NEFT/RTGS/IMPS [CONFIRM]. All null = bank transfer not offered.
+  bankAccountName    String?   @map("bank_account_name")
+  bankAccountNumber  String?   @map("bank_account_number")
+  bankIfsc           String?   @map("bank_ifsc") @db.Char(11)
+  bankName           String?   @map("bank_name")
   foreignDonations   Boolean   @default(false) @map("foreign_donations")
   updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 

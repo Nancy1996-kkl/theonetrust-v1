@@ -38,6 +38,11 @@ function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
     addHelpNote: vi.fn(async () => ({ id: 'n' })),
     team: vi.fn(async () => ({ users: [] })),
     helpExportUrl: vi.fn(() => '/api/v1/admin/help-requests/export.csv'),
+    bankTransfers: vi.fn(async () => ({ credits: [], awaiting: [], exceptions: [] })),
+    recordBankCredit: vi.fn(),
+    confirmBankCredit: vi.fn(),
+    rejectBankCredit: vi.fn(),
+    resolveException: vi.fn(),
     ...overrides,
   };
 }

@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type {
+  BankTransferIntentResponse,
   DonationEstimateResponse,
   DonationIntentRequest,
   DonationIntentResponse,
@@ -46,6 +47,24 @@ export interface DonateClient {
     outcome: { paymentId: string; signature: string },
   ): Promise<VerifiedStatus>;
   status(publicReference: string): Promise<VerifiedStatus>;
+  /** Bank transfer (#25): no Razorpay order; returns the trust account and a reference. */
+  startBankTransfer(
+    request: DonationIntentRequest,
+    idempotencyKey: string,
+  ): Promise<
+    { ok: true; intent: BankTransferIntentResponse } | { ok: false; reason: StartFailure }
+  >;
+  /** "I've made the transfer" + optional UTR. Never confirms the payment. */
+  claimBankTransfer(publicReference: string, utr: string | null): Promise<boolean>;
+}
+
+type StartFailure = 'invalid' | 'rate_limited' | 'unavailable' | 'network';
+
+function failureFor(status: number): StartFailure {
+  if (status === 400 || status === 409) return 'invalid';
+  if (status === 429) return 'rate_limited';
+  if (status === 503) return 'unavailable';
+  return 'network';
 }
 
 const STATUSES = new Set(['PAID', 'PENDING', 'FAILED']);
@@ -148,10 +167,42 @@ export function createApiDonateClient(
         }
         return { ok: false, reason: 'network' };
       }
-      if (res.status === 400 || res.status === 409) return { ok: false, reason: 'invalid' };
-      if (res.status === 429) return { ok: false, reason: 'rate_limited' };
-      if (res.status === 503) return { ok: false, reason: 'unavailable' };
-      return { ok: false, reason: 'network' };
+      return { ok: false, reason: failureFor(res.status) };
+    },
+    async startBankTransfer(request, idempotencyKey) {
+      let res: Response;
+      try {
+        res = await fetchImpl(apiUrl(baseUrl, '/donation-intents'), {
+          method: 'POST',
+          credentials: 'omit',
+          headers: { ...json, 'idempotency-key': idempotencyKey },
+          body: JSON.stringify({ ...request, channel: 'bank_transfer', coverFee: false }),
+        });
+      } catch {
+        return { ok: false, reason: 'network' };
+      }
+      if (res.status === 201 || res.status === 200) {
+        const intent = (await res.json().catch(() => null)) as BankTransferIntentResponse | null;
+        if (intent?.bankTransfer?.accountNumber && intent.amountPaise === request.giftPaise) {
+          return { ok: true, intent };
+        }
+        return { ok: false, reason: 'network' };
+      }
+      return { ok: false, reason: failureFor(res.status) };
+    },
+    async claimBankTransfer(publicReference, utr) {
+      try {
+        const res = await fetchImpl(
+          apiUrl(
+            baseUrl,
+            `/donation-intents/${encodeURIComponent(publicReference)}/bank-transfer-claim`,
+          ),
+          { method: 'POST', credentials: 'omit', headers: json, body: JSON.stringify({ utr }) },
+        );
+        return res.status === 202;
+      } catch {
+        return false;
+      }
     },
     async checkout(intent, prefill) {
       let Razorpay: RazorpayConstructor;
@@ -251,7 +302,27 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
         maxPaise: 50_000_000,
         receiptMinPaise: 50_000,
         feeCoverOffered: false,
+        bankTransferOffered: true,
       }),
+    startBankTransfer: (request) =>
+      wait({
+        ok: true as const,
+        intent: {
+          publicReference: 'TOT-D-MOCK00000000',
+          giftPaise: request.giftPaise,
+          feePaise: 0 as const,
+          amountPaise: request.giftPaise,
+          currency: 'INR' as const,
+          // Visibly fake details: the mock is never used on the live site.
+          bankTransfer: {
+            accountName: 'MOCK ACCOUNT (test only)',
+            accountNumber: '000000000000',
+            ifsc: 'TEST0000000',
+            bankName: 'Mock Bank',
+          },
+        },
+      }),
+    claimBankTransfer: () => wait(true),
     start: (request) =>
       scenario() === 'start-fail'
         ? wait({ ok: false as const, reason: 'network' as const })
@@ -291,6 +362,8 @@ export const unavailableDonateClient: DonateClient = {
   checkout: () => Promise.resolve({ kind: 'dismissed' }),
   verify: () => Promise.resolve('UNKNOWN'),
   status: () => Promise.resolve('UNKNOWN'),
+  startBankTransfer: () => Promise.resolve({ ok: false, reason: 'unavailable' }),
+  claimBankTransfer: () => Promise.resolve(false),
 };
 
 /** VITE_DONATE_ADAPTER: `api` (live), `mock` (dev/e2e), anything else → unavailable. */
