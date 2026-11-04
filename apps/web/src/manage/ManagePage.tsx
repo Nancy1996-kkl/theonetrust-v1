@@ -167,6 +167,7 @@ export function ManagePage() {
             </Button>
           )}
           <p className="receipt__muted">{t.pauseNote}</p>
+          <p className="receipt__muted">{t.changeNote}</p>
         </section>
       )}
       <p className="receipt__muted">{t.privacy}</p>

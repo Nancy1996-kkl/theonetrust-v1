@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Db } from '../../db/client.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseProviderPayment } from '../donations/provider.ts';
+import { applySubscriptionEvent, SUBSCRIPTION_EVENTS } from '../subscriptions/lifecycle.ts';
 import { applyProviderPayment, applyRefund } from './reconcile.ts';
 
 /** HMAC-SHA256 of the exact raw body with the webhook secret, compared in constant time. */
@@ -19,6 +20,7 @@ interface RazorpayEvent {
   payload?: {
     payment?: { entity?: unknown };
     refund?: { entity?: { status?: unknown } };
+    subscription?: { entity?: unknown };
   };
 }
 
@@ -37,9 +39,21 @@ export async function razorpayWebhookRoutes(
   app: FastifyInstance,
   opts: { db?: Db; secret?: string; now: () => Date },
 ) {
-  async function process(db: Db, event: RazorpayEvent): Promise<Outcome> {
+  async function process(db: Db, event: RazorpayEvent, eventId: string): Promise<Outcome> {
     const type = typeof event.event === 'string' ? event.event : '';
     const rawPayment = event.payload?.payment?.entity;
+
+    // Monthly giving (#33): subscription events follow the mandate, charges become payments.
+    if ((SUBSCRIPTION_EVENTS as readonly string[]).includes(type)) {
+      return applySubscriptionEvent(
+        db,
+        type,
+        event.payload?.subscription?.entity,
+        rawPayment ? parseProviderPayment(rawPayment) : null,
+        eventId,
+        opts.now(),
+      );
+    }
 
     if (type === 'virtual_account.credited') {
       // Smart Collect is [CONFIRM] / not enabled: money arrived — the owner must look at it.
@@ -62,6 +76,10 @@ export async function razorpayWebhookRoutes(
       : payment.orderId
         ? await db.paymentAttempt.findUnique({ where: { providerOrderId: payment.orderId } })
         : null;
+    if (!attempt && (rawPayment as { invoice_id?: unknown }).invoice_id) {
+      // A monthly charge: recorded from its subscription.charged event, not from here (#33).
+      return { status: 'IGNORED', note: 'subscription_payment' };
+    }
     if (!attempt) {
       // A payment we never created an order for (or not linked yet): owner review, no guess.
       await db.paymentException.create({
@@ -129,7 +147,7 @@ export async function razorpayWebhookRoutes(
     }
 
     try {
-      const outcome = await process(db, event);
+      const outcome = await process(db, event, eventId);
       await db.webhookEvent.update({
         where: { id: row.id },
         data: {

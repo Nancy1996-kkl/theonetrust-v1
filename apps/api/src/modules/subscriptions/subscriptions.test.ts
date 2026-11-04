@@ -246,3 +246,27 @@ describe('monthly email and env', () => {
     expect(MONTHLY_CONSENT_VERSION).toBe('monthly-v1');
   });
 });
+
+describe('problem email', () => {
+  it('says "on hold" when halted and "try again" otherwise, with or without the manage link', async () => {
+    const { renderDonorSubscriptionProblem } = await import('../notifications/templates.ts');
+    const halted = renderDonorSubscriptionProblem(
+      {
+        donorName: 'A',
+        amountPaise: 50_000,
+        halted: true,
+        manageUrl: 'https://x.test/manage/t',
+        trustName: 'T',
+      },
+      'en',
+    );
+    expect(halted.text).toContain('on hold');
+    expect(halted.html).toContain('<a href="https://x.test/manage/t">');
+    const retry = renderDonorSubscriptionProblem(
+      { donorName: 'A', amountPaise: 50_000, halted: false, manageUrl: null, trustName: 'T' },
+      'ta',
+    );
+    expect(retry.text).toContain('மீண்டும் முயலலாம்');
+    expect(retry.text).not.toContain('manage');
+  });
+});
