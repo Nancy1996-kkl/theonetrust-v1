@@ -1,6 +1,7 @@
 import type { DonationStatus } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
 import type { ProviderPayment } from '../donations/provider.ts';
+import { enqueueDonationPaid } from '../notifications/outbox.ts';
 import { adjustReceiptForRefund, issueReceiptIfEligible } from '../receipts/issue.ts';
 import { canTransition, transitionDonation } from './transitions.ts';
 
@@ -84,13 +85,15 @@ export async function applyProviderPayment(
     );
     // The acknowledgement is created in the same transaction as PAID, never before (#29).
     if (target === 'PAID') {
-      await issueReceiptIfEligible(
+      const receipt = await issueReceiptIfEligible(
         tx,
         intent.id,
         { paymentAttemptId: attempt.id },
         payment.amountPaise,
         now,
       );
+      // Emails are queued here and sent later: a send failure can never undo PAID (#30).
+      await enqueueDonationPaid(tx, intent.id, receipt !== null);
     }
     return target;
   });

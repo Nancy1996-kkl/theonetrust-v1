@@ -235,6 +235,14 @@ describe('owner records a bank credit', () => {
     const receipts = await db.receipt.findMany({ where: { donationIntentId: intent.id } });
     expect(receipts).toHaveLength(1);
     expect(receipts[0]).toMatchObject({ bankTransferRecordId: id, amountPaise: 7_500_000 });
+    // #30: the owner (and the donor, who asked for an acknowledgement) are emailed later.
+    const queued = await db.notificationOutbox.findMany({
+      where: { entityRef: `donation_intent:${intent.id}` },
+    });
+    expect(queued.map((q) => q.template).sort()).toEqual([
+      'donor_donation_paid',
+      'owner_donation_paid',
+    ]);
     const entries = await db.auditLog.findMany({
       where: { actorId: ownerId, action: { startsWith: 'bank_transfer.' } },
     });

@@ -185,3 +185,19 @@
   align-items: end;
   gap: var(--space-3);
 }
+
+/* Email delivery (#30) */
+.admin-email__status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.admin-email__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding: 0;
+  list-style: none;
+}

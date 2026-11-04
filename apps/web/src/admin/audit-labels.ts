@@ -66,6 +66,10 @@ const LABELS: Record<string, { en: string; ta: string }> = {
     en: 'Payment exception resolved',
     ta: 'கட்டண விதிவிலக்கு தீர்க்கப்பட்டது',
   },
+  'notification.retry': {
+    en: 'Email queued again',
+    ta: 'மின்னஞ்சல் மீண்டும் வரிசையில் சேர்க்கப்பட்டது',
+  },
   'admin.preferences.update': { en: 'Dashboard language changed', ta: 'பலகை மொழி மாற்றப்பட்டது' },
 };
 

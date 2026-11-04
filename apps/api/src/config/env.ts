@@ -113,6 +113,32 @@ const EnvSchema = z
     ),
     /** Acknowledgement page + PDF requests per IP per hour. */
     RECEIPT_RATE_LIMIT_PER_HOUR: z.coerce.number().int().min(1).max(1000).default(60),
+    /**
+     * Email provider for the notification outbox (#30): `resend`, `brevo` or `none`. With `none`
+     * notifications stay queued (visible in the dashboard) and nothing is sent.
+     */
+    EMAIL_PROVIDER: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.enum(['none', 'resend', 'brevo']).default('none'),
+    ),
+    /** Provider API key — backend only, never VITE_*. Required unless EMAIL_PROVIDER=none. */
+    EMAIL_API_KEY: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.string().min(16).max(256).optional(),
+    ),
+    /** Verified sender, e.g. `Theonetrust.in <no-reply@theonetrust.in>` [CONFIRM domain]. */
+    EMAIL_FROM: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .max(200)
+        .regex(
+          /^(?:[^<>@\r\n]{1,80} <[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+>|[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+)$/,
+        )
+        .optional(),
+    ),
+    /** How often the outbox worker looks for due emails. */
+    EMAIL_WORKER_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(30_000),
   })
   .superRefine((env, ctx) => {
     if (Boolean(env.RAZORPAY_KEY_ID) !== Boolean(env.RAZORPAY_KEY_SECRET)) {
@@ -129,6 +155,16 @@ const EnvSchema = z
         path: ['RAZORPAY_KEY_ID'],
         message: 'live key outside production',
       });
+    }
+    if (env.EMAIL_PROVIDER !== 'none') {
+      for (const key of ['EMAIL_API_KEY', 'EMAIL_FROM'] as const) {
+        if (!env[key])
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: `required for ${env.EMAIL_PROVIDER}`,
+          });
+      }
     }
     if (env.NODE_ENV !== 'production') return;
     for (const key of ['DATABASE_URL', 'AUTH_SECRET_KEY'] as const) {

@@ -11,6 +11,7 @@ import { parseInput } from '../../http/validation.ts';
 import { auditLog, changedFieldNames, type AuditEntry } from '../audit/audit.ts';
 import { AuditQuery, listAuditEntries } from '../audit/query.ts';
 import { helpAdminRoutes } from '../help/admin-routes.ts';
+import { notificationAdminRoutes } from '../notifications/admin-routes.ts';
 import { bankAdminRoutes } from '../payments/bank-admin-routes.ts';
 import type { AdminGuard } from './guard.ts';
 
@@ -37,6 +38,8 @@ export interface AdminRouteOptions {
   guard: AdminGuard;
   /** Undefined when no database is configured (the guard then answers 401/503 first). */
   db?: Db;
+  /** Whether an email provider is configured (shown on the delivery-status page). */
+  emailSending?: boolean;
 }
 
 const UNSAFE = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -127,6 +130,7 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
   if (opts.db) {
     await helpAdminRoutes(app, { db: opts.db });
     await bankAdminRoutes(app, { db: opts.db });
+    await notificationAdminRoutes(app, { db: opts.db, sendingEnabled: opts.emailSending ?? false });
   }
 
   /** Read-only. There is intentionally no PUT/PATCH/DELETE for audit entries. */

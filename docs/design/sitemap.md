@@ -35,6 +35,7 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
 | `/admin/donations/:id` | — | One donation: payment attempts, webhook history, receipt, notifications | Trust owner | Owner session | No index | #31 | Planned |
 | `/admin/bank-transfers` | — | Record bank credits, second confirmation, open exceptions | Trust owner | Owner session | No index | #25 | Built |
 | `/admin/exceptions` | — | Payment exceptions and reconciliation (pending too long, mismatch, bank transfers) | Trust owner | Owner session | No index | #25, #31 | Planned |
+| `/admin/notifications` | — | Email delivery: queued, sent, retrying and failed emails (owner + donor) with a short reason; send again | Trust owner | Owner session | No index | #30 | Built |
 | `/admin/receipts` | — | Receipts: copy link, download, resend | Trust owner | Owner session | No index | #31 | Planned |
 | `/admin/help-requests` | — | Help request inbox: New → Contacted → Verifying → Helping → Closed | Trust owner | Owner session | No index | #22 | Built |
 | `/admin/help-requests/:id` | — | One help request with private notes and status history | Trust owner | Owner session | No index | #22 | Built |
