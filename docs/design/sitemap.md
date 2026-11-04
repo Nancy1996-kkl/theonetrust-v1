@@ -35,8 +35,8 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
 | `/admin/donations/:id` | — | One donation: payment attempts, webhook history, receipt, notifications | Trust owner | Owner session | No index | #31 | Planned |
 | `/admin/exceptions` | — | Payment exceptions and reconciliation (pending too long, mismatch, bank transfers) | Trust owner | Owner session | No index | #25, #31 | Planned |
 | `/admin/receipts` | — | Receipts: copy link, download, resend | Trust owner | Owner session | No index | #31 | Planned |
-| `/admin/help-requests` | — | Help request inbox: New → Contacted → Verifying → Helping → Closed | Trust owner | Owner session | No index | #22 | Planned |
-| `/admin/help-requests/:id` | — | One help request with private notes and status history | Trust owner | Owner session | No index | #22 | Planned |
+| `/admin/help-requests` | — | Help request inbox: New → Contacted → Verifying → Helping → Closed | Trust owner | Owner session | No index | #22 | Built |
+| `/admin/help-requests/:id` | — | One help request with private notes and status history | Trust owner | Owner session | No index | #22 | Built |
 | `/admin/monthly-giving` | — | Monthly giving subscriptions and their charge history | Trust owner | Owner session | No index | #33 | Planned |
 | `/admin/programmes` | — | Ways we help: create, edit, pause (bilingual) | Trust owner | Owner session | No index | #36 | Planned |
 | `/admin/content` | — | Site sections, FAQ, impact metrics, stories (draft → preview → publish) | Trust owner | Owner session | No index | #36 | Planned |

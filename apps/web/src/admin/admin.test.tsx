@@ -32,6 +32,12 @@ function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
     logout: vi.fn(async () => undefined),
     updatePreferences: vi.fn(async (locale: 'ta' | 'en') => ({ ...USER, locale })),
     auditLog: vi.fn(async () => ({ items: [], nextCursor: null })),
+    helpCases: vi.fn(async () => ({ items: [], nextCursor: null })),
+    helpCase: vi.fn(async () => Promise.reject(new AdminApiError('NOT_FOUND'))),
+    updateHelpCase: vi.fn(async () => Promise.reject(new AdminApiError('NOT_FOUND'))),
+    addHelpNote: vi.fn(async () => ({ id: 'n' })),
+    team: vi.fn(async () => ({ users: [] })),
+    helpExportUrl: vi.fn(() => '/api/v1/admin/help-requests/export.csv'),
     ...overrides,
   };
 }
@@ -526,5 +532,32 @@ describe('audit helpers', () => {
     expect(istDayStart('')).toBeUndefined();
     expect(auditActionLabel('auth.logout', 'ta')).toBe('வெளியேறினார்');
     expect(auditActionLabel('x.y', 'en')).toBe('x.y');
+  });
+});
+
+describe('help inbox API client', () => {
+  it('builds inbox requests and the export link', async () => {
+    const fetchImpl = vi.fn(
+      async (_url: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(JSON.stringify({ items: [], nextCursor: null, users: [], id: 'n' }), {
+          status: 200,
+        }),
+    );
+    const api = createAdminApi('https://api.example/api/v1', fetchImpl);
+    await api.helpCases({ status: 'NEW' }, 'c1');
+    await api.helpCase('a b');
+    await api.updateHelpCase('id1', { status: 'CLOSED' });
+    await api.addHelpNote('id1', 'note');
+    await api.team();
+    expect(fetchImpl.mock.calls.map((c) => [c[0], c[1]?.method])).toEqual([
+      ['https://api.example/api/v1/admin/help-requests?status=NEW&cursor=c1', 'GET'],
+      ['https://api.example/api/v1/admin/help-requests/a%20b', 'GET'],
+      ['https://api.example/api/v1/admin/help-requests/id1', 'PATCH'],
+      ['https://api.example/api/v1/admin/help-requests/id1/notes', 'POST'],
+      ['https://api.example/api/v1/admin/team', 'GET'],
+    ]);
+    expect(api.helpExportUrl({ language: 'ta' })).toBe(
+      'https://api.example/api/v1/admin/help-requests/export.csv?language=ta',
+    );
   });
 });

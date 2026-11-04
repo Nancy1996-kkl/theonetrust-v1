@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { AdminSessionResponse } from '@theonetrust/contracts';
+import type { AdminSessionResponse, HelpRequestStatus } from '@theonetrust/contracts';
 import type { UiLang } from '../components/ui/ui-strings.ts';
 import type { AdminApi, AdminApiError } from './api.ts';
 import { ADMIN_STRINGS, type AdminStrings } from './strings.ts';
@@ -50,4 +50,8 @@ export function stringsFor(lang: UiLang): AdminStrings {
 /** Groups a base32 key in fours so it is easy to read and type. */
 export function groupKey(key: string): string {
   return key.replace(/(.{4})(?=.)/g, '$1 ');
+}
+
+export function statusLabel(t: AdminStrings, status: HelpRequestStatus): string {
+  return t[`status${status}`];
 }

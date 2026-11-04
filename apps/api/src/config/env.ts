@@ -59,6 +59,18 @@ const EnvSchema = z
     /** Wrong passwords or codes in a row before the account is locked. */
     LOGIN_MAX_FAILURES: z.coerce.number().int().min(3).max(20).default(5),
     LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+    /** Get Help submissions allowed per IP per hour (plan §5 anti-spam). */
+    HELP_RATE_LIMIT_PER_HOUR: z.coerce.number().int().min(1).max(100).default(5),
+    /** A repeat from the same phone within this window returns the first reference. */
+    HELP_DUPLICATE_WINDOW_MINUTES: z.coerce.number().int().min(0).max(1440).default(10),
+    /**
+     * Where the owner is notified of new help requests. Until it is set, no notification is
+     * queued (the requests are still saved and visible in the dashboard).
+     */
+    OWNER_NOTIFICATION_EMAIL: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.email().optional(),
+    ),
     /** Browser/CDN cache lifetime for public content responses. */
     PUBLIC_CACHE_SECONDS: z.coerce.number().int().min(0).max(86_400).default(300),
     /**

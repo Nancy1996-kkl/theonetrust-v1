@@ -5,6 +5,11 @@ import {
   type AdminSessionUser,
   type ApiErrorCode,
   type AuditListResponse,
+  type HelpCaseDetail,
+  type HelpCaseFilters,
+  type HelpCaseList,
+  type HelpCaseListItem,
+  type HelpCaseUpdate,
   type MfaEnableResponse,
   type MfaSetupResponse,
 } from '@theonetrust/contracts';
@@ -29,6 +34,12 @@ export interface AuditFilters {
   action?: string;
   from?: string;
   to?: string;
+}
+
+function query(values: Record<string, string | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(values)) if (value) params.set(key, value);
+  return params.toString();
 }
 
 export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => fetch(...args)) {
@@ -81,6 +92,20 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
       params.set('limit', '50');
       return call<AuditListResponse>('GET', `/admin/audit-log?${params.toString()}`);
     },
+    helpCases: (filters: HelpCaseFilters, cursor?: string) =>
+      call<HelpCaseList>('GET', `/admin/help-requests?${query({ ...filters, cursor })}`),
+    helpCase: (id: string) =>
+      call<HelpCaseDetail>('GET', `/admin/help-requests/${encodeURIComponent(id)}`),
+    updateHelpCase: (id: string, patch: HelpCaseUpdate) =>
+      call<HelpCaseListItem>('PATCH', `/admin/help-requests/${encodeURIComponent(id)}`, patch),
+    addHelpNote: (id: string, body: string) =>
+      call<{ id: string }>('POST', `/admin/help-requests/${encodeURIComponent(id)}/notes`, {
+        body,
+      }),
+    team: () => call<{ users: Array<{ id: string; email: string }> }>('GET', '/admin/team'),
+    /** Plain link: the browser downloads it with the session cookie (GET, no CSRF needed). */
+    helpExportUrl: (filters: HelpCaseFilters) =>
+      apiUrl(baseUrl, `/admin/help-requests/export.csv?${query({ ...filters })}`),
     logout: async () => {
       await call<undefined>('POST', '/auth/logout');
       csrfToken = undefined;
