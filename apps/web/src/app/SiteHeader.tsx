@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { LanguageSwitch } from '../components/ui/LanguageSwitch.tsx';
 import type { UiLang } from '../components/ui/ui-strings.ts';
 import { focusableIn } from '../components/ui/focus.ts';
@@ -93,9 +94,12 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
             onChange={onLanguageChange}
             className="site-header__lang"
           />
-          <a className="ui-button ui-button--secondary site-header__help" href={`${home}#get-help`}>
+          <Link
+            className="ui-button ui-button--secondary site-header__help"
+            to={`${home}#get-help`}
+          >
             {t.getHelp}
-          </a>
+          </Link>
           <a className="ui-button ui-button--donate site-header__donate" href={`${home}#donate`}>
             {t.donate}
           </a>
@@ -123,13 +127,13 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
             <nav aria-label={t.menu}>
               <ul>{sectionLinks}</ul>
             </nav>
-            <a
+            <Link
               className="ui-button ui-button--secondary ui-button--full"
-              href={`${home}#get-help`}
+              to={`${home}#get-help`}
               onClick={() => setOpen(false)}
             >
               {t.getHelp}
-            </a>
+            </Link>
             <LanguageSwitch
               current={lang}
               onChange={(next) => {
