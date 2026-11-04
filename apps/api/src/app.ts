@@ -20,6 +20,7 @@ import { publicContentRepository } from './modules/public-content/repository.ts'
 import { publicContentRoutes } from './modules/public-content/routes.ts';
 import { helpPublicRoutes } from './modules/help/public-routes.ts';
 import { donationRoutes } from './modules/donations/routes.ts';
+import { paymentVerifyRoutes } from './modules/payments/verify-routes.ts';
 import { razorpayProvider, type PaymentProvider } from './modules/donations/provider.ts';
 import { healthRoutes } from './routes/health.ts';
 import { deriveAuthKeys } from './security/crypto.ts';
@@ -147,6 +148,16 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   app.register(donationRoutes, {
     prefix: `${API_V1_PREFIX}/donation-intents`,
     perHour: env.DONATION_RATE_LIMIT_PER_HOUR,
+    now: options.now ?? (() => new Date()),
+    ...(options.db && { db: options.db }),
+    ...(paymentProvider && { provider: paymentProvider }),
+  });
+
+  // Payment verification and donor status re-check (#26).
+  app.register(paymentVerifyRoutes, {
+    prefix: API_V1_PREFIX,
+    verifyPerHour: env.DONATION_RATE_LIMIT_PER_HOUR * 3,
+    statusPerHour: env.DONATION_RATE_LIMIT_PER_HOUR * 6,
     now: options.now ?? (() => new Date()),
     ...(options.db && { db: options.db }),
     ...(paymentProvider && { provider: paymentProvider }),

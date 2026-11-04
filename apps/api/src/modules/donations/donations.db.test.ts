@@ -15,6 +15,9 @@ let ip = 0;
 const provider: PaymentProvider = {
   name: 'RAZORPAY',
   publicKeyId: 'rzp_test_publickey01',
+  verifyCheckoutSignature: () => false,
+  fetchPayment: async () => Promise.reject(new PaymentProviderError('rejected')),
+  fetchOrderPayments: async () => [],
   createOrder: vi.fn(async (input: CreateOrderInput) => {
     if (failNext) {
       const error = failNext;
