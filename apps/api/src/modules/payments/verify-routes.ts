@@ -5,6 +5,7 @@ import type { Db } from '../../db/client.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { PaymentProviderError, type PaymentProvider } from '../donations/provider.ts';
+import { currentReceiptToken } from '../receipts/issue.ts';
 import { applyProviderPayment, donorStatus } from './reconcile.ts';
 
 const reference = z.string().regex(/^TOT-D-[0-9A-HJKMNP-TV-Z]{12}$/);
@@ -22,6 +23,8 @@ export interface VerifyRouteOptions {
   verifyPerHour: number;
   statusPerHour: number;
   now: () => Date;
+  /** Derives acknowledgement share tokens (#29); without it no receipt link is returned. */
+  receiptKey?: Buffer;
 }
 
 /**
@@ -46,15 +49,21 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
     return intent;
   }
 
-  const reply = (
-    publicReference: string,
+  async function reply(
+    db: Db,
+    intent: { id: string; publicReference: string; amountPaise: number },
     status: Parameters<typeof donorStatus>[0],
-    amountPaise: number,
-  ): DonationStatusResponse => ({
-    publicReference,
-    status: donorStatus(status),
-    amountPaise,
-  });
+  ): Promise<DonationStatusResponse> {
+    const shown = donorStatus(status);
+    const receiptToken =
+      shown === 'PAID' ? await currentReceiptToken(db, intent.id, opts.receiptKey) : undefined;
+    return {
+      publicReference: intent.publicReference,
+      status: shown,
+      amountPaise: intent.amountPaise,
+      ...(receiptToken && { receiptToken }),
+    };
+  }
 
   app.post(
     '/payments/verify',
@@ -84,12 +93,12 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
           'Payment fetch failed',
         );
         // Signature was fine but Razorpay could not be asked: stay pending, re-check later.
-        return reply(intent.publicReference, intent.status, intent.amountPaise);
+        return reply(db, intent, intent.status);
       }
       const status = await applyProviderPayment(db, attempt.id, payment, opts.now(), {
         signatureVerified: true,
       });
-      return reply(intent.publicReference, status, intent.amountPaise);
+      return reply(db, intent, status);
     },
   );
 
@@ -103,7 +112,7 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
       const unsettled = ['CREATED', 'PENDING', 'AUTHORIZED'].includes(intent.status);
       const attempt = intent.paymentAttempts[0];
       if (!unsettled || intent.channel !== 'CHECKOUT' || !attempt) {
-        return reply(publicReference, intent.status, intent.amountPaise);
+        return reply(db, intent, intent.status);
       }
       // Ask Razorpay (with our secret) — covers a lost browser callback or a closed tab.
       try {
@@ -114,11 +123,11 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
           payments.find((p) => p.status === 'captured') ??
           payments.find((p) => p.status === 'authorized') ??
           payments[0];
-        if (!best) return reply(publicReference, intent.status, intent.amountPaise);
+        if (!best) return reply(db, intent, intent.status);
         const status = await applyProviderPayment(db, attempt.id, best, opts.now());
-        return reply(publicReference, status, intent.amountPaise);
+        return reply(db, intent, status);
       } catch {
-        return reply(publicReference, intent.status, intent.amountPaise);
+        return reply(db, intent, intent.status);
       }
     },
   );

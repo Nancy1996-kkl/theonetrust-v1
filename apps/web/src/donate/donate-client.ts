@@ -7,6 +7,7 @@ import type {
   DonationStatusResponse,
 } from '@theonetrust/contracts';
 import { apiUrl } from '../lib/api-url.ts';
+import { MOCK_RECEIPT_TOKEN } from '../receipt/receipt-client.ts';
 
 /**
  * How the donate panel talks to the trust and to Razorpay (#24).
@@ -47,6 +48,8 @@ export interface DonateClient {
     outcome: { paymentId: string; signature: string },
   ): Promise<VerifiedStatus>;
   status(publicReference: string): Promise<VerifiedStatus>;
+  /** Acknowledgement link token for a PAID donation, when one was issued (#29). */
+  receipt(publicReference: string): Promise<string | null>;
   /** Bank transfer (#25): no Razorpay order; returns the trust account and a reference. */
   startBankTransfer(
     request: DonationIntentRequest,
@@ -284,12 +287,27 @@ export function createApiDonateClient(
         return 'UNKNOWN';
       }
     },
+    async receipt(publicReference) {
+      try {
+        const res = await fetchImpl(
+          apiUrl(baseUrl, `/donations/status/${encodeURIComponent(publicReference)}`),
+          { credentials: 'omit' },
+        );
+        if (!res.ok) return null;
+        const body = (await res.json().catch(() => null)) as DonationStatusResponse | null;
+        return body?.status === 'PAID' && typeof body.receiptToken === 'string'
+          ? body.receiptToken
+          : null;
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
 /**
  * Dev/e2e simulation. Tests choose the outcome with `window.__donateMock`
- * ('success' | 'cancel' | 'fail' | 'limit' | 'pending' | 'stuck' | 'start-fail'); default success.
+ * ('success' | 'cancel' | 'fail' | 'limit' | 'pending' | 'stuck' | 'start-fail' | 'no-receipt'); default success.
  */
 export function createMockDonateClient(delayMs = 200): DonateClient {
   const scenario = () => (globalThis as { __donateMock?: string }).__donateMock ?? 'success';
@@ -352,6 +370,8 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
       wait(['pending', 'stuck'].includes(scenario()) ? ('PENDING' as const) : ('PAID' as const)),
     // "pending": verify answers PENDING and the re-check finds it PAID; "stuck" stays pending.
     status: () => wait(scenario() === 'stuck' ? ('PENDING' as const) : ('PAID' as const)),
+    // "no-receipt": paid, but the donor declined or the amount is below the threshold.
+    receipt: () => wait(scenario() === 'no-receipt' ? null : MOCK_RECEIPT_TOKEN),
   };
 }
 
@@ -362,6 +382,7 @@ export const unavailableDonateClient: DonateClient = {
   checkout: () => Promise.resolve({ kind: 'dismissed' }),
   verify: () => Promise.resolve('UNKNOWN'),
   status: () => Promise.resolve('UNKNOWN'),
+  receipt: () => Promise.resolve(null),
   startBankTransfer: () => Promise.resolve({ ok: false, reason: 'unavailable' }),
   claimBankTransfer: () => Promise.resolve(false),
 };

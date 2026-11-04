@@ -23,6 +23,7 @@ import { donationRoutes } from './modules/donations/routes.ts';
 import { paymentVerifyRoutes } from './modules/payments/verify-routes.ts';
 import { razorpayWebhookRoutes } from './modules/payments/webhook-routes.ts';
 import { razorpayProvider, type PaymentProvider } from './modules/donations/provider.ts';
+import { receiptRoutes } from './modules/receipts/routes.ts';
 import { healthRoutes } from './routes/health.ts';
 import { deriveAuthKeys } from './security/crypto.ts';
 
@@ -140,6 +141,9 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
 
   app.register(healthRoutes, { prefix: API_V1_PREFIX, version: APP_VERSION });
 
+  // Purpose-specific keys from AUTH_SECRET_KEY (owner sign-in, CSRF, receipt links).
+  const keys = env.AUTH_SECRET_KEY ? deriveAuthKeys(env.AUTH_SECRET_KEY) : undefined;
+
   // Donations (#23): the server owns intents, amounts and Razorpay orders.
   const paymentProvider =
     options.paymentProvider ??
@@ -160,6 +164,7 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     verifyPerHour: env.DONATION_RATE_LIMIT_PER_HOUR * 3,
     statusPerHour: env.DONATION_RATE_LIMIT_PER_HOUR * 6,
     now: options.now ?? (() => new Date()),
+    ...(keys && { receiptKey: keys.receipt }),
     ...(options.db && { db: options.db }),
     ...(paymentProvider && { provider: paymentProvider }),
   });
@@ -170,6 +175,15 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     now: options.now ?? (() => new Date()),
     ...(options.db && { db: options.db }),
     ...(env.RAZORPAY_WEBHOOK_SECRET && { secret: env.RAZORPAY_WEBHOOK_SECRET }),
+  });
+
+  // Donation acknowledgements (#29): private share link + PDF on demand.
+  app.register(receiptRoutes, {
+    prefix: `${API_V1_PREFIX}/receipts`,
+    siteUrl: env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173',
+    perHour: env.RECEIPT_RATE_LIMIT_PER_HOUR,
+    ...(options.db && { db: options.db }),
+    ...(keys && { key: keys.receipt }),
   });
 
   // Get Help (#22): public submissions, rate-limited, honeypot, validated with the form's rules.
@@ -192,7 +206,6 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
 
   // Owner sign-in (#19). Needs both a database and AUTH_SECRET_KEY; otherwise it is closed (503).
   app.register(cookie);
-  const keys = env.AUTH_SECRET_KEY ? deriveAuthKeys(env.AUTH_SECRET_KEY) : undefined;
   const auth =
     options.db && keys
       ? (() => {

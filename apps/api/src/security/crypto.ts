@@ -14,6 +14,8 @@ export interface AuthKeys {
   encryption: Buffer;
   /** HMAC key for CSRF tokens. */
   csrf: Buffer;
+  /** HMAC key that turns a receipt's random salt into its share-link token (#29). */
+  receipt: Buffer;
   /** Version stored next to every ciphertext, for key rotation. */
   version: number;
 }
@@ -28,6 +30,7 @@ export function deriveAuthKeys(base64Secret: string): AuthKeys {
   return {
     encryption: derive('encryption:v1'),
     csrf: derive('csrf:v1'),
+    receipt: derive('receipt-link:v1'),
     version: CURRENT_KEY_VERSION,
   };
 }

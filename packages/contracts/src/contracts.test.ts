@@ -101,3 +101,15 @@ describe('site text keys', () => {
     for (const key of SITE_TEXT_KEYS) expect(key).toMatch(/^[a-z_]+\.[a-z_]+$/);
   });
 });
+
+describe('receipt contracts (#29)', () => {
+  it('accepts only 43-character url-safe tokens and lists the payment methods', async () => {
+    const { isReceiptToken, RECEIPT_METHODS } = await import('./index.ts');
+    expect(isReceiptToken('A'.repeat(43))).toBe(true);
+    expect(isReceiptToken('a-_'.repeat(14) + 'Z')).toBe(true);
+    for (const bad of ['', 'A'.repeat(42), 'A'.repeat(44), `${'A'.repeat(42)}/`]) {
+      expect(isReceiptToken(bad)).toBe(false);
+    }
+    expect(RECEIPT_METHODS).toContain('bank_transfer');
+  });
+});

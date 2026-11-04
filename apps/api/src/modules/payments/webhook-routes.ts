@@ -76,6 +76,7 @@ export async function razorpayWebhookRoutes(
         attempt.id,
         payment,
         type.slice('refund.'.length) as 'created' | 'processed' | 'failed',
+        opts.now(),
       );
     } else {
       await applyProviderPayment(db, attempt.id, payment, opts.now());

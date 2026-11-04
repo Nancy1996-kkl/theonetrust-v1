@@ -1,6 +1,7 @@
 import type { DonationStatus } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
 import type { ProviderPayment } from '../donations/provider.ts';
+import { adjustReceiptForRefund, issueReceiptIfEligible } from '../receipts/issue.ts';
 import { canTransition, transitionDonation } from './transitions.ts';
 
 /**
@@ -81,6 +82,16 @@ export async function applyProviderPayment(
       target,
       target === 'PAID' ? 'gateway_verified' : 'gateway_status',
     );
+    // The acknowledgement is created in the same transaction as PAID, never before (#29).
+    if (target === 'PAID') {
+      await issueReceiptIfEligible(
+        tx,
+        intent.id,
+        { paymentAttemptId: attempt.id },
+        payment.amountPaise,
+        now,
+      );
+    }
     return target;
   });
 }
@@ -102,6 +113,7 @@ export async function applyRefund(
   attemptId: string,
   payment: ProviderPayment,
   refundStatus: 'created' | 'processed' | 'failed',
+  now: Date = new Date(),
 ): Promise<DonationStatus> {
   return db.$transaction(async (tx) => {
     const attempt = await tx.paymentAttempt.findUniqueOrThrow({
@@ -118,6 +130,10 @@ export async function applyRefund(
       data: { refundedPaise: refunded, providerStatus: payment.status },
     });
     const full = refunded > 0 && refunded >= attempt.capturedPaise;
+    // A processed refund is recorded on the acknowledgement as a new entry, never a deletion.
+    if (refundStatus === 'processed' && refunded > 0) {
+      await adjustReceiptForRefund(tx, attempt.id, attempt.capturedPaise - refunded, full, now);
+    }
     if (refundStatus === 'failed') {
       if (intent.status === 'REFUND_PENDING') {
         await transitionDonation(tx, intent.id, 'PAID', 'gateway_verified');
