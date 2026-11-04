@@ -18,3 +18,4 @@ apps/api/src/generated/
 .DS_Store
 *.log
 .claude/settings.local.json
+dist-server/

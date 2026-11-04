@@ -100,7 +100,7 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
           </h2>
           <ul>
             <li>
-              <a href={`${home}#get-help`}>{t.getHelp}</a>
+              <Link to={`${home}#get-help`}>{t.getHelp}</Link>
             </li>
             <li>
               <a href={`${home}#contact`}>{t.navContact}</a>

@@ -8,6 +8,12 @@ import { consoleGuard } from './console-guard.ts';
  * test fails that test. React warnings (keys, act(), invalid DOM nesting,
  * hydration) surface as real failures instead of noise.
  */
+// jsdom does not implement scrollIntoView; React Router's ScrollRestoration calls it for #anchors.
+// A no-op keeps unit tests honest about everything else (real browsers are covered by e2e).
+if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 beforeEach(() => {
   consoleGuard.reset();
   for (const level of ['error', 'warn'] as const) {
