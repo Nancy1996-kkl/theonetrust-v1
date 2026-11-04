@@ -79,6 +79,53 @@ jobs:
           path: '**/coverage/'
           retention-days: 14
 
+  database:
+    name: Database — migrate from empty PostgreSQL, constraints, repositories
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        # Plain PostgreSQL: the schema must not depend on Neon- or Supabase-only features.
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: theonetrust_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/theonetrust_test
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Database tests (wipes schema, applies every migration, checks constraints)
+        run: pnpm --filter @theonetrust/api exec vitest run --config vitest.db.config.ts --coverage
+
+      - name: Schema and migrations are in sync (no drift)
+        working-directory: apps/api
+        env:
+          DIRECT_URL: ${{ env.TEST_DATABASE_URL }}
+        run: pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code
+
+      - name: Synthetic seed runs and is repeatable
+        working-directory: apps/api
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+          NODE_ENV: development
+        run: |
+          pnpm db:seed
+          pnpm db:seed
+
   e2e:
     name: E2E — 5 viewports + auto bug detector
     needs: quality

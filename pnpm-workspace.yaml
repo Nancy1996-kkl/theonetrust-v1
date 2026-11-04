@@ -7,4 +7,6 @@ strictPeerDependencies: false
 
 # Packages allowed to run install scripts (supply-chain safety: allowlist only).
 onlyBuiltDependencies:
+  - '@prisma/engines'
   - esbuild
+  - prisma
