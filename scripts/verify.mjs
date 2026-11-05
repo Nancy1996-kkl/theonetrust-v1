@@ -31,6 +31,8 @@ const steps = [
     ? []
     : [
         ['build', 'pnpm', ['build']],
+        ['web bundle secrets scan', 'pnpm', ['check:bundle']],
+        ['dependency audit', 'pnpm', ['audit:deps']],
         ['e2e (5 viewports + auto bug detector)', 'pnpm', ['test:e2e']],
         ['visual baselines (5 viewports, en + ta)', 'pnpm', ['test:visual']],
       ]),

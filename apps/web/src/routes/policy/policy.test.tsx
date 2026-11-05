@@ -212,3 +212,14 @@ describe('linked from the footer and from forms', () => {
     expect(links.map((a) => a.getAttribute('href'))).toEqual(['/ta/terms', '/ta/privacy']);
   });
 });
+
+describe('privacy notice matches what the system does (#38)', () => {
+  it('says PAN and address are reported to the Income Tax Department for tax opt-ins', () => {
+    const sharing = POLICIES.privacy.sections.find((s) => s.id === 'sharing');
+    const en = sharing?.paragraphs.map((p) => p.en).join(' ') ?? '';
+    const ta = sharing?.paragraphs.map((p) => p.ta).join(' ') ?? '';
+    expect(sharing?.confirmed).toBe(true);
+    expect(en).toMatch(/PAN, address and the amount are reported to the Income Tax Department/);
+    expect(ta).toMatch(/வருமான வரித் துறைக்குத் தெரிவிக்கப்படும்/);
+  });
+});

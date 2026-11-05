@@ -122,6 +122,16 @@ describe('loadEnv — sign-in settings', () => {
   });
 });
 
+describe('loadEnv — trusted proxy (#38)', () => {
+  it('defaults to private and loopback networks and refuses odd values', () => {
+    expect(loadEnv({}).TRUST_PROXY).toBe('loopback, linklocal, uniquelocal');
+    expect(loadEnv({ TRUST_PROXY: '10.0.0.0/8, 172.16.0.1' }).TRUST_PROXY).toBe(
+      '10.0.0.0/8, 172.16.0.1',
+    );
+    expect(() => loadEnv({ TRUST_PROXY: 'x;rm' })).toThrow();
+  });
+});
+
 describe('loadEnv — public content', () => {
   it('defaults the cache and leaves the documents URL unset', () => {
     const env = loadEnv({ PUBLIC_DOCUMENTS_BASE_URL: '' });

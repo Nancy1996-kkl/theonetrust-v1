@@ -290,7 +290,10 @@ describe('CORS allowlist', () => {
     });
     expect(res.statusCode).toBe(204);
     expect(res.headers['access-control-allow-origin']).toBe('https://theonetrust.in');
-    expect(res.headers['access-control-allow-methods']).toContain('POST');
+    // Every method a browser route uses must be allowed, or the dashboard breaks cross-origin.
+    for (const m of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']) {
+      expect(res.headers['access-control-allow-methods']).toContain(m);
+    }
     expect(res.headers['access-control-allow-headers']).toContain('content-type');
     expect(res.headers['access-control-max-age']).toBe('600');
   });
@@ -324,6 +327,58 @@ describe('security headers', () => {
     });
     const res = await t.app.inject({ method: 'GET', url: '/api/v1/health' });
     expect(res.headers['strict-transport-security']).toBe(HSTS_HEADER);
+  });
+});
+
+describe('client IP behind a proxy (#38)', () => {
+  const PROD = {
+    NODE_ENV: 'production',
+    LOG_LEVEL: 'silent',
+    DATABASE_URL: 'postgresql://u:p@db.example/app',
+    AUTH_SECRET_KEY: Buffer.alloc(32, 1).toString('base64'),
+  };
+  const ipRoute = (app: FastifyInstance) => {
+    app.get('/__ip', async (request) => ({ ip: request.ip }));
+  };
+
+  it('trusts the private-network proxy: its appended client IP is used, a forged entry is not', async () => {
+    const t = await start(PROD, ipRoute);
+    const res = await t.app.inject({
+      method: 'GET',
+      url: '/api/v1/__ip',
+      remoteAddress: '10.0.0.5',
+      headers: { 'x-forwarded-for': '6.6.6.6, 203.0.113.7' },
+    });
+    // The proxy appended the real client (203.0.113.7); the forged first entry is not used.
+    expect(res.json()).toEqual({ ip: '203.0.113.7' });
+    // A caller connecting directly from the internet cannot set its own IP.
+    const direct = await t.app.inject({
+      method: 'GET',
+      url: '/api/v1/__ip',
+      remoteAddress: '198.51.100.9',
+      headers: { 'x-forwarded-for': '6.6.6.6' },
+    });
+    expect(direct.json()).toEqual({ ip: '198.51.100.9' });
+  });
+
+  it('TRUST_PROXY=none ignores the header; development never trusts it', async () => {
+    const none = await start({ ...PROD, TRUST_PROXY: 'none' }, ipRoute);
+    const a = await none.app.inject({
+      method: 'GET',
+      url: '/api/v1/__ip',
+      remoteAddress: '10.0.0.5',
+      headers: { 'x-forwarded-for': '203.0.113.7' },
+    });
+    expect(a.json()).toEqual({ ip: '10.0.0.5' });
+    await none.app.close();
+    const dev = await start({}, ipRoute);
+    const b = await dev.app.inject({
+      method: 'GET',
+      url: '/api/v1/__ip',
+      remoteAddress: '10.0.0.5',
+      headers: { 'x-forwarded-for': '203.0.113.7' },
+    });
+    expect(b.json()).toEqual({ ip: '10.0.0.5' });
   });
 });
 

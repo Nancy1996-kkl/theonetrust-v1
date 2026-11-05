@@ -68,11 +68,12 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Secrets scan of the built bundle, source maps included (#38).
       - name: Secrets must not reach the browser bundle
-        run: |
-          if grep -rEn "RAZORPAY_KEY_SECRET|RAZORPAY_WEBHOOK_SECRET|EMAIL_API_KEY|DATABASE_URL|DIRECT_URL|AUTH_SECRET_KEY|rzp_live_" apps/web/dist; then
-            echo "::error::Server-only values found in the web bundle"; exit 1
-          fi
+        run: pnpm check:bundle
+
+      - name: Dependency audit (production dependencies, high and critical)
+        run: pnpm audit:deps
 
       - name: Upload coverage
         if: always()

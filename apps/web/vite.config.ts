@@ -3,6 +3,8 @@ import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
+// @ts-expect-error -- plain ESM helper shared with the prerender script (tested with node --test)
+import { webSecurityHeaders } from './scripts/security-headers.mjs';
 
 /**
  * `vite preview` serves `/terms/` from dist/terms/index.html but answers `/terms` with the
@@ -27,8 +29,29 @@ function prerenderedPages(): Plugin {
   };
 }
 
+/**
+ * `vite preview` sends the production security headers (#38), so every e2e test runs under the
+ * real Content-Security-Policy and a violation fails it (the auto bug detector reads the console).
+ * HSTS and upgrade-insecure-requests are left out: preview is plain http on 127.0.0.1.
+ */
+function securityHeaders(): Plugin {
+  return {
+    name: 'theonetrust:security-headers',
+    configurePreviewServer(server) {
+      const headers = webSecurityHeaders({
+        apiBaseUrl: process.env.VITE_API_BASE_URL,
+        production: false,
+      }) as Record<string, string>;
+      server.middlewares.use((_req, res, next) => {
+        for (const [k, v] of Object.entries(headers)) res.setHeader(k, v);
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), prerenderedPages()],
+  plugins: [react(), prerenderedPages(), securityHeaders()],
   server: { port: 5173, strictPort: true },
   preview: { port: 4173, strictPort: true },
   build: { sourcemap: true },

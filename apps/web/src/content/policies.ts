@@ -133,6 +133,10 @@ export const POLICIES: Record<PolicyId, Policy> = {
             'We never sell your information or show it publicly. Your name, phone, email, PAN or address never appear in links or on public pages, including acknowledgement links.',
             'உங்கள் தகவல்களை நாங்கள் ஒருபோதும் விற்பதில்லை, பொதுவில் காட்டுவதுமில்லை. உங்கள் பெயர், தொலைபேசி, மின்னஞ்சல், PAN அல்லது முகவரி இணைப்புகளிலோ பொதுப் பக்கங்களிலோ — ஒப்புகை இணைப்புகள் உட்பட — ஒருபோதும் தோன்றாது.',
           ),
+          p(
+            'If you choose a tax option, your name, PAN, address and the amount are reported to the Income Tax Department, as the trust must do for such donations. They are stored encrypted.',
+            'நீங்கள் வரி விருப்பத்தைத் தேர்ந்தெடுத்தால், உங்கள் பெயர், PAN, முகவரி மற்றும் தொகை வருமான வரித் துறைக்குத் தெரிவிக்கப்படும் — அத்தகைய நன்கொடைகளுக்கு அறக்கட்டளை இதைச் செய்ய வேண்டும். அவை மறைகுறியாக்கம் செய்து சேமிக்கப்படுகின்றன.',
+          ),
         ],
       },
       {
