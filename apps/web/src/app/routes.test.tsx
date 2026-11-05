@@ -47,7 +47,9 @@ describe('unknown routes', () => {
   it('lets the visitor return home from the not-found page', async () => {
     renderRoute('/missing');
     await userEvent.click(screen.getByRole('link', { name: 'Go to the home page' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Theonetrust.in' })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Build a Better Tomorrow' }),
+    ).toBeVisible();
   });
 
   it('has no WCAG 2.2 AA violations on the not-found page', async () => {

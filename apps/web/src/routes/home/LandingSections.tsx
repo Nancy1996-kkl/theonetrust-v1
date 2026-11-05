@@ -7,6 +7,8 @@ import { visible } from '../../content/landing.ts';
 import { homePath, localizedPath } from '../../i18n/lang.ts';
 import { useLang } from '../../i18n/use-lang.ts';
 import { useDonationDraft } from '../../state/donation-draft.ts';
+import { HeroBanner } from './HeroBanner.tsx';
+import { ArrowIcon, HeartIcon, PinIcon } from './hero-icons.tsx';
 import { Reveal } from './Reveal.tsx';
 
 export interface SectionProps {
@@ -45,15 +47,29 @@ function GatedText({
   );
 }
 
-/** 2 · Hero — typographic until an approved photo exists. Never urgency, counts or deadlines. */
+/** Headline with the accent words on their own line; plain text if the accent is missing. */
+function HeroTitle({ text, accent }: { text: string; accent: string | null }) {
+  const at = accent ? text.indexOf(accent) : -1;
+  if (!accent || at < 0) return <>{text}</>;
+  return (
+    <>
+      {text.slice(0, at)}
+      <span className="landing-hero__accent">{accent}</span>
+      {text.slice(at + accent.length)}
+    </>
+  );
+}
+
+/** 2 · Hero — forest band, beneficiary banner with a forest scrim, Donate first. */
 export function HeroSection({ content, facts, showDrafts }: SectionProps) {
   const lang = useLang();
   const home = homePath(lang);
   const { hero, draftLabel } = content;
   const headline = visible(hero.headline, showDrafts);
   return (
-    <section id="top" className="landing-hero" aria-labelledby="hero-title">
-      <div className="landing__wrap landing-hero__grid">
+    <section id="top" className="landing-hero surface-inverse" aria-labelledby="hero-title">
+      <HeroBanner pauseLabel={hero.pauseBanner[lang]} playLabel={hero.playBanner[lang]} />
+      <div className="landing__wrap landing-hero__inner">
         <div className="landing-hero__text">
           <GatedText
             item={visible(hero.eyebrow, showDrafts)}
@@ -61,7 +77,11 @@ export function HeroSection({ content, facts, showDrafts }: SectionProps) {
             draftLabel={draftLabel}
           />
           <h1 id="hero-title" className="landing-hero__title">
-            {headline ? headline.value[lang] : facts.siteName}
+            {headline ? (
+              <HeroTitle text={headline.value[lang]} accent={hero.headlineAccent?.[lang] ?? null} />
+            ) : (
+              facts.siteName
+            )}
           </h1>
           {headline && <DraftBadge item={headline} label={draftLabel} />}
           <GatedText
@@ -70,21 +90,32 @@ export function HeroSection({ content, facts, showDrafts }: SectionProps) {
             draftLabel={draftLabel}
           />
           <div className="landing-hero__actions">
-            <a className="ui-button ui-button--donate" href={`${home}#donate`}>
+            <a className="ui-button ui-button--donate landing-hero__donate" href={`${home}#donate`}>
               {hero.donateCta[lang]}
+              <HeartIcon />
             </a>
-            <Link className="ui-button ui-button--secondary" to={`${home}#get-help`}>
+            <a className="ui-button ui-button--secondary" href={`${home}#about`}>
+              {hero.learnMoreCta[lang]}
+              <ArrowIcon />
+            </a>
+          </div>
+          <p className="landing-hero__help">
+            {hero.getHelpPrompt[lang]}{' '}
+            <Link className="landing-hero__help-link" to={`${home}#get-help`}>
               {hero.getHelpCta[lang]}
             </Link>
-          </div>
+          </p>
+          {facts.area && (
+            <p className="landing-hero__place">
+              <PinIcon />
+              {facts.area[lang]}
+            </p>
+          )}
           <GatedText
             item={visible(hero.paymentNote, showDrafts)}
             className="landing-hero__note"
             draftLabel={draftLabel}
           />
-        </div>
-        <div className="landing-hero__art surface-inverse" aria-hidden="true">
-          <span className="landing-hero__mark" />
         </div>
       </div>
     </section>

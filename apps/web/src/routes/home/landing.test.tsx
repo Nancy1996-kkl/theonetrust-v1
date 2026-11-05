@@ -134,25 +134,80 @@ describe('live page (drafts hidden)', () => {
     ]);
   });
 
-  it('hero falls back to the site name and never shows unconfirmed wording', () => {
+  it('hero shows the approved headline with its accent words on their own line', () => {
     renderHome();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(TRUST_FACTS.siteName);
-    expect(document.body).not.toHaveTextContent(LANDING_CONTENT.hero.headline.value.en);
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent('Build a Better Tomorrow');
+    expect(h1.querySelector('.landing-hero__accent')).toHaveTextContent('Tomorrow');
+    expect(screen.getByText('Together we can')).toHaveClass('landing-hero__eyebrow');
+    expect(screen.getByText(/underprivileged children and communities/)).toBeVisible();
+    // The payment note stays hidden until Razorpay is live.
     expect(document.body).not.toHaveTextContent('Razorpay');
     expect(document.body).not.toHaveTextContent('Draft —');
   });
 
-  it('hero has Donate (primary) and Get Help (secondary) actions', () => {
+  it('hero headline in Tamil keeps the same structure', () => {
+    renderHome('/ta/');
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent(LANDING_CONTENT.hero.headline.value.ta);
+    expect(h1.querySelector('.landing-hero__accent')).toHaveTextContent('சிறந்த நாளையை');
+  });
+
+  it('hero falls back to the site name when the headline is unconfirmed', () => {
+    const content: LandingContent = {
+      ...LANDING_CONTENT,
+      hero: {
+        ...LANDING_CONTENT.hero,
+        headline: { confirmed: false, value: { en: 'Unconfirmed claim', ta: 'உறுதியற்றது' } },
+      },
+    };
+    renderHome('/', { content });
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(TRUST_FACTS.siteName);
+    expect(document.body).not.toHaveTextContent('Unconfirmed claim');
+  });
+
+  it('an owner-edited headline without the accent words renders as plain text', () => {
+    const content: LandingContent = {
+      ...LANDING_CONTENT,
+      hero: {
+        ...LANDING_CONTENT.hero,
+        headline: { confirmed: true, value: { en: 'Kindness in Kanchipuram', ta: 'கருணை' } },
+      },
+    };
+    renderHome('/', { content });
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent('Kindness in Kanchipuram');
+    expect(h1.querySelector('.landing-hero__accent')).toBeNull();
+  });
+
+  it('hero has Donate (primary), Learn more and Get Help actions', () => {
     renderHome();
     const hero = document.getElementById('top')!;
     expect(within(hero).getByRole('link', { name: 'Donate now' })).toHaveAttribute(
       'href',
       '/#donate',
     );
+    expect(within(hero).getByRole('link', { name: 'Learn more' })).toHaveAttribute(
+      'href',
+      '/#about',
+    );
     expect(within(hero).getByRole('link', { name: 'Get Help' })).toHaveAttribute(
       'href',
       '/#get-help',
     );
+    expect(within(hero).getByText('Kanchipuram, Tamil Nadu')).toBeVisible();
+  });
+
+  it('Tamil hero actions stay on the Tamil page', () => {
+    renderHome('/ta/');
+    const hero = document.getElementById('top')!;
+    expect(
+      within(hero).getByRole('link', { name: LANDING_CONTENT.hero.donateCta.ta }),
+    ).toHaveAttribute('href', '/ta/#donate');
+    expect(
+      within(hero).getByRole('link', { name: LANDING_CONTENT.hero.learnMoreCta.ta }),
+    ).toHaveAttribute('href', '/ta/#about');
+    expect(within(hero).getByText('காஞ்சிபுரம், தமிழ்நாடு')).toBeVisible();
   });
 
   it('facts strip shows only verified facts (area) and hides unknown ones', () => {
@@ -253,11 +308,11 @@ describe('preview page (drafts visible, always labelled)', () => {
     },
   };
 
-  it('shows draft headline, payment note and all programmes, each marked Draft', () => {
+  it('shows the confirmed headline without a Draft label, and the draft payment note and programmes marked Draft', () => {
     renderHome('/', { showDrafts: true });
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      'Together, we create a better tomorrow.',
-    );
+    const h1 = screen.getByRole('heading', { level: 1 });
+    expect(h1).toHaveTextContent('Build a Better Tomorrow');
+    expect(h1).not.toHaveTextContent('Draft');
     const ways = document.getElementById('ways-we-help')!;
     expect(within(ways).getAllByRole('article')).toHaveLength(7);
     expect(within(ways).getAllByText('Draft — not yet confirmed')).toHaveLength(6);

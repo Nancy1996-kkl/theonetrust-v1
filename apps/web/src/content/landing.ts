@@ -44,10 +44,20 @@ export interface LandingContent {
   hero: {
     eyebrow: Gated<Bilingual> | null;
     headline: Gated<Bilingual>;
+    /**
+     * Words inside the headline set on their own line in the accent colour. Ignored when the
+     * (owner-edited) headline no longer contains them, so a CMS edit can never break the title.
+     */
+    headlineAccent: Bilingual | null;
     lead: Gated<Bilingual> | null;
     donateCta: Bilingual;
+    learnMoreCta: Bilingual;
+    getHelpPrompt: Bilingual;
     getHelpCta: Bilingual;
     paymentNote: Gated<Bilingual>;
+    /** Accessible labels for the banner's pause control (WCAG 2.2.2: moving content > 5 s). */
+    pauseBanner: Bilingual;
+    playBanner: Bilingual;
   };
   about: {
     title: Bilingual;
@@ -92,16 +102,32 @@ const unconfirmedProgramme = (slug: string, title: Bilingual): Programme => ({
 
 export const LANDING_CONTENT: LandingContent = {
   hero: {
-    eyebrow: null,
+    // Hero wording supplied by the site owner with the approved hero design (5 Nov 2026).
+    eyebrow: {
+      confirmed: true,
+      value: { en: 'Together we can', ta: 'ஒன்றிணைந்தால் முடியும்' },
+    },
     headline: {
-      confirmed: false, // [CONFIRM] #1 — draft from the wireframe
+      confirmed: true,
       value: {
-        en: 'Together, we create a better tomorrow.',
-        ta: 'எல்லோரும் சேர்ந்து, நாளையை நல்லதாக்குவோம்.',
+        en: 'Build a Better Tomorrow',
+        ta: 'சிறந்த நாளையை ஒன்றாக உருவாக்குவோம்',
       },
     },
-    lead: null, // [CONFIRM] #1 — one short paragraph about the trust's real scope
+    headlineAccent: { en: 'Tomorrow', ta: 'சிறந்த நாளையை' },
+    lead: {
+      confirmed: true,
+      value: {
+        en: 'We are a non-profit trust working for the development and a better future of underprivileged children and communities.',
+        ta: 'பின்தங்கிய குழந்தைகள் மற்றும் சமூகங்களின் வளர்ச்சிக்காகவும் சிறந்த எதிர்காலத்துக்காகவும் செயல்படும் லாப நோக்கற்ற அறக்கட்டளை நாங்கள்.',
+      },
+    },
     donateCta: { en: 'Donate now', ta: 'இப்போதே நன்கொடை கொடுங்கள்' },
+    learnMoreCta: { en: 'Learn more', ta: 'மேலும் அறிய' },
+    getHelpPrompt: {
+      en: 'Does your family need support?',
+      ta: 'உங்கள் குடும்பத்திற்கு உதவி தேவையா?',
+    },
     getHelpCta: { en: 'Get Help', ta: 'உதவி பெற' },
     paymentNote: {
       confirmed: false, // [CONFIRM] #1 — Razorpay account not yet live
@@ -110,6 +136,8 @@ export const LANDING_CONTENT: LandingContent = {
         ta: 'Razorpay மூலம் பாதுகாப்பாகப் பணம் செலுத்தலாம் · UPI, கார்டு, நெட்பேங்கிங் · பணம் வந்தது உறுதியான பிறகே ஒப்புகை',
       },
     },
+    pauseBanner: { en: 'Pause banner animation', ta: 'பதாகை அசைவை நிறுத்து' },
+    playBanner: { en: 'Play banner animation', ta: 'பதாகை அசைவை இயக்கு' },
   },
   about: {
     title: { en: 'About the trust', ta: 'அறக்கட்டளையைப் பற்றி' },

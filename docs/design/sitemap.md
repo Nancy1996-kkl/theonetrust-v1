@@ -70,19 +70,19 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
 
 Section order follows the plan (§4). IDs are the anchor targets used by the navigation.
 
-| #   | Section                                 | Anchor ID            | In nav?          | Notes                                                                                |
-| --- | --------------------------------------- | -------------------- | ---------------- | ------------------------------------------------------------------------------------ |
-| 1   | Header                                  | —                    | —                | Logo + trust name, nav, தமிழ் / English switch, **Get Help** and **Donate** buttons  |
-| 2   | Hero                                    | `top`                | —                | Human headline, short real scope, Donate (primary) + Get Help (secondary)            |
-| 3   | About: introduction + trust facts strip | `about`              | **About**        | Only verified facts (issue #1); unknown fields hidden                                |
-| 4   | Ways we help                            | `ways-we-help`       | **Ways we help** | Each card opens the donate panel with that need selected; general vs earmarked       |
-| 5   | How a donation helps                    | `how-donations-help` | —                | Illustrative only when costs are verified                                            |
-| 6   | How it works                            | `how-it-works`       | —                | Need → amount → pay → acknowledgement and updates                                    |
-| 7   | Impact and stories                      | `impact`             | **Impact**       | Sourced, dated metrics; consented stories; factual empty state, never zeros          |
-| 8   | Transparency centre                     | `transparency`       | **Transparency** | Dated documents with language, period, file type                                     |
-| 9   | FAQ                                     | `faq`                | —                | Includes payment limits, tax honesty, "no fee for donors", how to stop monthly gifts |
-| 10  | Contact                                 | `contact`            | **Contact**      | Phone, WhatsApp, email, area, call hours                                             |
-| 11  | Footer                                  | —                    | —                | Legal name and particulars, policy links, receipt help, language switch              |
+| #   | Section                                 | Anchor ID            | In nav?          | Notes                                                                                                         |
+| --- | --------------------------------------- | -------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1   | Header                                  | —                    | —                | Logo + trust name, nav, தமிழ் / English switch, **Get Help** and **Donate** buttons                           |
+| 2   | Hero                                    | `top`                | —                | Forest band + animated beneficiary banner; headline, real scope, Donate (primary) + Learn more, Get Help link |
+| 3   | About: introduction + trust facts strip | `about`              | **About**        | Only verified facts (issue #1); unknown fields hidden                                                         |
+| 4   | Ways we help                            | `ways-we-help`       | **Ways we help** | Each card opens the donate panel with that need selected; general vs earmarked                                |
+| 5   | How a donation helps                    | `how-donations-help` | —                | Illustrative only when costs are verified                                                                     |
+| 6   | How it works                            | `how-it-works`       | —                | Need → amount → pay → acknowledgement and updates                                                             |
+| 7   | Impact and stories                      | `impact`             | **Impact**       | Sourced, dated metrics; consented stories; factual empty state, never zeros                                   |
+| 8   | Transparency centre                     | `transparency`       | **Transparency** | Dated documents with language, period, file type                                                              |
+| 9   | FAQ                                     | `faq`                | —                | Includes payment limits, tax honesty, "no fee for donors", how to stop monthly gifts                          |
+| 10  | Contact                                 | `contact`            | **Contact**      | Phone, WhatsApp, email, area, call hours                                                                      |
+| 11  | Footer                                  | —                    | —                | Legal name and particulars, policy links, receipt help, language switch                                       |
 
 ### Panels on the single page
 
