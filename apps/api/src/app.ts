@@ -109,7 +109,8 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
         ? incoming
         : randomUUID();
     },
-    trustProxy: production,
+    // Trust X-Forwarded-For only from the configured proxy addresses, never from anyone (#38).
+    trustProxy: production && env.TRUST_PROXY !== 'none' ? env.TRUST_PROXY : false,
   });
 
   app.addHook('onSend', async (request, reply) => {
@@ -123,7 +124,8 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     origin: (origin, callback) => {
       callback(null, origin === undefined || env.CORS_ORIGINS.includes(origin));
     },
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    // Every method an API route uses; PUT is the owner's content draft (#36, found in #38).
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['content-type', CORRELATION_HEADER, CSRF_HEADER, 'idempotency-key'],
     exposedHeaders: [CORRELATION_HEADER, 'retry-after'],
     credentials: true,

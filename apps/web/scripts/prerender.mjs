@@ -5,11 +5,13 @@
  *   - the real page HTML inside #root (search engines and slow phones see content before JS),
  *   - <html lang>, title, description, canonical, hreflang and Open Graph in <head>,
  *   - preload links for the fonts that page needs first.
- * Also writes 404.html (not-found, noindex), sitemap.xml and robots.txt.
+ * Also writes 404.html (not-found, noindex), sitemap.xml, robots.txt and _headers (#38).
  */
 import { readFileSync, readdirSync, rmSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { loadEnv } from 'vite';
+import { headersFile, webSecurityHeaders } from './security-headers.mjs';
 
 const webRoot = resolve(import.meta.dirname, '..');
 const dist = join(webRoot, 'dist');
@@ -89,5 +91,16 @@ write(
 );
 write('sitemap.xml', server.buildSitemapXml());
 write('robots.txt', server.buildRobotsTxt());
+// Security headers for the static host (#38), with the API origin this build talks to.
+const { VITE_API_BASE_URL } = loadEnv('production', webRoot, 'VITE_');
+write(
+  '_headers',
+  headersFile(
+    webSecurityHeaders({
+      apiBaseUrl: process.env.VITE_API_BASE_URL ?? VITE_API_BASE_URL,
+      production: true,
+    }),
+  ),
+);
 
 rmSync(serverDir, { recursive: true, force: true });

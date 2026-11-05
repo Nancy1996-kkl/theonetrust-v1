@@ -32,6 +32,16 @@ const EnvSchema = z
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
+    /**
+     * Addresses of the reverse proxy in front of the API in production (#38), comma-separated
+     * IPs/CIDRs or proxy-addr names. Only a request arriving FROM one of these may set the client
+     * IP via X-Forwarded-For, so a direct caller cannot invent its own IP to dodge rate limits.
+     * Default: private and loopback networks (a platform load balancer). 'none' = trust nobody.
+     */
+    TRUST_PROXY: z
+      .string()
+      .regex(/^[\w.:/, -]+$/)
+      .default('loopback, linklocal, uniquelocal'),
     /** Requests allowed per client IP per window, across all routes (routes may set stricter limits). */
     RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(120),
     RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(60_000),
