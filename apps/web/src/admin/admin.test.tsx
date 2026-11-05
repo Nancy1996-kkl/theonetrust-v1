@@ -67,6 +67,7 @@ function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
     donation: vi.fn(async () => Promise.reject(new AdminApiError('NOT_FOUND'))),
     recheckDonation: vi.fn(),
     donationsExportUrl: vi.fn(() => '/api/v1/admin/donations/export.csv'),
+    webhooks: vi.fn(),
     exceptionQueue: vi.fn(async () => ({ items: [], staleAfterMinutes: 30 })),
     receipts: vi.fn(async () => ({ items: [], page: 1, pageSize: 25, total: 0 })),
     resendReceipt: vi.fn(),

@@ -1,6 +1,7 @@
 import {
   CSRF_HEADER,
   type AdminDocument,
+  type AdminWebhookList,
   type AdminDocumentList,
   type AdminMetric,
   type AdminProgramme,
@@ -175,6 +176,11 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
     donationsExportUrl: (filters: LedgerFilters) =>
       apiUrl(baseUrl, `/admin/donations/export.csv?${query({ ...filters, page: undefined })}`),
     exceptionQueue: () => call<ExceptionQueue>('GET', '/admin/exceptions'),
+    webhooks: (filter?: { status?: string; attention?: boolean }) =>
+      call<AdminWebhookList>(
+        'GET',
+        `/admin/webhooks?${query({ status: filter?.status, attention: filter?.attention ? '1' : undefined })}`,
+      ),
     receipts: (page = 1) => call<AdminReceiptList>('GET', `/admin/receipts?page=${page}`),
     resendReceipt: (id: string, reason: string) =>
       call<{ id: string; queued: boolean }>(

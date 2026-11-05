@@ -152,7 +152,12 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     reply.code(status).send(errorBody(code, request.id, fields));
   });
 
-  app.register(healthRoutes, { prefix: API_V1_PREFIX, version: APP_VERSION });
+  const pingDb = options.db;
+  app.register(healthRoutes, {
+    prefix: API_V1_PREFIX,
+    version: APP_VERSION,
+    ...(pingDb && { ping: () => pingDb.$queryRaw`SELECT 1` }),
+  });
 
   // Purpose-specific keys from AUTH_SECRET_KEY (owner sign-in, CSRF, receipt links).
   const keys = env.AUTH_SECRET_KEY ? deriveAuthKeys(env.AUTH_SECRET_KEY) : undefined;

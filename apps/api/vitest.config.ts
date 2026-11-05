@@ -15,6 +15,7 @@ export default defineConfig({
         'src/**/*.test.ts',
         'src/server.ts',
         'src/cli/set-owner-password.ts',
+        'src/cli/run-launch-check.ts',
         'src/generated/**',
         // Need PostgreSQL: covered by the database suite, which has its own thresholds.
         'src/db/repositories/**',
@@ -33,6 +34,7 @@ export default defineConfig({
         'src/modules/payments/reconcile.ts',
         'src/modules/payments/verify-routes.ts',
         'src/modules/payments/webhook-routes.ts',
+        'src/modules/payments/webhook-admin-routes.ts',
         'src/modules/ledger/**',
         'src/modules/notifications/admin-routes.ts',
         'src/modules/notifications/outbox.ts',

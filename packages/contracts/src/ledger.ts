@@ -207,3 +207,26 @@ export interface AdminSubscriptionDetail extends AdminSubscriptionItem {
   chargeList: LedgerItem[];
   exceptions: Array<{ id: string; kind: string; status: 'OPEN' | 'RESOLVED'; createdAt: string }>;
 }
+
+/** Webhook delivery view (#39): what Razorpay sent and how it was handled. No payloads. */
+export type WebhookStatusDto = 'RECEIVED' | 'PROCESSED' | 'IGNORED' | 'FAILED';
+
+export interface AdminWebhookItem {
+  id: string;
+  eventType: string;
+  status: WebhookStatusDto;
+  /** Short code only, e.g. "processing_failed" or "unknown_payment_to_review". */
+  note: string | null;
+  attempts: number;
+  receivedAt: string;
+  processedAt: string | null;
+  /** Still RECEIVED or FAILED after the stale window: Razorpay retries, the owner should look. */
+  needsAttention: boolean;
+  donation: { id: string; reference: string } | null;
+}
+
+export interface AdminWebhookList {
+  items: AdminWebhookItem[];
+  counts: Record<WebhookStatusDto, number>;
+  staleAfterMinutes: number;
+}
