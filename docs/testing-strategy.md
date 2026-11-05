@@ -70,11 +70,25 @@ the production signature code; they run in the CI `database` job against Postgre
 1. `implementation-task` skill → plan + `edge-case-matrix` (success / failure / edge rows).
 2. Tests first (or `test-engineer` agent), see them fail, implement, `pnpm verify`.
 3. `change-audit` skill + reviewer agents (`change-auditor`, `payment-security-reviewer`,
-   `ui-a11y-reviewer`) → fix Critical/High.
+   `ui-a11y-reviewer`, `ui-regression-reviewer`, `a11y-i18n-reviewer`) → fix Critical/High.
 4. PR with the template: matrix, real command output, screenshots, risks.
+
+## Visual baselines (#37)
+
+`pnpm test:visual` (config `apps/web/playwright.visual.config.ts`, specs `e2e/*.visual.ts`) takes
+screenshots of key screens and states — home, policy, not found, donate panel, acknowledgement and
+its not-found state, a long-Tamil specimen, and the owner dashboard (sign-in, a table with long
+Tamil text, empty, loading and error) — in English and Tamil at 360, 390, 768, 1366 and 1440 px.
+The auto bug detector (axe, overflow, console, document checks) also runs after every screenshot.
+
+- Baselines live in `apps/web/e2e/__screenshots__/` and are rendered on Linux Chromium (the CI
+  runner). File names carry no platform suffix, so compare on Linux (CI or the cloud sandbox).
+- Accept an intended change with `pnpm --filter @theonetrust/web test:visual:update` and list every
+  changed baseline in the PR; the `ui-regression-reviewer` agent checks them.
+- Manual screen-reader checks are recorded in `docs/testing/a11y-i18n-audit.md`.
 
 ## Planned additions (tracked in issues)
 
-Visual regression baselines and Tamil/English screenshot matrix (#37), Lighthouse budgets (#16),
+Lighthouse budgets (#16),
 API integration tests against a real PostgreSQL in CI (#18),
 security scanning (#38).

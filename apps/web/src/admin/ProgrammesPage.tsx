@@ -99,7 +99,7 @@ export function ProgrammesPage() {
   const columns: Column<AdminProgramme>[] = [
     {
       key: 'title',
-      header: c.progTitleEn,
+      header: lang === 'ta' ? c.progTitleTa : c.progTitleEn,
       rowHeader: true,
       cell: (p) => (lang === 'ta' ? p.titleTa : p.titleEn),
     },

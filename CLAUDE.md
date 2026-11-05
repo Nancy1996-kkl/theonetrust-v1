@@ -18,8 +18,9 @@ dashboard. Money, donor privacy and beneficiary dignity are involved: **correctn
 | --------------------------- | ----------------------------------------------------------------------------------- |
 | `pnpm dev`                  | Web (5173) + API (4000)                                                             |
 | `pnpm verify:quick`         | format, lint, typecheck, script tests, unit tests, tests-required gate              |
-| `pnpm verify`               | everything above + coverage thresholds + build + Playwright on 5 viewports          |
+| `pnpm verify`               | everything above + coverage thresholds + build + Playwright + visual baselines      |
 | `pnpm test:e2e`             | Playwright with the auto bug detector (console, exceptions, network, overflow, axe) |
+| `pnpm test:visual`          | Visual baselines: key screens and states, en + ta, 5 viewports (Linux Chromium)     |
 | `pnpm check:tests-required` | fails if a package's source changed without a test change in that package           |
 
 Local Playwright in the cloud sandbox: `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers pnpm test:e2e`.
