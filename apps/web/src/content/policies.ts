@@ -124,7 +124,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
         paragraphs: [
           p(
             'Only the trust’s authorised people, through a protected dashboard. Service providers that run the site for us — payment (Razorpay), email and hosting — process it only to provide their service.',
-            'பாதுகாப்பான நிர்வாகப் பக்கம் வழியாக, அறக்கட்டளை அனுமதித்தவர்கள் மட்டுமே பார்க்க முடியும். எங்களுக்காக இந்தத் தளத்தை இயக்கும் நிறுவனங்கள் — பணம் செலுத்துதல் (Razorpay), மின்னஞ்சல், இணையதள ஹோஸ்டிங் — தங்கள் வேலைக்குத் தேவையான அளவு மட்டுமே இவற்றைக் கையாளும்.',
+            'பாதுகாப்பான நிர்வாகப் பக்கம் வழியாக, அறக்கட்டளை அனுமதித்தவர்கள் மட்டுமே பார்க்க முடியும். எங்களுக்காக இந்தத் தளத்தை இயக்கும் நிறுவனங்கள் — பணம் செலுத்துதல் (Razorpay), மின்னஞ்சல், இணையதளத்தை இயக்கும் சேவை — தங்கள் வேலைக்குத் தேவையான அளவு மட்டுமே இவற்றைக் கையாளும்.',
           ),
           p(
             'We never sell your information or show it publicly. Your name, phone, email, PAN or address never appear in links or on public pages, including acknowledgement links.',
@@ -132,7 +132,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
           ),
           p(
             'If you choose a tax option, your name, PAN, address and the amount are reported to the Income Tax Department, as the trust must do for such donations. They are stored encrypted.',
-            'நீங்கள் வரி விலக்கைத் தேர்வு செய்தால், உங்கள் பெயர், PAN, முகவரி, தொகை ஆகியவை வருமான வரித் துறைக்குத் தெரிவிக்கப்படும் — இப்படிப்பட்ட நன்கொடைகளுக்கு அறக்கட்டளை இதைச் செய்தாக வேண்டும். இவை மறைகுறியாக்கம் (encryption) செய்து பாதுகாப்பாக வைக்கப்படும்.',
+            'நீங்கள் வரி விலக்கைத் தேர்வு செய்தால், உங்கள் பெயர், PAN, முகவரி, தொகை ஆகியவை வருமான வரித் துறைக்குத் தெரிவிக்கப்படும் — இப்படிப்பட்ட நன்கொடைகளுக்கு அறக்கட்டளை இதைச் செய்தாக வேண்டும். இவை மறைகுறியாக்கம் செய்து பாதுகாப்பாக வைக்கப்படும்.',
           ),
         ],
       },
@@ -143,7 +143,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
         paragraphs: [
           p(
             'We remember your language choice in your browser. We do not use advertising or tracking cookies.',
-            'நீங்கள் தேர்வு செய்த மொழியை உங்கள் உலாவியிலேயே (browser) நினைவில் வைக்கிறோம். விளம்பரத்துக்கோ உங்களைப் பின்தொடரவோ குக்கீகள் (cookies) பயன்படுத்துவதில்லை.',
+            'நீங்கள் தேர்வு செய்த மொழியை உங்கள் உலாவியிலேயே நினைவில் வைக்கிறோம். விளம்பரத்துக்கோ உங்களைப் பின்தொடரவோ எந்தச் சிறு கோப்பும் (குக்கீ) வைப்பதில்லை.',
           ),
         ],
       },
@@ -191,7 +191,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
           ),
           p(
             'A donation is complete only when our server has verified the payment with Razorpay. A payment screen, QR scan, UTR number or screenshot is not proof of payment.',
-            'பணம் வந்ததை Razorpay-இடம் நாங்கள் சரிபார்த்த பிறகுதான் நன்கொடை முடிந்ததாகும். பணம் செலுத்திய திரை, QR ஸ்கேன், UTR எண், ஸ்கிரீன்ஷாட் — இவை பணம் வந்ததற்கான சான்று ஆகாது.',
+            'பணம் வந்ததை Razorpay-இடம் நாங்கள் சரிபார்த்த பிறகுதான் நன்கொடை முடிந்ததாகும். பணம் செலுத்திய திரை, QR ஸ்கேன், UTR எண், திரைப் படம் — இவை பணம் வந்ததற்கான சான்று ஆகாது.',
           ),
           p(
             'We do not charge donors any fee.',

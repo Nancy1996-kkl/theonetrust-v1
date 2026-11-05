@@ -288,7 +288,7 @@ describe('tax and evidence rules', () => {
   it('does not publish an impact metric without source, period, date and approval', async () => {
     const err = await pgError(
       db.impactMetric.create({
-        data: { labelTa: 'சோதனை (Test)', labelEn: 'Synthetic', value: 1n, status: 'PUBLISHED' },
+        data: { labelTa: 'சோதனை', labelEn: 'Synthetic', value: 1n, status: 'PUBLISHED' },
       }),
     );
     expect(err).toContain('impact_metrics_published_evidence');

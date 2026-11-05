@@ -85,7 +85,7 @@ export const RECEIPT_STRINGS = {
       netbanking: 'நெட்பேங்கிங்',
       wallet: 'வாலட்',
       bank_transfer: 'வங்கிப் பரிமாற்றம்',
-      other: 'ஆன்லைன் பணம் செலுத்துதல்',
+      other: 'இணையம் வழியாகப் பணம் செலுத்துதல்',
     } satisfies Record<ReceiptMethod, string>,
   },
 } as const;
