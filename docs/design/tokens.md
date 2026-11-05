@@ -1,7 +1,7 @@
 # Design tokens
 
 Source of truth: [`apps/web/src/styles/tokens.css`](../../apps/web/src/styles/tokens.css).
-Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (Midnight Navy).
+Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (Forest Green).
 
 ## Rules
 
@@ -12,13 +12,13 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (Mid
    (`apps/web/src/styles/design-tokens.ts`). The test enforces WCAG 2.2 AA and regenerates the
    table below: `UPDATE_TOKEN_DOCS=1 pnpm --filter @theonetrust/web test`.
 3. **Status is never colour alone**: always pair with an icon and words.
-4. **Gold is an accent**: the Donate button background, thin rules, and text on navy only.
-   Gold text on light surfaces is 2.1–2.3:1 and fails AA (`FORBIDDEN_PAIRS` keeps it that way).
+4. **Gold is an accent**: the Donate button background, thin rules, and text on dark green only.
+   Accent text on light surfaces is 2.1–2.3:1 and fails AA (`FORBIDDEN_PAIRS` keeps it that way).
 5. **Warning orange** (`--color-status-warning`) is for icons and borders only (3.6:1). Warning
    text uses `--color-status-warning-text` (derived darker tone, 5.5:1).
-6. **Focus ring**: info blue on light surfaces; gold inside `.surface-inverse` (blue is only 2.5:1 on navy).
+6. **Focus ring**: info blue on light surfaces; gold inside `.surface-inverse` (blue is only 2.5:1 on dark green).
 
-7. **Navy bands** use `.surface-inverse`, which re-maps the role tokens (text, headings, links,
+7. **Dark green bands** use `.surface-inverse`, which re-maps the role tokens (text, headings, links,
    focus ring) — never set only `color` on a dark container.
 8. **Status text never sits on the muted band** (`--color-surface-muted`): success and warning
    text fail AA there. Put status messages on `--color-surface` or `--color-bg`.
@@ -34,23 +34,23 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (Mid
 
 ## Colour
 
-| Palette token            | Value   | Role                                                                    |
-| ------------------------ | ------- | ----------------------------------------------------------------------- |
-| `--palette-navy`         | #172B46 | Midnight Navy — primary brand, headings, primary buttons, inverse bands |
-| `--palette-gold`         | #C6A76B | Champagne Gold — Donate CTA background, accents on navy                 |
-| `--palette-silver`       | #E5E7E9 | Silver Mist — muted bands, decorative dividers                          |
-| `--palette-cloud`        | #F7F8FA | Cloud White — page background                                           |
-| `--palette-steel`        | #34465B | Steel Blue — secondary text, form borders                               |
-| `--palette-graphite`     | #262D35 | Graphite — body text                                                    |
-| `--palette-white`        | #FFFFFF | Card surfaces, text on navy                                             |
-| `--palette-success`      | #287A55 | Success                                                                 |
-| `--palette-warning`      | #B7791F | Warning icons/borders                                                   |
-| `--palette-warning-dark` | #8F5E14 | Warning text (derived for AA)                                           |
-| `--palette-error`        | #B42318 | Error                                                                   |
-| `--palette-info`         | #3568A8 | Information, focus ring                                                 |
-| `--palette-gold-light`   | #D4BA88 | Donate hover (derived; 7.6:1 with navy text)                            |
-| `--palette-gold-dark`    | #B8975A | Donate pressed (derived; 5.1:1 with navy text)                          |
-| `--palette-slate`        | #5E6B7A | Placeholder and disabled text (derived; 5.4:1 on white)                 |
+| Palette token            | Value   | Role                                                              |
+| ------------------------ | ------- | ----------------------------------------------------------------- |
+| `--palette-primary`      | #14532D | Dark green — primary brand, headings, primary buttons, dark bands |
+| `--palette-accent`       | #9FD8AD | Light green — Donate CTA background, accents on dark green        |
+| `--palette-mist`         | #E3F1E7 | Light green tint — muted bands, decorative dividers               |
+| `--palette-canvas`       | #F6FAF7 | Near-white with a green hint — page background                    |
+| `--palette-primary-soft` | #3D6B4F | Mid green — secondary text, form borders                          |
+| `--palette-ink`          | #1F2D25 | Green-black — body text                                           |
+| `--palette-white`        | #FFFFFF | Card surfaces, text on dark green                                 |
+| `--palette-success`      | #287A55 | Success                                                           |
+| `--palette-warning`      | #B7791F | Warning icons/borders                                             |
+| `--palette-warning-dark` | #8F5E14 | Warning text (derived for AA)                                     |
+| `--palette-error`        | #B42318 | Error                                                             |
+| `--palette-info`         | #3568A8 | Information, focus ring                                           |
+| `--palette-accent-light` | #B8E3C2 | Donate hover (derived; 6.4:1 with dark green text)                |
+| `--palette-accent-dark`  | #86C997 | Donate pressed (derived; 4.7:1 with dark green text)              |
+| `--palette-slate`        | #5C6E63 | Placeholder and disabled text (derived; 5.4:1 on white)           |
 
 ### Contrast (generated — do not edit by hand)
 
@@ -58,46 +58,47 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (Mid
 <!-- contrast-table:start -->
 | Where | Foreground | Background | Use | Ratio | AA minimum | Result |
 |---|---|---|---|---|---|---|
-| Body text on page | `--color-text` #262D35 | `--color-bg` #F7F8FA | text | 13.09:1 | 4.5:1 | ✔ AA |
-| Body text on cards | `--color-text` #262D35 | `--color-surface` #FFFFFF | text | 13.91:1 | 4.5:1 | ✔ AA |
-| Body text on muted band | `--color-text` #262D35 | `--color-surface-muted` #E5E7E9 | text | 11.22:1 | 4.5:1 | ✔ AA |
-| Secondary text on page | `--color-text-muted` #34465B | `--color-bg` #F7F8FA | text | 9.09:1 | 4.5:1 | ✔ AA |
-| Secondary text on cards | `--color-text-muted` #34465B | `--color-surface` #FFFFFF | text | 9.66:1 | 4.5:1 | ✔ AA |
-| Secondary text on muted band | `--color-text-muted` #34465B | `--color-surface-muted` #E5E7E9 | text | 7.79:1 | 4.5:1 | ✔ AA |
-| Headings on page | `--color-text-heading` #172B46 | `--color-bg` #F7F8FA | text | 13.43:1 | 4.5:1 | ✔ AA |
-| Headings on cards | `--color-text-heading` #172B46 | `--color-surface` #FFFFFF | text | 14.28:1 | 4.5:1 | ✔ AA |
-| Headings on muted band | `--color-text-heading` #172B46 | `--color-surface-muted` #E5E7E9 | text | 11.51:1 | 4.5:1 | ✔ AA |
-| Links on page | `--color-link` #172B46 | `--color-bg` #F7F8FA | text | 13.43:1 | 4.5:1 | ✔ AA |
-| Links on cards | `--color-link` #172B46 | `--color-surface` #FFFFFF | text | 14.28:1 | 4.5:1 | ✔ AA |
-| Links on muted band | `--color-link` #172B46 | `--color-surface-muted` #E5E7E9 | text | 11.51:1 | 4.5:1 | ✔ AA |
-| Text, headings, links on navy band | `--color-text-inverse` #FFFFFF | `--color-surface-inverse` #172B46 | text | 14.28:1 | 4.5:1 | ✔ AA |
-| Gold label on navy | `--color-text-accent-on-inverse` #C6A76B | `--color-surface-inverse` #172B46 | text | 6.21:1 | 4.5:1 | ✔ AA |
-| Primary button | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg` #172B46 | text | 14.28:1 | 4.5:1 | ✔ AA |
-| Primary button hover | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-hover` #34465B | text | 9.66:1 | 4.5:1 | ✔ AA |
-| Primary button pressed | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-active` #262D35 | text | 13.91:1 | 4.5:1 | ✔ AA |
-| Donate button | `--color-action-donate-text` #172B46 | `--color-action-donate-bg` #C6A76B | text | 6.21:1 | 4.5:1 | ✔ AA |
-| Donate button hover | `--color-action-donate-text` #172B46 | `--color-action-donate-bg-hover` #D4BA88 | text | 7.60:1 | 4.5:1 | ✔ AA |
-| Donate button pressed | `--color-action-donate-text` #172B46 | `--color-action-donate-bg-active` #B8975A | text | 5.17:1 | 4.5:1 | ✔ AA |
-| Secondary button label | `--color-action-secondary-text` #172B46 | `--color-surface` #FFFFFF | text | 14.28:1 | 4.5:1 | ✔ AA |
-| Secondary button hover | `--color-action-secondary-text` #172B46 | `--color-action-secondary-bg-hover` #E5E7E9 | text | 11.51:1 | 4.5:1 | ✔ AA |
-| Secondary button border | `--color-action-secondary-border` #172B46 | `--color-bg` #F7F8FA | ui | 13.43:1 | 3:1 | ✔ AA |
-| Input placeholder | `--color-text-placeholder` #5E6B7A | `--color-surface` #FFFFFF | text | 5.44:1 | 4.5:1 | ✔ AA |
+| Body text on page | `--color-text` #1F2D25 | `--color-bg` #F6FAF7 | text | 13.65:1 | 4.5:1 | ✔ AA |
+| Body text on cards | `--color-text` #1F2D25 | `--color-surface` #FFFFFF | text | 14.38:1 | 4.5:1 | ✔ AA |
+| Body text on muted band | `--color-text` #1F2D25 | `--color-surface-muted` #E3F1E7 | text | 12.32:1 | 4.5:1 | ✔ AA |
+| Secondary text on page | `--color-text-muted` #3D6B4F | `--color-bg` #F6FAF7 | text | 5.83:1 | 4.5:1 | ✔ AA |
+| Secondary text on cards | `--color-text-muted` #3D6B4F | `--color-surface` #FFFFFF | text | 6.15:1 | 4.5:1 | ✔ AA |
+| Secondary text on muted band | `--color-text-muted` #3D6B4F | `--color-surface-muted` #E3F1E7 | text | 5.27:1 | 4.5:1 | ✔ AA |
+| Headings on page | `--color-text-heading` #14532D | `--color-bg` #F6FAF7 | text | 8.64:1 | 4.5:1 | ✔ AA |
+| Headings on cards | `--color-text-heading` #14532D | `--color-surface` #FFFFFF | text | 9.11:1 | 4.5:1 | ✔ AA |
+| Headings on muted band | `--color-text-heading` #14532D | `--color-surface-muted` #E3F1E7 | text | 7.81:1 | 4.5:1 | ✔ AA |
+| Links on page | `--color-link` #14532D | `--color-bg` #F6FAF7 | text | 8.64:1 | 4.5:1 | ✔ AA |
+| Links on cards | `--color-link` #14532D | `--color-surface` #FFFFFF | text | 9.11:1 | 4.5:1 | ✔ AA |
+| Links on muted band | `--color-link` #14532D | `--color-surface-muted` #E3F1E7 | text | 7.81:1 | 4.5:1 | ✔ AA |
+| Text, headings, links on dark green band | `--color-text-inverse` #FFFFFF | `--color-surface-inverse` #14532D | text | 9.11:1 | 4.5:1 | ✔ AA |
+| Accent label on dark green | `--color-text-accent-on-inverse` #9FD8AD | `--color-surface-inverse` #14532D | text | 5.59:1 | 4.5:1 | ✔ AA |
+| Primary button | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg` #14532D | text | 9.11:1 | 4.5:1 | ✔ AA |
+| Primary button hover | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-hover` #3D6B4F | text | 6.15:1 | 4.5:1 | ✔ AA |
+| Primary button pressed | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-active` #1F2D25 | text | 14.38:1 | 4.5:1 | ✔ AA |
+| Donate button | `--color-action-donate-text` #14532D | `--color-action-donate-bg` #9FD8AD | text | 5.59:1 | 4.5:1 | ✔ AA |
+| Donate button hover | `--color-action-donate-text` #14532D | `--color-action-donate-bg-hover` #B8E3C2 | text | 6.42:1 | 4.5:1 | ✔ AA |
+| Donate button pressed | `--color-action-donate-text` #14532D | `--color-action-donate-bg-active` #86C997 | text | 4.69:1 | 4.5:1 | ✔ AA |
+| Secondary button label | `--color-action-secondary-text` #14532D | `--color-surface` #FFFFFF | text | 9.11:1 | 4.5:1 | ✔ AA |
+| Secondary button hover | `--color-action-secondary-text` #14532D | `--color-action-secondary-bg-hover` #E3F1E7 | text | 7.81:1 | 4.5:1 | ✔ AA |
+| Secondary button border | `--color-action-secondary-border` #14532D | `--color-bg` #F6FAF7 | ui | 8.64:1 | 3:1 | ✔ AA |
+| Input placeholder | `--color-text-placeholder` #5C6E63 | `--color-surface` #FFFFFF | text | 5.43:1 | 4.5:1 | ✔ AA |
 | Success message | `--color-status-success` #287A55 | `--color-surface` #FFFFFF | text | 5.24:1 | 4.5:1 | ✔ AA |
-| Success message on page | `--color-status-success` #287A55 | `--color-bg` #F7F8FA | text | 4.93:1 | 4.5:1 | ✔ AA |
+| Success message on page | `--color-status-success` #287A55 | `--color-bg` #F6FAF7 | text | 4.97:1 | 4.5:1 | ✔ AA |
 | Error message | `--color-status-error` #B42318 | `--color-surface` #FFFFFF | text | 6.57:1 | 4.5:1 | ✔ AA |
-| Error message on page | `--color-status-error` #B42318 | `--color-bg` #F7F8FA | text | 6.18:1 | 4.5:1 | ✔ AA |
+| Error message on page | `--color-status-error` #B42318 | `--color-bg` #F6FAF7 | text | 6.24:1 | 4.5:1 | ✔ AA |
 | Info message | `--color-status-info` #3568A8 | `--color-surface` #FFFFFF | text | 5.68:1 | 4.5:1 | ✔ AA |
-| Info message on page | `--color-status-info` #3568A8 | `--color-bg` #F7F8FA | text | 5.34:1 | 4.5:1 | ✔ AA |
+| Info message on page | `--color-status-info` #3568A8 | `--color-bg` #F6FAF7 | text | 5.39:1 | 4.5:1 | ✔ AA |
 | Warning message | `--color-status-warning-text` #8F5E14 | `--color-surface` #FFFFFF | text | 5.55:1 | 4.5:1 | ✔ AA |
-| Warning message on page | `--color-status-warning-text` #8F5E14 | `--color-bg` #F7F8FA | text | 5.22:1 | 4.5:1 | ✔ AA |
+| Warning message on page | `--color-status-warning-text` #8F5E14 | `--color-bg` #F6FAF7 | text | 5.27:1 | 4.5:1 | ✔ AA |
 | Warning icon/border | `--color-status-warning` #B7791F | `--color-surface` #FFFFFF | ui | 3.64:1 | 3:1 | ✔ AA |
-| Form field border | `--color-border-input` #34465B | `--color-surface` #FFFFFF | ui | 9.66:1 | 3:1 | ✔ AA |
-| Focus ring on page | `--color-focus` #3568A8 | `--color-bg` #F7F8FA | ui | 5.34:1 | 3:1 | ✔ AA |
+| Form field border | `--color-border-input` #3D6B4F | `--color-surface` #FFFFFF | ui | 6.15:1 | 3:1 | ✔ AA |
+| Focus ring on page | `--color-focus` #3568A8 | `--color-bg` #F6FAF7 | ui | 5.39:1 | 3:1 | ✔ AA |
 | Focus ring on cards | `--color-focus` #3568A8 | `--color-surface` #FFFFFF | ui | 5.68:1 | 3:1 | ✔ AA |
-| Focus ring on muted band | `--color-focus` #3568A8 | `--color-surface-muted` #E5E7E9 | ui | 4.58:1 | 3:1 | ✔ AA |
-| Focus ring on navy | `--color-focus-on-inverse` #C6A76B | `--color-surface-inverse` #172B46 | ui | 6.21:1 | 3:1 | ✔ AA |
-| Form field border on navy | `--color-border-input-on-inverse` #E5E7E9 | `--color-surface-inverse` #172B46 | ui | 11.51:1 | 3:1 | ✔ AA |
-| Outline button hover on navy | `--color-text-inverse` #FFFFFF | `--color-action-secondary-bg-hover-on-inverse` #34465B | text | 9.66:1 | 4.5:1 | ✔ AA |
+| Focus ring on muted band | `--color-focus` #3568A8 | `--color-surface-muted` #E3F1E7 | ui | 4.86:1 | 3:1 | ✔ AA |
+| Focus ring on dark green | `--color-focus-on-inverse` #9FD8AD | `--color-surface-inverse` #14532D | ui | 5.59:1 | 3:1 | ✔ AA |
+| Form field border on dark green | `--color-border-input-on-inverse` #E3F1E7 | `--color-surface-inverse` #14532D | ui | 7.81:1 | 3:1 | ✔ AA |
+| Outline button hover on dark green | `--color-text-inverse` #FFFFFF | `--color-action-secondary-bg-hover-on-inverse` #3D6B4F | text | 6.15:1 | 4.5:1 | ✔ AA |
+| Warning text on muted band (passes with the green palette) | `--color-status-warning-text` #8F5E14 | `--color-surface-muted` #E3F1E7 | text | 4.76:1 | 4.5:1 | ✔ AA |
 <!-- contrast-table:end -->
 <!-- prettier-ignore-end -->
 
@@ -131,7 +132,7 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (Mid
 | ------------------ | --------------------------------------------------------------------------------------------------------------- |
 | Spacing (4px base) | `--space-1` 4px … `--space-24` 96px; `--space-section` 48→96px; `--gutter` 16→32px; `--content-max` 1200px      |
 | Radius             | `--radius-sm` 4px, `--radius-md` 8px, `--radius-lg` 12px, `--radius-xl` 16px, `--radius-pill`                   |
-| Shadow             | `--shadow-sm`, `--shadow-md`, `--shadow-lg` (navy-tinted, subtle)                                               |
+| Shadow             | `--shadow-sm`, `--shadow-md`, `--shadow-lg` (green-tinted, subtle)                                              |
 | Controls           | `--control-height` 48px, `--control-height-sm` 44px (touch minimum), `--focus-ring-width` 3px                   |
 | Motion             | `--duration-fast` 150ms, `--duration-base` 200ms, `--duration-slow` 250ms; all 0 under `prefers-reduced-motion` |
 | Layers             | `--z-header` 50, `--z-overlay` 90, `--z-modal` 100, `--z-toast` 110, `--z-skip-link` 120                        |

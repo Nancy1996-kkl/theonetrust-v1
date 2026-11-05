@@ -8,7 +8,7 @@ dashboard. Money, donor privacy and beneficiary dignity are involved: **correctn
 1. The GitHub issue you are working on (scope + acceptance criteria). One issue per PR.
 2. `docs/website-plan.md` — corrected plan (wins over the original spec where they differ).
 3. `PROJECT_SPEC.md` — detailed product/engineering spec.
-4. `docs/ux-design-brief.md` — visual system (Midnight Navy, Libre Baskerville / Inter / Noto Sans Tamil).
+4. `docs/ux-design-brief.md` — visual system (green theme, Libre Baskerville / Inter / Noto Sans Tamil).
 5. `docs/research/` and `docs/decisions/` — dated research and architecture decisions (ADRs).
 6. `docs/testing-strategy.md` — how the test harness works.
 

@@ -162,7 +162,7 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(problems).toEqual([]);
   });
 
-  test('focus ring is visible on light and navy surfaces', async ({ page }) => {
+  test('focus ring is visible on light and dark green surfaces', async ({ page }) => {
     await page.goto('/');
     await injectSpecimen(page);
 
@@ -185,10 +185,10 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(light.color).toBe('rgb(53, 104, 168)'); // --palette-info
 
     const dark = await ringOf('#inverse-button');
-    expect(dark.color).toBe('rgb(198, 167, 107)'); // --palette-gold on navy
+    expect(dark.color).toBe('rgb(159, 216, 173)'); // --palette-accent on dark green
   });
 
-  test('navy band turns headings, body text and links white (never navy on navy)', async ({
+  test('dark green band turns headings, body text and links white (never dark green on dark green)', async ({
     page,
   }) => {
     await page.goto('/');
@@ -201,14 +201,14 @@ test.describe('Tamil specimen at this viewport', () => {
       link: getComputedStyle(el.querySelector('a')!).color,
     }));
     expect(colours).toEqual({
-      background: 'rgb(23, 43, 70)', // --palette-navy
+      background: 'rgb(20, 83, 45)', // --palette-primary
       heading: 'rgb(255, 255, 255)',
       text: 'rgb(255, 255, 255)',
       link: 'rgb(255, 255, 255)',
     });
   });
 
-  test('navy band flips outline buttons and input borders; a nested .surface card flips back', async ({
+  test('dark green band flips outline buttons and input borders; a nested .surface card flips back', async ({
     page,
   }) => {
     await page.goto('/');
@@ -227,10 +227,10 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(result).toEqual({
       outlineText: 'rgb(255, 255, 255)',
       outlineBorder: 'rgb(255, 255, 255)',
-      inputBorder: 'rgb(229, 231, 233)', // --palette-silver, 11.5:1 on navy
+      inputBorder: 'rgb(227, 241, 231)', // --palette-mist, 7.8:1 on dark green
       cardBackground: 'rgb(255, 255, 255)',
-      cardHeading: 'rgb(23, 43, 70)', // navy again on the light card
-      cardLink: 'rgb(23, 43, 70)',
+      cardHeading: 'rgb(20, 83, 45)', // dark green again on the light card
+      cardLink: 'rgb(20, 83, 45)',
     });
   });
 

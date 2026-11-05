@@ -59,10 +59,10 @@ describe('colour contrast (WCAG 2.2 AA)', () => {
     }
   });
 
-  it('only uses gold as a text colour on navy', () => {
-    const goldForegrounds = results.filter((r) => r.fgHex === tokens.get('--palette-gold'));
-    expect(goldForegrounds.length).toBeGreaterThan(0);
-    for (const pair of goldForegrounds) expect(pair.bg).toBe('--color-surface-inverse');
+  it('only uses the accent as a text colour on dark green', () => {
+    const accentForegrounds = results.filter((r) => r.fgHex === tokens.get('--palette-accent'));
+    expect(accentForegrounds.length).toBeGreaterThan(0);
+    for (const pair of accentForegrounds) expect(pair.bg).toBe('--color-surface-inverse');
   });
 
   it('keeps the documented contrast table in sync with the tokens', () => {

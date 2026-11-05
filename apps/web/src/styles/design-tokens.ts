@@ -111,13 +111,13 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     fg: '--color-text-inverse',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Text, headings, links on navy band',
+    where: 'Text, headings, links on dark green band',
   },
   {
     fg: '--color-text-accent-on-inverse',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Gold label on navy',
+    where: 'Accent label on dark green',
   },
   {
     fg: '--color-action-primary-text',
@@ -211,19 +211,25 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     fg: '--color-focus-on-inverse',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Focus ring on navy',
+    where: 'Focus ring on dark green',
   },
   {
     fg: '--color-border-input-on-inverse',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Form field border on navy',
+    where: 'Form field border on dark green',
   },
   {
     fg: '--color-text-inverse',
     bg: '--color-action-secondary-bg-hover-on-inverse',
     use: 'text',
-    where: 'Outline button hover on navy',
+    where: 'Outline button hover on dark green',
+  },
+  {
+    fg: '--color-status-warning-text',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Warning text on muted band (passes with the green palette)',
   },
 ];
 
@@ -232,8 +238,8 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
  * rule stays documented and nobody quietly moves them into CONTRAST_PAIRS.
  */
 export const FORBIDDEN_PAIRS: ContrastPair[] = [
-  { fg: '--palette-gold', bg: '--color-bg', use: 'text', where: 'Gold text on page' },
-  { fg: '--palette-gold', bg: '--color-surface', use: 'text', where: 'Gold text on cards' },
+  { fg: '--palette-accent', bg: '--color-bg', use: 'text', where: 'Accent text on page' },
+  { fg: '--palette-accent', bg: '--color-surface', use: 'text', where: 'Accent text on cards' },
   {
     fg: '--color-status-warning',
     bg: '--color-surface',
@@ -247,28 +253,22 @@ export const FORBIDDEN_PAIRS: ContrastPair[] = [
     where: 'Success text on muted band',
   },
   {
-    fg: '--color-status-warning-text',
-    bg: '--color-surface-muted',
-    use: 'text',
-    where: 'Warning text on muted band',
-  },
-  {
     fg: '--color-focus',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Blue focus ring on navy',
+    where: 'Blue focus ring on dark green',
   },
   {
     fg: '--color-border-input',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Steel input border on navy',
+    where: 'Steel input border on dark green',
   },
   {
     fg: '--color-action-secondary-text',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Navy outline button on navy',
+    where: 'Dark green outline button on dark green',
   },
 ];
 

@@ -10,7 +10,14 @@ import {
   receiptToken,
   receiptTokenHash,
 } from './numbering.ts';
-import { RECEIPT_STRINGS, formatReceiptDate, receiptRows, renderReceiptPdf } from './pdf.ts';
+import { readFileSync } from 'node:fs';
+import {
+  COLOUR,
+  RECEIPT_STRINGS,
+  formatReceiptDate,
+  receiptRows,
+  renderReceiptPdf,
+} from './pdf.ts';
 import { verifyUrl } from './routes.ts';
 
 describe('financial year (April–March, IST)', () => {
@@ -151,5 +158,21 @@ describe('env', () => {
       'https://theonetrust.in',
     );
     expect(() => loadEnv({ PUBLIC_SITE_URL: 'ftp://x' })).toThrow();
+  });
+});
+
+describe('PDF colours follow the website theme', () => {
+  it('uses the same hex values as the web palette tokens', () => {
+    const css = readFileSync(
+      new URL('../../../../web/src/styles/tokens.css', import.meta.url),
+      'utf8',
+    );
+    const token = (name: string) =>
+      new RegExp(`--palette-${name}:\\s*(#[0-9a-f]{6})`).exec(css)?.[1];
+    expect(COLOUR.primary).toBe(token('primary'));
+    expect(COLOUR.text).toBe(token('ink'));
+    expect(COLOUR.muted).toBe(token('slate'));
+    expect(COLOUR.rule).toBe(token('accent'));
+    expect(COLOUR.alert).toBe(token('error'));
   });
 });

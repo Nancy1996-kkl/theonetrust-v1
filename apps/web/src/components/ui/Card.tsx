@@ -9,7 +9,7 @@ export interface CardProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
 }
 
-/** Light surface container. Inside a navy band it restores the light role tokens (.surface). */
+/** Light surface container. Inside a dark green band it restores the light role tokens (.surface). */
 export function Card({
   as: Tag = 'div',
   elevation = 'raised',
@@ -35,7 +35,7 @@ export interface BentoTileProps extends Omit<HTMLAttributes<HTMLElement>, 'title
   headingLevel?: 2 | 3 | 4;
   /** How many columns the tile spans on wide screens (single column on phones). */
   span?: 1 | 2;
-  /** Navy feature tile. Text and focus tokens switch automatically. */
+  /** Dark green feature tile. Text and focus tokens switch automatically. */
   tone?: 'light' | 'inverse';
   /** Optional call to action rendered at the bottom of the tile. */
   action?: ReactNode;

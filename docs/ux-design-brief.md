@@ -16,16 +16,23 @@ The public website should feel premium, elegant, trustworthy, human-centred, and
 
 ### 2. Brand Identity
 
-**Selected colour palette: Midnight Navy**
+**Selected colour palette: Green (client decision, Nov 2026)** — replaces Midnight Navy.
 
-| Colour | HEX | Purpose |
-|---|---|---|
-| Midnight Navy | #172B46 | Primary brand |
-| Champagne Gold | #C6A76B | Accent |
-| Silver Mist | #E5E7E9 | Secondary background |
-| Cloud White | #F7F8FA | Main background |
-| Steel Blue | #34465B | Secondary elements |
-| Graphite | #262D35 | Primary typography |
+Primary is dark green; the site uses white, dark green and light green surfaces. The values
+below are placeholders until the client sends the exact colour codes; they live only in
+`apps/web/src/styles/tokens.css` (palette layer), so replacing them changes the whole site.
+
+| Colour | HEX | Purpose | Token |
+|---|---|---|---|
+| Dark green | #14532D | Primary brand, buttons, dark bands | `--palette-primary` |
+| Light green | #9FD8AD | Accent: the one donate button, accents on dark green | `--palette-accent` |
+| Light green tint | #E3F1E7 | Secondary background, dividers | `--palette-mist` |
+| Near-white | #F6FAF7 | Main background | `--palette-canvas` |
+| Mid green | #3D6B4F | Secondary text, form borders | `--palette-primary-soft` |
+| Green-black | #1F2D25 | Body text | `--palette-ink` |
+| White | #FFFFFF | Cards | `--palette-white` |
+
+Previous palette (Midnight Navy #172B46, Champagne Gold #C6A76B, …) is retired.
 
 Additional semantic colours:
 - Success: #287A55

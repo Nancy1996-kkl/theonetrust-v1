@@ -15,7 +15,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /**
- * The one button. `donate` is the single gold call to action — use it once per view.
+ * The one button. `donate` is the single accent call to action — use it once per view.
  * While loading the button stays focusable (aria-disabled, not disabled) so keyboard users
  * do not lose their place, but clicks are ignored.
  */

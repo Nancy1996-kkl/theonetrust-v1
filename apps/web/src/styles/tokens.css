@@ -1,19 +1,21 @@
 /*
  * Design tokens — the ONLY place raw colours, font sizes and timing values may appear.
- * Source: docs/ux-design-brief.md §2–4 (Midnight Navy system). Documentation and the
+ * Source: docs/ux-design-brief.md §2–4 (Forest Green system). Documentation and the
  * contrast table: docs/design/tokens.md (kept in sync by src/styles/tokens.test.ts).
  *
  * Layers: 1) palette (raw brand values)  2) roles (what components use).
  * Components must use ROLE tokens, never palette tokens directly.
  */
 :root {
-  /* ── 1. Palette (approved brand colours) ─────────────────────────── */
-  --palette-navy: #172b46; /* Midnight Navy — primary brand */
-  --palette-gold: #c6a76b; /* Champagne Gold — accent, use sparingly */
-  --palette-silver: #e5e7e9; /* Silver Mist — secondary background */
-  --palette-cloud: #f7f8fa; /* Cloud White — main background */
-  --palette-steel: #34465b; /* Steel Blue — secondary elements */
-  --palette-graphite: #262d35; /* Graphite — primary typography */
+  /* ── 1. Palette — green theme (client, Nov 2026) ─────────────────────
+     PLACEHOLDER greens until the client sends the exact colour codes: replace only the six
+     hex values below; every component follows. Each pair is AA-checked by tokens.test.ts. */
+  --palette-primary: #14532d; /* Dark green — primary brand, buttons, dark bands */
+  --palette-accent: #9fd8ad; /* Light green — the one donate button, accents on dark green */
+  --palette-mist: #e3f1e7; /* Light green tint — secondary background, dividers */
+  --palette-canvas: #f6faf7; /* Near-white with a green hint — main background */
+  --palette-primary-soft: #3d6b4f; /* Mid green — secondary text, form borders */
+  --palette-ink: #1f2d25; /* Green-black — body text */
   --palette-white: #ffffff;
 
   --palette-success: #287a55;
@@ -23,43 +25,43 @@
   --palette-info: #3568a8;
 
   /* Derived tones for interaction states (each checked in CONTRAST_PAIRS) */
-  --palette-gold-light: #d4ba88; /* donate hover */
-  --palette-gold-dark: #b8975a; /* donate pressed */
-  --palette-slate: #5e6b7a; /* placeholder and disabled text (5.4:1 on white) */
+  --palette-accent-light: #b8e3c2; /* donate hover */
+  --palette-accent-dark: #86c997; /* donate pressed */
+  --palette-slate: #5c6e63; /* placeholder and disabled text (5.4:1 on white) */
 
   /* ── 2. Roles ─────────────────────────────────────────────────────── */
   /* Surfaces */
-  --color-bg: var(--palette-cloud);
+  --color-bg: var(--palette-canvas);
   --color-surface: var(--palette-white);
-  --color-surface-muted: var(--palette-silver);
-  --color-surface-inverse: var(--palette-navy);
+  --color-surface-muted: var(--palette-mist);
+  --color-surface-inverse: var(--palette-primary);
 
   /* Text */
-  --color-text: var(--palette-graphite);
-  --color-text-muted: var(--palette-steel);
-  --color-text-heading: var(--palette-navy);
+  --color-text: var(--palette-ink);
+  --color-text-muted: var(--palette-primary-soft);
+  --color-text-heading: var(--palette-primary);
   --color-text-inverse: var(--palette-white);
-  --color-text-accent-on-inverse: var(--palette-gold); /* gold text ONLY on navy */
-  --color-link: var(--palette-navy);
+  --color-text-accent-on-inverse: var(--palette-accent); /* accent text ONLY on dark green */
+  --color-link: var(--palette-primary);
 
   /* Actions */
-  --color-action-primary-bg: var(--palette-navy);
+  --color-action-primary-bg: var(--palette-primary);
   --color-action-primary-text: var(--palette-white);
-  --color-action-donate-bg: var(--palette-gold); /* the one gold CTA */
-  --color-action-donate-text: var(--palette-navy);
-  --color-action-secondary-text: var(--palette-navy);
-  --color-action-secondary-border: var(--palette-navy);
+  --color-action-donate-bg: var(--palette-accent); /* the one accent CTA */
+  --color-action-donate-text: var(--palette-primary);
+  --color-action-secondary-text: var(--palette-primary);
+  --color-action-secondary-border: var(--palette-primary);
 
   /* Interaction states */
-  --color-action-primary-bg-hover: var(--palette-steel);
-  --color-action-primary-bg-active: var(--palette-graphite);
-  --color-action-donate-bg-hover: var(--palette-gold-light);
-  --color-action-donate-bg-active: var(--palette-gold-dark);
-  --color-action-secondary-bg-hover: var(--palette-silver);
+  --color-action-primary-bg-hover: var(--palette-primary-soft);
+  --color-action-primary-bg-active: var(--palette-ink);
+  --color-action-donate-bg-hover: var(--palette-accent-light);
+  --color-action-donate-bg-active: var(--palette-accent-dark);
+  --color-action-secondary-bg-hover: var(--palette-mist);
   --color-text-placeholder: var(--palette-slate);
   --color-text-disabled: var(--palette-slate); /* WCAG exempts disabled controls; kept readable */
-  --color-surface-disabled: var(--palette-silver);
-  --color-border-disabled: var(--palette-silver);
+  --color-surface-disabled: var(--palette-mist);
+  --color-border-disabled: var(--palette-mist);
 
   /* Status (always paired with an icon or text — never colour alone) */
   --color-status-success: var(--palette-success);
@@ -69,21 +71,21 @@
   --color-status-info: var(--palette-info);
 
   /* Lines and focus */
-  --color-border-subtle: var(--palette-silver); /* decorative dividers only */
-  --color-border-input: var(--palette-steel); /* ≥ 3:1 for form controls (WCAG 1.4.11) */
+  --color-border-subtle: var(--palette-mist); /* decorative dividers only */
+  --color-border-input: var(--palette-primary-soft); /* ≥ 3:1 for form controls (WCAG 1.4.11) */
   --color-focus: var(--palette-info); /* on light surfaces */
-  --color-focus-on-inverse: var(--palette-gold); /* on navy: info is only 2.5:1 there */
-  --color-border-input-on-inverse: var(--palette-silver); /* steel is only 1.5:1 on navy */
-  --color-action-secondary-bg-hover-on-inverse: var(--palette-steel);
+  --color-focus-on-inverse: var(--palette-accent); /* on dark green: info is only 2.5:1 there */
+  --color-border-input-on-inverse: var(--palette-mist); /* steel is only 1.5:1 on dark green */
+  --color-action-secondary-bg-hover-on-inverse: var(--palette-primary-soft);
 
-  /* Elevation (navy-tinted, subtle) — derived from the palette so they never drift */
+  /* Elevation (green-tinted, subtle) — derived from the palette so they never drift */
   --shadow-sm:
-    0 1px 2px color-mix(in srgb, var(--palette-navy) 6%, transparent),
-    0 1px 3px color-mix(in srgb, var(--palette-navy) 8%, transparent);
+    0 1px 2px color-mix(in srgb, var(--palette-primary) 6%, transparent),
+    0 1px 3px color-mix(in srgb, var(--palette-primary) 8%, transparent);
   --shadow-md:
-    0 4px 12px color-mix(in srgb, var(--palette-navy) 8%, transparent),
-    0 2px 4px color-mix(in srgb, var(--palette-navy) 6%, transparent);
-  --shadow-lg: 0 12px 32px color-mix(in srgb, var(--palette-navy) 12%, transparent);
+    0 4px 12px color-mix(in srgb, var(--palette-primary) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--palette-primary) 6%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, var(--palette-primary) 12%, transparent);
 
   /* ── Typography ───────────────────────────────────────────────────── */
   --font-heading: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
