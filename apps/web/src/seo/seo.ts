@@ -26,11 +26,11 @@ export const INDEXABLE_PAGES: IndexablePage[] = [
     path: '/',
     title: {
       en: `${SITE} — donate or ask for help`,
-      ta: `${SITE} — நன்கொடை அளிக்க அல்லது உதவி கேட்க`,
+      ta: `${SITE} — நன்கொடை கொடுக்க, உதவி கேட்க`,
     },
     description: {
       en: 'Donate online to the trust or ask for help — in Tamil or English. Kanchipuram, Tamil Nadu.',
-      ta: 'அறக்கட்டளைக்கு இணையவழியில் நன்கொடை அளியுங்கள் அல்லது உதவி கேளுங்கள் — தமிழிலோ ஆங்கிலத்திலோ. காஞ்சிபுரம், தமிழ்நாடு.',
+      ta: 'அறக்கட்டளைக்கு இணையத்தில் நன்கொடை கொடுங்கள், அல்லது உதவி கேளுங்கள் — தமிழிலும் ஆங்கிலத்திலும். காஞ்சிபுரம், தமிழ்நாடு.',
     },
   },
   ...(['terms', 'privacy', 'refund'] as const).map((id) => ({

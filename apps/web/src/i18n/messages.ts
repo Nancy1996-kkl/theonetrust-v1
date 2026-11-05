@@ -38,33 +38,34 @@ export type MessageKey = keyof typeof en;
 export type Messages = Record<MessageKey, string>;
 
 const ta: Messages = {
-  skipToContent: 'முதன்மை உள்ளடக்கத்திற்குச் செல்லவும்',
+  skipToContent: 'நேராக முக்கியப் பகுதிக்குச் செல்ல',
   homeLink: 'Theonetrust.in — முகப்பு',
   sectionsNav: 'பிரிவுகள்',
   navAbout: 'எங்களைப் பற்றி',
   navWays: 'உதவிகள்',
-  navImpact: 'தாக்கம்',
+  navImpact: 'பணியின் பலன்',
   navTransparency: 'வெளிப்படைத்தன்மை',
   navContact: 'தொடர்பு',
   navFaq: 'கேள்விகள்',
   donate: 'நன்கொடை',
   getHelp: 'உதவி பெற',
   menu: 'பட்டியல்',
-  footerNav: 'அடிக்குறிப்பு',
-  footerExplore: 'பார்வையிட',
+  footerNav: 'பக்கத்தின் கீழ்ப் பகுதி',
+  footerExplore: 'பக்கங்கள்',
   footerHelp: 'உதவி',
-  footerLegal: 'சட்டம்',
+  footerLegal: 'விதிகள், கொள்கைகள்',
   receiptHelp: 'ஒப்புகைச் சீட்டு உதவி',
   terms: 'விதிமுறைகள்',
   privacy: 'தனியுரிமை',
-  refund: 'பணம் திரும்பப்பெறுதல் மற்றும் ரத்து',
-  phoneWhatsapp: 'தொலைபேசி மற்றும் WhatsApp',
+  refund: 'பணம் திரும்பத் தருதல், ரத்து',
+  phoneWhatsapp: 'தொலைபேசி / WhatsApp',
   email: 'மின்னஞ்சல்',
   location: 'இடம்',
   callHours: 'அழைப்பு நேரம்',
   notFoundTitle: 'பக்கம் கிடைக்கவில்லை',
-  notFoundBody: 'நீங்கள் தேடும் பக்கம் இல்லை அல்லது மாற்றப்பட்டுள்ளது.',
-  goHome: 'முகப்புப் பக்கத்திற்குச் செல்லவும்',
+  notFoundBody:
+    'நீங்கள் தேடிய பக்கம் இங்கே இல்லை. அது நீக்கப்பட்டிருக்கலாம் அல்லது வேறு இடத்துக்கு மாறியிருக்கலாம்.',
+  goHome: 'முகப்புப் பக்கத்துக்குச் செல்ல',
 };
 
 export const MESSAGES: { en: Messages; ta: Messages } = { en, ta };

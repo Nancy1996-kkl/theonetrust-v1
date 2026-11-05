@@ -70,7 +70,7 @@ export function AdminLayout({ api: injected }: AdminLayoutProps) {
         <title>{t.dashboardName}</title>
         <meta name="robots" content="noindex, nofollow" />
         <a className="skip-link" href="#main">
-          {lang === 'ta' ? 'முதன்மை உள்ளடக்கத்திற்குச் செல்லவும்' : 'Skip to main content'}
+          {lang === 'ta' ? 'நேராக முக்கியப் பகுதிக்குச் செல்ல' : 'Skip to main content'}
         </a>
         <header className="admin-header surface-inverse">
           <span className="admin-header__name">{t.dashboardName}</span>

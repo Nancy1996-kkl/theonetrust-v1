@@ -209,7 +209,7 @@ describe('live page (drafts hidden)', () => {
   it('Tamil page uses Tamil content and /ta/ links', () => {
     renderHome('/ta/');
     expect(screen.getByRole('heading', { level: 2, name: 'நாங்கள் உதவும் வழிகள்' })).toBeVisible();
-    expect(screen.getByRole('link', { name: /நன்கொடை அளிக்க/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /நன்கொடை கொடுக்க/ })).toHaveAttribute(
       'href',
       '/ta/?programme=general#donate',
     );
@@ -217,7 +217,9 @@ describe('live page (drafts hidden)', () => {
       within(document.getElementById('about')!).getByText('காஞ்சிபுரம், தமிழ்நாடு'),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: 'கட்டண உதவி, பணம் திரும்பப்பெறுதல் மற்றும் திருத்தங்கள்' }),
+      screen.getByRole('link', {
+        name: 'பணம் செலுத்துவதில் உதவி, பணம் திரும்பத் தருதல், திருத்தங்கள்',
+      }),
     ).toHaveAttribute('href', '/ta/refund-policy');
   });
 

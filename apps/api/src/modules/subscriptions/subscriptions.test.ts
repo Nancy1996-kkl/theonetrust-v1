@@ -266,7 +266,7 @@ describe('problem email', () => {
       { donorName: 'A', amountPaise: 50_000, halted: false, manageUrl: null, trustName: 'T' },
       'ta',
     );
-    expect(retry.text).toContain('மீண்டும் முயலலாம்');
+    expect(retry.text).toContain('மறுபடி முயற்சி செய்யும்');
     expect(retry.text).not.toContain('manage');
   });
 });

@@ -175,7 +175,7 @@ describe('AmountPicker', () => {
     await user.type(screen.getByRole('textbox'), 'abc');
     await user.tab();
     expect(
-      screen.getByText('₹1 அல்லது அதற்கு மேற்பட்ட முழு ரூபாய் தொகையை உள்ளிடவும்.'),
+      screen.getByText('₹1 அல்லது அதற்கு மேல், முழு ரூபாயாகத் தொகையை எழுதுங்கள்.'),
     ).toBeInTheDocument();
   });
 

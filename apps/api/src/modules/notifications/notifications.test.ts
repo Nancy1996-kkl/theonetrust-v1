@@ -196,7 +196,7 @@ describe('templates', () => {
   it('owner email: both languages, reference, amount, receipt link, payment reference', () => {
     const email = renderOwnerDonationPaid(CTX);
     expect(email.subject).toBe(
-      'Donation received: ₹1,500 (TOT-D-ABCDEFGHJKMN) / நன்கொடை பெறப்பட்டது: ₹1,500 (TOT-D-ABCDEFGHJKMN)',
+      'Donation received: ₹1,500 (TOT-D-ABCDEFGHJKMN) / நன்கொடை வந்தது: ₹1,500 (TOT-D-ABCDEFGHJKMN)',
     );
     for (const part of [
       EMAIL_STRINGS.en.ownerPaidLead,
@@ -231,7 +231,7 @@ describe('templates', () => {
       expect(email.subject).toBe(
         lang === 'en'
           ? 'Thank you — your donation to Theonetrust.in was received'
-          : 'நன்றி — Theonetrust.in-க்கு உங்கள் நன்கொடை பெறப்பட்டது',
+          : 'நன்றி — Theonetrust.in-க்கு உங்கள் நன்கொடை வந்து சேர்ந்தது',
       );
       expect(email.text).toContain(CTX.receiptUrl);
       expect(email.html).toContain(`<a href="${CTX.receiptUrl}">`);
