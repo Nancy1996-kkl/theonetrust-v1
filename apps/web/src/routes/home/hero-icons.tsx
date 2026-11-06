@@ -56,3 +56,12 @@ export function PlayIcon() {
     </svg>
   );
 }
+
+export function SealIcon() {
+  return (
+    <svg {...common} className="landing-facts__seal" data-icon="seal">
+      <circle cx="12" cy="9" r="6" />
+      <path d="M9.5 9l1.8 1.8L14.8 7.4M8.5 14l-1.5 7 5-2.5 5 2.5-1.5-7" />
+    </svg>
+  );
+}

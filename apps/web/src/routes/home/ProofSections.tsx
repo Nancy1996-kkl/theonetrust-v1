@@ -9,8 +9,11 @@ import { StatusPill } from '../../components/ui/StatusPill.tsx';
 import type { TrustFacts } from '../../config/trust-facts.ts';
 import type { Bilingual, LandingContent } from '../../content/landing.ts';
 import {
+  isPublishableAllocation,
   isPublishableMetric,
   isPublishableStory,
+  isWellFormedAllocation,
+  type Allocation,
   type ProofContent,
   type TransparencyDocument,
 } from '../../content/proof.ts';
@@ -18,6 +21,8 @@ import { homePath } from '../../i18n/lang.ts';
 import { useLang, useMessages } from '../../i18n/use-lang.ts';
 import { useDonationDraft } from '../../state/donation-draft.ts';
 import { PolicyNotice } from '../policy/PolicyNotice.tsx';
+import { bandClass, type Band } from './bands.ts';
+import { CountUp } from './CountUp.tsx';
 import { Reveal } from './Reveal.tsx';
 
 /** Where a section's data stands. Static content is always ready; API data (#21) uses all three. */
@@ -58,12 +63,14 @@ function SectionFrame({
   title,
   state,
   proof,
+  band,
   children,
 }: {
   id: string;
   title: Bilingual;
   state: SectionState;
   proof: ProofContent;
+  band?: Band;
   children: ReactNode;
 }) {
   const lang = useLang();
@@ -83,7 +90,7 @@ function SectionFrame({
     );
   }
   return (
-    <section id={id} className="landing-section" aria-labelledby={`${id}-title`}>
+    <section id={id} className={bandClass(band)} aria-labelledby={`${id}-title`}>
       <Reveal className="landing__wrap">
         <h2 id={`${id}-title`}>{title[lang]}</h2>
         {body}
@@ -92,7 +99,11 @@ function SectionFrame({
   );
 }
 
-/** 7 · Impact and stories — only sourced, dated metrics and consented stories; never zeros. */
+function publishedStories(proof: ProofContent, showDrafts: boolean) {
+  return proof.impact.stories.filter((s) => isPublishableStory(s) && (s.confirmed || showDrafts));
+}
+
+/** 7 · Impact — forest band: only sourced, dated metrics (counting up), never zeros; Donate. */
 export function ImpactSection({ proof, landing, showDrafts, states }: ProofProps) {
   const lang = useLang();
   const date = useDate();
@@ -100,13 +111,17 @@ export function ImpactSection({ proof, landing, showDrafts, states }: ProofProps
   const metrics = impact.metrics.filter(
     (m) => isPublishableMetric(m) && (m.confirmed || showDrafts),
   );
-  const stories = impact.stories.filter(
-    (s) => isPublishableStory(s) && (s.confirmed || showDrafts),
-  );
+  const stories = publishedStories(proof, showDrafts);
   const empty = metrics.length === 0 && stories.length === 0;
   return (
-    <SectionFrame id="impact" title={impact.title} state={states?.impact ?? READY} proof={proof}>
-      {empty ? (
+    <SectionFrame
+      id="impact"
+      title={impact.title}
+      state={states?.impact ?? READY}
+      proof={proof}
+      band="forest"
+    >
+      {empty && (
         <StateBlock
           state="empty"
           title={impact.emptyTitle[lang]}
@@ -114,43 +129,106 @@ export function ImpactSection({ proof, landing, showDrafts, states }: ProofProps
         >
           <p>{impact.emptyBody[lang]}</p>
         </StateBlock>
-      ) : (
-        <>
-          {metrics.length > 0 && (
-            <ul className="proof-metrics">
-              {metrics.map((m) => (
-                <li key={m.id} className="proof-metrics__item">
-                  <span className="proof-metrics__value">{m.value}</span>
-                  <span className="proof-metrics__label">{m.label[lang]}</span>
-                  <span className="proof-metrics__meta">
-                    {impact.sourceLabel[lang]}: {m.source[lang]} · {impact.periodLabel[lang]}:{' '}
-                    {m.period[lang]} · {impact.updatedLabel[lang]}:{' '}
-                    <time dateTime={m.updated}>{date(m.updated)}</time>
-                  </span>
-                  <Draft confirmed={m.confirmed} label={landing.draftLabel} />
-                </li>
-              ))}
-            </ul>
-          )}
-          {stories.length > 0 && (
-            <div className="proof-stories">
-              {stories.map((s) => (
-                <article key={s.id} className="proof-stories__item">
-                  <h3>{s.title[lang]}</h3>
-                  <p>{s.body[lang]}</p>
-                  <Draft confirmed={s.confirmed} label={landing.draftLabel} />
-                </article>
-              ))}
-            </div>
-          )}
-        </>
       )}
+      {metrics.length > 0 && (
+        <ul className="proof-metrics">
+          {metrics.map((m) => (
+            <li key={m.id} className="proof-metrics__item">
+              <CountUp value={m.value} className="proof-metrics__value" />
+              <span className="proof-metrics__label">{m.label[lang]}</span>
+              <span className="proof-metrics__meta">
+                {impact.sourceLabel[lang]}: {m.source[lang]} · {impact.periodLabel[lang]}:{' '}
+                {m.period[lang]} · {impact.updatedLabel[lang]}:{' '}
+                <time dateTime={m.updated}>{date(m.updated)}</time>
+              </span>
+              <Draft confirmed={m.confirmed} label={landing.draftLabel} />
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="proof-band-cta">
+        <a className="ui-button ui-button--donate" href={`${homePath(lang)}#donate`}>
+          {impact.donateCta[lang]}
+        </a>
+        <p className="proof-band-cta__note">{impact.verifiedNote[lang]}</p>
+      </div>
     </SectionFrame>
   );
 }
 
+/** 7b · Stories — champagne band, mint cards; only consented stories, else not rendered. */
+export function StoriesSection({ proof, landing, showDrafts, states }: ProofProps) {
+  const lang = useLang();
+  const { impact } = proof;
+  const stories = publishedStories(proof, showDrafts);
+  if (stories.length === 0 || (states?.impact ?? READY).status !== 'ready') return null;
+  return (
+    <section id="stories" className={bandClass('champagne')} aria-labelledby="stories-title">
+      <Reveal className="landing__wrap">
+        <h2 id="stories-title">{impact.storiesTitle[lang]}</h2>
+        <p className="landing__intro">{impact.storiesIntro[lang]}</p>
+        <div className="proof-stories">
+          {stories.map((s) => (
+            <article key={s.id} className="proof-stories__item">
+              <h3>{s.title[lang]}</h3>
+              <p>{s.body[lang]}</p>
+              <Draft confirmed={s.confirmed} label={landing.draftLabel} />
+            </article>
+          ))}
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+/** Where donations go — text percentages with bars (never colour or length alone). */
+function AllocationChart({
+  allocation,
+  proof,
+  showDrafts,
+  draftLabel,
+}: {
+  allocation: Allocation;
+  proof: ProofContent;
+  showDrafts: boolean;
+  draftLabel: Bilingual;
+}) {
+  const lang = useLang();
+  const { transparency: t } = proof;
+  const show =
+    isPublishableAllocation(allocation) || (showDrafts && isWellFormedAllocation(allocation));
+  if (!show) return null;
+  const percent = new Intl.NumberFormat(lang === 'ta' ? 'ta-IN' : 'en-IN', {
+    style: 'percent',
+    maximumFractionDigits: 1,
+  });
+  return (
+    <figure className="proof-allocation" aria-labelledby="allocation-title">
+      <h3 id="allocation-title" className="proof-allocation__title">
+        {t.allocationTitle[lang]}
+      </h3>
+      <Draft confirmed={allocation.confirmed} label={draftLabel} />
+      <ul className="proof-allocation__list">
+        {allocation.items.map((item) => (
+          <li key={item.id} className="proof-allocation__item">
+            <span className="proof-allocation__label">{item.label[lang]}</span>
+            <span className="proof-allocation__value">{percent.format(item.percent / 100)}</span>
+            <span className="proof-allocation__track" aria-hidden="true">
+              <span className="proof-allocation__bar" style={{ inlineSize: `${item.percent}%` }} />
+            </span>
+          </li>
+        ))}
+      </ul>
+      <figcaption className="proof-allocation__meta">
+        {t.allocationSourceLabel[lang]}: {allocation.source?.[lang]} ·{' '}
+        {t.allocationPeriodLabel[lang]}: {allocation.period?.[lang]}
+      </figcaption>
+    </figure>
+  );
+}
+
 /** 8 · Transparency centre — owner-approved documents only; never fake entries. */
-export function TransparencySection({ proof, states }: ProofProps) {
+export function TransparencySection({ proof, landing, showDrafts, states }: ProofProps) {
   const lang = useLang();
   const date = useDate();
   const { transparency: t } = proof;
@@ -190,6 +268,12 @@ export function TransparencySection({ proof, states }: ProofProps) {
       state={states?.transparency ?? READY}
       proof={proof}
     >
+      <AllocationChart
+        allocation={t.allocation}
+        proof={proof}
+        showDrafts={showDrafts}
+        draftLabel={landing.draftLabel}
+      />
       <DataTable
         caption={t.tableCaption[lang]}
         hideCaption
@@ -212,7 +296,13 @@ export function FaqSection({ proof, landing, showDrafts, states }: ProofProps) {
   const { faq } = proof;
   const items = faq.items.filter((f) => f.confirmed || showDrafts);
   return (
-    <SectionFrame id="faq" title={faq.title} state={states?.faq ?? READY} proof={proof}>
+    <SectionFrame
+      id="faq"
+      title={faq.title}
+      state={states?.faq ?? READY}
+      proof={proof}
+      band="champagne"
+    >
       {items.length === 0 ? (
         <StateBlock state="empty" title={faq.emptyTitle[lang]} />
       ) : (
@@ -247,7 +337,7 @@ export function ContactSection({ proof, facts }: ProofProps) {
   if (facts.callHours) rows.push([t.callHours, facts.callHours[lang]]);
 
   return (
-    <section id="contact" className="landing-section" aria-labelledby="contact-title">
+    <section id="contact" className={bandClass('white')} aria-labelledby="contact-title">
       <Reveal className="landing__wrap proof-contact">
         <div>
           <h2 id="contact-title">{contact.title[lang]}</h2>
@@ -293,7 +383,7 @@ export function FinalCtaSection({ proof, landing, showDrafts }: ProofProps) {
   const query = amount === null ? '' : `?amount=${amount / PAISE_PER_RUPEE}`;
   const href = `${homePath(lang)}${query}#donate`;
   return (
-    <section id="give" className="landing-section proof-cta" aria-labelledby="give-title">
+    <section id="give" className={`${bandClass('forest')} proof-cta`} aria-labelledby="give-title">
       <Reveal className="landing__wrap">
         <h2 id="give-title">
           {showTitle ? finalCta.title.value[lang] : finalCta.fallbackTitle[lang]}

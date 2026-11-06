@@ -7,8 +7,9 @@ import { visible } from '../../content/landing.ts';
 import { homePath, localizedPath } from '../../i18n/lang.ts';
 import { useLang } from '../../i18n/use-lang.ts';
 import { useDonationDraft } from '../../state/donation-draft.ts';
+import { bandClass } from './bands.ts';
 import { HeroBanner } from './HeroBanner.tsx';
-import { ArrowIcon, HeartIcon, PinIcon } from './hero-icons.tsx';
+import { ArrowIcon, HeartIcon, PinIcon, SealIcon } from './hero-icons.tsx';
 import { Reveal } from './Reveal.tsx';
 
 export interface SectionProps {
@@ -126,12 +127,14 @@ export function HeroSection({ content, facts, showDrafts }: SectionProps) {
 export function AboutSection({ content, facts, showDrafts }: SectionProps) {
   const lang = useLang();
   const { about, draftLabel } = content;
-  const rows: Array<[Bilingual, string]> = [];
-  if (facts.legalName) rows.push([about.factLabels.legalName, facts.legalName]);
-  if (facts.registration) rows.push([about.factLabels.registration, facts.registration]);
-  if (facts.established) rows.push([about.factLabels.established, facts.established]);
-  if (facts.area) rows.push([about.factLabels.area, facts.area[lang]]);
-  if (facts.taxApproval) rows.push([about.factLabels.taxApproval, facts.taxApproval[lang]]);
+  // Registration and tax approval are trust signals: shown as gold-outline badges, and only
+  // once confirmed in issue #1 (TRUST_FACTS keeps them null until then).
+  const rows: Array<[Bilingual, string, boolean]> = [];
+  if (facts.registration) rows.push([about.factLabels.registration, facts.registration, true]);
+  if (facts.taxApproval) rows.push([about.factLabels.taxApproval, facts.taxApproval[lang], true]);
+  if (facts.legalName) rows.push([about.factLabels.legalName, facts.legalName, false]);
+  if (facts.established) rows.push([about.factLabels.established, facts.established, false]);
+  if (facts.area) rows.push([about.factLabels.area, facts.area[lang], false]);
 
   return (
     <section id="about" className="landing-section" aria-labelledby="about-title">
@@ -144,9 +147,17 @@ export function AboutSection({ content, facts, showDrafts }: SectionProps) {
         />
         {rows.length > 0 && (
           <dl className="landing-facts">
-            {rows.map(([label, value]) => (
-              <div key={label.en} className="landing-facts__item">
-                <dt>{label[lang]}</dt>
+            {rows.map(([label, value, badge]) => (
+              <div
+                key={label.en}
+                className={
+                  badge ? 'landing-facts__item landing-facts__item--badge' : 'landing-facts__item'
+                }
+              >
+                <dt>
+                  {badge && <SealIcon />}
+                  {label[lang]}
+                </dt>
                 <dd>{value}</dd>
               </div>
             ))}
@@ -201,7 +212,7 @@ export function WaysWeHelpSection({ content, showDrafts }: SectionProps) {
   const { ways, draftLabel } = content;
   const programmes = ways.programmes.filter((p) => p.confirmed || showDrafts);
   return (
-    <section id="ways-we-help" className="landing-section" aria-labelledby="ways-title">
+    <section id="ways-we-help" className={bandClass('white')} aria-labelledby="ways-title">
       <Reveal className="landing__wrap">
         <h2 id="ways-title">{ways.title[lang]}</h2>
         <GatedText
@@ -232,7 +243,7 @@ export function DonationHelpsSection({ content, showDrafts }: SectionProps) {
     maximumFractionDigits: 0,
   });
   return (
-    <section id="how-donations-help" className="landing-section" aria-labelledby="helps-title">
+    <section id="how-donations-help" className={bandClass('white')} aria-labelledby="helps-title">
       <Reveal className="landing__wrap">
         <h2 id="helps-title">{donationHelps.title[lang]}</h2>
         <ul className="landing-helps">

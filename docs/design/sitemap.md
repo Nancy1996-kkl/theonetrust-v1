@@ -78,8 +78,9 @@ Section order follows the plan (§4). IDs are the anchor targets used by the nav
 | 4   | Ways we help                            | `ways-we-help`       | **Ways we help** | Each card opens the donate panel with that need selected; general vs earmarked                                |
 | 5   | How a donation helps                    | `how-donations-help` | —                | Illustrative only when costs are verified                                                                     |
 | 6   | How it works                            | `how-it-works`       | —                | Need → amount → pay → acknowledgement and updates                                                             |
-| 7   | Impact and stories                      | `impact`             | **Impact**       | Sourced, dated metrics; consented stories; factual empty state, never zeros                                   |
-| 8   | Transparency centre                     | `transparency`       | **Transparency** | Dated documents with language, period, file type                                                              |
+| 7   | Impact (forest band)                    | `impact`             | **Impact**       | Sourced, dated metrics counting up in gold; Donate; factual empty state, never zeros                          |
+| 7b  | Stories (champagne band)                | `stories`            | —                | Consented stories on mint cards; the band is not rendered until one exists                                    |
+| 8   | Transparency centre                     | `transparency`       | **Transparency** | "Where donations go" chart (confirmed figures only); dated documents with language, period, file type         |
 | 9   | FAQ                                     | `faq`                | —                | Includes payment limits, tax honesty, "no fee for donors", how to stop monthly gifts                          |
 | 10  | Contact                                 | `contact`            | **Contact**      | Phone, WhatsApp, email, area, call hours                                                                      |
 | 11  | Footer                                  | —                    | —                | Legal name and particulars, policy links, receipt help, language switch                                       |

@@ -220,6 +220,35 @@ describe('live page (drafts hidden)', () => {
     }
   });
 
+  it('confirmed registration and tax approval show first, as gold-outline trust badges', () => {
+    renderHome('/', {
+      facts: {
+        ...TRUST_FACTS,
+        registration: '12A/TEST/0001',
+        taxApproval: { en: '80G approved (test)', ta: '80G ஒப்புதல் (சோதனை)' },
+      },
+    });
+    const items = [...document.querySelectorAll('.landing-facts__item')];
+    expect(items.map((i) => i.querySelector('dt')!.textContent)).toEqual([
+      'Registration',
+      'Tax approval',
+      'Area',
+    ]);
+    expect(items[0]).toHaveClass('landing-facts__item--badge');
+    expect(items[1]).toHaveClass('landing-facts__item--badge');
+    expect(items[2]).not.toHaveClass('landing-facts__item--badge');
+    // The seal is decorative and sits inside the term, keeping the <dl> valid.
+    expect(items[0]!.querySelector('dt [data-icon="seal"]')).toHaveAttribute('aria-hidden', 'true');
+    expect(items[0]).toHaveTextContent('12A/TEST/0001');
+  });
+
+  it('trust badges have no WCAG 2.2 AA violations (valid definition list)', async () => {
+    const { container } = renderHome('/', {
+      facts: { ...TRUST_FACTS, registration: '12A/TEST/0001' },
+    });
+    await expectNoA11yViolations(container.querySelector('#about')!);
+  });
+
   it('facts strip disappears completely when no fact is verified', () => {
     renderHome('/', { facts: { ...TRUST_FACTS, area: null } });
     expect(document.querySelector('.landing-facts')).toBeNull();
