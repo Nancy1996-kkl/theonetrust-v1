@@ -28,10 +28,10 @@ const FONTS = {
  * accent, error. receipts.test.ts checks they match the web tokens.
  */
 export const COLOUR = {
-  primary: '#14532d',
-  text: '#1f2d25',
+  primary: '#1d6b3f',
+  text: '#1b2b22',
   muted: '#5c6e63',
-  rule: '#9fd8ad',
+  rule: '#c8edd2',
   alert: '#b42318',
 };
 

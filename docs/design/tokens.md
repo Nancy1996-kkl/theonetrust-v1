@@ -34,23 +34,23 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
 
 ## Colour
 
-| Palette token            | Value   | Role                                                              |
-| ------------------------ | ------- | ----------------------------------------------------------------- |
-| `--palette-primary`      | #14532D | Dark green — primary brand, headings, primary buttons, dark bands |
-| `--palette-accent`       | #9FD8AD | Light green — Donate CTA background, accents on dark green        |
-| `--palette-mist`         | #E3F1E7 | Light green tint — muted bands, decorative dividers               |
-| `--palette-canvas`       | #F6FAF7 | Near-white with a green hint — page background                    |
-| `--palette-primary-soft` | #3D6B4F | Mid green — secondary text, form borders                          |
-| `--palette-ink`          | #1F2D25 | Green-black — body text                                           |
-| `--palette-white`        | #FFFFFF | Card surfaces, text on dark green                                 |
-| `--palette-success`      | #287A55 | Success                                                           |
-| `--palette-warning`      | #B7791F | Warning icons/borders                                             |
-| `--palette-warning-dark` | #8F5E14 | Warning text (derived for AA)                                     |
-| `--palette-error`        | #B42318 | Error                                                             |
-| `--palette-info`         | #3568A8 | Information, focus ring                                           |
-| `--palette-accent-light` | #B8E3C2 | Donate hover (derived; 6.4:1 with dark green text)                |
-| `--palette-accent-dark`  | #86C997 | Donate pressed (derived; 4.7:1 with dark green text)              |
-| `--palette-slate`        | #5C6E63 | Placeholder and disabled text (derived; 5.4:1 on white)           |
+| Palette token            | Value   | Role                                                                     |
+| ------------------------ | ------- | ------------------------------------------------------------------------ |
+| `--palette-primary`      | #1D6B3F | Medium-dark green — primary brand, headings, primary buttons, dark bands |
+| `--palette-accent`       | #C8EDD2 | Light green — Donate CTA background, accents on dark green               |
+| `--palette-mist`         | #E4F3E8 | Light green tint — muted bands, decorative dividers                      |
+| `--palette-canvas`       | #F5FBF7 | Near-white with a green hint — page background                           |
+| `--palette-primary-soft` | #2F5D42 | Deeper green — secondary text, borders, hover                            |
+| `--palette-ink`          | #1B2B22 | Green-black — body text                                                  |
+| `--palette-white`        | #FFFFFF | Card surfaces, text on dark green                                        |
+| `--palette-success`      | #287A55 | Success                                                                  |
+| `--palette-warning`      | #B7791F | Warning icons/borders                                                    |
+| `--palette-warning-dark` | #8F5E14 | Warning text (derived for AA)                                            |
+| `--palette-error`        | #B42318 | Error                                                                    |
+| `--palette-info`         | #3568A8 | Information, focus ring                                                  |
+| `--palette-accent-light` | #DAF3E0 | Donate hover (derived; AA with primary green text)                       |
+| `--palette-accent-dark`  | #BCE6C6 | Donate pressed (derived; 4.7:1 with primary green text)                  |
+| `--palette-slate`        | #5C6E63 | Placeholder and disabled text (derived; 5.4:1 on white)                  |
 
 ### Contrast (generated — do not edit by hand)
 
@@ -58,47 +58,48 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
 <!-- contrast-table:start -->
 | Where | Foreground | Background | Use | Ratio | AA minimum | Result |
 |---|---|---|---|---|---|---|
-| Body text on page | `--color-text` #1F2D25 | `--color-bg` #F6FAF7 | text | 13.65:1 | 4.5:1 | ✔ AA |
-| Body text on cards | `--color-text` #1F2D25 | `--color-surface` #FFFFFF | text | 14.38:1 | 4.5:1 | ✔ AA |
-| Body text on muted band | `--color-text` #1F2D25 | `--color-surface-muted` #E3F1E7 | text | 12.32:1 | 4.5:1 | ✔ AA |
-| Secondary text on page | `--color-text-muted` #3D6B4F | `--color-bg` #F6FAF7 | text | 5.83:1 | 4.5:1 | ✔ AA |
-| Secondary text on cards | `--color-text-muted` #3D6B4F | `--color-surface` #FFFFFF | text | 6.15:1 | 4.5:1 | ✔ AA |
-| Secondary text on muted band | `--color-text-muted` #3D6B4F | `--color-surface-muted` #E3F1E7 | text | 5.27:1 | 4.5:1 | ✔ AA |
-| Headings on page | `--color-text-heading` #14532D | `--color-bg` #F6FAF7 | text | 8.64:1 | 4.5:1 | ✔ AA |
-| Headings on cards | `--color-text-heading` #14532D | `--color-surface` #FFFFFF | text | 9.11:1 | 4.5:1 | ✔ AA |
-| Headings on muted band | `--color-text-heading` #14532D | `--color-surface-muted` #E3F1E7 | text | 7.81:1 | 4.5:1 | ✔ AA |
-| Links on page | `--color-link` #14532D | `--color-bg` #F6FAF7 | text | 8.64:1 | 4.5:1 | ✔ AA |
-| Links on cards | `--color-link` #14532D | `--color-surface` #FFFFFF | text | 9.11:1 | 4.5:1 | ✔ AA |
-| Links on muted band | `--color-link` #14532D | `--color-surface-muted` #E3F1E7 | text | 7.81:1 | 4.5:1 | ✔ AA |
-| Text, headings, links on dark green band | `--color-text-inverse` #FFFFFF | `--color-surface-inverse` #14532D | text | 9.11:1 | 4.5:1 | ✔ AA |
-| Accent label on dark green | `--color-text-accent-on-inverse` #9FD8AD | `--color-surface-inverse` #14532D | text | 5.59:1 | 4.5:1 | ✔ AA |
-| Primary button | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg` #14532D | text | 9.11:1 | 4.5:1 | ✔ AA |
-| Primary button hover | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-hover` #3D6B4F | text | 6.15:1 | 4.5:1 | ✔ AA |
-| Primary button pressed | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-active` #1F2D25 | text | 14.38:1 | 4.5:1 | ✔ AA |
-| Donate button | `--color-action-donate-text` #14532D | `--color-action-donate-bg` #9FD8AD | text | 5.59:1 | 4.5:1 | ✔ AA |
-| Donate button hover | `--color-action-donate-text` #14532D | `--color-action-donate-bg-hover` #B8E3C2 | text | 6.42:1 | 4.5:1 | ✔ AA |
-| Donate button pressed | `--color-action-donate-text` #14532D | `--color-action-donate-bg-active` #86C997 | text | 4.69:1 | 4.5:1 | ✔ AA |
-| Secondary button label | `--color-action-secondary-text` #14532D | `--color-surface` #FFFFFF | text | 9.11:1 | 4.5:1 | ✔ AA |
-| Secondary button hover | `--color-action-secondary-text` #14532D | `--color-action-secondary-bg-hover` #E3F1E7 | text | 7.81:1 | 4.5:1 | ✔ AA |
-| Secondary button border | `--color-action-secondary-border` #14532D | `--color-bg` #F6FAF7 | ui | 8.64:1 | 3:1 | ✔ AA |
+| Body text on page | `--color-text` #1B2B22 | `--color-bg` #F5FBF7 | text | 14.14:1 | 4.5:1 | ✔ AA |
+| Body text on cards | `--color-text` #1B2B22 | `--color-surface` #FFFFFF | text | 14.83:1 | 4.5:1 | ✔ AA |
+| Body text on muted band | `--color-text` #1B2B22 | `--color-surface-muted` #E4F3E8 | text | 12.91:1 | 4.5:1 | ✔ AA |
+| Secondary text on page | `--color-text-muted` #2F5D42 | `--color-bg` #F5FBF7 | text | 7.24:1 | 4.5:1 | ✔ AA |
+| Secondary text on cards | `--color-text-muted` #2F5D42 | `--color-surface` #FFFFFF | text | 7.59:1 | 4.5:1 | ✔ AA |
+| Secondary text on muted band | `--color-text-muted` #2F5D42 | `--color-surface-muted` #E4F3E8 | text | 6.61:1 | 4.5:1 | ✔ AA |
+| Headings on page | `--color-text-heading` #1D6B3F | `--color-bg` #F5FBF7 | text | 6.20:1 | 4.5:1 | ✔ AA |
+| Headings on cards | `--color-text-heading` #1D6B3F | `--color-surface` #FFFFFF | text | 6.50:1 | 4.5:1 | ✔ AA |
+| Headings on muted band | `--color-text-heading` #1D6B3F | `--color-surface-muted` #E4F3E8 | text | 5.66:1 | 4.5:1 | ✔ AA |
+| Links on page | `--color-link` #1D6B3F | `--color-bg` #F5FBF7 | text | 6.20:1 | 4.5:1 | ✔ AA |
+| Links on cards | `--color-link` #1D6B3F | `--color-surface` #FFFFFF | text | 6.50:1 | 4.5:1 | ✔ AA |
+| Links on muted band | `--color-link` #1D6B3F | `--color-surface-muted` #E4F3E8 | text | 5.66:1 | 4.5:1 | ✔ AA |
+| Text, headings, links on dark green band | `--color-text-inverse` #FFFFFF | `--color-surface-inverse` #1D6B3F | text | 6.50:1 | 4.5:1 | ✔ AA |
+| Accent label on dark green | `--color-text-accent-on-inverse` #C8EDD2 | `--color-surface-inverse` #1D6B3F | text | 5.11:1 | 4.5:1 | ✔ AA |
+| Primary button | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg` #1D6B3F | text | 6.50:1 | 4.5:1 | ✔ AA |
+| Primary button hover | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-hover` #2F5D42 | text | 7.59:1 | 4.5:1 | ✔ AA |
+| Primary button pressed | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-active` #1B2B22 | text | 14.83:1 | 4.5:1 | ✔ AA |
+| Donate button | `--color-action-donate-text` #1D6B3F | `--color-action-donate-bg` #C8EDD2 | text | 5.11:1 | 4.5:1 | ✔ AA |
+| Donate button hover | `--color-action-donate-text` #1D6B3F | `--color-action-donate-bg-hover` #DAF3E0 | text | 5.53:1 | 4.5:1 | ✔ AA |
+| Donate button pressed | `--color-action-donate-text` #1D6B3F | `--color-action-donate-bg-active` #BCE6C6 | text | 4.73:1 | 4.5:1 | ✔ AA |
+| Secondary button label | `--color-action-secondary-text` #1D6B3F | `--color-surface` #FFFFFF | text | 6.50:1 | 4.5:1 | ✔ AA |
+| Secondary button hover | `--color-action-secondary-text` #1D6B3F | `--color-action-secondary-bg-hover` #E4F3E8 | text | 5.66:1 | 4.5:1 | ✔ AA |
+| Secondary button border | `--color-action-secondary-border` #1D6B3F | `--color-bg` #F5FBF7 | ui | 6.20:1 | 3:1 | ✔ AA |
 | Input placeholder | `--color-text-placeholder` #5C6E63 | `--color-surface` #FFFFFF | text | 5.43:1 | 4.5:1 | ✔ AA |
 | Success message | `--color-status-success` #287A55 | `--color-surface` #FFFFFF | text | 5.24:1 | 4.5:1 | ✔ AA |
-| Success message on page | `--color-status-success` #287A55 | `--color-bg` #F6FAF7 | text | 4.97:1 | 4.5:1 | ✔ AA |
+| Success message on page | `--color-status-success` #287A55 | `--color-bg` #F5FBF7 | text | 4.99:1 | 4.5:1 | ✔ AA |
 | Error message | `--color-status-error` #B42318 | `--color-surface` #FFFFFF | text | 6.57:1 | 4.5:1 | ✔ AA |
-| Error message on page | `--color-status-error` #B42318 | `--color-bg` #F6FAF7 | text | 6.24:1 | 4.5:1 | ✔ AA |
+| Error message on page | `--color-status-error` #B42318 | `--color-bg` #F5FBF7 | text | 6.26:1 | 4.5:1 | ✔ AA |
 | Info message | `--color-status-info` #3568A8 | `--color-surface` #FFFFFF | text | 5.68:1 | 4.5:1 | ✔ AA |
-| Info message on page | `--color-status-info` #3568A8 | `--color-bg` #F6FAF7 | text | 5.39:1 | 4.5:1 | ✔ AA |
+| Info message on page | `--color-status-info` #3568A8 | `--color-bg` #F5FBF7 | text | 5.41:1 | 4.5:1 | ✔ AA |
 | Warning message | `--color-status-warning-text` #8F5E14 | `--color-surface` #FFFFFF | text | 5.55:1 | 4.5:1 | ✔ AA |
-| Warning message on page | `--color-status-warning-text` #8F5E14 | `--color-bg` #F6FAF7 | text | 5.27:1 | 4.5:1 | ✔ AA |
+| Warning message on page | `--color-status-warning-text` #8F5E14 | `--color-bg` #F5FBF7 | text | 5.29:1 | 4.5:1 | ✔ AA |
 | Warning icon/border | `--color-status-warning` #B7791F | `--color-surface` #FFFFFF | ui | 3.64:1 | 3:1 | ✔ AA |
-| Form field border | `--color-border-input` #3D6B4F | `--color-surface` #FFFFFF | ui | 6.15:1 | 3:1 | ✔ AA |
-| Focus ring on page | `--color-focus` #3568A8 | `--color-bg` #F6FAF7 | ui | 5.39:1 | 3:1 | ✔ AA |
+| Form field border | `--color-border-input` #2F5D42 | `--color-surface` #FFFFFF | ui | 7.59:1 | 3:1 | ✔ AA |
+| Focus ring on page | `--color-focus` #3568A8 | `--color-bg` #F5FBF7 | ui | 5.41:1 | 3:1 | ✔ AA |
 | Focus ring on cards | `--color-focus` #3568A8 | `--color-surface` #FFFFFF | ui | 5.68:1 | 3:1 | ✔ AA |
-| Focus ring on muted band | `--color-focus` #3568A8 | `--color-surface-muted` #E3F1E7 | ui | 4.86:1 | 3:1 | ✔ AA |
-| Focus ring on dark green | `--color-focus-on-inverse` #9FD8AD | `--color-surface-inverse` #14532D | ui | 5.59:1 | 3:1 | ✔ AA |
-| Form field border on dark green | `--color-border-input-on-inverse` #E3F1E7 | `--color-surface-inverse` #14532D | ui | 7.81:1 | 3:1 | ✔ AA |
-| Outline button hover on dark green | `--color-text-inverse` #FFFFFF | `--color-action-secondary-bg-hover-on-inverse` #3D6B4F | text | 6.15:1 | 4.5:1 | ✔ AA |
-| Warning text on muted band (passes with the green palette) | `--color-status-warning-text` #8F5E14 | `--color-surface-muted` #E3F1E7 | text | 4.76:1 | 4.5:1 | ✔ AA |
+| Focus ring on muted band | `--color-focus` #3568A8 | `--color-surface-muted` #E4F3E8 | ui | 4.94:1 | 3:1 | ✔ AA |
+| Focus ring on dark green | `--color-focus-on-inverse` #C8EDD2 | `--color-surface-inverse` #1D6B3F | ui | 5.11:1 | 3:1 | ✔ AA |
+| Form field border on dark green | `--color-border-input-on-inverse` #E4F3E8 | `--color-surface-inverse` #1D6B3F | ui | 5.66:1 | 3:1 | ✔ AA |
+| Outline button hover on dark green | `--color-text-inverse` #FFFFFF | `--color-action-secondary-bg-hover-on-inverse` #2F5D42 | text | 7.59:1 | 4.5:1 | ✔ AA |
+| Warning text on muted band (passes with the green palette) | `--color-status-warning-text` #8F5E14 | `--color-surface-muted` #E4F3E8 | text | 4.83:1 | 4.5:1 | ✔ AA |
+| Success text on muted band (passes with the medium-green palette) | `--color-status-success` #287A55 | `--color-surface-muted` #E4F3E8 | text | 4.56:1 | 4.5:1 | ✔ AA |
 <!-- contrast-table:end -->
 <!-- prettier-ignore-end -->
 
