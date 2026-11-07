@@ -231,6 +231,12 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     use: 'text',
     where: 'Warning text on muted band (passes with the green palette)',
   },
+  {
+    fg: '--color-status-success',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Success text on muted band (passes with the medium-green palette)',
+  },
 ];
 
 /**
@@ -245,12 +251,6 @@ export const FORBIDDEN_PAIRS: ContrastPair[] = [
     bg: '--color-surface',
     use: 'text',
     where: 'Warning orange as text',
-  },
-  {
-    fg: '--color-status-success',
-    bg: '--color-surface-muted',
-    use: 'text',
-    where: 'Success text on muted band',
   },
   {
     fg: '--color-focus',

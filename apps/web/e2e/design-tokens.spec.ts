@@ -185,7 +185,7 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(light.color).toBe('rgb(53, 104, 168)'); // --palette-info
 
     const dark = await ringOf('#inverse-button');
-    expect(dark.color).toBe('rgb(159, 216, 173)'); // --palette-accent on dark green
+    expect(dark.color).toBe('rgb(200, 237, 210)'); // --palette-accent on dark green
   });
 
   test('dark green band turns headings, body text and links white (never dark green on dark green)', async ({
@@ -201,7 +201,7 @@ test.describe('Tamil specimen at this viewport', () => {
       link: getComputedStyle(el.querySelector('a')!).color,
     }));
     expect(colours).toEqual({
-      background: 'rgb(20, 83, 45)', // --palette-primary
+      background: 'rgb(29, 107, 63)', // --palette-primary
       heading: 'rgb(255, 255, 255)',
       text: 'rgb(255, 255, 255)',
       link: 'rgb(255, 255, 255)',
@@ -227,10 +227,10 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(result).toEqual({
       outlineText: 'rgb(255, 255, 255)',
       outlineBorder: 'rgb(255, 255, 255)',
-      inputBorder: 'rgb(227, 241, 231)', // --palette-mist, 7.8:1 on dark green
+      inputBorder: 'rgb(228, 243, 232)', // --palette-mist, 5.7:1 on the primary green
       cardBackground: 'rgb(255, 255, 255)',
-      cardHeading: 'rgb(20, 83, 45)', // dark green again on the light card
-      cardLink: 'rgb(20, 83, 45)',
+      cardHeading: 'rgb(29, 107, 63)', // dark green again on the light card
+      cardLink: 'rgb(29, 107, 63)',
     });
   });
 

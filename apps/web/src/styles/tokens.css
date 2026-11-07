@@ -10,12 +10,12 @@
   /* ── 1. Palette — green theme (client, Nov 2026) ─────────────────────
      PLACEHOLDER greens until the client sends the exact colour codes: replace only the six
      hex values below; every component follows. Each pair is AA-checked by tokens.test.ts. */
-  --palette-primary: #14532d; /* Dark green — primary brand, buttons, dark bands */
-  --palette-accent: #9fd8ad; /* Light green — the one donate button, accents on dark green */
-  --palette-mist: #e3f1e7; /* Light green tint — secondary background, dividers */
-  --palette-canvas: #f6faf7; /* Near-white with a green hint — main background */
-  --palette-primary-soft: #3d6b4f; /* Mid green — secondary text, form borders */
-  --palette-ink: #1f2d25; /* Green-black — body text */
+  --palette-primary: #1d6b3f; /* Medium-dark green — primary brand, buttons, dark bands */
+  --palette-accent: #c8edd2; /* Light green — the one donate button, accents on dark green */
+  --palette-mist: #e4f3e8; /* Light green tint — secondary background, dividers */
+  --palette-canvas: #f5fbf7; /* Near-white with a green hint — main background */
+  --palette-primary-soft: #2f5d42; /* Deeper green — secondary text, form borders, hover */
+  --palette-ink: #1b2b22; /* Green-black — body text */
   --palette-white: #ffffff;
 
   --palette-success: #287a55;
@@ -25,8 +25,8 @@
   --palette-info: #3568a8;
 
   /* Derived tones for interaction states (each checked in CONTRAST_PAIRS) */
-  --palette-accent-light: #b8e3c2; /* donate hover */
-  --palette-accent-dark: #86c997; /* donate pressed */
+  --palette-accent-light: #daf3e0; /* donate hover */
+  --palette-accent-dark: #bce6c6; /* donate pressed */
   --palette-slate: #5c6e63; /* placeholder and disabled text (5.4:1 on white) */
 
   /* ── 2. Roles ─────────────────────────────────────────────────────── */
