@@ -9,7 +9,9 @@ export function RouteErrorPage() {
       <title>Something went wrong · Theonetrust.in</title>
       <h1>Something went wrong</h1>
       <p role="alert">Please refresh the page or try again in a moment.</p>
-      <p lang="ta">பக்கத்தைப் புதுப்பிக்கவும் அல்லது சிறிது நேரம் கழித்து முயற்சிக்கவும்.</p>
+      <p lang="ta">
+        பக்கத்தை மறுபடி திறந்து பாருங்கள், அல்லது கொஞ்ச நேரம் கழித்து முயற்சி செய்யுங்கள்.
+      </p>
       <a href="/">Go to the home page</a>
     </main>
   );

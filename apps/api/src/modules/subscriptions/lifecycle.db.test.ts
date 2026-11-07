@@ -444,7 +444,7 @@ describe('failed and halted charges', () => {
       },
     });
     const mail = sent.find((m) => m.idempotencyKey === outbox.id)!;
-    expect(mail.text).toContain('நிறுத்தி வைக்கப்பட்டுள்ளது');
+    expect(mail.text).toContain('நின்றுவிட்டது');
     expect(mail.text).toContain(`https://theonetrust.example/ta/manage/${manageToken}`);
     // Cancelled before the next problem email goes out: no alarming email.
     await event('subscription.pending', subId, 'pending', {

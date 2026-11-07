@@ -94,6 +94,6 @@ test('language switch goes to the same page in Tamil and keeps query and hash', 
 test('Tamil not-found page', async ({ page }) => {
   await page.goto('/ta/does-not-exist');
   await expect(page.getByRole('heading', { level: 1, name: 'பக்கம் கிடைக்கவில்லை' })).toBeVisible();
-  await page.getByRole('link', { name: 'முகப்புப் பக்கத்திற்குச் செல்லவும்' }).click();
+  await page.getByRole('link', { name: 'முகப்புப் பக்கத்துக்குச் செல்ல' }).click();
   await expect(page).toHaveURL(/\/ta\/$/);
 });

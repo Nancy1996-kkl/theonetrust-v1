@@ -259,7 +259,7 @@ describe('transparency centre', () => {
     renderHome('/ta/', { proof: withData });
     const t = section('transparency');
     expect(within(t).getByRole('columnheader', { name: 'ஆவணம்' })).toBeInTheDocument();
-    expect(t).toHaveTextContent('ஆங்கிலம் மற்றும் தமிழ்');
+    expect(t).toHaveTextContent('ஆங்கிலம், தமிழ்');
   });
 });
 
@@ -286,8 +286,8 @@ describe('FAQ', () => {
     renderHome('/ta/');
     const faq = section('faq');
     expect(within(faq).getByRole('heading', { name: 'கேள்விகள்' })).toBeVisible();
-    expect(within(faq).getByText('வரி விலக்கு கோர முடியுமா?')).toBeInTheDocument();
-    expect(faq).toHaveTextContent('தற்போது இல்லை.');
+    expect(within(faq).getByText('வரி விலக்கு கிடைக்குமா?')).toBeInTheDocument();
+    expect(faq).toHaveTextContent('இப்போதைக்கு இல்லை.');
   });
 
   it('preview shows every question; unconfirmed ones are labelled', () => {
@@ -424,7 +424,7 @@ describe('final call to action', () => {
     expect(
       within(give).getByRole('group', { name: 'தொகையைத் தேர்ந்தெடுங்கள்' }),
     ).toBeInTheDocument();
-    expect(within(give).getByRole('link', { name: 'இப்போதே நன்கொடை அளியுங்கள்' })).toHaveAttribute(
+    expect(within(give).getByRole('link', { name: 'இப்போதே நன்கொடை கொடுங்கள்' })).toHaveAttribute(
       'href',
       '/ta/#donate',
     );

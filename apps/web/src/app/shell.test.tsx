@@ -31,7 +31,7 @@ describe('landmarks and skip link', () => {
   it('skip link is first and targets main, in each language', () => {
     renderRoute('/ta/');
     const links = screen.getAllByRole('link');
-    expect(links[0]).toHaveAccessibleName('முதன்மை உள்ளடக்கத்திற்குச் செல்லவும்');
+    expect(links[0]).toHaveAccessibleName('நேராக முக்கியப் பகுதிக்குச் செல்ல');
     expect(links[0]).toHaveAttribute('href', '#main');
   });
 
@@ -256,7 +256,7 @@ describe('footer', () => {
 
   it('policy links follow the language', () => {
     renderRoute('/ta/');
-    const legal = within(footer()).getByRole('navigation', { name: 'சட்டம்' });
+    const legal = within(footer()).getByRole('navigation', { name: 'விதிகள், கொள்கைகள்' });
     expect(within(legal).getByRole('link', { name: 'விதிமுறைகள்' })).toHaveAttribute(
       'href',
       '/ta/terms',
@@ -320,9 +320,10 @@ describe('not-found page', () => {
   it('is in Tamil under /ta/ and links to the Tamil home', () => {
     renderRoute('/ta/does-not-exist');
     expect(screen.getByRole('heading', { level: 1, name: 'பக்கம் கிடைக்கவில்லை' })).toBeVisible();
-    expect(
-      screen.getByRole('link', { name: 'முகப்புப் பக்கத்திற்குச் செல்லவும்' }),
-    ).toHaveAttribute('href', '/ta/');
+    expect(screen.getByRole('link', { name: 'முகப்புப் பக்கத்துக்குச் செல்ல' })).toHaveAttribute(
+      'href',
+      '/ta/',
+    );
   });
 
   it('is not indexed', () => {

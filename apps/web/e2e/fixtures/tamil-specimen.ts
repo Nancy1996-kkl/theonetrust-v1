@@ -61,4 +61,4 @@ export const TAMIL_SPECIMEN = /* html */ `
 </div>`;
 
 /** A long Tamil skip-link label: wraps to two lines on small phones. */
-export const TAMIL_SKIP_LABEL = 'முதன்மை உள்ளடக்கத்திற்குச் செல்லவும்';
+export const TAMIL_SKIP_LABEL = 'நேராக முக்கியப் பகுதிக்குச் செல்ல';

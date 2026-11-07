@@ -2,13 +2,16 @@ import type { UiLang } from '../components/ui/ui-strings.ts';
 
 /** Plain-language names for audit actions. Unknown actions show their code. */
 const LABELS: Record<string, { en: string; ta: string }> = {
-  'auth.login.password_ok': { en: 'Password accepted', ta: 'கடவுச்சொல் ஏற்கப்பட்டது' },
+  'auth.login.password_ok': { en: 'Password accepted', ta: 'கடவுச்சொல் சரி' },
   'auth.login.wrong_password': { en: 'Wrong password', ta: 'தவறான கடவுச்சொல்' },
   'auth.login.unknown_account': {
     en: 'Sign-in with an unknown email',
     ta: 'தெரியாத மின்னஞ்சலுடன் உள்நுழைவு முயற்சி',
   },
-  'auth.login.locked': { en: 'Sign-in while locked', ta: 'பூட்டிய நிலையில் உள்நுழைவு முயற்சி' },
+  'auth.login.locked': {
+    en: 'Sign-in while locked',
+    ta: 'கணக்கு பூட்டியிருக்கும்போது உள்நுழைய முயற்சி',
+  },
   'auth.account.locked': {
     en: 'Account locked after failed attempts',
     ta: 'தவறான முயற்சிகளால் கணக்கு பூட்டப்பட்டது',
@@ -32,45 +35,48 @@ const LABELS: Record<string, { en: string; ta: string }> = {
     en: 'Owner password set or reset',
     ta: 'உரிமையாளர் கடவுச்சொல் அமைக்கப்பட்டது',
   },
-  'help_request.created': { en: 'Help request received', ta: 'உதவிக் கோரிக்கை பெறப்பட்டது' },
+  'help_request.created': { en: 'Help request received', ta: 'உதவிக் கோரிக்கை வந்தது' },
   'help_request.status_changed': {
     en: 'Help request status changed',
     ta: 'உதவிக் கோரிக்கை நிலை மாற்றப்பட்டது',
   },
-  'help_request.updated': { en: 'Help request updated', ta: 'உதவிக் கோரிக்கை புதுப்பிக்கப்பட்டது' },
+  'help_request.updated': { en: 'Help request updated', ta: 'உதவிக் கோரிக்கையில் மாற்றம்' },
   'help_request.note_added': {
     en: 'Note added to a help request',
     ta: 'உதவிக் கோரிக்கையில் குறிப்பு சேர்க்கப்பட்டது',
   },
   'help_request.exported': {
     en: 'Help requests exported (masked)',
-    ta: 'உதவிக் கோரிக்கைகள் ஏற்றுமதி (மறைக்கப்பட்டது)',
+    ta: 'உதவிக் கோரிக்கைகள் பதிவிறக்கம் (விவரம் மறைத்தது)',
   },
   'bank_transfer.credit_recorded': {
     en: 'Bank credit recorded and matched',
-    ta: 'வங்கி வரவு பதிவாகிப் பொருந்தியது',
+    ta: 'வங்கிப் பணம் பதிவானது, பொருந்தியது',
   },
   'bank_transfer.credit_unmatched': {
     en: 'Bank credit recorded — exception',
-    ta: 'வங்கி வரவு பதிவானது — விதிவிலக்கு',
+    ta: 'வங்கிப் பணம் பதிவானது — கவனிக்க வேண்டியது',
   },
   'bank_transfer.confirmed_paid': {
     en: 'Bank transfer confirmed — donation paid',
-    ta: 'வங்கிப் பரிமாற்றம் உறுதி — நன்கொடை செலுத்தப்பட்டது',
+    ta: 'வங்கிப் பரிமாற்றம் உறுதி — நன்கொடைப் பணம் வந்தது',
   },
   'bank_transfer.credit_rejected': {
     en: 'Bank credit rejected',
-    ta: 'வங்கி வரவு நிராகரிக்கப்பட்டது',
+    ta: 'வங்கிப் பணம் நிராகரிக்கப்பட்டது',
   },
   'payment_exception.resolved': {
     en: 'Payment exception resolved',
-    ta: 'கட்டண விதிவிலக்கு தீர்க்கப்பட்டது',
+    ta: 'கவனிக்க வேண்டிய பணம் — முடிந்தது',
   },
   'notification.retry': {
     en: 'Email queued again',
-    ta: 'மின்னஞ்சல் மீண்டும் வரிசையில் சேர்க்கப்பட்டது',
+    ta: 'மின்னஞ்சல் மறுபடி வரிசையில் சேர்ந்தது',
   },
-  'admin.preferences.update': { en: 'Dashboard language changed', ta: 'பலகை மொழி மாற்றப்பட்டது' },
+  'admin.preferences.update': {
+    en: 'Dashboard language changed',
+    ta: 'நிர்வாகப் பக்க மொழி மாறியது',
+  },
 };
 
 export function auditActionLabel(action: string, lang: UiLang): string {

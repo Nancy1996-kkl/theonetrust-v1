@@ -32,15 +32,15 @@ const T = {
     amount: '₹1,000',
     name: 'முழுப் பெயர்',
     mobile: 'கைபேசி எண்',
-    consent: 'என் நன்கொடையைப் பதிவுசெய்ய அறக்கட்டளை இந்த விவரங்களை வைத்திருக்கலாம்.',
+    consent: 'என் நன்கொடையைப் பதிவு செய்ய, அறக்கட்டளை இந்த விவரங்களை வைத்துக்கொள்ளலாம்.',
     pay: '₹1,000 பாதுகாப்பாகச் செலுத்து',
-    thanks: 'நன்றி — கட்டணம் பெறப்பட்டது',
-    cancelled: 'கட்டணம் ரத்து செய்யப்பட்டது',
-    failed: 'கட்டணம் நிறைவேறவில்லை',
+    thanks: 'நன்றி — உங்கள் பணம் வந்து சேர்ந்தது',
+    cancelled: 'பணம் செலுத்துவதை நிறுத்திவிட்டீர்கள்',
+    failed: 'பணம் செலுத்த முடியவில்லை',
     tryAgain: 'மீண்டும் முயற்சி செய்',
     limit: 'உங்கள் UPI செயலி அல்லது வங்கி இந்தத் தொகையை அனுமதிக்கவில்லை',
     payCard: 'கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்து',
-    pending: 'உங்கள் கட்டணத்தை உறுதிப்படுத்திக்கொண்டிருக்கிறோம்',
+    pending: 'உங்கள் பணம் வந்ததா என்று இன்னும் பார்த்துக்கொண்டிருக்கிறோம்',
     checkAgain: 'மீண்டும் சரிபார்',
   },
 } as const;
@@ -269,7 +269,7 @@ test('manage page in Tamil; unknown link shows "not found"', async ({ page }) =>
   await expect(
     page.getByRole('heading', { level: 1, name: 'உங்கள் மாதாந்திர நன்கொடை' }),
   ).toBeVisible();
-  await expect(page.getByText('செயலில்')).toBeVisible();
+  await expect(page.getByText('நடப்பில் உள்ளது')).toBeVisible();
   await page.goto(`/manage/${'Z'.repeat(43)}`);
   await expect(page.getByRole('heading', { name: 'Link not found' })).toBeVisible();
 });
