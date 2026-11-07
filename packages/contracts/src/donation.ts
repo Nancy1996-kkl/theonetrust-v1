@@ -24,8 +24,11 @@ export interface DonationIntentRequest {
   feeMethod?: FeeCoverMethod;
   consent: true;
   locale: 'ta' | 'en';
-  /** `bank_transfer`: no Razorpay order; the owner confirms the credit (#25). Default checkout. */
-  channel?: 'checkout' | 'bank_transfer';
+  /**
+   * `bank_transfer`: no Razorpay order; the owner confirms the credit (#25). `qr`: a one-time
+   * Razorpay UPI QR for exactly this amount, shown inside the donate pop-up. Default checkout.
+   */
+  channel?: 'checkout' | 'bank_transfer' | 'qr';
   /** Only when `taxOptInOffered` (#34). PAN + address are encrypted by the API. */
   taxOptIn?: { pan: string; address: string; oldRegimeAck: true };
 }
@@ -67,6 +70,27 @@ export interface DonationIntentResponse {
   };
 }
 
+/**
+ * Amounts offered as one-tap "Pay by UPI QR" buttons (client, Nov 2026). The server caps QR
+ * payments at `qrMaxPaise`; larger gifts use Checkout (UPI, card, netbanking).
+ */
+export const DONATION_QR_AMOUNTS_RUPEES = [200, 500, 1000, 1500, 2000] as const;
+
+/** A one-time UPI QR for one donation (Razorpay QR Codes). Scanning it is NOT proof of payment. */
+export interface DonationQrResponse {
+  publicReference: string;
+  giftPaise: number;
+  feePaise: number;
+  amountPaise: number;
+  currency: 'INR';
+  qr: {
+    /** API path of the QR image (PNG), relative to the API base, e.g. /donation-intents/…/qr.png */
+    imagePath: string;
+    /** The QR stops accepting payments at this time (ISO). */
+    expiresAt: string;
+  };
+}
+
 export interface DonationEstimateResponse {
   minPaise: number;
   maxPaise: number;
@@ -79,6 +103,10 @@ export interface DonationEstimateResponse {
   monthlyOffered?: boolean;
   /** Tax-benefit opt-in is offered: approval recorded, valid and switched on (#34). */
   taxOptInOffered?: boolean;
+  /** One-time UPI QR in the pop-up is switched on (Razorpay QR Codes enabled [CONFIRM]). */
+  qrOffered?: boolean;
+  /** Largest amount (paise) a QR may be made for. */
+  qrMaxPaise?: number;
   /** Present when a gift was given and fee cover is offered for the method. */
   feePaise?: number;
   amountPaise?: number;

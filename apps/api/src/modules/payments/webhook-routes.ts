@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type { Db } from '../../db/client.ts';
 import { AppError } from '../../http/errors.ts';
-import { parseProviderPayment } from '../donations/provider.ts';
+import { parseProviderPayment, QR_ID } from '../donations/provider.ts';
 import { applySubscriptionEvent, SUBSCRIPTION_EVENTS } from '../subscriptions/lifecycle.ts';
 import { applyProviderPayment, applyRefund } from './reconcile.ts';
 
@@ -21,6 +21,7 @@ interface RazorpayEvent {
     payment?: { entity?: unknown };
     refund?: { entity?: { status?: unknown } };
     subscription?: { entity?: unknown };
+    qr_code?: { entity?: { id?: unknown } };
   };
 }
 
@@ -64,6 +65,34 @@ export async function razorpayWebhookRoutes(
       return { status: 'PROCESSED', note: 'virtual_account_credit_to_review' };
     }
 
+    // One-time UPI QR (client, Nov 2026): the payment is matched to the QR it was made on.
+    if (type === 'qr_code.credited') {
+      const qrId = event.payload?.qr_code?.entity?.id;
+      if (typeof qrId !== 'string' || !QR_ID.test(qrId) || !rawPayment) {
+        return { status: 'IGNORED', note: 'no_qr_entity' };
+      }
+      const payment = parseProviderPayment(rawPayment);
+      const attempt = await db.paymentAttempt.findUnique({ where: { providerOrderId: qrId } });
+      if (!attempt) {
+        // Money arrived on a QR we did not make: the owner looks, nothing is guessed.
+        await db.paymentException.create({
+          data: { kind: 'PAYMENT_MISMATCH', providerPaymentId: payment.paymentId },
+        });
+        return { status: 'PROCESSED', note: 'unknown_qr_to_review' };
+      }
+      await applyProviderPayment(db, attempt.id, { ...payment, orderId: qrId }, opts.now());
+      // If the same payment arrived earlier as an unmatched payment.* event, its open exception
+      // now points at this donation, so the owner can close it at a glance.
+      await db.paymentException.updateMany({
+        where: { providerPaymentId: payment.paymentId, status: 'OPEN', donationIntentId: null },
+        data: { donationIntentId: attempt.donationIntentId },
+      });
+      return { status: 'PROCESSED', donationIntentId: attempt.donationIntentId };
+    }
+    if (type === 'qr_code.created' || type === 'qr_code.closed') {
+      return { status: 'IGNORED', note: 'qr_lifecycle' };
+    }
+
     const handled = ['payment.authorized', 'payment.captured', 'payment.failed', 'order.paid'];
     const refunds = ['refund.created', 'refund.processed', 'refund.failed'];
     if (!handled.includes(type) && !refunds.includes(type))
@@ -79,6 +108,27 @@ export async function razorpayWebhookRoutes(
     if (!attempt && (rawPayment as { invoice_id?: unknown }).invoice_id) {
       // A monthly charge: recorded from its subscription.charged event, not from here (#33).
       return { status: 'IGNORED', note: 'subscription_payment' };
+    }
+    if (!attempt && !refunds.includes(type)) {
+      // A QR payment may also arrive as payment.*: it is linked from qr_code.credited instead.
+      const linked = await db.paymentAttempt.findUnique({
+        where: { providerPaymentId: payment.paymentId },
+      });
+      if (linked && QR_ID.test(linked.providerOrderId)) {
+        return { status: 'IGNORED', note: 'qr_payment_linked' };
+      }
+      // Razorpay may give a QR payment an order of its own; our QR notes still identify it.
+      const ref = (rawPayment as { notes?: { donation_reference?: unknown } }).notes
+        ?.donation_reference;
+      if (typeof ref === 'string') {
+        const qrAttempt = await db.paymentAttempt.findFirst({
+          where: {
+            donationIntent: { publicReference: ref },
+            providerOrderId: { startsWith: 'qr_' },
+          },
+        });
+        if (qrAttempt) return { status: 'IGNORED', note: 'awaiting_qr_credit' };
+      }
     }
     if (!attempt) {
       // A payment we never created an order for (or not linked yet): owner review, no guess.

@@ -18,6 +18,11 @@ test('the CSP allows only our origin, the API origin and Razorpay; never inline 
     csp,
     /connect-src 'self' https:\/\/api\.theonetrust\.in https:\/\/api\.razorpay\.com/,
   );
+  // The UPI QR image comes from the API, never straight from Razorpay's link.
+  assert.match(
+    csp,
+    /img-src 'self' data: https:\/\/api\.theonetrust\.in https:\/\/\*\.razorpay\.com;/,
+  );
   assert.match(csp, /frame-ancestors 'none'/);
   assert.match(csp, /object-src 'none'/);
   assert.match(csp, /upgrade-insecure-requests$/);
@@ -28,6 +33,7 @@ test('a relative or missing API URL adds nothing; development has no HSTS or upg
   assert.equal(apiOrigin(undefined), null);
   const csp = contentSecurityPolicy({ apiBaseUrl: '/api/v1', production: false });
   assert.match(csp, /connect-src 'self' https:\/\/api\.razorpay\.com/);
+  assert.match(csp, /img-src 'self' data: https:\/\/\*\.razorpay\.com;/);
   assert.doesNotMatch(csp, /upgrade-insecure-requests/);
   const dev = webSecurityHeaders({ apiBaseUrl: undefined, production: false });
   assert.equal(dev['Strict-Transport-Security'], undefined);

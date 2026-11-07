@@ -299,6 +299,9 @@ model PaymentAttempt {
   refundedPaise       Int             @default(0) @map("refunded_paise")
   feePaise            Int?            @map("fee_paise")
   signatureVerifiedAt DateTime?       @map("signature_verified_at") @db.Timestamptz(3)
+  /// One-time UPI QR (client, Nov 2026): providerOrderId holds the Razorpay QR ID (qr_…).
+  qrImageUrl          String?         @map("qr_image_url")
+  qrExpiresAt         DateTime?       @map("qr_expires_at") @db.Timestamptz(3)
   createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 

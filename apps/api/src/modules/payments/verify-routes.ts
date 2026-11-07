@@ -4,7 +4,12 @@ import type { DonationStatusResponse } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
-import { PaymentProviderError, type PaymentProvider } from '../donations/provider.ts';
+import {
+  PaymentProviderError,
+  QR_ID,
+  type PaymentProvider,
+  type ProviderPayment,
+} from '../donations/provider.ts';
 import { currentReceiptToken } from '../receipts/issue.ts';
 import { applyProviderPayment, donorStatus } from './reconcile.ts';
 
@@ -116,9 +121,17 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
       }
       // Ask Razorpay (with our secret) — covers a lost browser callback or a closed tab.
       try {
+        const qr = QR_ID.test(attempt.providerOrderId);
+        // A QR payment carries no order of ours: it is matched to the QR it was made on.
+        const asQr = (p: ProviderPayment): ProviderPayment =>
+          qr ? { ...p, orderId: attempt.providerOrderId } : p;
         const payments = attempt.providerPaymentId
-          ? [await provider.fetchPayment(attempt.providerPaymentId)]
-          : await provider.fetchOrderPayments(attempt.providerOrderId);
+          ? [asQr(await provider.fetchPayment(attempt.providerPaymentId))]
+          : qr
+            ? provider.fetchQrPayments
+              ? (await provider.fetchQrPayments(attempt.providerOrderId)).map(asQr)
+              : []
+            : await provider.fetchOrderPayments(attempt.providerOrderId);
         const best =
           payments.find((p) => p.status === 'captured') ??
           payments.find((p) => p.status === 'authorized') ??

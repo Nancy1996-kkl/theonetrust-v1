@@ -32,7 +32,8 @@ export function contentSecurityPolicy({ apiBaseUrl, production }) {
     "default-src 'self'",
     `script-src 'self' ${RAZORPAY.script}`,
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: ${RAZORPAY.img}`,
+    // The one-time UPI QR image is served by the API (never hot-linked from Razorpay).
+    ['img-src', "'self'", 'data:', api, RAZORPAY.img].filter(Boolean).join(' '),
     "font-src 'self'",
     ['connect-src', "'self'", api, ...RAZORPAY.connect].filter(Boolean).join(' '),
     `frame-src ${RAZORPAY.frame.join(' ')}`,

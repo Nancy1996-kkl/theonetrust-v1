@@ -8,6 +8,7 @@ import {
   type BankTransferIntentResponse,
   type DonationEstimateResponse,
   type DonationIntentResponse,
+  type DonationQrResponse,
   type TrustBankAccount,
 } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
@@ -37,7 +38,7 @@ const IntentBody = z.object({
   feeMethod: z.enum(FEE_COVER_METHODS).optional(),
   consent: z.literal(true),
   locale: z.enum(['ta', 'en']),
-  channel: z.enum(['checkout', 'bank_transfer']).default('checkout'),
+  channel: z.enum(['checkout', 'bank_transfer', 'qr']).default('checkout'),
   /**
    * Tax-benefit opt-in (#34). Accepted ONLY when the trust's approval is recorded, valid and
    * switched on; otherwise refused. PAN and address are encrypted before they are stored.
@@ -78,6 +79,8 @@ export interface DonationRouteOptions {
   monthlyOffered?: boolean;
   /** AES-256-GCM key (+ version) for PAN and address at rest (#34). */
   encryption?: { key: Buffer; version: number };
+  /** One-time UPI QR in the pop-up (client, Nov 2026). Absent = not offered. */
+  qr?: { maxPaise: number; expiryMinutes: number };
 }
 
 /**
@@ -97,6 +100,11 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
   function deps() {
     if (!opts.db || !opts.provider) throw new AppError('SERVICE_UNAVAILABLE');
     return { db: opts.db, provider: opts.provider };
+  }
+
+  /** QR is offered only when switched on AND the provider can make QR codes. */
+  function qrReady() {
+    return opts.qr && opts.provider?.createQrCode ? opts.qr : null;
   }
 
   async function feeFor(db: Db, giftPaise: number, method: FeeMethod | undefined) {
@@ -122,6 +130,10 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       bankTransferOffered: bankAccount(settings) !== null,
       monthlyOffered: opts.monthlyOffered === true,
       taxOptInOffered: opts.encryption !== undefined && taxOptInOffered(settings, opts.now()),
+      qrOffered: qrReady() !== null,
+      ...(qrReady() && {
+        qrMaxPaise: Math.min(qrReady()?.maxPaise ?? 0, settings.maxDonationPaise),
+      }),
       ...(query.giftPaise !== undefined &&
         fee !== null && { feePaise: fee, amountPaise: query.giftPaise + fee }),
     };
@@ -152,6 +164,8 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
     }
     const account = bankAccount(settings);
     if (bank && !account) problems.push({ path: 'channel', issue: 'not_offered' });
+    const qr = body.channel === 'qr' ? qrReady() : null;
+    if (body.channel === 'qr' && !qr) problems.push({ path: 'channel', issue: 'not_offered' });
     let pan: string | null = null;
     if (body.taxOptIn) {
       if (!opts.encryption || !taxOptInOffered(settings, opts.now())) {
@@ -172,6 +186,9 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
 
     const donations = donationRepository(db);
     const feePaise = body.coverFee && fee !== null ? fee : 0;
+    if (qr && body.giftPaise + feePaise > qr.maxPaise) {
+      throw new AppError('VALIDATION_ERROR', [{ path: 'giftPaise', issue: 'too_big_for_qr' }]);
+    }
 
     // A retry with the same key returns the same order instead of charging twice.
     if (idempotencyKey) {
@@ -191,6 +208,10 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
         const attempt = existing.paymentAttempts[0];
         if (existing.giftPaise !== body.giftPaise || existing.feePaise !== feePaise || !attempt) {
           throw new AppError('CONFLICT');
+        }
+        if (qr) {
+          if (!attempt.qrExpiresAt) throw new AppError('CONFLICT');
+          return reply.code(200).send(qrResponse(existing, attempt.qrExpiresAt));
         }
         return reply
           .code(200)
@@ -235,6 +256,41 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
     /* c8 ignore next -- deps() above guarantees a provider for checkout */
     if (!provider) throw new AppError('SERVICE_UNAVAILABLE');
 
+    if (qr && provider.createQrCode) {
+      let made;
+      try {
+        made = await provider.createQrCode({
+          amountPaise: intent.amountPaise,
+          reference: intent.publicReference,
+          closeBy: new Date(opts.now().getTime() + qr.expiryMinutes * 60_000),
+          notes: {
+            donation_reference: intent.publicReference,
+            programme: body.programme ?? 'general',
+          },
+        });
+      } catch (error) {
+        request.log.warn(
+          {
+            reason: error instanceof PaymentProviderError ? error.reason : 'unknown',
+            ref: intent.publicReference,
+          },
+          'Payment QR not created',
+        );
+        throw new AppError('SERVICE_UNAVAILABLE');
+      }
+      await db.paymentAttempt.create({
+        data: {
+          donationIntentId: intent.id,
+          provider: 'RAZORPAY',
+          providerOrderId: made.qrId,
+          amountPaise: toPaise(made.amountPaise),
+          qrImageUrl: made.imageUrl,
+          qrExpiresAt: made.closeBy,
+        },
+      });
+      return reply.code(201).send(qrResponse(intent, made.closeBy));
+    }
+
     let order;
     try {
       order = await provider.createOrder({
@@ -263,6 +319,41 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       amountPaise: toPaise(order.amountPaise),
     });
     return reply.code(201).send(response(intent, order.orderId, provider.publicKeyId));
+  });
+
+  /**
+   * The QR picture for a donation's current QR (client, Nov 2026). Fetched from Razorpay on the
+   * server, so the page needs no third-party image host. Only while the QR can still be paid.
+   */
+  app.get('/:reference/qr.png', { config: limit }, async (request, reply) => {
+    const { reference } = parseInput(ReferenceParams, request.params);
+    const { db, provider } = deps();
+    const intent = await db.donationIntent.findUnique({
+      where: { publicReference: reference },
+      include: { paymentAttempts: { orderBy: { createdAt: 'desc' }, take: 1 } },
+    });
+    const attempt = intent?.paymentAttempts[0];
+    if (
+      !intent ||
+      !attempt?.qrImageUrl ||
+      !attempt.qrExpiresAt ||
+      attempt.qrExpiresAt <= opts.now() ||
+      !['CREATED', 'PENDING'].includes(intent.status) ||
+      !provider.fetchQrImage
+    ) {
+      throw new AppError('NOT_FOUND');
+    }
+    let image;
+    try {
+      image = await provider.fetchQrImage(attempt.qrImageUrl);
+    } catch {
+      throw new AppError('SERVICE_UNAVAILABLE');
+    }
+    return reply
+      .header('content-type', image.contentType)
+      .header('cache-control', 'no-store')
+      .header('x-content-type-options', 'nosniff')
+      .send(image.data);
   });
 
   /**
@@ -312,6 +403,23 @@ function bankResponse(
     amountPaise: intent.amountPaise,
     currency: 'INR',
     bankTransfer: account,
+  };
+}
+
+function qrResponse(
+  intent: { publicReference: string; giftPaise: number; feePaise: number; amountPaise: number },
+  expiresAt: Date,
+): DonationQrResponse {
+  return {
+    publicReference: intent.publicReference,
+    giftPaise: intent.giftPaise,
+    feePaise: intent.feePaise,
+    amountPaise: intent.amountPaise,
+    currency: 'INR',
+    qr: {
+      imagePath: `/donation-intents/${intent.publicReference}/qr.png`,
+      expiresAt: expiresAt.toISOString(),
+    },
   };
 }
 

@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { PaymentProviderError, razorpayProvider } from './provider.ts';
+import { isRazorpayImageUrl, PaymentProviderError, razorpayProvider } from './provider.ts';
 
 const INPUT = {
   amountPaise: 51_200,
@@ -179,5 +179,130 @@ describe('razorpayProvider — verification and payment reads', () => {
     expect(minimal).toMatchObject({ orderId: null, method: null, refundedPaise: 0 });
     const down = provider(vi.fn(async () => Promise.reject(new Error('x'))) as never);
     await expect(down.fetchPayment('pay_Def456UVW')).rejects.toMatchObject({ reason: 'network' });
+  });
+});
+
+describe('razorpayProvider — one-time UPI QR', () => {
+  const provider = (fetchImpl: typeof fetch) =>
+    razorpayProvider({ keyId: 'rzp_test_abcdefgh12', keySecret: 's', fetch: fetchImpl });
+  const closeBy = new Date('2026-11-07T06:15:00.000Z');
+  const input = { amountPaise: 50_000, reference: 'TOT-D-ABCDEFGHJKMN', closeBy, notes: {} };
+  const qr = {
+    id: 'qr_Abc123XYZ',
+    image_url: 'https://rzp.io/i/abc',
+    payment_amount: 50_000,
+    close_by: closeBy.getTime() / 1000,
+    status: 'active',
+  };
+
+  it('asks for a single-use, fixed-amount UPI QR and returns it', async () => {
+    const fetchImpl = reply(200, qr);
+    const made = await provider(fetchImpl as never).createQrCode!(input);
+    expect(made).toEqual({
+      qrId: 'qr_Abc123XYZ',
+      imageUrl: 'https://rzp.io/i/abc',
+      amountPaise: 50_000,
+      closeBy,
+    });
+    const [url, init] = fetchImpl.mock.calls[0]!;
+    expect(String(url)).toBe('https://api.razorpay.com/v1/payments/qr_codes');
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      type: 'upi_qr',
+      usage: 'single_use',
+      fixed_amount: true,
+      payment_amount: 50_000,
+      close_by: closeBy.getTime() / 1000,
+    });
+  });
+
+  it('rejects any reply that is not exactly what we asked for', async () => {
+    for (const bad of [
+      { ...qr, payment_amount: 1 },
+      { ...qr, status: 'closed' },
+      { ...qr, id: 'order_Abc123' },
+      { ...qr, image_url: 'https://evil.example/qr.png' },
+      'not json',
+    ]) {
+      await expect(provider(reply(200, bad) as never).createQrCode!(input)).rejects.toMatchObject({
+        reason: 'unexpected_response',
+      });
+    }
+    await expect(provider(reply(400, {}) as never).createQrCode!(input)).rejects.toMatchObject({
+      reason: 'rejected',
+    });
+    const down = vi.fn(async () => Promise.reject(new Error('x')));
+    await expect(provider(down as never).createQrCode!(input)).rejects.toMatchObject({
+      reason: 'network',
+    });
+    // A missing close_by falls back to the time we asked for.
+    const noClose: Partial<typeof qr> = { ...qr };
+    delete noClose.close_by;
+    expect((await provider(reply(200, noClose) as never).createQrCode!(input)).closeBy).toEqual(
+      closeBy,
+    );
+  });
+
+  it('lists the payments made on a QR', async () => {
+    const raw = {
+      id: 'pay_Def456UVW',
+      order_id: null,
+      amount: 50_000,
+      currency: 'INR',
+      status: 'captured',
+      method: 'upi',
+      amount_refunded: 0,
+    };
+    const fetchImpl = reply(200, { items: [raw] });
+    const list = await provider(fetchImpl as never).fetchQrPayments!('qr_Abc123XYZ');
+    expect(list).toEqual([expect.objectContaining({ paymentId: 'pay_Def456UVW', orderId: null })]);
+    expect(String(fetchImpl.mock.calls[0]![0])).toContain(
+      '/v1/payments/qr_codes/qr_Abc123XYZ/payments',
+    );
+    await expect(provider(fetchImpl as never).fetchQrPayments!('../x')).rejects.toMatchObject({
+      reason: 'rejected',
+    });
+    await expect(
+      provider(reply(200, { nope: 1 }) as never).fetchQrPayments!('qr_Abc123XYZ'),
+    ).rejects.toMatchObject({ reason: 'unexpected_response' });
+  });
+
+  it('fetches only Razorpay PNG/JPEG QR images of a sane size', async () => {
+    const image = (type: string, bytes = 10, status = 200) =>
+      vi.fn(
+        async () =>
+          new Response(new Uint8Array(bytes), { status, headers: { 'content-type': type } }),
+      );
+    const ok = await provider(image('image/png; charset=binary') as never).fetchQrImage!(
+      'https://rzp.io/i/abc',
+    );
+    expect(ok.contentType).toBe('image/png');
+    expect(ok.data.length).toBe(10);
+    for (const bad of [
+      image('image/svg+xml'),
+      image('text/html'),
+      image('image/png', 0),
+      image('image/png', 1_048_577),
+      image('image/png', 10, 404),
+    ]) {
+      await expect(
+        provider(bad as never).fetchQrImage!('https://rzp.io/i/abc'),
+      ).rejects.toMatchObject({ reason: 'unexpected_response' });
+    }
+    await expect(
+      provider(image('image/png') as never).fetchQrImage!('https://evil.example/x.png'),
+    ).rejects.toMatchObject({ reason: 'rejected' });
+    const down = vi.fn(async () => Promise.reject(new Error('x')));
+    await expect(
+      provider(down as never).fetchQrImage!('https://rzp.io/i/abc'),
+    ).rejects.toMatchObject({ reason: 'network' });
+  });
+
+  it('recognises only https Razorpay image hosts', () => {
+    expect(isRazorpayImageUrl('https://rzp.io/i/abc')).toBe(true);
+    expect(isRazorpayImageUrl('https://cdn.razorpay.com/qr/abc.png')).toBe(true);
+    expect(isRazorpayImageUrl('http://rzp.io/i/abc')).toBe(false);
+    expect(isRazorpayImageUrl('https://razorpay.com.evil.example/x')).toBe(false);
+    expect(isRazorpayImageUrl('https://evilrzp.io/x')).toBe(false);
+    expect(isRazorpayImageUrl('not a url')).toBe(false);
   });
 });

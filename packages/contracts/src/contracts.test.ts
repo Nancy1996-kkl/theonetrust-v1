@@ -133,3 +133,11 @@ describe('content management contracts (#36)', () => {
     expect(DOCUMENT_FILE_TYPES).toEqual(['application/pdf', 'image/png', 'image/jpeg']);
   });
 });
+
+describe('donation QR contracts (client, Nov 2026)', () => {
+  it('offers five QR amounts from ₹200 up to ₹2,000', async () => {
+    const { DONATION_QR_AMOUNTS_RUPEES } = await import('./index.ts');
+    expect(DONATION_QR_AMOUNTS_RUPEES).toEqual([200, 500, 1000, 1500, 2000]);
+    expect(Math.max(...DONATION_QR_AMOUNTS_RUPEES)).toBe(2000);
+  });
+});
