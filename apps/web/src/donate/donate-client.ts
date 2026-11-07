@@ -4,6 +4,7 @@ import type {
   DonationEstimateResponse,
   DonationIntentRequest,
   DonationIntentResponse,
+  DonationQrResponse,
   DonationStatusResponse,
 } from '@theonetrust/contracts';
 import { apiUrl } from '../lib/api-url.ts';
@@ -59,6 +60,16 @@ export interface DonateClient {
   >;
   /** "I've made the transfer" + optional UTR. Never confirms the payment. */
   claimBankTransfer(publicReference: string, utr: string | null): Promise<boolean>;
+  /**
+   * One-time UPI QR for exactly this amount (client, Nov 2026). Scanning proves nothing: the
+   * panel shows "paid" only when `status` says PAID. `imageUrl` is ready for an <img>.
+   */
+  startQr?(
+    request: DonationIntentRequest,
+    idempotencyKey: string,
+  ): Promise<
+    { ok: true; intent: DonationQrResponse; imageUrl: string } | { ok: false; reason: StartFailure }
+  >;
 }
 
 type StartFailure = 'invalid' | 'rate_limited' | 'unavailable' | 'network';
@@ -193,6 +204,33 @@ export function createApiDonateClient(
       }
       return { ok: false, reason: failureFor(res.status) };
     },
+    async startQr(request, idempotencyKey) {
+      let res: Response;
+      try {
+        res = await fetchImpl(apiUrl(baseUrl, '/donation-intents'), {
+          method: 'POST',
+          credentials: 'omit',
+          headers: { ...json, 'idempotency-key': idempotencyKey },
+          // The QR is for the exact amount on the button: no fee cover on top.
+          body: JSON.stringify({ ...request, channel: 'qr', coverFee: false }),
+        });
+      } catch {
+        return { ok: false, reason: 'network' };
+      }
+      if (res.status === 201 || res.status === 200) {
+        const intent = (await res.json().catch(() => null)) as DonationQrResponse | null;
+        const path = intent?.qr?.imagePath;
+        if (
+          typeof path === 'string' &&
+          /^\/donation-intents\/[A-Z0-9-]+\/qr\.png$/.test(path) &&
+          intent?.amountPaise === request.giftPaise
+        ) {
+          return { ok: true, intent, imageUrl: apiUrl(baseUrl, path) };
+        }
+        return { ok: false, reason: 'network' };
+      }
+      return { ok: false, reason: failureFor(res.status) };
+    },
     async claimBankTransfer(publicReference, utr) {
       try {
         const res = await fetchImpl(
@@ -305,6 +343,11 @@ export function createApiDonateClient(
   };
 }
 
+/** A visibly fake placeholder: the mock is never used on the live site. */
+export const MOCK_QR_IMAGE = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="white"/><rect x="5" y="5" width="90" height="90" fill="none" stroke="black" stroke-width="4"/><text x="50" y="55" font-size="14" text-anchor="middle" font-family="sans-serif">TEST QR</text></svg>',
+)}`;
+
 /**
  * Dev/e2e simulation. Tests choose the outcome with `window.__donateMock`
  * ('success' | 'cancel' | 'fail' | 'limit' | 'pending' | 'stuck' | 'start-fail' | 'no-receipt'); default success.
@@ -322,6 +365,8 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
         feeCoverOffered: false,
         bankTransferOffered: true,
         monthlyOffered: true,
+        qrOffered: true,
+        qrMaxPaise: 200_000,
       }),
     startBankTransfer: (request) =>
       wait({
@@ -342,6 +387,24 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
         },
       }),
     claimBankTransfer: () => wait(true),
+    startQr: (request) =>
+      scenario() === 'start-fail'
+        ? wait({ ok: false as const, reason: 'network' as const })
+        : wait({
+            ok: true as const,
+            intent: {
+              publicReference: 'TOT-D-MOCK00000000',
+              giftPaise: request.giftPaise,
+              feePaise: 0,
+              amountPaise: request.giftPaise,
+              currency: 'INR' as const,
+              qr: {
+                imagePath: '/donation-intents/TOT-D-MOCK00000000/qr.png',
+                expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+              },
+            },
+            imageUrl: MOCK_QR_IMAGE,
+          }),
     start: (request) =>
       scenario() === 'start-fail'
         ? wait({ ok: false as const, reason: 'network' as const })

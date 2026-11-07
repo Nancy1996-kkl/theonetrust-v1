@@ -607,23 +607,47 @@
 }
 
 .ui-stepper__list {
+  /* Flipkart-style progress bar (client, Nov 2026): equal columns, marker on top, label below,
+     a line joining the markers. Always one row, even at 360px and with long Tamil labels. */
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .ui-stepper__step {
+  position: relative;
   display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   min-width: 0;
+  text-align: center;
   color: var(--color-text-muted);
 }
 
+/* The line from the previous marker to this one (drawn behind the markers). */
+.ui-stepper__step + .ui-stepper__step::before {
+  content: '';
+  position: absolute;
+  inset-block-start: calc(var(--space-8) / 2 - var(--border-width-strong) / 2);
+  inset-inline: calc(-50% + var(--space-8) / 2 + var(--space-1))
+    calc(50% + var(--space-8) / 2 + var(--space-1));
+  block-size: var(--border-width-strong);
+  background: var(--color-border-input);
+}
+
+/* Reached steps: the line into them is solid primary and thicker (not colour alone). */
+.ui-stepper__step--done + .ui-stepper__step::before {
+  block-size: calc(var(--border-width-strong) * 2);
+  inset-block-start: calc(var(--space-8) / 2 - var(--border-width-strong));
+  background: var(--color-action-primary-bg);
+}
+
 .ui-stepper__marker {
+  position: relative;
+  z-index: 1;
   display: inline-grid;
   place-items: center;
   flex: none;
@@ -631,18 +655,28 @@
   block-size: var(--space-8);
   border: var(--border-width-strong) solid currentColor;
   border-radius: var(--radius-pill);
+  background: var(--color-surface);
   font-weight: var(--weight-semibold);
 }
 
-.ui-stepper__step--done {
-  color: var(--color-status-success);
+.ui-stepper__label {
+  max-inline-size: 100%;
+  font-size: var(--text-small);
+  overflow-wrap: anywhere;
 }
 
-.ui-stepper__step--done .ui-stepper__label {
+/* Done: filled primary marker with a tick (shape, not colour alone). */
+.ui-stepper__step--done {
   color: var(--color-text);
 }
 
-/* Current: filled marker + bold label (shape and weight, not colour alone). */
+.ui-stepper__step--done .ui-stepper__marker {
+  background: var(--color-action-primary-bg);
+  border-color: var(--color-action-primary-bg);
+  color: var(--color-action-primary-text);
+}
+
+/* Current: filled marker + bold label + a ring around the marker. */
 .ui-stepper__step--current {
   color: var(--color-text);
   font-weight: var(--weight-semibold);
@@ -652,6 +686,9 @@
   background: var(--color-action-primary-bg);
   border-color: var(--color-action-primary-bg);
   color: var(--color-action-primary-text);
+  box-shadow:
+    0 0 0 var(--border-width-strong) var(--color-surface),
+    0 0 0 calc(var(--border-width-strong) * 2) var(--color-action-primary-bg);
 }
 
 /* ── Data table ──────────────────────────────────────────────────── */

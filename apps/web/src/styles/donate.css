@@ -89,3 +89,41 @@
   gap: var(--space-3);
   margin-block: var(--space-3);
 }
+
+/* One-time UPI QR (client, Nov 2026) */
+.donate__qr {
+  margin-block: var(--space-4);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.donate__qr-title {
+  margin-block: 0 var(--space-2);
+}
+
+.donate__qr-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.donate__qr-figure {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.donate__qr-image {
+  width: min(15rem, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  padding: var(--space-2);
+  background: var(--palette-white); /* a QR must scan on white in any theme */
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}

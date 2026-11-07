@@ -201,6 +201,9 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     now: options.now ?? (() => new Date()),
     ...(options.db && { db: options.db }),
     ...(paymentProvider && { provider: paymentProvider }),
+    ...(env.RAZORPAY_QR_ENABLED && {
+      qr: { maxPaise: env.DONATION_QR_MAX_PAISE, expiryMinutes: env.DONATION_QR_EXPIRY_MINUTES },
+    }),
   });
 
   // Payment verification and donor status re-check (#26).

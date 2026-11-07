@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
+  DONATION_QR_AMOUNTS_RUPEES,
   formatInr,
   MONTHLY_CONSENT_VERSION,
   normalizeIndianMobile,
@@ -25,6 +26,7 @@ import { PolicyNotice } from '../routes/policy/PolicyNotice.tsx';
 import { useDonationDraft } from '../state/donation-draft.ts';
 import { newIdempotencyKey, useDonateClient, type CheckoutOutcome } from './donate-client.ts';
 import { MonthlyConsent } from './MonthlyConsent.tsx';
+import { QrAmounts, QrPay } from './QrPay.tsx';
 import { TaxOptInFields } from './TaxOptInFields.tsx';
 import { useMonthlyClient } from './monthly-client.ts';
 import {
@@ -50,10 +52,13 @@ type Screen =
   | 'network'
   | 'bank'
   | 'bank-sent'
+  | 'qr'
   | 'monthly-done'
   | 'monthly-pending';
 const STEPS: Step[] = ['need', 'amount', 'details', 'review'];
 const STEP_LABELS: DonateMessageKey[] = ['stepNeed', 'stepAmount', 'stepDetails', 'stepPay'];
+/** Matches the API default (DONATION_QR_EXPIRY_MINUTES); the QR itself shows its exact time. */
+const QR_EXPIRY_MINUTES = 15;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface Details {
@@ -152,6 +157,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const [mandateConsent, setMandateConsent] = useState(false);
   const [mandateError, setMandateError] = useState(false);
   const [manageToken, setManageToken] = useState<string | null>(null);
+  /** The amount on the QR button the donor picked (client, Nov 2026). */
+  const [qrGift, setQrGift] = useState<number | null>(null);
   const monthlyKey = useRef<string | null>(null);
   const attemptKey = useRef<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -164,6 +171,14 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const monthly = draft.frequency === 'monthly' && limits?.monthlyOffered === true;
   /** Tax opt-in (#34): only when the server says the approval is confirmed and switched on. */
   const taxOffered = limits?.taxOptInOffered === true && !monthly;
+  /** UPI QR only when the server offers it (one-time gifts, up to its cap) and no tax opt-in. */
+  const qrClient = client.startQr ? { startQr: client.startQr, status: client.status } : null;
+  const qrOffered =
+    qrClient !== null &&
+    limits?.qrOffered === true &&
+    limits.qrMaxPaise !== undefined &&
+    !monthly &&
+    !(taxOffered && details.taxOptIn);
 
   // Limits and the fee estimate come from the server; nothing is assumed here.
   useEffect(() => {
@@ -206,6 +221,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       setStep('need');
       setCancelled(false);
     }
+    // An open QR is dropped with the pop-up; reopening shows the review step, not a stale QR.
+    if (screen === 'qr') setScreen('form');
   }
 
   function settle(status: 'PAID' | 'PENDING' | 'FAILED' | 'UNKNOWN', ref: string) {
@@ -616,6 +633,38 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         </Button>
       </div>
     );
+  } else if (screen === 'qr' && qrClient && qrGift) {
+    body = (
+      <QrPay
+        client={qrClient}
+        request={{ ...intentRequest(), giftPaise: qrGift, coverFee: false }}
+        t={t}
+        money={money}
+        locale={locale}
+        headingRef={headingRef}
+        onSettled={(status, ref) => {
+          setReference(ref);
+          settle(status, ref);
+        }}
+        onFailed={(reason) =>
+          setScreen(
+            reason === 'invalid' ? 'invalid' : reason === 'rate_limited' ? 'wait' : 'network',
+          )
+        }
+      />
+    );
+    footer = (
+      <Button
+        variant="ghost"
+        fullWidth
+        onClick={() => {
+          setScreen('form');
+          setStep('review');
+        }}
+      >
+        {t.back}
+      </Button>
+    );
   } else if (screen === 'bank-sent') {
     body = (
       <>
@@ -897,6 +946,23 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             />
           )}
           <p className="donate__muted">{t.trustLine}</p>
+          {qrOffered && limits?.qrMaxPaise !== undefined && (
+            <QrAmounts
+              amounts={DONATION_QR_AMOUNTS_RUPEES}
+              maxPaise={limits.qrMaxPaise}
+              expiryMinutes={QR_EXPIRY_MINUTES}
+              t={t}
+              money={money}
+              disabled={busy}
+              onPick={(paise) => {
+                // The donor's amount becomes the QR's amount, so the summary always matches.
+                updateDraft({ amountPaise: paise as Paise });
+                setQrGift(paise);
+                setCancelled(false);
+                setScreen('qr');
+              }}
+            />
+          )}
           {limits?.bankTransferOffered && !monthly && (
             <Button variant="ghost" loading={busy} onClick={() => void startBank()}>
               {t.bankTransferLink}

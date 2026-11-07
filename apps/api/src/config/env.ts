@@ -166,6 +166,18 @@ const EnvSchema = z
       .enum(['true', 'false', ''])
       .default('false')
       .transform((v) => v === 'true'),
+    /**
+     * One-time UPI QR inside the donate pop-up (client, Nov 2026). Needs Razorpay "QR Codes"
+     * switched on for the account [CONFIRM]; off by default. Test-mode QRs cannot be scanned.
+     */
+    RAZORPAY_QR_ENABLED: z
+      .enum(['true', 'false', ''])
+      .default('false')
+      .transform((v) => v === 'true'),
+    /** Largest QR payment (paise). Client: ₹2,000. */
+    DONATION_QR_MAX_PAISE: z.coerce.number().int().min(100).max(10_000_000).default(200_000),
+    /** How long a QR accepts payment (Razorpay allows 2 minutes to 2 hours). */
+    DONATION_QR_EXPIRY_MINUTES: z.coerce.number().int().min(3).max(120).default(15),
     /** A checkout payment still unsettled after this many minutes is listed for the owner (#31). */
     ADMIN_STALE_PENDING_MINUTES: z.coerce.number().int().min(5).max(10_080).default(30),
     /** How often the outbox worker looks for due emails. */

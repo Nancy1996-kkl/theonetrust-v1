@@ -44,7 +44,42 @@ export interface PaymentProvider {
   fetchPayment(paymentId: string): Promise<ProviderPayment>;
   /** All payments made against an order (used when the browser callback never arrived). */
   fetchOrderPayments(orderId: string): Promise<ProviderPayment[]>;
+  /** One-time UPI QR for exactly one amount (Razorpay QR Codes, client Nov 2026). */
+  createQrCode?(input: CreateQrInput): Promise<ProviderQr>;
+  /** Payments made on a QR (the re-check when the webhook is late). */
+  fetchQrPayments?(qrId: string): Promise<ProviderPayment[]>;
+  /** The QR picture, fetched server-side so the browser never talks to Razorpay for it. */
+  fetchQrImage?(imageUrl: string): Promise<{ contentType: string; data: Buffer }>;
 }
+
+export interface CreateQrInput {
+  amountPaise: number;
+  /** Our public reference, shown in the provider dashboard. */
+  reference: string;
+  /** When the QR stops accepting payment. */
+  closeBy: Date;
+  /** Non-personal labels only. */
+  notes: Record<string, string>;
+}
+
+export interface ProviderQr {
+  qrId: string;
+  imageUrl: string;
+  amountPaise: number;
+  closeBy: Date;
+}
+
+export const QR_ID = /^qr_[A-Za-z0-9]{6,40}$/;
+/** QR images are only ever fetched from Razorpay's own hosts. */
+export function isRazorpayImageUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' && /(^|\.)(rzp\.io|razorpay\.com)$/.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+const MAX_QR_IMAGE_BYTES = 1_048_576;
 
 export class PaymentProviderError extends Error {
   constructor(readonly reason: 'network' | 'rejected' | 'unexpected_response') {
@@ -142,6 +177,83 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
       const body = (await getJson(`/v1/orders/${orderId}/payments`)) as { items?: unknown };
       if (!Array.isArray(body.items)) throw new PaymentProviderError('unexpected_response');
       return body.items.map(parseProviderPayment);
+    },
+    async createQrCode(input) {
+      let res: Response;
+      try {
+        res = await doFetch(`${base}/v1/payments/qr_codes`, {
+          method: 'POST',
+          headers: { authorization: auth, 'content-type': 'application/json' },
+          body: JSON.stringify({
+            type: 'upi_qr',
+            name: 'Theonetrust.in',
+            usage: 'single_use',
+            fixed_amount: true,
+            payment_amount: input.amountPaise,
+            description: input.reference,
+            close_by: Math.floor(input.closeBy.getTime() / 1000),
+            notes: input.notes,
+          }),
+          signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+        });
+      } catch {
+        throw new PaymentProviderError('network');
+      }
+      if (!res.ok) throw new PaymentProviderError('rejected');
+      const body = (await res.json().catch(() => null)) as {
+        id?: unknown;
+        image_url?: unknown;
+        payment_amount?: unknown;
+        close_by?: unknown;
+        status?: unknown;
+      } | null;
+      // Trust nothing: exactly the amount we asked for, an active QR, a Razorpay image link.
+      if (
+        typeof body?.id !== 'string' ||
+        !QR_ID.test(body.id) ||
+        typeof body.image_url !== 'string' ||
+        !isRazorpayImageUrl(body.image_url) ||
+        body.payment_amount !== input.amountPaise ||
+        body.status !== 'active'
+      ) {
+        throw new PaymentProviderError('unexpected_response');
+      }
+      const closeBy = Number(body.close_by);
+      return {
+        qrId: body.id,
+        imageUrl: body.image_url,
+        amountPaise: body.payment_amount,
+        closeBy: Number.isFinite(closeBy) && closeBy > 0 ? new Date(closeBy * 1000) : input.closeBy,
+      };
+    },
+    async fetchQrPayments(qrId) {
+      if (!QR_ID.test(qrId)) throw new PaymentProviderError('rejected');
+      const body = (await getJson(`/v1/payments/qr_codes/${qrId}/payments`)) as {
+        items?: unknown;
+      };
+      if (!Array.isArray(body.items)) throw new PaymentProviderError('unexpected_response');
+      return body.items.map(parseProviderPayment);
+    },
+    async fetchQrImage(imageUrl) {
+      if (!isRazorpayImageUrl(imageUrl)) throw new PaymentProviderError('rejected');
+      let res: Response;
+      try {
+        res = await doFetch(imageUrl, {
+          redirect: 'follow',
+          signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+        });
+      } catch {
+        throw new PaymentProviderError('network');
+      }
+      const contentType = res.headers.get('content-type') ?? '';
+      if (!res.ok || !/^image\/(png|jpeg)\b/.test(contentType)) {
+        throw new PaymentProviderError('unexpected_response');
+      }
+      const data = Buffer.from(await res.arrayBuffer());
+      if (data.length === 0 || data.length > MAX_QR_IMAGE_BYTES) {
+        throw new PaymentProviderError('unexpected_response');
+      }
+      return { contentType: contentType.split(';')[0] ?? 'image/png', data };
     },
     async createOrder(input) {
       let res: Response;

@@ -122,6 +122,17 @@ describe('loadEnv — sign-in settings', () => {
   });
 });
 
+describe('loadEnv — donation QR (client, Nov 2026)', () => {
+  it('is off by default with a ₹2,000 cap and a 15-minute expiry', () => {
+    const env = loadEnv({});
+    expect(env.RAZORPAY_QR_ENABLED).toBe(false);
+    expect(env.DONATION_QR_MAX_PAISE).toBe(200_000);
+    expect(env.DONATION_QR_EXPIRY_MINUTES).toBe(15);
+    expect(loadEnv({ RAZORPAY_QR_ENABLED: 'true' }).RAZORPAY_QR_ENABLED).toBe(true);
+    expect(() => loadEnv({ DONATION_QR_EXPIRY_MINUTES: '500' })).toThrow();
+  });
+});
+
 describe('loadEnv — trusted proxy (#38)', () => {
   it('defaults to private and loopback networks and refuses odd values', () => {
     expect(loadEnv({}).TRUST_PROXY).toBe('loopback, linklocal, uniquelocal');

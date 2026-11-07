@@ -142,6 +142,38 @@ test('bank transfer: account details + reference; "not confirmed yet" until the 
   await expect(panel.getByRole('heading', { name: T.en.thanks })).toHaveCount(0);
 });
 
+test('UPI QR in the pop-up: pick ₹500 → QR for ₹500 → "thank you" only after the server check', async ({
+  page,
+}) => {
+  const panel = await toReview(page, 'en', 'stuck');
+  for (const amount of ['₹200', '₹500', '₹1,000', '₹1,500', '₹2,000']) {
+    await expect(panel.getByRole('button', { name: `QR for ${amount}` })).toBeVisible();
+  }
+  await panel.getByRole('button', { name: 'QR for ₹500' }).click();
+  await expect(panel.getByRole('heading', { name: 'Scan to pay ₹500' })).toBeVisible();
+  await expect(
+    panel.getByRole('img', { name: 'UPI QR code to pay ₹500 to the trust' }),
+  ).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Download QR' })).toBeVisible();
+  // Server still says pending: no success.
+  await panel.getByRole('button', { name: 'I have paid — check now' }).click();
+  await expect(panel.getByRole('heading', { name: T.en.thanks })).toHaveCount(0);
+  await page.evaluate(() => {
+    (window as unknown as { __donateMock: string }).__donateMock = 'success';
+  });
+  await panel.getByRole('button', { name: 'I have paid — check now' }).click();
+  await expect(panel.getByRole('heading', { name: T.en.thanks })).toBeVisible();
+});
+
+test('UPI QR in Tamil', async ({ page }) => {
+  const panel = await toReview(page, 'ta', 'stuck');
+  await panel.getByRole('button', { name: '₹200-க்கு QR' }).click();
+  await expect(
+    panel.getByRole('heading', { name: '₹200 செலுத்த ஸ்கேன் பண்ணுங்கள்' }),
+  ).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'QR-ஐ டவுன்லோட் பண்ணு' })).toBeVisible();
+});
+
 // ── Payment test suite (#28): ₹1, limits, refresh and back button ──────────────────────────
 
 async function toAmount(page: Page, scenario = 'success') {

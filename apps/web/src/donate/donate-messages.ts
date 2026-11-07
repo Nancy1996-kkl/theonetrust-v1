@@ -127,6 +127,21 @@ const en = {
   waitText: 'There were many attempts from this connection. Please try again in a few minutes.',
   netTitle: 'Could not reach the trust',
   netText: 'Your choices are kept. Check your connection and try again.',
+  qrTitle: 'Or scan a UPI QR',
+  qrIntro: 'Pick an amount. We make a QR for exactly that amount, valid for {minutes} minutes.',
+  qrChoose: 'QR for {amount}',
+  qrHeading: 'Scan to pay {amount}',
+  qrAlt: 'UPI QR code to pay {amount} to the trust',
+  qrHow: 'Open any UPI app (GPay, PhonePe, Paytm, BHIM), scan this QR and pay. It works once only.',
+  qrDownload: 'Download QR',
+  qrWaiting: 'Waiting for your payment… this page updates by itself.',
+  qrNotProof:
+    'A scan or a screenshot does not confirm the gift. We show "thank you" only after the payment reaches the trust.',
+  qrExpires: 'Valid until {time}',
+  qrExpiredTitle: 'This QR has expired',
+  qrExpiredText: 'If you already paid, we will confirm it shortly. Otherwise, make a new QR.',
+  qrNew: 'Make a new QR',
+  qrPaid: 'I have paid — check now',
 };
 
 export type DonateMessageKey = keyof typeof en;
@@ -268,9 +283,27 @@ const ta: Record<DonateMessageKey, string> = {
   netTitle: 'அறக்கட்டளையின் தளத்தோடு இணைய முடியவில்லை',
   netText:
     'நீங்கள் தேர்வு செய்தவை அப்படியே இருக்கின்றன. இணையம் சரியாக இருக்கிறதா என்று பார்த்து, மறுபடி முயற்சி செய்யுங்கள்.',
+  qrTitle: 'அல்லது UPI QR ஸ்கேன் பண்ணுங்கள்',
+  qrIntro:
+    'தொகையைத் தேர்வு செய்யுங்கள். அதே தொகைக்கு ஒரு QR வரும்; அது {minutes} நிமிடம் மட்டும் வேலை செய்யும்.',
+  qrChoose: '{amount}-க்கு QR',
+  qrHeading: '{amount} செலுத்த ஸ்கேன் பண்ணுங்கள்',
+  qrAlt: 'அறக்கட்டளைக்கு {amount} செலுத்தும் UPI QR',
+  qrHow:
+    'ஏதாவது ஒரு UPI ஆப் (GPay, PhonePe, Paytm, BHIM) திறந்து இந்த QR-ஐ ஸ்கேன் பண்ணி பணம் அனுப்புங்கள். இது ஒருமுறை மட்டும் வேலை செய்யும்.',
+  qrDownload: 'QR-ஐ டவுன்லோட் பண்ணு',
+  qrWaiting: 'உங்கள் பணத்துக்காகக் காத்திருக்கிறோம்… இந்தப் பக்கம் தானாகவே மாறும்.',
+  qrNotProof:
+    'ஸ்கேன் பண்ணியதோ, ஸ்கிரீன்ஷாட்டோ நன்கொடையை உறுதி செய்யாது. பணம் அறக்கட்டளைக்கு வந்த பிறகுதான் "நன்றி" காட்டுவோம்.',
+  qrExpires: '{time} வரை வேலை செய்யும்',
+  qrExpiredTitle: 'இந்த QR-இன் நேரம் முடிந்துவிட்டது',
+  qrExpiredText:
+    'ஏற்கெனவே பணம் அனுப்பியிருந்தால், சீக்கிரம் உறுதி செய்வோம். இல்லையென்றால் புது QR எடுங்கள்.',
+  qrNew: 'புது QR எடு',
+  qrPaid: 'பணம் அனுப்பிவிட்டேன் — இப்போது பார்',
 };
 
 export const DONATE_MESSAGES: Record<UiLang, Record<DonateMessageKey, string>> = { en, ta };
 
-/** Quick picks from the plan (₹500, ₹1,000, ₹2,000, ₹5,000). */
-export const DONATE_PRESETS_RUPEES = [500, 1000, 2000, 5000] as const;
+/** Client, Nov 2026: start small (₹1 minimum is the "Other amount" box). */
+export const DONATE_PRESETS_RUPEES = [200, 500, 1000, 2000] as const;
