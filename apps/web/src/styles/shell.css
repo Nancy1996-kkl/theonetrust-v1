@@ -285,7 +285,7 @@
   font-size: var(--text-small);
 }
 
-/* Inside navy bands the pressed language uses the gold action pair (navy on navy otherwise). */
+/* Inside dark green bands the pressed language uses the accent action pair (dark green on dark green otherwise). */
 .surface-inverse .ui-lang__option[aria-pressed='true'] {
   background: var(--color-action-donate-bg);
   color: var(--color-action-donate-text);

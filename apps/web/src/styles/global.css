@@ -130,9 +130,9 @@ button {
   outline-offset: var(--focus-ring-offset);
 }
 
-/* Navy bands re-map the ROLE tokens, so headings, links, body text, outline buttons,
+/* Dark green bands re-map the ROLE tokens, so headings, links, body text, outline buttons,
    form borders and the focus ring inside them all switch together (setting only `color`
-   leaves navy headings on navy). */
+   leaves dark green headings on dark green). */
 .surface-inverse {
   --color-text: var(--color-text-inverse);
   --color-text-muted: var(--color-text-inverse);
@@ -148,18 +148,18 @@ button {
   color: var(--color-text);
 }
 
-/* A light card placed inside a navy band restores the light-surface role tokens.
+/* A light card placed inside a dark green band restores the light-surface role tokens.
    Must mirror the :root values — tokens.test.ts checks they stay identical. */
 .surface {
-  --color-text: var(--palette-graphite);
-  --color-text-muted: var(--palette-steel);
-  --color-text-heading: var(--palette-navy);
-  --color-link: var(--palette-navy);
+  --color-text: var(--palette-ink);
+  --color-text-muted: var(--palette-primary-soft);
+  --color-text-heading: var(--palette-primary);
+  --color-link: var(--palette-primary);
   --color-focus: var(--palette-info);
-  --color-action-secondary-text: var(--palette-navy);
-  --color-action-secondary-border: var(--palette-navy);
-  --color-action-secondary-bg-hover: var(--palette-silver);
-  --color-border-input: var(--palette-steel);
+  --color-action-secondary-text: var(--palette-primary);
+  --color-action-secondary-border: var(--palette-primary);
+  --color-action-secondary-bg-hover: var(--palette-mist);
+  --color-border-input: var(--palette-primary-soft);
 
   background: var(--color-surface);
   color: var(--color-text);

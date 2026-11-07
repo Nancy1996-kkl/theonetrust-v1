@@ -23,12 +23,15 @@ const FONTS = {
   bold: require.resolve('@expo-google-fonts/noto-sans-tamil/700Bold/NotoSansTamil_700Bold.ttf'),
 };
 
-/** Brand palette (apps/web/src/styles/tokens.css): navy, graphite, slate, gold, error. */
-const COLOUR = {
-  navy: '#172b46',
-  text: '#262d35',
-  muted: '#5e6b7a',
-  rule: '#c6a76b',
+/**
+ * Brand palette, kept equal to apps/web/src/styles/tokens.css (green theme): primary, ink, slate,
+ * accent, error. receipts.test.ts checks they match the web tokens.
+ */
+export const COLOUR = {
+  primary: '#14532d',
+  text: '#1f2d25',
+  muted: '#5c6e63',
+  rule: '#9fd8ad',
   alert: '#b42318',
 };
 
@@ -150,7 +153,7 @@ export async function renderReceiptPdf(
   doc
     .font('bold')
     .fontSize(18)
-    .fillColor(COLOUR.navy)
+    .fillColor(COLOUR.primary)
     .text(view.trust.legalName ?? SITE_NAME);
   if (view.trust.registration) {
     doc.font('regular').fontSize(10).fillColor(COLOUR.muted).text(view.trust.registration);
@@ -163,7 +166,7 @@ export async function renderReceiptPdf(
     .strokeColor(COLOUR.rule)
     .stroke();
   doc.moveDown(1);
-  doc.font('bold').fontSize(20).fillColor(COLOUR.navy).text(t.title);
+  doc.font('bold').fontSize(20).fillColor(COLOUR.primary).text(t.title);
   doc.moveDown(0.3);
 
   if (view.state !== 'VALID') {

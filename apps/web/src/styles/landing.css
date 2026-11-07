@@ -107,7 +107,7 @@
   color: var(--color-text-muted);
 }
 
-/* Typographic visual: a calm navy panel with a gold rule — no stock people (spec §4.2). */
+/* Typographic visual: a calm dark green panel with an accent rule — no stock people (spec §4.2). */
 .landing-hero__art {
   display: none;
   place-items: center;

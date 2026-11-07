@@ -1,7 +1,7 @@
 /**
  * Tamil typography specimen injected into the real production build, so the test
  * exercises the actual fonts, tokens and global styles. Long words, stacked vowel signs,
- * flex/grid rows and navy bands are deliberate worst cases for clipping, overflow and
+ * flex/grid rows and dark green bands are deliberate worst cases for clipping, overflow and
  * contrast. Text is generic UI wording — no claims about the trust.
  *
  * data-check values:  text = line-height check · box = must stay inside its container ·
