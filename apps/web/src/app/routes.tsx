@@ -19,6 +19,7 @@ import { DocumentsPage } from '../admin/DocumentsPage.tsx';
 import { MetricsPage } from '../admin/MetricsPage.tsx';
 import { ProgrammesPage } from '../admin/ProgrammesPage.tsx';
 import { SiteSettingsPage } from '../admin/SiteSettingsPage.tsx';
+import { WebhooksPage } from '../admin/WebhooksPage.tsx';
 import { RequireAdmin } from '../admin/RequireAdmin.tsx';
 import { RootLayout } from './RootLayout.tsx';
 import { RouteErrorPage } from '../routes/error/RouteErrorPage.tsx';
@@ -68,6 +69,7 @@ export const routes: RouteObject[] = [
               { path: 'donations', element: <DonationsPage /> },
               { path: 'donations/:id', element: <DonationDetailPage /> },
               { path: 'exceptions', element: <ExceptionsPage /> },
+              { path: 'webhooks', element: <WebhooksPage /> },
               { path: 'receipts', element: <ReceiptsPage /> },
               { path: 'monthly-giving', element: <MonthlyGivingPage /> },
               { path: 'tax', element: <TaxSettingsPage /> },

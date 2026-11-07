@@ -41,6 +41,9 @@ export function AdminNav() {
               <NavLink to="/admin/exceptions">{l.navExceptions}</NavLink>
             </li>
             <li>
+              <NavLink to="/admin/webhooks">{l.navWebhooks}</NavLink>
+            </li>
+            <li>
               <NavLink to="/admin/receipts">{l.navReceipts}</NavLink>
             </li>
             <li>

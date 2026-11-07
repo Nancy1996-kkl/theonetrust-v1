@@ -19,6 +19,7 @@ import { taxAdminRoutes } from '../tax/admin-routes.ts';
 import { taxFilingRoutes } from '../tax/filing-routes.ts';
 import { notificationAdminRoutes } from '../notifications/admin-routes.ts';
 import { bankAdminRoutes } from '../payments/bank-admin-routes.ts';
+import { webhookAdminRoutes } from '../payments/webhook-admin-routes.ts';
 import { cmsAdminRoutes } from '../cms/admin-routes.ts';
 import { documentAdminRoutes } from '../cms/document-routes.ts';
 import { settingsAdminRoutes, type PaymentConfigStatus } from '../cms/settings-routes.ts';
@@ -157,6 +158,11 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
   if (opts.db) {
     await helpAdminRoutes(app, { db: opts.db });
     await bankAdminRoutes(app, { db: opts.db });
+    await webhookAdminRoutes(app, {
+      db: opts.db,
+      staleAfterMinutes: opts.staleAfterMinutes ?? 30,
+      now: opts.now ?? (() => new Date()),
+    });
     await notificationAdminRoutes(app, { db: opts.db, sendingEnabled: opts.emailSending ?? false });
     await subscriptionAdminRoutes(app, { db: opts.db });
     await taxAdminRoutes(app, { db: opts.db, now: opts.now ?? (() => new Date()) });

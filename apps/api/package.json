@@ -18,7 +18,8 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:status": "prisma migrate status",
     "db:seed": "prisma db seed",
-    "owner:set-password": "tsx --env-file-if-exists=../../.env src/cli/set-owner-password.ts"
+    "owner:set-password": "tsx --env-file-if-exists=../../.env src/cli/set-owner-password.ts",
+    "launch:check": "tsx --env-file-if-exists=../../.env src/cli/run-launch-check.ts"
   },
   "dependencies": {
     "@expo-google-fonts/noto-sans-tamil": "0.4.3",

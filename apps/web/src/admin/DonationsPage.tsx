@@ -202,7 +202,7 @@ export function DonationsPage() {
       {error && (
         <StateBlock
           state="error"
-          title={t.helpErrorTitle}
+          title={t.loadErrorTitle}
           headingLevel={2}
           action={
             <Button variant="secondary" onClick={() => setAttempt((n) => n + 1)}>
