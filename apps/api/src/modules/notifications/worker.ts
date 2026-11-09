@@ -7,12 +7,15 @@ import { currentReceipt, shareTokenFor } from '../receipts/issue.ts';
 import { verifyUrl } from '../receipts/routes.ts';
 import { manageToken } from '../subscriptions/rules.ts';
 import { EmailSendError, type EmailProvider } from './provider.ts';
+import { SheetSendError, type SheetCell, type SheetProvider } from './sheet.ts';
 import {
   renderDonorDonationPaid,
   renderDonorSubscriptionStarted,
   renderDonorSubscriptionProblem,
   renderOwnerDonationPaid,
   renderOwnerHelpRequest,
+  istDateTime,
+  methodLabel,
   type DonationPaidContext,
   type RenderedEmail,
 } from './templates.ts';
@@ -33,6 +36,8 @@ const SITE_NAME = 'Theonetrust.in';
 export interface WorkerDeps {
   db: Db;
   provider?: EmailProvider | undefined;
+  /** Google Sheet of paid donations (client, Nov 2026); without it sheet rows wait. */
+  sheet?: SheetProvider | undefined;
   ownerEmail?: string | undefined;
   siteUrl: string;
   receiptKey?: Buffer | undefined;
@@ -49,7 +54,9 @@ export interface RunResult {
   cancelled: number;
 }
 
-type Built = { to: string; email: RenderedEmail } | { cancel: string };
+type Built = { to: string; email: RenderedEmail } | { sheetRow: SheetCell[] } | { cancel: string };
+
+export const SHEET_TEMPLATE = 'sheet_donation_paid';
 
 const site = (deps: WorkerDeps, path: string) => `${deps.siteUrl.replace(/\/$/, '')}${path}`;
 
@@ -94,6 +101,10 @@ async function donationContext(
         ? verifyUrl(deps.siteUrl, token, intent.locale === 'ta' ? 'ta' : 'en')
         : null,
       donorName: intent.donorName,
+      donorEmail: intent.donorEmail,
+      donorPhone: intent.donorPhone,
+      monthly: intent.subscriptionId !== null,
+      paidAt: intent.paidAt ? intent.paidAt.toISOString() : null,
       trustName: settings?.legalName ?? SITE_NAME,
       dashboardUrl: site(deps, '/admin'),
     },
@@ -118,6 +129,26 @@ export async function buildEmail(deps: WorkerDeps, row: NotificationOutbox): Pro
         kind: help.kind,
         dashboardUrl: site(deps, `/admin/help-requests/${help.id}`),
       }),
+    };
+  }
+  if (row.template === SHEET_TEMPLATE && kind === 'donation_intent') {
+    const found = await donationContext(deps, id);
+    if (!found) return { cancel: 'entity_missing' };
+    const c = found.ctx;
+    return {
+      sheetRow: [
+        c.paidAt ? istDateTime(c.paidAt) : '',
+        c.reference,
+        c.donorName,
+        c.donorEmail ?? '',
+        c.donorPhone ?? '',
+        c.amountPaise / 100,
+        c.monthly ? 'Monthly' : 'One-time',
+        c.programme?.en ?? 'General fund',
+        methodLabel(c.method),
+        c.paymentReference ?? '',
+        c.receiptNumber ?? '',
+      ],
     };
   }
   if (
@@ -204,10 +235,16 @@ export function backoffFor(attemptsMade: number): number {
 /** One pass over due notifications. Never throws for a single bad row. */
 export async function processDueNotifications(deps: WorkerDeps): Promise<RunResult> {
   const result: RunResult = { sent: 0, retrying: 0, failed: 0, cancelled: 0 };
-  if (!deps.provider) return result; // EMAIL_PROVIDER=none: everything stays queued
+  // Without an email provider emails stay queued; without a sheet, sheet rows stay queued.
+  if (!deps.provider && !deps.sheet) return result;
   const now = deps.now();
+  const template = !deps.provider
+    ? { equals: SHEET_TEMPLATE }
+    : !deps.sheet
+      ? { not: SHEET_TEMPLATE }
+      : undefined;
   const due = await deps.db.notificationOutbox.findMany({
-    where: { status: 'PENDING', nextAttemptAt: { lte: now } },
+    where: { status: 'PENDING', nextAttemptAt: { lte: now }, ...(template && { template }) },
     orderBy: { nextAttemptAt: 'asc' },
     take: deps.batchSize ?? 20,
   });
@@ -231,7 +268,13 @@ export async function processDueNotifications(deps: WorkerDeps): Promise<RunResu
         result.cancelled++;
         continue;
       }
-      await deps.provider.send({ to: built.to, ...built.email, idempotencyKey: row.id });
+      if ('sheetRow' in built) {
+        if (!deps.sheet) throw new SheetSendError('no_sheet', false);
+        await deps.sheet.appendRow(built.sheetRow);
+      } else {
+        if (!deps.provider) throw new EmailSendError('no_provider', false);
+        await deps.provider.send({ to: built.to, ...built.email, idempotencyKey: row.id });
+      }
       await deps.db.notificationOutbox.update({
         where: { id: row.id },
         data: { status: 'SENT', sentAt: now, lastError: null, retryCount: row.retryCount + 1 },
@@ -240,8 +283,9 @@ export async function processDueNotifications(deps: WorkerDeps): Promise<RunResu
       continue;
     } catch (error) {
       // Codes only: never the provider's body, the address or the message.
-      code = error instanceof EmailSendError ? error.code : 'internal';
-      permanent = error instanceof EmailSendError && error.permanent;
+      const known = error instanceof EmailSendError || error instanceof SheetSendError;
+      code = known ? error.code : 'internal';
+      permanent = known && error.permanent;
     }
     const attempts = row.retryCount + 1;
     if (permanent || attempts >= MAX_ATTEMPTS) {

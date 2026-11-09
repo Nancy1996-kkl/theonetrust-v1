@@ -242,6 +242,7 @@ describe('owner records a bank credit', () => {
     expect(queued.map((q) => q.template).sort()).toEqual([
       'donor_donation_paid',
       'owner_donation_paid',
+      'sheet_donation_paid',
     ]);
     const entries = await db.auditLog.findMany({
       where: { actorId: ownerId, action: { startsWith: 'bank_transfer.' } },

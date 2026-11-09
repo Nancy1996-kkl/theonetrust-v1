@@ -79,6 +79,21 @@ describe('email providers', () => {
     expect(await bare.send(MESSAGE)).toEqual({ id: null });
   });
 
+  it('reply-to (the trust inbox) is sent when set, by both providers', async () => {
+    const calls: unknown[] = [];
+    const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
+      calls.push(JSON.parse(String(init.body)));
+      return json({});
+    });
+    const cfg = { apiKey: 'k'.repeat(16), from: 'a@example.org', fetch: fetchImpl };
+    await resendProvider({ ...cfg, replyTo: 'info.trust@example.org' }).send(MESSAGE);
+    await brevoProvider({ ...cfg, replyTo: 'info.trust@example.org' }).send(MESSAGE);
+    await resendProvider(cfg).send(MESSAGE);
+    expect(calls[0]).toMatchObject({ reply_to: 'info.trust@example.org' });
+    expect(calls[1]).toMatchObject({ replyTo: { email: 'info.trust@example.org' } });
+    expect(calls[2]).not.toHaveProperty('reply_to');
+  });
+
   it.each([
     [429, false],
     [500, false],
@@ -187,13 +202,19 @@ const CTX: DonationPaidContext = {
   receiptNumber: 'TOT-R-2026-27-000001',
   receiptUrl: `https://theonetrust.example/receipt/${'T'.repeat(43)}`,
   donorName: 'Synthetic <Donor>',
+  donorEmail: 'donor@example.org',
+  donorPhone: '+919800000001',
+  monthly: false,
+  paidAt: '2026-11-09T08:35:00.000Z',
   trustName: 'Theonetrust.in',
   dashboardUrl: 'https://theonetrust.example/admin',
 };
 const PII = /\b\d{12,19}\b|[A-Z]{5}\d{4}[A-Z]|\+91|@example\.org/;
+/** Card/account numbers and PAN never appear in any email, owner's included. */
+const NEVER = /\b\d{12,19}\b|[A-Z]{5}\d{4}[A-Z]/;
 
 describe('templates', () => {
-  it('owner email: both languages, reference, amount, receipt link, payment reference', () => {
+  it('owner email: both languages, reference, amount, receipt link, payment reference, donor contact', () => {
     const email = renderOwnerDonationPaid(CTX);
     expect(email.subject).toBe(
       'Donation received: ₹1,500 (TOT-D-ABCDEFGHJKMN) / நன்கொடை வந்தது: ₹1,500 (TOT-D-ABCDEFGHJKMN)',
@@ -206,12 +227,21 @@ describe('templates', () => {
       CTX.receiptUrl!,
       'General fund',
       'பொது நிதி',
+      // Client, Nov 2026: the owner's private email carries the donor's contact details.
+      'Donor email',
+      'donor@example.org',
+      '+919800000001',
+      'One-time',
+      'ஒருமுறை',
+      'Paid on (IST)',
+      '2026-11-09 14:05',
     ]) {
       expect(email.text).toContain(part);
     }
     expect(email.html).toContain('&lt;Donor&gt;'); // escaped
     expect(email.html).not.toContain('<Donor>');
-    expect(`${email.text}${email.html}`).not.toMatch(PII);
+    // The donor's own mobile is shown on purpose; nothing else number-like or a PAN.
+    expect(`${email.text}${email.html}`.replaceAll(CTX.donorPhone!, '')).not.toMatch(NEVER);
     const noReceipt = renderOwnerDonationPaid({
       ...CTX,
       receiptNumber: null,
@@ -219,7 +249,14 @@ describe('templates', () => {
       paymentReference: null,
       programme: { en: 'Food', ta: 'உணவு' },
       method: 'bank_transfer',
+      donorEmail: null,
+      donorPhone: null,
+      monthly: true,
+      paidAt: null,
     });
+    expect(noReceipt.text).toContain(EMAIL_STRINGS.en.notGiven);
+    expect(noReceipt.text).toContain('Monthly');
+    expect(noReceipt.text).not.toContain('Paid on');
     expect(noReceipt.text).toContain(EMAIL_STRINGS.en.noReceipt);
     expect(noReceipt.text).toContain('உணவு');
     expect(noReceipt.text).not.toContain('Payment reference');

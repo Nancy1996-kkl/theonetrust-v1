@@ -199,8 +199,8 @@ export const PROOF_CONTENT: ProofContent = {
         confirmed: true,
         question: { en: 'When do I get my acknowledgement?', ta: 'ஒப்புகை எப்போது கிடைக்கும்?' },
         answer: {
-          en: 'As soon as your payment is verified — never before. Above the minimum amount shown in the donate panel you can download a donation acknowledgement, and we email the link if you gave an email address.',
-          ta: 'உங்கள் பணம் வந்தது உறுதியானவுடன் — அதற்கு முன் எப்போதும் இல்லை. நன்கொடைப் பகுதியில் சொல்லியிருக்கும் குறைந்த தொகைக்கு மேல் கொடுத்தால், ஒப்புகையைப் பதிவிறக்கிக்கொள்ளலாம்; மின்னஞ்சல் கொடுத்திருந்தால் அதன் இணைப்பையும் அனுப்புவோம்.',
+          en: 'As soon as your payment is verified — never before. Above the minimum amount shown in the donate panel you can view a donation acknowledgement online, and we email the link if you gave an email address.',
+          ta: 'உங்கள் பணம் வந்தது உறுதியானவுடன் — அதற்கு முன் எப்போதும் இல்லை. நன்கொடைப் பகுதியில் சொல்லியிருக்கும் குறைந்த தொகைக்கு மேல் கொடுத்தால், ஒப்புகையை இணையத்தில் பார்க்கலாம்; மின்னஞ்சல் கொடுத்திருந்தால் அதன் இணைப்பையும் அனுப்புவோம்.',
         },
       },
       {

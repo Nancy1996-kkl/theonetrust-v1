@@ -33,6 +33,8 @@ type FetchImpl = (url: string, init: RequestInit) => Promise<Response>;
 interface ProviderConfig {
   apiKey: string;
   from: string;
+  /** Replies from donors go here (e.g. the trust's Gmail). */
+  replyTo?: string;
   fetch?: FetchImpl;
   timeoutMs?: number;
 }
@@ -81,6 +83,7 @@ export function resendProvider(config: ProviderConfig): EmailProvider {
         {
           from: config.from,
           to: [message.to],
+          ...(config.replyTo && { reply_to: config.replyTo }),
           subject: message.subject,
           text: message.text,
           html: message.html,
@@ -107,6 +110,7 @@ export function brevoProvider(config: ProviderConfig): EmailProvider {
             ? { name: sender.name, email: sender.email }
             : { email: sender.email },
           to: [{ email: message.to }],
+          ...(config.replyTo && { replyTo: { email: config.replyTo } }),
           subject: message.subject,
           textContent: message.text,
           htmlContent: message.html,
@@ -123,8 +127,13 @@ export function selectEmailProvider(env: {
   EMAIL_PROVIDER: 'none' | 'resend' | 'brevo';
   EMAIL_API_KEY?: string | undefined;
   EMAIL_FROM?: string | undefined;
+  EMAIL_REPLY_TO?: string | undefined;
 }): EmailProvider | undefined {
   if (env.EMAIL_PROVIDER === 'none' || !env.EMAIL_API_KEY || !env.EMAIL_FROM) return undefined;
-  const config = { apiKey: env.EMAIL_API_KEY, from: env.EMAIL_FROM };
+  const config = {
+    apiKey: env.EMAIL_API_KEY,
+    from: env.EMAIL_FROM,
+    ...(env.EMAIL_REPLY_TO && { replyTo: env.EMAIL_REPLY_TO }),
+  };
   return env.EMAIL_PROVIDER === 'resend' ? resendProvider(config) : brevoProvider(config);
 }

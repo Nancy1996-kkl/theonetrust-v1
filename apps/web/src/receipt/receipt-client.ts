@@ -11,8 +11,6 @@ export type ReceiptLookup =
 
 export interface ReceiptClient {
   get(token: string): Promise<ReceiptLookup>;
-  /** Where the PDF is downloaded from (the API renders it on demand). */
-  pdfUrl(token: string, lang: 'en' | 'ta'): string;
 }
 
 export function createApiReceiptClient(
@@ -37,7 +35,6 @@ export function createApiReceiptClient(
         return { kind: 'unavailable' };
       }
     },
-    pdfUrl: (token, lang) => apiUrl(baseUrl, `/receipts/${token}/pdf?lang=${lang}`),
   };
 }
 
@@ -73,13 +70,11 @@ export function createMockReceiptClient(): ReceiptClient {
       }
       return { kind: 'not-found' };
     },
-    pdfUrl: (token, lang) => `/api/v1/receipts/${token}/pdf?lang=${lang}`,
   };
 }
 
 export const unavailableReceiptClient: ReceiptClient = {
   get: async () => ({ kind: 'unavailable' }),
-  pdfUrl: () => '#',
 };
 
 export function selectReceiptClient(

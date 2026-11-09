@@ -30,6 +30,13 @@ export interface DonationPaidContext {
   receiptNumber: string | null;
   receiptUrl: string | null;
   donorName: string;
+  /** Owner email and sheet only — never shown on public pages or in URLs. */
+  donorEmail: string | null;
+  donorPhone: string | null;
+  /** Part of monthly giving (a subscription charge) rather than a one-time gift. */
+  monthly: boolean;
+  /** When the donation was verified as paid (ISO); null if unknown. */
+  paidAt: string | null;
   trustName: string;
   dashboardUrl: string;
 }
@@ -72,6 +79,13 @@ export const EMAIL_STRINGS = {
     receipt: 'Acknowledgement',
     noReceipt: 'Not requested (or below the acknowledgement minimum)',
     donor: 'Donor',
+    donorEmailLabel: 'Donor email',
+    donorPhoneLabel: 'Donor mobile',
+    notGiven: 'Not given',
+    kind: 'Type',
+    oneTime: 'One-time',
+    monthlyKind: 'Monthly',
+    paidOn: 'Paid on (IST)',
     openDashboard: 'Open the dashboard',
     donorSubject: 'Thank you — your donation to {trust} was received',
     donorGreeting: 'Dear {name},',
@@ -79,7 +93,7 @@ export const EMAIL_STRINGS = {
     donorReceipt: 'Your donation acknowledgement ({number}): {url}',
     donorKeep: 'Keep this link private — anyone with it can see the acknowledgement.',
     donorNote: 'This email is an acknowledgement of your donation. It is not a tax certificate.',
-    donorWhy: 'You are receiving this because you asked for an acknowledgement by email.',
+    donorWhy: 'You are receiving this because you gave your email address with your donation.',
     monthlySubject: 'Your monthly giving to {trust} is set up',
     monthlyLead: 'Thank you. Your monthly donation of {amount} is set up.',
     monthlyStart:
@@ -116,6 +130,13 @@ export const EMAIL_STRINGS = {
     receipt: 'ஒப்புகை',
     noReceipt: 'கேட்கவில்லை (அல்லது ஒப்புகைக்கான குறைந்த தொகையைவிடக் குறைவு)',
     donor: 'நன்கொடையாளர்',
+    donorEmailLabel: 'நன்கொடையாளர் மின்னஞ்சல்',
+    donorPhoneLabel: 'நன்கொடையாளர் கைபேசி',
+    notGiven: 'கொடுக்கவில்லை',
+    kind: 'வகை',
+    oneTime: 'ஒருமுறை',
+    monthlyKind: 'மாதந்தோறும்',
+    paidOn: 'பணம் வந்த நேரம் (இந்திய நேரம்)',
     openDashboard: 'நிர்வாகப் பக்கத்தைத் திற',
     donorSubject: 'நன்றி — {trust}-க்கு உங்கள் நன்கொடை வந்து சேர்ந்தது',
     donorGreeting: 'அன்புள்ள {name},',
@@ -124,7 +145,7 @@ export const EMAIL_STRINGS = {
     donorKeep:
       'இந்த இணைப்பை யாருக்கும் கொடுக்காதீர்கள் — இது யாரிடம் இருந்தாலும் ஒப்புகையைப் பார்க்க முடியும்.',
     donorNote: 'இந்த மின்னஞ்சல் உங்கள் நன்கொடைக்கான ஒப்புகை. இது வரிச் சான்றிதழ் இல்லை.',
-    donorWhy: 'மின்னஞ்சலில் ஒப்புகை வேண்டும் என்று கேட்டதால் இது உங்களுக்கு வந்துள்ளது.',
+    donorWhy: 'நன்கொடை கொடுக்கும்போது உங்கள் மின்னஞ்சலைக் கொடுத்ததால் இது உங்களுக்கு வந்துள்ளது.',
     monthlySubject: '{trust}-க்கு உங்கள் மாதாந்திர நன்கொடை தொடங்கிவிட்டது',
     monthlyLead: 'நன்றி. மாதம் {amount} நன்கொடை தொடங்கிவிட்டது.',
     monthlyStart:
@@ -171,6 +192,17 @@ const money = (paise: number, lang: Lang) =>
   formatInr(paise as Paise, lang === 'ta' ? 'ta-IN' : 'en-IN');
 
 type Row = [string, string];
+
+/** "2026-11-09 14:05" in India time — what the owner and the sheet read. */
+export function istDateTime(iso: string): string {
+  return new Date(new Date(iso).getTime() + 330 * 60_000)
+    .toISOString()
+    .slice(0, 16)
+    .replace('T', ' ');
+}
+
+/** The payment method in words, for the owner's sheet. */
+export const methodLabel = (method: ReceiptMethod, lang: Lang = 'en') => METHOD[lang][method];
 
 function block(lead: string, rows: Row[], link?: { label: string; url: string }) {
   const text = [
@@ -222,6 +254,10 @@ export function renderOwnerDonationPaid(ctx: DonationPaidContext): RenderedEmail
             : t.noReceipt,
         ],
         [t.donor, ctx.donorName],
+        [t.donorEmailLabel, ctx.donorEmail ?? t.notGiven],
+        [t.donorPhoneLabel, ctx.donorPhone ?? t.notGiven],
+        [t.kind, ctx.monthly ? t.monthlyKind : t.oneTime],
+        ...(ctx.paidAt ? ([[t.paidOn, istDateTime(ctx.paidAt)]] as Row[]) : []),
       ],
       { label: t.openDashboard, url: ctx.dashboardUrl },
     );

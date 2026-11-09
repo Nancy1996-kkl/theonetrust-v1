@@ -99,7 +99,6 @@ export function ReceiptPage() {
     [t.method, t.methods[view.method]],
     [t.purpose, view.purpose ? view.purpose[lang] : t.generalFund],
   ];
-  const other = lang === 'ta' ? 'en' : 'ta';
 
   return (
     <article className="page receipt" aria-labelledby="receipt-title">
@@ -139,24 +138,6 @@ export function ReceiptPage() {
         </p>
       )}
       <p className="receipt__note">{t.note}</p>
-      <div className="receipt__actions">
-        <a
-          className="ui-button ui-button--primary"
-          href={client.pdfUrl(token, lang)}
-          download
-          rel="noreferrer"
-        >
-          {t.download}
-        </a>
-        <a
-          className="ui-button ui-button--secondary"
-          href={client.pdfUrl(token, other)}
-          download
-          rel="noreferrer"
-        >
-          {t.downloadOther}
-        </a>
-      </div>
       <p className="receipt__muted">{t.privacy}</p>
     </article>
   );

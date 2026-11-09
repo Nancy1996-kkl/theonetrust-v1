@@ -165,9 +165,6 @@ function api(overrides: Partial<AdminApi> = {}): AdminApi {
     resolveException: vi.fn(async () => ({ status: 'RESOLVED' })),
     receipts: vi.fn(async () => ({ items: [RECEIPT], page: 1, pageSize: 25, total: 1 })),
     resendReceipt: vi.fn(async () => ({ id: RECEIPT.id, queued: true })),
-    receiptPdfUrl: vi.fn(
-      (token: string, lang: string) => `/api/v1/receipts/${token}/pdf?lang=${lang}`,
-    ),
     logout: vi.fn(),
     updatePreferences: vi.fn(),
     ...overrides,
@@ -472,7 +469,7 @@ describe('exceptions queue', () => {
 });
 
 describe('receipts', () => {
-  it('copy link, download PDF, resend with a reason', async () => {
+  it('copy link, open the acknowledgement page (no PDF), resend with a reason', async () => {
     const user = userEvent.setup();
     const writeText = vi.fn(async () => undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
@@ -482,7 +479,7 @@ describe('receipts', () => {
     expect(table).toHaveTextContent(t.emailStatusSENT);
     expect(within(table).getByRole('link', { name: new RegExp(l.download) })).toHaveAttribute(
       'href',
-      `/api/v1/receipts/${TOKEN}/pdf?lang=en`,
+      `/receipt/${TOKEN}`,
     );
     await expectNoA11yViolations(container);
 
@@ -579,6 +576,5 @@ describe('strings and api client', () => {
     expect(client.donationsExportUrl({ status: 'PAID', page: 3 })).toBe(
       '/api/v1/admin/donations/export.csv?status=PAID',
     );
-    expect(client.receiptPdfUrl('tok', 'ta')).toBe('/api/v1/receipts/tok/pdf?lang=ta');
   });
 });

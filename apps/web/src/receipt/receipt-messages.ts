@@ -27,8 +27,6 @@ export const RECEIPT_MESSAGES = {
     generalFund: 'General fund — used where the need is greatest',
     approval: 'Approval reference {reference}, valid until {date}.',
     note: 'This acknowledgement confirms that the trust received the donation. It is not a tax certificate.',
-    download: 'Download PDF',
-    downloadOther: 'Download PDF in Tamil',
     privacy:
       'Only people with this link can see this page. It never shows phone numbers, email addresses, PAN or addresses.',
     home: 'Back to the home page',
@@ -65,8 +63,6 @@ export const RECEIPT_MESSAGES = {
     generalFund: 'பொது நிதி — அதிகம் தேவைப்படும் இடத்தில் பயன்படும்',
     approval: 'ஒப்புதல் எண் {reference}, {date} வரை செல்லும்.',
     note: 'அறக்கட்டளைக்கு இந்த நன்கொடை வந்து சேர்ந்தது என்பதற்கு இந்த ஒப்புகையே சான்று. இது வரிச் சான்றிதழ் இல்லை.',
-    download: 'PDF பதிவிறக்கு',
-    downloadOther: 'ஆங்கிலத்தில் PDF பதிவிறக்கு',
     privacy:
       'இந்த இணைப்பு இருப்பவர்கள் மட்டுமே இந்தப் பக்கத்தைப் பார்க்க முடியும். இதில் தொலைபேசி எண், மின்னஞ்சல், PAN, முகவரி எதுவும் வராது.',
     home: 'முகப்புப் பக்கத்துக்குத் திரும்ப',

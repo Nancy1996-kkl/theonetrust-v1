@@ -180,6 +180,49 @@ const EnvSchema = z
     DONATION_QR_EXPIRY_MINUTES: z.coerce.number().int().min(3).max(120).default(15),
     /** A checkout payment still unsettled after this many minutes is listed for the owner (#31). */
     ADMIN_STALE_PENDING_MINUTES: z.coerce.number().int().min(5).max(10_080).default(30),
+    /** Where donors' replies to the thank-you email go, e.g. the trust's Gmail. Optional. */
+    EMAIL_REPLY_TO: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .max(200)
+        .regex(/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/)
+        .optional(),
+    ),
+    /**
+     * Google Sheet of paid donations (client, Nov 2026). Set all three or none. The sheet is
+     * shared (Editor) with the service account email; rows are added by the outbox worker.
+     */
+    GOOGLE_SHEETS_SPREADSHEET_ID: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .regex(/^[A-Za-z0-9_-]{20,100}$/)
+        .optional(),
+    ),
+    /** The tab the rows go to (it must exist). */
+    GOOGLE_SHEETS_TAB: z
+      .string()
+      .regex(/^[^'!\r\n]{1,100}$/)
+      .default('Donations'),
+    GOOGLE_SERVICE_ACCOUNT_EMAIL: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .regex(/^[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com$/)
+        .optional(),
+    ),
+    /** The service account's private key (PEM). "\n" escapes are accepted. Backend only. */
+    GOOGLE_SERVICE_ACCOUNT_KEY: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .transform((v) => v.replace(/\\n/g, '\n'))
+        .refine((v) => /-----BEGIN PRIVATE KEY-----[\s\S]+-----END PRIVATE KEY-----/.test(v), {
+          message: 'must be a PEM private key',
+        })
+        .optional(),
+    ),
     /** How often the outbox worker looks for due emails. */
     EMAIL_WORKER_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(30_000),
   })
@@ -207,6 +250,17 @@ const EnvSchema = z
             path: [key],
             message: `required for ${env.EMAIL_PROVIDER}`,
           });
+      }
+    }
+    const sheet = [
+      'GOOGLE_SHEETS_SPREADSHEET_ID',
+      'GOOGLE_SERVICE_ACCOUNT_EMAIL',
+      'GOOGLE_SERVICE_ACCOUNT_KEY',
+    ] as const;
+    if (sheet.some((k) => env[k]) && !sheet.every((k) => env[k])) {
+      for (const key of sheet) {
+        if (!env[key])
+          ctx.addIssue({ code: 'custom', path: [key], message: 'set all Google Sheet values' });
       }
     }
     if (env.NODE_ENV !== 'production') return;

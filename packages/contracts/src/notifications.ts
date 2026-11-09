@@ -8,6 +8,8 @@ export const NOTIFICATION_TEMPLATES = [
   'owner_help_request_new',
   'donor_subscription_started',
   'donor_subscription_problem',
+  /** Not an email: a row added to the trust's Google Sheet (client, Nov 2026). */
+  'sheet_donation_paid',
 ] as const;
 export type NotificationTemplate = (typeof NOTIFICATION_TEMPLATES)[number];
 

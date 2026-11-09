@@ -203,7 +203,7 @@ const en = {
   // Receipts
   receiptsTitle: 'Acknowledgements',
   receiptsIntro:
-    'Copy a private link, download the PDF, or send the email again. Corrections and refunds add new entries; nothing is deleted.',
+    'Copy a private link, open the acknowledgement page, or send the email again. Corrections and refunds add new entries; nothing is deleted.',
   receiptsCaption: 'Acknowledgements, newest first',
   colNumber: 'Number',
   colIssued: 'Issued',
@@ -212,7 +212,7 @@ const en = {
   copyLink: 'Copy link',
   copied: 'Link copied.',
   copyFailed: 'Could not copy. Select the link and copy it.',
-  download: 'Download PDF',
+  download: 'Open acknowledgement',
   resend: 'Send email again',
   resent: 'Queued. It will be sent on the next run.',
   noEmail: 'No email (not asked or no address)',
@@ -458,7 +458,7 @@ const ta: LedgerStrings = {
   queueEmpty: 'கவனிக்க வேண்டியது எதுவும் இல்லை.',
   receiptsTitle: 'ஒப்புகைகள்',
   receiptsIntro:
-    'நன்கொடையாளரின் தனி இணைப்பை நகலெடுக்கலாம், PDF பதிவிறக்கலாம், அல்லது மின்னஞ்சலை மறுபடி அனுப்பலாம். திருத்தமோ திருப்பித் தருவதோ புதிய பதிவாகச் சேரும்; எதுவும் அழிக்கப்படாது.',
+    'நன்கொடையாளரின் தனி இணைப்பை நகலெடுக்கலாம், ஒப்புகைப் பக்கத்தைத் திறக்கலாம், அல்லது மின்னஞ்சலை மறுபடி அனுப்பலாம். திருத்தமோ திருப்பித் தருவதோ புதிய பதிவாகச் சேரும்; எதுவும் அழிக்கப்படாது.',
   receiptsCaption: 'ஒப்புகைகள், புதியவை முதலில்',
   colNumber: 'எண்',
   colIssued: 'கொடுத்த தேதி',
@@ -467,7 +467,7 @@ const ta: LedgerStrings = {
   copyLink: 'இணைப்பை நகலெடு',
   copied: 'இணைப்பு நகலெடுக்கப்பட்டது.',
   copyFailed: 'நகலெடுக்க முடியவில்லை. இணைப்பைத் தேர்வு செய்து நீங்களே நகலெடுங்கள்.',
-  download: 'PDF பதிவிறக்கு',
+  download: 'ஒப்புகையைத் திற',
   resend: 'மின்னஞ்சலை மறுபடி அனுப்பு',
   resent: 'வரிசையில் சேர்த்துவிட்டோம். அடுத்த முறை அனுப்பப்படும்.',
   noEmail: 'மின்னஞ்சல் இல்லை (கேட்கவில்லை அல்லது முகவரி இல்லை)',
