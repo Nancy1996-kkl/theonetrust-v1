@@ -93,6 +93,19 @@
   }
 }
 
+/* Carousel: slides are stacked and crossfade; each clip fades in over its still once it is
+   actually painting, so a slow network never shows a blank box. */
+.hero-carousel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--duration-entrance) var(--ease-entrance);
+}
+
+.hero-carousel__slide[data-active] {
+  opacity: 1;
+}
+
 .landing-hero__poster,
 .landing-hero__video {
   position: absolute;
@@ -101,8 +114,6 @@
   block-size: 100%;
   max-width: none;
   object-fit: cover;
-  /* The subject sits right of centre in the frame. */
-  object-position: 72% 30%;
 }
 
 .landing-hero__video {
@@ -110,7 +121,24 @@
   transition: opacity var(--duration-entrance) var(--ease-entrance);
 }
 
-.landing-hero__media[data-playing] .landing-hero__video {
+/* Framing: keep the people in view as the box changes shape. */
+[data-slide='smile'] > * {
+  object-position: 72% 30%;
+}
+
+[data-slide='notebook'] > * {
+  object-position: 62% 40%;
+}
+
+[data-slide='supplies'] > * {
+  object-position: 50% 45%;
+}
+
+[data-slide='wheelchair'] > * {
+  object-position: 40% 50%;
+}
+
+.hero-carousel__slide[data-painting] .landing-hero__video {
   opacity: 1;
 }
 
@@ -123,11 +151,71 @@
   pointer-events: none;
 }
 
-.landing-hero__motion {
+/* Controls sit above the scrim: pause + one slim progress segment per clip. */
+.hero-carousel__controls {
   position: absolute;
   z-index: 1;
+  /* Phones/tablets: top-right, clear of the headline that overlaps the banner's faded foot. */
   inset-block-start: var(--space-3);
   inset-inline-end: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hero-carousel__dots {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.hero-carousel__dot {
+  display: grid;
+  align-items: center;
+  inline-size: var(--space-10);
+  min-height: var(--control-height-sm);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.hero-carousel__dot:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.hero-carousel__track {
+  display: block;
+  block-size: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-input);
+  overflow: hidden;
+}
+
+/* Gold fill = how far the current clip has played; a small gold accent, never text. */
+.hero-carousel__fill {
+  display: block;
+  block-size: 100%;
+  background: var(--color-rule-accent);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left center;
+  transition: transform var(--duration-base) linear;
+}
+
+.hero-carousel__dot[aria-current='true'] .hero-carousel__track {
+  background: var(--color-text-inverse-muted);
+}
+
+/* Still mode (reduced motion / data saver): the current segment is simply full. */
+.hero-carousel:not(:has(video)) .hero-carousel__dot[aria-current='true'] .hero-carousel__fill {
+  --progress: 1;
+}
+
+.hero-carousel__dot:hover .hero-carousel__track {
+  background: var(--color-text-inverse);
+}
+
+.landing-hero__motion {
   display: grid;
   place-items: center;
   inline-size: var(--control-height-sm);
@@ -301,19 +389,18 @@
     aspect-ratio: auto;
   }
 
-  .landing-hero__poster,
-  .landing-hero__video {
-    object-position: 100% 35%;
-  }
-
   .landing-hero__media::after {
     background: var(--gradient-hero-scrim);
   }
 
-  .landing-hero__motion {
-    inset-block-start: auto;
-    inset-block-end: var(--space-6);
+  .hero-carousel__controls {
+    inset-block: auto var(--space-6);
     inset-inline-end: var(--space-6);
+  }
+
+  /* Wide banner: the portrait is low-res, so show more of the frame rather than the face. */
+  [data-slide='smile'] > * {
+    object-position: 100% 35%;
   }
 
   .landing-hero__inner {
@@ -328,7 +415,8 @@
   }
 
   :lang(ta) .landing-hero__text {
-    max-width: 38rem;
+    /* Wider than English for longer Tamil words, still inside the solid part of the scrim. */
+    max-width: 36rem;
   }
 }
 

@@ -55,9 +55,12 @@ export interface LandingContent {
     getHelpPrompt: Bilingual;
     getHelpCta: Bilingual;
     paymentNote: Gated<Bilingual>;
-    /** Accessible labels for the banner's pause control (WCAG 2.2.2: moving content > 5 s). */
+    /** Accessible labels for the banner carousel (WCAG 2.2.2: moving content > 5 s). */
     pauseBanner: Bilingual;
     playBanner: Bilingual;
+    carouselLabel: Bilingual;
+    /** "{n}" and "{total}" are replaced with the slide number and count. */
+    slideLabel: Bilingual;
   };
   about: {
     title: Bilingual;
@@ -136,8 +139,13 @@ export const LANDING_CONTENT: LandingContent = {
         ta: 'Razorpay மூலம் பாதுகாப்பாகப் பணம் செலுத்தலாம் · UPI, கார்டு, நெட்பேங்கிங் · பணம் வந்தது உறுதியான பிறகே ஒப்புகை',
       },
     },
-    pauseBanner: { en: 'Pause banner animation', ta: 'பதாகை அசைவை நிறுத்து' },
-    playBanner: { en: 'Play banner animation', ta: 'பதாகை அசைவை இயக்கு' },
+    pauseBanner: { en: 'Pause banner videos', ta: 'பதாகை வீடியோக்களை நிறுத்து' },
+    playBanner: { en: 'Play banner videos', ta: 'பதாகை வீடியோக்களை இயக்கு' },
+    carouselLabel: { en: 'Banner videos', ta: 'பதாகை வீடியோக்கள்' },
+    slideLabel: {
+      en: 'Show video {n} of {total}',
+      ta: '{total} வீடியோக்களில் {n}-வது வீடியோவைக் காட்டு',
+    },
   },
   about: {
     title: { en: 'About the trust', ta: 'அறக்கட்டளையைப் பற்றி' },

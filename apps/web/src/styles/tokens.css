@@ -93,9 +93,9 @@
   --gradient-hero-scrim: linear-gradient(
     90deg,
     var(--palette-forest) 0%,
-    color-mix(in srgb, var(--palette-forest) 92%, transparent) 34%,
-    color-mix(in srgb, var(--palette-forest) 55%, transparent) 52%,
-    transparent 74%
+    color-mix(in srgb, var(--palette-forest) 92%, transparent) 35%,
+    color-mix(in srgb, var(--palette-forest) 50%, transparent) 47%,
+    transparent 62%
   );
   --gradient-hero-scrim-stacked: linear-gradient(
     180deg,

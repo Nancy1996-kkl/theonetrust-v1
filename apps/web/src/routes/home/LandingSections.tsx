@@ -8,7 +8,7 @@ import { homePath, localizedPath } from '../../i18n/lang.ts';
 import { useLang } from '../../i18n/use-lang.ts';
 import { useDonationDraft } from '../../state/donation-draft.ts';
 import { bandClass } from './bands.ts';
-import { HeroBanner } from './HeroBanner.tsx';
+import { HeroCarousel } from './HeroCarousel.tsx';
 import { ArrowIcon, HeartIcon, PinIcon, SealIcon } from './hero-icons.tsx';
 import { Reveal } from './Reveal.tsx';
 
@@ -69,7 +69,12 @@ export function HeroSection({ content, facts, showDrafts }: SectionProps) {
   const headline = visible(hero.headline, showDrafts);
   return (
     <section id="top" className="landing-hero surface-inverse" aria-labelledby="hero-title">
-      <HeroBanner pauseLabel={hero.pauseBanner[lang]} playLabel={hero.playBanner[lang]} />
+      <HeroCarousel
+        pauseLabel={hero.pauseBanner[lang]}
+        playLabel={hero.playBanner[lang]}
+        carouselLabel={hero.carouselLabel[lang]}
+        slideLabelTemplate={hero.slideLabel[lang]}
+      />
       <div className="landing__wrap landing-hero__inner">
         <div className="landing-hero__text">
           <GatedText

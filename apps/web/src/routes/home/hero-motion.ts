@@ -1,6 +1,3 @@
-/** Intrinsic size of the banner frames (keeps layout stable before the image loads). */
-export const BANNER_SIZE = { width: 878, height: 434 } as const;
-
 const REDUCE_QUERY = '(prefers-reduced-motion: reduce)';
 
 interface NetworkInformationLike {

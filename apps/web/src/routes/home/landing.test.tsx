@@ -385,27 +385,32 @@ describe('scroll reveal', () => {
   });
 
   it('waits, then reveals when the section scrolls into view, and disconnects', () => {
-    const observers: Array<{ cb: IntersectionObserverCallback; disconnect: () => void }> = [];
+    // Other components (the hero carousel) observe too, so find the reveal's own observer.
+    const observers: Array<{
+      cb: IntersectionObserverCallback;
+      disconnect: () => void;
+      targets: Element[];
+    }> = [];
     class FakeObserver {
       disconnect = vi.fn();
+      targets: Element[] = [];
       constructor(cb: IntersectionObserverCallback) {
-        observers.push({ cb, disconnect: this.disconnect });
+        observers.push({ cb, disconnect: this.disconnect, targets: this.targets });
       }
-      observe() {}
+      observe(el: Element) {
+        this.targets.push(el);
+      }
     }
     vi.stubGlobal('IntersectionObserver', FakeObserver);
     renderHome();
     const first = document.querySelector('.reveal')!;
+    const own = observers.find((o) => o.targets.includes(first))!;
     expect(first).toHaveAttribute('data-reveal', 'waiting');
-    act(() =>
-      observers[0]!.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as never),
-    );
+    act(() => own.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as never));
     expect(first).toHaveAttribute('data-reveal', 'waiting');
-    act(() =>
-      observers[0]!.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as never),
-    );
+    act(() => own.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as never));
     expect(first).toHaveAttribute('data-reveal', 'shown');
-    expect(observers[0]!.disconnect).toHaveBeenCalled();
+    expect(own.disconnect).toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 });
