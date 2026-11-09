@@ -61,7 +61,7 @@ test.describe('type scale', () => {
 });
 
 test.describe('fonts', () => {
-  test('Inter, Libre Baskerville, Noto Sans Tamil and Noto Serif Tamil load from our own origin', async ({
+  test('Inter, Playfair Display, Noto Sans Tamil and Noto Serif Tamil load from our own origin', async ({
     page,
     baseURL,
   }) => {
@@ -75,7 +75,7 @@ test.describe('fonts', () => {
     const loaded = await page.evaluate(async () => {
       const probes = {
         inter: ['16px "Inter Variable"', 'Donate'],
-        baskerville: ['700 34px "Libre Baskerville"', 'Theonetrust'],
+        playfair: ['600 34px "Playfair Display Variable"', 'Theonetrust'],
         tamil: ['16px "Noto Sans Tamil Variable"', 'தமிழ் நன்கொடை'],
         tamilHeading: ['700 28px "Noto Serif Tamil"', 'தமிழ் தலைப்பு'],
       } as const;
@@ -87,7 +87,7 @@ test.describe('fonts', () => {
       }
       return out;
     });
-    expect(loaded).toEqual({ inter: true, baskerville: true, tamil: true, tamilHeading: true });
+    expect(loaded).toEqual({ inter: true, playfair: true, tamil: true, tamilHeading: true });
 
     expect(fontRequests.length).toBeGreaterThan(0);
     const origin = new URL(baseURL!).origin;
@@ -112,7 +112,7 @@ test.describe('fonts', () => {
       );
     }
     // English headings are unaffected.
-    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Libre Baskerville/);
+    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Playfair Display Variable/);
   });
 });
 
@@ -162,13 +162,14 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(problems).toEqual([]);
   });
 
-  test('focus ring is visible on light and dark green surfaces', async ({ page }) => {
+  test('focus ring is visible on light and forest surfaces', async ({ page }) => {
     await page.goto('/');
     await injectSpecimen(page);
 
     const ringOf = async (selector: string) => {
       const target = page.locator(selector);
-      for (let i = 0; i < 40; i += 1) {
+      // The specimen sits after every header and hero control, so allow a generous Tab budget.
+      for (let i = 0; i < 80; i += 1) {
         if (await target.evaluate((el) => el === document.activeElement)) break;
         await page.keyboard.press('Tab');
       }
@@ -182,13 +183,13 @@ test.describe('Tamil specimen at this viewport', () => {
     const light = await ringOf('[data-check="card"] button');
     expect(light.style).toBe('solid');
     expect(light.width).toBeGreaterThanOrEqual(2);
-    expect(light.color).toBe('rgb(53, 104, 168)'); // --palette-info
+    expect(light.color).toBe('rgb(60, 118, 58)'); // --palette-green
 
     const dark = await ringOf('#inverse-button');
-    expect(dark.color).toBe('rgb(200, 237, 210)'); // --palette-accent on dark green
+    expect(dark.color).toBe('rgb(212, 175, 55)'); // --palette-gold on forest
   });
 
-  test('dark green band turns headings, body text and links white (never dark green on dark green)', async ({
+  test('forest band turns headings, body text and links white (never forest on forest)', async ({
     page,
   }) => {
     await page.goto('/');
@@ -201,14 +202,14 @@ test.describe('Tamil specimen at this viewport', () => {
       link: getComputedStyle(el.querySelector('a')!).color,
     }));
     expect(colours).toEqual({
-      background: 'rgb(29, 107, 63)', // --palette-primary
+      background: 'rgb(15, 42, 29)', // --palette-forest
       heading: 'rgb(255, 255, 255)',
       text: 'rgb(255, 255, 255)',
       link: 'rgb(255, 255, 255)',
     });
   });
 
-  test('dark green band flips outline buttons and input borders; a nested .surface card flips back', async ({
+  test('forest band flips outline buttons and input borders; a nested .surface card flips back', async ({
     page,
   }) => {
     await page.goto('/');
@@ -227,10 +228,10 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(result).toEqual({
       outlineText: 'rgb(255, 255, 255)',
       outlineBorder: 'rgb(255, 255, 255)',
-      inputBorder: 'rgb(228, 243, 232)', // --palette-mist, 5.7:1 on the primary green
+      inputBorder: 'rgb(168, 213, 186)', // --palette-sage, 9.4:1 on forest
       cardBackground: 'rgb(255, 255, 255)',
-      cardHeading: 'rgb(29, 107, 63)', // dark green again on the light card
-      cardLink: 'rgb(29, 107, 63)',
+      cardHeading: 'rgb(15, 42, 29)', // forest again on the light card
+      cardLink: 'rgb(47, 94, 46)', // --palette-green-deep
     });
   });
 

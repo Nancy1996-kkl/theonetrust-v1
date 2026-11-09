@@ -70,6 +70,8 @@
 
 .ui-button--donate:hover {
   background: var(--color-action-donate-bg-hover);
+  /* Soft gold glow (brand brief): the only element on the page that glows. */
+  box-shadow: var(--shadow-glow-gold);
 }
 
 .ui-button--donate:active {

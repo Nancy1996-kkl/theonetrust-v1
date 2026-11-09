@@ -42,6 +42,21 @@ export interface TransparencyDocument {
   approved: boolean;
 }
 
+/** One slice of "where donations go". Percentages of total spending for the stated period. */
+export interface AllocationItem {
+  id: string;
+  label: Bilingual;
+  percent: number;
+}
+
+export interface Allocation {
+  /** Owner/CA-confirmed figures only. Hidden until confirmed and the slices add up to 100. */
+  confirmed: boolean;
+  items: AllocationItem[];
+  period: Bilingual | null;
+  source: Bilingual | null;
+}
+
 export interface Faq {
   id: string;
   question: Bilingual;
@@ -60,6 +75,10 @@ export interface ProofContent {
     periodLabel: Bilingual;
     updatedLabel: Bilingual;
     seeDocuments: Bilingual;
+    donateCta: Bilingual;
+    verifiedNote: Bilingual;
+    storiesTitle: Bilingual;
+    storiesIntro: Bilingual;
   };
   transparency: {
     title: Bilingual;
@@ -69,6 +88,10 @@ export interface ProofContent {
     download: Bilingual;
     languageNames: Record<TransparencyDocument['language'], Bilingual>;
     tableCaption: Bilingual;
+    allocation: Allocation;
+    allocationTitle: Bilingual;
+    allocationPeriodLabel: Bilingual;
+    allocationSourceLabel: Bilingual;
     columns: {
       document: Bilingual;
       language: Bilingual;
@@ -118,6 +141,16 @@ export const PROOF_CONTENT: ProofContent = {
     periodLabel: { en: 'Period', ta: 'காலம்' },
     updatedLabel: { en: 'Updated', ta: 'புதுப்பிக்கப்பட்டது' },
     seeDocuments: { en: 'See our documents', ta: 'எங்கள் ஆவணங்களைப் பாருங்கள்' },
+    donateCta: { en: 'Donate now', ta: 'இப்போதே நன்கொடை அளியுங்கள்' },
+    verifiedNote: {
+      en: 'You receive an acknowledgement only after your payment is verified.',
+      ta: 'உங்கள் கட்டணம் சரிபார்க்கப்பட்ட பிறகே ஒப்புகை அனுப்பப்படும்.',
+    },
+    storiesTitle: { en: 'Stories of change', ta: 'மாற்றத்தின் கதைகள்' },
+    storiesIntro: {
+      en: 'Shared with the consent of the people in them.',
+      ta: 'இதில் இடம்பெறுபவர்களின் ஒப்புதலுடன் பகிரப்படுகிறது.',
+    },
   },
   transparency: {
     title: { en: 'Transparency', ta: 'வெளிப்படைத்தன்மை' },
@@ -137,6 +170,15 @@ export const PROOF_CONTENT: ProofContent = {
       'en+ta': { en: 'English and Tamil', ta: 'ஆங்கிலம், தமிழ்' },
     },
     tableCaption: { en: 'Published documents', ta: 'வெளியிடப்பட்ட ஆவணங்கள்' },
+    allocation: {
+      confirmed: false, // [CONFIRM] #1 — from the trust's audited accounts only
+      items: [],
+      period: null,
+      source: null,
+    },
+    allocationTitle: { en: 'Where donations go', ta: 'நன்கொடைகள் எங்கு செல்கின்றன' },
+    allocationPeriodLabel: { en: 'Period', ta: 'காலம்' },
+    allocationSourceLabel: { en: 'Source', ta: 'ஆதாரம்' },
     columns: {
       document: { en: 'Document', ta: 'ஆவணம்' },
       language: { en: 'Language', ta: 'மொழி' },
@@ -318,4 +360,20 @@ export function isPublishableMetric(metric: ImpactMetric): boolean {
 /** A story is shown only with documented consent. */
 export function isPublishableStory(story: Story): boolean {
   return story.consent;
+}
+
+/** Shares must be 0–100 and add up to 100 (±0.5 for rounding), with a source and a period. */
+export function isWellFormedAllocation(a: Allocation): boolean {
+  if (a.items.length === 0) return false;
+  const filled = (b: Bilingual | null) => Boolean(b?.en.trim() && b.ta.trim());
+  if (!filled(a.source) || !filled(a.period)) return false;
+  if (a.items.some((i) => !Number.isFinite(i.percent) || i.percent < 0 || i.percent > 100))
+    return false;
+  const total = a.items.reduce((sum, i) => sum + i.percent, 0);
+  return Math.abs(total - 100) <= 0.5;
+}
+
+/** Live site: confirmed and well formed. */
+export function isPublishableAllocation(a: Allocation): boolean {
+  return a.confirmed && isWellFormedAllocation(a);
 }

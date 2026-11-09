@@ -1,21 +1,22 @@
 /*
  * Design tokens — the ONLY place raw colours, font sizes and timing values may appear.
- * Source: docs/ux-design-brief.md §2–4 (Forest Green system). Documentation and the
+ * Source: docs/ux-design-brief.md §2–4 (Forest & Gold system). Documentation and the
  * contrast table: docs/design/tokens.md (kept in sync by src/styles/tokens.test.ts).
  *
  * Layers: 1) palette (raw brand values)  2) roles (what components use).
  * Components must use ROLE tokens, never palette tokens directly.
  */
 :root {
-  /* ── 1. Palette — green theme (client, Nov 2026) ─────────────────────
-     PLACEHOLDER greens until the client sends the exact colour codes: replace only the six
-     hex values below; every component follows. Each pair is AA-checked by tokens.test.ts. */
-  --palette-primary: #1d6b3f; /* Medium-dark green — primary brand, buttons, dark bands */
-  --palette-accent: #c8edd2; /* Light green — the one donate button, accents on dark green */
-  --palette-mist: #e4f3e8; /* Light green tint — secondary background, dividers */
-  --palette-canvas: #f5fbf7; /* Near-white with a green hint — main background */
-  --palette-primary-soft: #2f5d42; /* Deeper green — secondary text, form borders, hover */
-  --palette-ink: #1b2b22; /* Green-black — body text */
+  /* ── 1. Palette (approved brand colours — "Forest & Gold", owner brief 5 Nov 2026) ── */
+  --palette-forest: #0f2a1d; /* Deep Forest — primary brand, headings, inverse bands */
+  --palette-green: #3c763a; /* Trust Green — focus ring, icons, primary hover */
+  --palette-mint: #b7e4c7; /* Mint — story cards */
+  --palette-sage: #a8d5ba; /* Sage — borders and quiet accents on forest */
+  --palette-gold: #d4af37; /* Gold — Donate, 1px rules, impact numbers on forest. Never paragraphs */
+  --palette-gold-text: #8a6d1f; /* Gold for small text on ivory/white only (4.8:1) */
+  --palette-champagne: #f7e7ce; /* Champagne — stories / muted bands */
+  --palette-ivory: #fffdf8; /* Ivory — main background */
+  --palette-body: #4a5a50; /* Body text (7.2:1 on ivory) */
   --palette-white: #ffffff;
 
   --palette-success: #287a55;
@@ -24,44 +25,53 @@
   --palette-error: #b42318;
   --palette-info: #3568a8;
 
-  /* Derived tones for interaction states (each checked in CONTRAST_PAIRS) */
-  --palette-accent-light: #daf3e0; /* donate hover */
-  --palette-accent-dark: #bce6c6; /* donate pressed */
-  --palette-slate: #5c6e63; /* placeholder and disabled text (5.4:1 on white) */
+  /* Derived tones (each checked in CONTRAST_PAIRS) */
+  --palette-green-deep: #2f5e2e; /* links: brand green is only 4.49:1 on champagne */
+  --palette-moss: #556659; /* secondary text (5.0:1 on champagne) */
+  --palette-forest-deep: #081a11; /* primary pressed */
+  --palette-forest-soft: #1d4430; /* outline-button hover on forest */
+  --palette-gold-light: #e2c25a; /* donate hover (8.8:1 with forest text) */
+  --palette-gold-dark: #b8962a; /* donate pressed (5.4:1 with forest text) */
+  --palette-linen: #ede8dd; /* disabled surfaces, decorative dividers */
+  --palette-slate: #5c6b61; /* placeholder and disabled text (5.6:1 on white) */
 
   /* ── 2. Roles ─────────────────────────────────────────────────────── */
-  /* Surfaces */
-  --color-bg: var(--palette-canvas);
+  /* Surfaces: forest → ivory → forest → champagne rhythm (docs/ux-design-brief.md §2) */
+  --color-bg: var(--palette-ivory);
   --color-surface: var(--palette-white);
-  --color-surface-muted: var(--palette-mist);
-  --color-surface-inverse: var(--palette-primary);
+  --color-surface-muted: var(--palette-champagne);
+  --color-surface-accent: var(--palette-mint); /* story cards */
+  --color-surface-inverse: var(--palette-forest);
 
   /* Text */
-  --color-text: var(--palette-ink);
-  --color-text-muted: var(--palette-primary-soft);
-  --color-text-heading: var(--palette-primary);
+  --color-text: var(--palette-body);
+  --color-text-muted: var(--palette-moss);
+  --color-text-heading: var(--palette-forest);
   --color-text-inverse: var(--palette-white);
-  --color-text-accent-on-inverse: var(--palette-accent); /* accent text ONLY on dark green */
-  --color-link: var(--palette-primary);
+  --color-text-inverse-muted: var(--palette-mint); /* lead text on forest */
+  --color-text-accent: var(--palette-gold-text); /* small gold labels on ivory/white only */
+  --color-text-accent-on-inverse: var(--palette-gold); /* gold text on forest */
+  --color-link: var(--palette-green-deep);
 
   /* Actions */
-  --color-action-primary-bg: var(--palette-primary);
+  --color-action-primary-bg: var(--palette-forest);
   --color-action-primary-text: var(--palette-white);
-  --color-action-donate-bg: var(--palette-accent); /* the one accent CTA */
-  --color-action-donate-text: var(--palette-primary);
-  --color-action-secondary-text: var(--palette-primary);
-  --color-action-secondary-border: var(--palette-primary);
+  --color-action-donate-bg: var(--palette-gold); /* the one gold CTA */
+  --color-action-donate-text: var(--palette-forest);
+  --color-action-donate-glow: color-mix(in srgb, var(--palette-gold) 45%, transparent);
+  --color-action-secondary-text: var(--palette-forest);
+  --color-action-secondary-border: var(--palette-forest);
 
   /* Interaction states */
-  --color-action-primary-bg-hover: var(--palette-primary-soft);
-  --color-action-primary-bg-active: var(--palette-ink);
-  --color-action-donate-bg-hover: var(--palette-accent-light);
-  --color-action-donate-bg-active: var(--palette-accent-dark);
-  --color-action-secondary-bg-hover: var(--palette-mist);
+  --color-action-primary-bg-hover: var(--palette-green);
+  --color-action-primary-bg-active: var(--palette-forest-deep);
+  --color-action-donate-bg-hover: var(--palette-gold-light);
+  --color-action-donate-bg-active: var(--palette-gold-dark);
+  --color-action-secondary-bg-hover: var(--palette-mint);
   --color-text-placeholder: var(--palette-slate);
   --color-text-disabled: var(--palette-slate); /* WCAG exempts disabled controls; kept readable */
-  --color-surface-disabled: var(--palette-mist);
-  --color-border-disabled: var(--palette-mist);
+  --color-surface-disabled: var(--palette-linen);
+  --color-border-disabled: var(--palette-linen);
 
   /* Status (always paired with an icon or text — never colour alone) */
   --color-status-success: var(--palette-success);
@@ -71,24 +81,43 @@
   --color-status-info: var(--palette-info);
 
   /* Lines and focus */
-  --color-border-subtle: var(--palette-mist); /* decorative dividers only */
-  --color-border-input: var(--palette-primary-soft); /* ≥ 3:1 for form controls (WCAG 1.4.11) */
-  --color-focus: var(--palette-info); /* on light surfaces */
-  --color-focus-on-inverse: var(--palette-accent); /* on dark green: info is only 2.5:1 there */
-  --color-border-input-on-inverse: var(--palette-mist); /* steel is only 1.5:1 on dark green */
-  --color-action-secondary-bg-hover-on-inverse: var(--palette-primary-soft);
+  --color-border-subtle: var(--palette-linen); /* decorative dividers only */
+  --color-rule-accent: var(--palette-gold); /* thin 1px gold rules (decorative) */
+  --color-border-input: var(--palette-body); /* ≥ 3:1 for form controls (WCAG 1.4.11) */
+  --color-focus: var(--palette-green); /* on light surfaces */
+  --color-focus-on-inverse: var(--palette-gold); /* on forest: green is only 2.8:1 there */
+  --color-border-input-on-inverse: var(--palette-sage); /* body green is only 2.1:1 on forest */
+  --color-action-secondary-bg-hover-on-inverse: var(--palette-forest-soft);
 
-  /* Elevation (green-tinted, subtle) — derived from the palette so they never drift */
+  /* Hero scrim: forest gradient over beneficiary photos so text always sits on ≥ 92% forest */
+  --gradient-hero-scrim: linear-gradient(
+    90deg,
+    var(--palette-forest) 0%,
+    color-mix(in srgb, var(--palette-forest) 92%, transparent) 35%,
+    color-mix(in srgb, var(--palette-forest) 50%, transparent) 47%,
+    transparent 62%
+  );
+  --gradient-hero-scrim-stacked: linear-gradient(
+    180deg,
+    transparent 40%,
+    color-mix(in srgb, var(--palette-forest) 70%, transparent) 75%,
+    var(--palette-forest) 100%
+  );
+
+  /* Elevation (forest-tinted, subtle) — derived from the palette so they never drift */
   --shadow-sm:
-    0 1px 2px color-mix(in srgb, var(--palette-primary) 6%, transparent),
-    0 1px 3px color-mix(in srgb, var(--palette-primary) 8%, transparent);
+    0 1px 2px color-mix(in srgb, var(--palette-forest) 6%, transparent),
+    0 1px 3px color-mix(in srgb, var(--palette-forest) 8%, transparent);
   --shadow-md:
-    0 4px 12px color-mix(in srgb, var(--palette-primary) 8%, transparent),
-    0 2px 4px color-mix(in srgb, var(--palette-primary) 6%, transparent);
-  --shadow-lg: 0 12px 32px color-mix(in srgb, var(--palette-primary) 12%, transparent);
+    0 4px 12px color-mix(in srgb, var(--palette-forest) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--palette-forest) 6%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, var(--palette-forest) 12%, transparent);
+  --shadow-glow-gold:
+    0 0 0 4px var(--color-action-donate-glow), 0 8px 24px var(--color-action-donate-glow);
 
   /* ── Typography ───────────────────────────────────────────────────── */
-  --font-heading: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+  --font-heading:
+    'Playfair Display Variable', 'Playfair Display', Georgia, 'Times New Roman', serif;
   --font-body: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-tamil: 'Noto Sans Tamil Variable', 'Noto Sans Tamil', Latha, var(--font-body);
   /* Classic printed-Tamil look for headings (owner chose this over legacy Bamini, #46). */
@@ -97,6 +126,8 @@
   /* Fluid scale: exact mobile value at 360px, exact desktop value at 1440px, rem-based so
      browser zoom and user font settings still work (WCAG 1.4.4). */
   --text-hero: clamp(2.375rem, 1.8333rem + 2.4074vw, 4rem); /* 38 → 64px */
+  /* Tamil hero: longer words, so one step smaller (30 → 46px) */
+  --text-hero-ta: clamp(1.875rem, 1.5417rem + 1.4815vw, 2.875rem);
   --text-h1: clamp(2.125rem, 1.8333rem + 1.2963vw, 3rem); /* 34 → 48px */
   --text-h2: clamp(1.75rem, 1.5417rem + 0.9259vw, 2.375rem); /* 28 → 38px */
   --text-h3: clamp(1.375rem, 1.2917rem + 0.3704vw, 1.625rem); /* 22 → 26px */
@@ -151,8 +182,10 @@
   --duration-fast: 150ms;
   --duration-base: 200ms;
   --duration-slow: 250ms;
+  --duration-entrance: 700ms; /* one-off page-load reveals and the banner fade-in only */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ── Layers ───────────────────────────────────────────────────────── */
   --z-header: 50;
@@ -171,5 +204,6 @@
     --duration-fast: 0.01ms;
     --duration-base: 0.01ms;
     --duration-slow: 0.01ms;
+    --duration-entrance: 0.01ms;
   }
 }
