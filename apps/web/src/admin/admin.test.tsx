@@ -71,7 +71,6 @@ function fakeApi(overrides: Partial<AdminApi> = {}): AdminApi {
     exceptionQueue: vi.fn(async () => ({ items: [], staleAfterMinutes: 30 })),
     receipts: vi.fn(async () => ({ items: [], page: 1, pageSize: 25, total: 0 })),
     resendReceipt: vi.fn(),
-    receiptPdfUrl: vi.fn(() => '#'),
     subscriptions: vi.fn(async () => ({ items: [], page: 1, pageSize: 25, total: 0 })),
     subscription: vi.fn(),
     taxSettings: vi.fn(),

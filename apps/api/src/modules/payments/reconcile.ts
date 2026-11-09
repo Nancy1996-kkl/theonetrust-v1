@@ -86,15 +86,15 @@ export async function applyProviderPayment(
     );
     // The acknowledgement is created in the same transaction as PAID, never before (#29).
     if (target === 'PAID') {
-      const receipt = await issueReceiptIfEligible(
+      await issueReceiptIfEligible(
         tx,
         intent.id,
         { paymentAttemptId: attempt.id },
         payment.amountPaise,
         now,
       );
-      // Emails are queued here and sent later: a send failure can never undo PAID (#30).
-      await enqueueDonationPaid(tx, intent.id, receipt !== null);
+      // Emails and the sheet row are queued here and sent later: a failure can never undo PAID.
+      await enqueueDonationPaid(tx, intent.id);
       // Tax opt-in donations need Form 113 reporting (#35).
       await ensureTaxTracking(tx, intent.id, now);
     }

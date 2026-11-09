@@ -3,6 +3,7 @@ import { EnvValidationError, loadEnv } from './config/env.ts';
 import { createDb } from './db/client.ts';
 import { selectEmailProvider } from './modules/notifications/provider.ts';
 import { startOutboxWorker } from './modules/notifications/schedule.ts';
+import { selectSheetProvider } from './modules/notifications/sheet.ts';
 import { deriveAuthKeys } from './security/crypto.ts';
 
 async function main(): Promise<void> {
@@ -11,13 +12,16 @@ async function main(): Promise<void> {
   const app = buildApp(env, db ? { db } : {});
   // Notification outbox (#30): sends queued emails outside any payment transaction.
   const provider = selectEmailProvider(env);
+  // Google Sheet of paid donations (client, Nov 2026): rows go through the same queue.
+  const sheet = selectSheetProvider(env);
   const keys = env.AUTH_SECRET_KEY ? deriveAuthKeys(env.AUTH_SECRET_KEY) : undefined;
   const stopWorker =
-    db && provider
+    db && (provider || sheet)
       ? startOutboxWorker(
           {
             db,
             provider,
+            sheet,
             ownerEmail: env.OWNER_NOTIFICATION_EMAIL,
             siteUrl: env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173',
             receiptKey: keys?.receipt,

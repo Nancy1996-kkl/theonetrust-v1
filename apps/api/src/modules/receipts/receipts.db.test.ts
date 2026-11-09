@@ -402,35 +402,16 @@ describe('GET /receipts/:token — minimal fields only', () => {
   });
 });
 
-describe('PDF on demand', () => {
-  it.each(['en', 'ta'])('downloads the acknowledgement as a PDF (%s)', async (lang) => {
+describe('no PDF download (client, Nov 2026)', () => {
+  it('the acknowledgement is a web page only: the old PDF address is not found', async () => {
     const d = await paidWithReceipt();
     const res = await app.inject({
       method: 'GET',
-      url: `/api/v1/receipts/${d.token}/pdf?lang=${lang}`,
+      url: `/api/v1/receipts/${d.token}/pdf?lang=en`,
       remoteAddress: nextIp(),
     });
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toBe('application/pdf');
-    expect(res.headers['cache-control']).toBe('no-store');
-    const [r] = await receipts(d.id);
-    expect(res.headers['content-disposition']).toBe(
-      `attachment; filename="acknowledgement-${r?.receiptNumber}.pdf"`,
-    );
-    expect(res.rawPayload.subarray(0, 5).toString()).toBe('%PDF-');
-    expect(res.rawPayload.toString('latin1')).not.toContain('donor.private@example.org');
-  });
-
-  it('bad language or token → 400 / 404', async () => {
-    const d = await paidWithReceipt();
-    expect(
-      (await app.inject({ method: 'GET', url: `/api/v1/receipts/${d.token}/pdf?lang=fr` }))
-        .statusCode,
-    ).toBe(400);
-    expect(
-      (await app.inject({ method: 'GET', url: `/api/v1/receipts/${'d'.repeat(43)}/pdf` }))
-        .statusCode,
-    ).toBe(404);
+    expect(res.statusCode).toBe(404);
+    expect(res.headers['content-type']).not.toBe('application/pdf');
   });
 });
 

@@ -290,7 +290,7 @@ describe('each charge is its own payment, with a receipt per charge', () => {
     expect(charge?.receipts).toHaveLength(1);
     expect(
       await db.notificationOutbox.count({ where: { entityRef: `donation_intent:${charge!.id}` } }),
-    ).toBe(2);
+    ).toBe(3); // owner email, donor thank-you, sheet row
     expect(await statusOf(subId)).toBe('ACTIVE');
   });
 

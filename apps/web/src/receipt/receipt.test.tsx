@@ -48,11 +48,10 @@ function renderAt(path: string, client: ReceiptClient) {
 
 const found = (view: Partial<ReceiptView> = {}): ReceiptClient => ({
   get: vi.fn(async () => ({ kind: 'found' as const, view: { ...VIEW, ...view } })),
-  pdfUrl: (token, lang) => `https://api.test/api/v1/receipts/${token}/pdf?lang=${lang}`,
 });
 
 describe('acknowledgement page', () => {
-  it('shows the minimal fields, a verified status, PDF links and is never indexed', async () => {
+  it('shows the minimal fields and a verified status, has no PDF download, and is never indexed', async () => {
     const t = RECEIPT_MESSAGES.en;
     renderAt(`/receipt/${TOKEN}`, found());
     expect(await screen.findByText(t.valid)).toBeVisible();
@@ -71,14 +70,8 @@ describe('acknowledgement page', () => {
     }
     // Legal name not confirmed yet: the site name stands in, nothing is invented.
     expect(document.querySelector('.receipt__trust')).toHaveTextContent('Theonetrust.in');
-    expect(screen.getByRole('link', { name: t.download })).toHaveAttribute(
-      'href',
-      `https://api.test/api/v1/receipts/${TOKEN}/pdf?lang=en`,
-    );
-    expect(screen.getByRole('link', { name: t.downloadOther })).toHaveAttribute(
-      'href',
-      `https://api.test/api/v1/receipts/${TOKEN}/pdf?lang=ta`,
-    );
+    // Client, Nov 2026: the acknowledgement is a web page only — no PDF download.
+    expect(screen.queryByRole('link', { name: /PDF/ })).toBeNull();
     await waitFor(() =>
       expect(document.querySelector('meta[name="robots"]')).toHaveAttribute(
         'content',
@@ -108,10 +101,7 @@ describe('acknowledgement page', () => {
     expect(screen.getByText('Synthetic Trust')).toBeVisible();
     expect(screen.getByText('Reg. [test]')).toBeVisible();
     expect(screen.getByText(/APPROVAL-1/)).toHaveTextContent('2029');
-    expect(screen.getByRole('link', { name: t.download })).toHaveAttribute(
-      'href',
-      expect.stringContaining('lang=ta'),
-    );
+    expect(screen.queryByRole('link', { name: /PDF/ })).toBeNull();
   });
 
   it('refunded and replaced acknowledgements say so in words, and link to the current one', async () => {
@@ -129,7 +119,7 @@ describe('acknowledgement page', () => {
 
   it('not found offers the home page; unavailable offers try again', async () => {
     const user = userEvent.setup();
-    renderAt(`/receipt/${TOKEN}`, { get: async () => ({ kind: 'not-found' }), pdfUrl: () => '#' });
+    renderAt(`/receipt/${TOKEN}`, { get: async () => ({ kind: 'not-found' }) });
     expect(await screen.findByText(RECEIPT_MESSAGES.en.notFoundTitle)).toBeVisible();
     expect(screen.getByRole('link', { name: RECEIPT_MESSAGES.en.home })).toHaveAttribute(
       'href',
@@ -141,7 +131,7 @@ describe('acknowledgement page', () => {
       .fn()
       .mockResolvedValueOnce({ kind: 'unavailable' })
       .mockResolvedValueOnce({ kind: 'found', view: VIEW });
-    renderAt(`/receipt/${TOKEN}`, { get, pdfUrl: () => '#' });
+    renderAt(`/receipt/${TOKEN}`, { get });
     expect(await screen.findByText(RECEIPT_MESSAGES.en.unavailableTitle)).toBeVisible();
     await user.click(screen.getByRole('button', { name: RECEIPT_MESSAGES.en.tryAgain }));
     expect(await screen.findByText('TOT-R-2026-27-000042')).toBeVisible();
@@ -164,9 +154,6 @@ describe('receipt clients', () => {
       credentials: 'omit',
       referrerPolicy: 'no-referrer',
     });
-    expect(api.pdfUrl(TOKEN, 'ta')).toBe(
-      `http://localhost:4000/api/v1/receipts/${TOKEN}/pdf?lang=ta`,
-    );
     expect(await api.get('not-a-token')).toEqual({ kind: 'not-found' });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     const reply = (res: () => Promise<Response>) => createApiReceiptClient('', res).get(TOKEN);
@@ -184,19 +171,11 @@ describe('receipt clients', () => {
     const replaced = await mock.get(MOCK_REPLACED_TOKEN);
     expect(replaced.kind === 'found' && replaced.view.replacementToken).toBe(MOCK_RECEIPT_TOKEN);
     expect(await mock.get(TOKEN)).toEqual({ kind: 'not-found' });
-    expect(mock.pdfUrl(TOKEN, 'en')).toContain(TOKEN);
     expect(await unavailableReceiptClient.get(TOKEN)).toEqual({ kind: 'unavailable' });
-    expect(unavailableReceiptClient.pdfUrl(TOKEN, 'en')).toBe('#');
-    expect(selectReceiptClient({ VITE_DONATE_ADAPTER: 'mock' }).pdfUrl(TOKEN, 'en')).toContain(
-      '/api/v1/receipts/',
-    );
-    expect(
-      selectReceiptClient({
-        VITE_DONATE_ADAPTER: 'api',
-        VITE_API_BASE_URL: 'https://api.x',
-      }).pdfUrl(TOKEN, 'en'),
-    ).toBe(`https://api.x/api/v1/receipts/${TOKEN}/pdf?lang=en`);
-    expect(selectReceiptClient({ DEV: true }).pdfUrl(TOKEN, 'en')).toContain(TOKEN);
+    expect(selectReceiptClient({ VITE_DONATE_ADAPTER: 'mock' }).get).toBeTypeOf('function');
+    expect(await selectReceiptClient({ DEV: true }).get(MOCK_RECEIPT_TOKEN)).toMatchObject({
+      kind: 'found',
+    });
     expect(selectReceiptClient({ VITE_DONATE_ADAPTER: 'unavailable' })).toBe(
       unavailableReceiptClient,
     );

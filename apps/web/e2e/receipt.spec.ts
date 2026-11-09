@@ -19,7 +19,7 @@ test('after a verified payment the panel links to the acknowledgement', async ({
   await panel.getByText('The trust may keep these details to record my donation.').click();
   await panel.getByRole('button', { name: 'Continue' }).click();
   await panel.getByRole('button', { name: 'Pay ₹1,000 securely' }).click();
-  await panel.getByRole('link', { name: 'View or download your donation acknowledgement' }).click();
+  await panel.getByRole('link', { name: 'View your donation acknowledgement' }).click();
   await expect(page).toHaveURL(new RegExp(`/receipt/${MOCK}$`));
   await expect(
     page.getByRole('heading', { level: 1, name: 'Donation acknowledgement' }),
@@ -28,7 +28,7 @@ test('after a verified payment the panel links to the acknowledgement', async ({
   expect(page.url()).not.toMatch(/9876|Synthetic|donor/i);
 });
 
-test('acknowledgement page: minimal fields, PDF links, never indexed (English)', async ({
+test('acknowledgement page: minimal fields, no PDF download, never indexed (English)', async ({
   page,
 }) => {
   await page.goto(`/receipt/${MOCK}`);
@@ -36,10 +36,7 @@ test('acknowledgement page: minimal fields, PDF links, never indexed (English)',
   for (const text of ['TOT-R-2026-27-000000', 'TOT-D-MOCK00000000', 'Synthetic Donor', '₹1,000']) {
     await expect(page.getByText(text, { exact: true })).toBeVisible();
   }
-  await expect(page.getByRole('link', { name: 'Download PDF', exact: true })).toHaveAttribute(
-    'href',
-    /\/receipts\/M{43}\/pdf\?lang=en$/,
-  );
+  await expect(page.getByRole('link', { name: /PDF/ })).toHaveCount(0);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
   await expect(page.locator('meta[name="referrer"]')).toHaveAttribute('content', 'no-referrer');
   await expect(page.locator('article.receipt')).not.toContainText(/@|\+91|\b\d{10}\b/);
@@ -49,10 +46,7 @@ test('acknowledgement page in Tamil', async ({ page }) => {
   await page.goto(`/ta/receipt/${MOCK}`);
   await expect(page.getByRole('heading', { level: 1, name: 'நன்கொடை ஒப்புகை' })).toBeVisible();
   await expect(page.getByText('அறக்கட்டளையால் சரிபார்க்கப்பட்டது')).toBeVisible();
-  await expect(page.getByRole('link', { name: 'PDF பதிவிறக்கு', exact: true })).toHaveAttribute(
-    'href',
-    /lang=ta$/,
-  );
+  await expect(page.getByRole('link', { name: /PDF/ })).toHaveCount(0);
 });
 
 test('a replaced acknowledgement says so and links to the current one', async ({ page }) => {

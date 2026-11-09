@@ -315,6 +315,7 @@ describe('donations ledger', () => {
     expect(detail.notifications.map((n: { template: string }) => n.template).sort()).toEqual([
       'donor_donation_paid',
       'owner_donation_paid',
+      'sheet_donation_paid',
     ]);
     expect(detail.donorEmailMasked).toBe('l•••@example.org');
     expect(detail.donorPhoneMasked).toBe('••••••5678');

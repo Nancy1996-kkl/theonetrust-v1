@@ -203,14 +203,14 @@ export async function bankAdminRoutes(app: FastifyInstance, opts: { db: Db }) {
         });
         if (updated.count !== 1) throw new AppError('CONFLICT');
         await transitionDonation(tx, intent.id, 'PAID', 'owner_bank_evidence');
-        const receipt = await issueReceiptIfEligible(
+        await issueReceiptIfEligible(
           tx,
           intent.id,
           { bankTransferRecordId: id },
           credit.amountPaise,
           new Date(),
         );
-        await enqueueDonationPaid(tx, intent.id, receipt !== null);
+        await enqueueDonationPaid(tx, intent.id);
         await ensureTaxTracking(tx, intent.id, new Date());
       },
     );

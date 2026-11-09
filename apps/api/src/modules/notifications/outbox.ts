@@ -9,17 +9,14 @@ type Tx = Prisma.TransactionClient;
  * worker looks details up when it sends. `skipDuplicates` (ON CONFLICT DO NOTHING) keeps retries
  * from queueing twice without aborting the transaction.
  *
- * The donor email is queued only when the donor gave an email address AND asked for an
- * acknowledgement ("email only if you add one", donate panel) AND one was issued.
+ * Client, Nov 2026: every donor who gave an email address gets a thank-you email (with the
+ * acknowledgement link when one was issued), and every paid donation is also added as a row to
+ * the trust's Google Sheet (`sheet_donation_paid`, sent by the same worker).
  */
-export async function enqueueDonationPaid(
-  tx: Tx,
-  intentId: string,
-  receiptIssued: boolean,
-): Promise<void> {
+export async function enqueueDonationPaid(tx: Tx, intentId: string): Promise<void> {
   const intent = await tx.donationIntent.findUniqueOrThrow({
     where: { id: intentId },
-    select: { donorEmail: true, wantsReceipt: true, locale: true },
+    select: { donorEmail: true, locale: true },
   });
   const entityRef = `donation_intent:${intentId}`;
   const rows: Prisma.NotificationOutboxCreateManyInput[] = [
@@ -30,8 +27,15 @@ export async function enqueueDonationPaid(
       locale: 'en',
       dedupeKey: `donation.paid:owner:${intentId}`,
     },
+    {
+      eventType: 'donation.paid',
+      entityRef,
+      template: 'sheet_donation_paid',
+      locale: 'en',
+      dedupeKey: `donation.paid:sheet:${intentId}`,
+    },
   ];
-  if (receiptIssued && intent.wantsReceipt && intent.donorEmail) {
+  if (intent.donorEmail) {
     rows.push({
       eventType: 'donation.paid',
       entityRef,

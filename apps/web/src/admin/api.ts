@@ -188,8 +188,6 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
         `/admin/receipts/${encodeURIComponent(id)}/resend`,
         { reason },
       ),
-    receiptPdfUrl: (token: string, lang: 'ta' | 'en') =>
-      apiUrl(baseUrl, `/receipts/${encodeURIComponent(token)}/pdf?lang=${lang}`),
     subscriptions: (status?: string, page = 1) =>
       call<AdminSubscriptionList>('GET', `/admin/subscriptions?${query({ status, page })}`),
     subscription: (id: string) =>

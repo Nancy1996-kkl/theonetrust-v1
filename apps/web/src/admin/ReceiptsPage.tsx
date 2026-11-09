@@ -11,7 +11,7 @@ import { AdminApiError } from './api.ts';
 import { istFor, moneyFor } from './ledger-format.ts';
 import { LEDGER_STRINGS, fillText } from './ledger-strings.ts';
 
-/** Copy link · Download PDF · Send email again (with a reason). Shared with the detail page. */
+/** Copy link · Open the page · Send email again (with a reason). Shared with the detail page. */
 export function ReceiptActions({
   receipt,
   onResent,
@@ -66,8 +66,9 @@ export function ReceiptActions({
           </Button>
           <a
             className="ui-button ui-button--secondary"
-            href={api.receiptPdfUrl(receipt.token ?? '', lang)}
-            download
+            href={`${lang === 'ta' ? '/ta' : ''}/receipt/${receipt.token}`}
+            target="_blank"
+            rel="noreferrer"
           >
             {l.download}
             <span className="visually-hidden"> {receipt.receiptNumber}</span>

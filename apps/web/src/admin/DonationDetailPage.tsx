@@ -266,7 +266,7 @@ export function DonationDetailPage() {
             l.eventType,
             (n) =>
               t[
-                `emailTpl${n.template === 'owner_donation_paid' || n.template === 'donor_donation_paid' || n.template === 'owner_help_request_new' ? n.template : 'other'}`
+                `emailTpl${n.template === 'owner_donation_paid' || n.template === 'donor_donation_paid' || n.template === 'owner_help_request_new' || n.template === 'sheet_donation_paid' ? n.template : 'other'}`
               ],
             { rowHeader: true },
           ),

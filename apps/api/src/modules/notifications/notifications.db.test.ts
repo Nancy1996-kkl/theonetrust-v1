@@ -14,6 +14,7 @@ import {
 } from '../donations/provider.ts';
 import { receiptViewByToken } from '../receipts/view.ts';
 import { EmailSendError, type EmailMessage, type EmailProvider } from './provider.ts';
+import { SheetSendError, type SheetCell, type SheetProvider } from './sheet.ts';
 import { BACKOFF_MS, MAX_ATTEMPTS, processDueNotifications, type WorkerDeps } from './worker.ts';
 
 /**
@@ -133,6 +134,8 @@ beforeAll(async () => {
 beforeEach(() => {
   sent.length = 0;
   failNext = [];
+  appended.length = 0;
+  sheetFail.clear();
 });
 afterAll(async () => {
   await app.close();
@@ -199,44 +202,78 @@ async function paid(patch: Record<string, unknown> = {}, giftPaise = 100_000) {
   };
 }
 
+/** Email rows only; the Google Sheet row (client, Nov 2026) is checked with `sheetRowFor`. */
 const rowsFor = (intentId: string) =>
   db.notificationOutbox.findMany({
-    where: { entityRef: `donation_intent:${intentId}` },
+    where: { entityRef: `donation_intent:${intentId}`, template: { not: 'sheet_donation_paid' } },
     orderBy: { template: 'asc' },
   });
+const sheetRowFor = (intentId: string) =>
+  db.notificationOutbox.findFirst({
+    where: { entityRef: `donation_intent:${intentId}`, template: 'sheet_donation_paid' },
+  });
+
+/** A sheet that records rows and fails on demand. */
+const appended: SheetCell[][] = [];
+/** Failures keyed by donation reference (older queued rows may be appended in the same pass). */
+const sheetFail = new Map<string, SheetSendError>();
+const sheet: SheetProvider = {
+  appendRow: async (row) => {
+    const failure = sheetFail.get(String(row[1]));
+    if (failure) throw failure;
+    appended.push(row);
+  },
+};
 const mailsFor = async (intentId: string) => {
   const ids = new Set((await rowsFor(intentId)).map((r) => r.id));
   return sent.filter((m) => ids.has(m.idempotencyKey));
 };
 
 describe('queued with the payment', () => {
-  it('PAID → one owner email and, with an email + acknowledgement, one donor email', async () => {
+  it('PAID → one owner email, one donor thank-you and one sheet row', async () => {
     const d = await paid();
     const rows = await rowsFor(d.intent.id);
     expect(rows.map((r) => [r.template, r.status, r.locale])).toEqual([
       ['donor_donation_paid', 'PENDING', 'ta'],
       ['owner_donation_paid', 'PENDING', 'en'],
     ]);
+    expect(await sheetRowFor(d.intent.id)).toMatchObject({ status: 'PENDING' });
     // References only: no name, email or phone in the queue.
-    expect(JSON.stringify(rows)).not.toMatch(/Synthetic|donor\.notify|9876/);
+    expect(JSON.stringify([...rows, await sheetRowFor(d.intent.id)])).not.toMatch(
+      /Synthetic|donor\.notify|9876/,
+    );
   });
 
-  it('retries of the payment never queue a second email', async () => {
+  it('retries of the payment never queue a second email or sheet row', async () => {
     const d = await paid();
     await d.verify();
     await d.verify();
     expect(await rowsFor(d.intent.id)).toHaveLength(2);
+    expect(
+      await db.notificationOutbox.count({
+        where: { entityRef: `donation_intent:${d.intent.id}`, template: 'sheet_donation_paid' },
+      }),
+    ).toBe(1);
   });
 
-  it('no donor email without an address, without consent, or without an acknowledgement', async () => {
-    for (const patch of [{ donorEmail: null }, { wantsReceipt: false }]) {
-      const d = await paid(patch);
-      expect((await rowsFor(d.intent.id)).map((r) => r.template)).toEqual(['owner_donation_paid']);
+  it('every donor with an email gets a thank-you (client, Nov 2026); without one, none', async () => {
+    const none = await paid({ donorEmail: null });
+    expect((await rowsFor(none.intent.id)).map((r) => r.template)).toEqual(['owner_donation_paid']);
+    // No acknowledgement asked for, or below the ₹500 minimum: still thanked by email.
+    for (const d of [await paid({ wantsReceipt: false }), await paid({}, 10_000)]) {
+      expect((await rowsFor(d.intent.id)).map((r) => r.template)).toEqual([
+        'donor_donation_paid',
+        'owner_donation_paid',
+      ]);
     }
-    const small = await paid({}, 10_000); // below the ₹500 acknowledgement minimum
-    expect((await rowsFor(small.intent.id)).map((r) => r.template)).toEqual([
-      'owner_donation_paid',
-    ]);
+  });
+
+  it('a thank-you without an acknowledgement has no link', async () => {
+    const d = await paid({ wantsReceipt: false, locale: 'en' });
+    await processDueNotifications(deps());
+    const donor = (await mailsFor(d.intent.id)).find((m) => m.to === 'donor.notify@example.org')!;
+    expect(donor.subject).toContain('Thank you');
+    expect(donor.text).not.toMatch(/receipt\//);
   });
 });
 
@@ -251,9 +288,14 @@ describe('worker: send, retry, give up — the payment stays PAID', () => {
     const donor = mails.find((m) => m.to === 'donor.notify@example.org')!;
     expect(owner.subject).toContain(d.ref);
     expect(owner.text).toContain(d.payment.paymentId);
-    // The owner email never repeats the donor's contact details; no card data anywhere.
+    // Client, Nov 2026: the owner's private email carries the donor's contact details…
+    expect(owner.text).toContain('donor.notify@example.org');
+    expect(owner.text).toContain('+919876543210');
+    // …the donor's own email repeats neither, and no email carries card data or a PAN.
+    expect(`${donor.text}${donor.html}`).not.toMatch(/donor\.notify|9876543210/);
     for (const mail of [owner, donor]) {
-      expect(`${mail.text}${mail.html}`).not.toMatch(/donor\.notify|9876543210|\b\d{12,19}\b/);
+      const body = `${mail.text}${mail.html}`.replaceAll('919876543210', '');
+      expect(body).not.toMatch(/\b\d{12,19}\b|[A-Z]{5}\d{4}[A-Z]/);
     }
     // The donor's acknowledgement link works.
     const token = /receipt\/([A-Za-z0-9_-]{43})/.exec(donor.text)?.[1];
@@ -408,6 +450,73 @@ describe('worker: send, retry, give up — the payment stays PAID', () => {
   });
 });
 
+describe('Google Sheet of paid donations (client, Nov 2026)', () => {
+  it('adds one row with the donation details; emails wait without an email provider', async () => {
+    const d = await paid({ locale: 'en' });
+    await processDueNotifications(deps({ provider: undefined, sheet }));
+    expect(await sheetRowFor(d.intent.id)).toMatchObject({ status: 'SENT' });
+    expect((await rowsFor(d.intent.id)).every((r) => r.status === 'PENDING')).toBe(true);
+    const row = appended.find((r) => r[1] === d.ref)!;
+    expect(row).toEqual([
+      expect.stringMatching(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/),
+      d.ref,
+      'Synthetic Donor',
+      'donor.notify@example.org',
+      '+919876543210',
+      1000,
+      'One-time',
+      'General fund',
+      'UPI',
+      d.payment.paymentId,
+      expect.stringMatching(/^TOT-R-/),
+    ]);
+  });
+
+  it('without a sheet, sheet rows wait while emails go out', async () => {
+    const d = await paid();
+    await processDueNotifications(deps());
+    expect(await sheetRowFor(d.intent.id)).toMatchObject({ status: 'PENDING', retryCount: 0 });
+    expect((await rowsFor(d.intent.id)).every((r) => r.status === 'SENT')).toBe(true);
+  });
+
+  it('a sheet failure is retried, or FAILED at once when permanent — the payment stays PAID', async () => {
+    const d = await paid();
+    sheetFail.set(d.ref, new SheetSendError('http_503', false));
+    await processDueNotifications(deps({ provider: undefined, sheet }));
+    expect(await sheetRowFor(d.intent.id)).toMatchObject({
+      status: 'PENDING',
+      retryCount: 1,
+      lastError: 'http_503',
+    });
+    const e = await paid();
+    sheetFail.set(e.ref, new SheetSendError('http_403', true));
+    await processDueNotifications(deps({ provider: undefined, sheet }));
+    expect(await sheetRowFor(e.intent.id)).toMatchObject({
+      status: 'FAILED',
+      lastError: 'http_403',
+    });
+    expect((await db.donationIntent.findUniqueOrThrow({ where: { id: e.intent.id } })).status).toBe(
+      'PAID',
+    );
+  });
+
+  it('a sheet row for a donation that no longer exists is cancelled', async () => {
+    const row = await db.notificationOutbox.create({
+      data: {
+        eventType: 'test',
+        entityRef: `donation_intent:${crypto.randomUUID()}`,
+        template: 'sheet_donation_paid',
+        dedupeKey: unique('dk'),
+      },
+    });
+    await processDueNotifications(deps({ provider: undefined, sheet }));
+    expect(await db.notificationOutbox.findUniqueOrThrow({ where: { id: row.id } })).toMatchObject({
+      status: 'CANCELLED',
+      lastError: 'entity_missing',
+    });
+  });
+});
+
 describe('delivery status for the owner', () => {
   it('lists emails with counts and references, never addresses or bodies; filters by status', async () => {
     const d = await paid();
@@ -421,8 +530,17 @@ describe('delivery status for the owner', () => {
       expect.objectContaining({ PENDING: expect.any(Number), FAILED: expect.any(Number) }),
     );
     const mine = body.items.filter((i: { reference: string }) => i.reference === d.ref);
-    expect(mine).toHaveLength(2);
-    expect(mine.map((i: { audience: string }) => i.audience).sort()).toEqual(['donor', 'owner']);
+    expect(mine).toHaveLength(3);
+    expect(mine.map((i: { template: string }) => i.template).sort()).toEqual([
+      'donor_donation_paid',
+      'owner_donation_paid',
+      'sheet_donation_paid',
+    ]);
+    expect(mine.map((i: { audience: string }) => i.audience).sort()).toEqual([
+      'donor',
+      'owner',
+      'owner',
+    ]);
     expect(res.body).not.toMatch(/donor\.notify|owner\.notify|9876/);
     const failed = await send('GET', '/api/v1/admin/notifications?status=FAILED');
     expect(failed.json().items.every((i: { status: string }) => i.status === 'FAILED')).toBe(true);
