@@ -109,6 +109,8 @@ describe('opening and closing', () => {
     await user.click(within(screen.getByRole('banner')).getByRole('link', { name: 'Get Help' }));
     expect(dialog()).toBeVisible();
     expect(screen.getByRole('heading', { name: en.startTitle })).toHaveFocus();
+    // Client, Nov 2026: a centred pop-up, not a side panel.
+    expect(dialog()).toHaveClass('ui-dialog--modal');
   });
 
   it('closes with Esc and stays on the same page', async () => {

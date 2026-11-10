@@ -499,7 +499,7 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
       open={open}
       onClose={close}
       title={t.title}
-      variant="panel"
+      variant="modal"
       dismissible={!submitting}
       footer={footer}
     >

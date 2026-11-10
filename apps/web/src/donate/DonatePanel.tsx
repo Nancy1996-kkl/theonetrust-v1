@@ -895,7 +895,6 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
               onChange={(patch) => setDetails((d) => ({ ...d, ...patch }))}
             />
           )}
-          <PolicyNotice />
         </form>
       );
     } else {
@@ -989,6 +988,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             {t.back}
           </Button>
         )}
+        {/* Client, Nov 2026: the terms line sits at the bottom of the pop-up on every step. */}
+        <PolicyNotice />
       </div>
     );
   }
@@ -998,7 +999,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       open={open}
       onClose={close}
       title={t.title}
-      variant="panel"
+      variant="modal"
       dismissible={!busy && screen !== 'confirming'}
       footer={footer}
     >

@@ -110,6 +110,20 @@ describe('donate messages', () => {
 });
 
 describe('donate panel', () => {
+  it('opens as a centred pop-up (client, Nov 2026)', async () => {
+    renderAt('/#donate', client());
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveClass('ui-dialog--modal');
+    expect(dialog).not.toHaveClass('ui-dialog--panel');
+    // The terms line is at the bottom of the pop-up from the first step.
+    const terms = within(dialog).getByRole('link', { name: 'Terms of use' });
+    expect(terms.closest('.ui-dialog__footer')).not.toBeNull();
+    expect(within(dialog).getByRole('link', { name: 'Privacy policy' })).toBeVisible();
+    expect(
+      within(dialog).getByRole('link', { name: /Refund, cancellation and correction policy/ }),
+    ).toBeVisible();
+  });
+
   it('walks need → amount → details → pay and shows success only after the server says PAID', async () => {
     const user = userEvent.setup();
     const donate = client();
