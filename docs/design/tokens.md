@@ -52,6 +52,9 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
 | `--palette-ivory`        | #FFFDF8 | Ivory — page background                                               |
 | `--palette-body`         | #4A5A50 | Body text, form borders                                               |
 | `--palette-sage-tint`    | #E6EEE9 | Home page — soft sage band                                            |
+| `--palette-peach`        | #FCF1E5 | Home page — warm section background                                   |
+| `--palette-home-ivory`   | #F7F5EF | Home page — page background                                           |
+| `--palette-home-sage`    | #76968A | Home page — shapes, frames, icons (never body text)                   |
 | `--palette-white`        | #FFFFFF | Card surfaces, text on forest                                         |
 | `--palette-success`      | #287A55 | Success                                                               |
 | `--palette-warning`      | #B7791F | Warning icons/borders                                                 |

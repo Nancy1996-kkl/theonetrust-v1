@@ -21,6 +21,9 @@
 
   /* Home page (client, Nov 2026) — one soft green band; everything else uses the palette above */
   --palette-sage-tint: #e6eee9; /* soft sage band */
+  --palette-peach: #fcf1e5; /* warm section background (client-approved, Nov 2026) */
+  --palette-home-ivory: #f7f5ef; /* home page background (client-approved) */
+  --palette-home-sage: #76968a; /* shapes, frames, icons — never body text (3.2:1 on white) */
 
   --palette-success: #287a55;
   --palette-warning: #b7791f; /* 3.6:1 on white: icons/borders only, never body text */
@@ -65,10 +68,10 @@
   --color-action-secondary-text: var(--palette-forest);
   --color-action-secondary-border: var(--palette-forest);
 
-  /* Home page roles (client, Nov 2026): Forest & Gold, no blue */
-  --color-home-bg: var(--palette-ivory);
-  --color-home-warm: var(--palette-champagne);
-  --color-home-sage: var(--palette-green);
+  /* Home page roles (client, Nov 2026): the approved colours, with forest in place of navy */
+  --color-home-bg: var(--palette-home-ivory);
+  --color-home-warm: var(--palette-peach);
+  --color-home-sage: var(--palette-home-sage);
   --color-home-sage-tint: var(--palette-sage-tint);
   --color-home-dark: var(--palette-forest);
   --color-home-heading: var(--palette-forest);
