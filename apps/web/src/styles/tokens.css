@@ -18,6 +18,13 @@
   --palette-ink: #1b2b22; /* Green-black — body text */
   --palette-white: #ffffff;
 
+  /* Home page redesign (client, Nov 2026) — see routes/home */
+  --palette-ivory: #f7f5ef; /* page background */
+  --palette-peach: #fcf1e5; /* warm section background */
+  --palette-sage: #76968a; /* shapes, frames, icons — never body text (3.2:1 on white) */
+  --palette-sage-tint: #e6eee9; /* soft sage band */
+  --palette-navy: #002c61; /* headings, impact band, footer */
+
   --palette-success: #287a55;
   --palette-warning: #b7791f; /* 3.6:1 on white: icons/borders only, never body text */
   --palette-warning-dark: #8f5e14; /* derived for AA text (5.5:1 on white) */
@@ -51,6 +58,15 @@
   --color-action-donate-text: var(--palette-primary);
   --color-action-secondary-text: var(--palette-primary);
   --color-action-secondary-border: var(--palette-primary);
+
+  /* Home redesign roles (client, Nov 2026) */
+  --color-home-bg: var(--palette-ivory);
+  --color-home-warm: var(--palette-peach);
+  --color-home-sage: var(--palette-sage);
+  --color-home-sage-tint: var(--palette-sage-tint);
+  --color-home-navy: var(--palette-navy);
+  --color-home-heading: var(--palette-navy);
+  --color-home-on-navy: var(--palette-white);
 
   /* Interaction states */
   --color-action-primary-bg-hover: var(--palette-primary-soft);

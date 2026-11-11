@@ -4,7 +4,9 @@ import type { MessageKey } from '../i18n/messages.ts';
 export const NAV_SECTIONS: ReadonlyArray<{ id: string; label: MessageKey }> = [
   { id: 'about', label: 'navAbout' },
   { id: 'ways-we-help', label: 'navWays' },
+  { id: 'services', label: 'navServices' },
   { id: 'impact', label: 'navImpact' },
-  { id: 'transparency', label: 'navTransparency' },
+  // Transparency is left out while the section is hidden (no approved documents yet, client
+  // Nov 2026). Add it back here and in SiteFooter.tsx once documents are published.
   { id: 'contact', label: 'navContact' },
 ];

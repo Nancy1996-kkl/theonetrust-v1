@@ -42,6 +42,11 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
 | `--palette-canvas`       | #F5FBF7 | Near-white with a green hint — page background                           |
 | `--palette-primary-soft` | #2F5D42 | Deeper green — secondary text, borders, hover                            |
 | `--palette-ink`          | #1B2B22 | Green-black — body text                                                  |
+| `--palette-ivory`        | #F7F5EF | Home redesign — page background                                          |
+| `--palette-peach`        | #FCF1E5 | Home redesign — warm section background                                  |
+| `--palette-sage`         | #76968A | Home redesign — shapes, frames, icons (never body text)                  |
+| `--palette-sage-tint`    | #E6EEE9 | Home redesign — soft sage band                                           |
+| `--palette-navy`         | #002C61 | Home redesign — headings, impact band, footer                            |
 | `--palette-white`        | #FFFFFF | Card surfaces, text on dark green                                        |
 | `--palette-success`      | #287A55 | Success                                                                  |
 | `--palette-warning`      | #B7791F | Warning icons/borders                                                    |

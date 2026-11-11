@@ -168,7 +168,8 @@ test.describe('Tamil specimen at this viewport', () => {
 
     const ringOf = async (selector: string) => {
       const target = page.locator(selector);
-      for (let i = 0; i < 40; i += 1) {
+      // The new home page (Nov 2026) has more links before the specimen, so allow more Tab presses.
+      for (let i = 0; i < 150; i += 1) {
         if (await target.evaluate((el) => el === document.activeElement)) break;
         await page.keyboard.press('Tab');
       }

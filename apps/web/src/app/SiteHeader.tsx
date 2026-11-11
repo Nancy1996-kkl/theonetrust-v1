@@ -80,7 +80,7 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
     <header ref={headerRef} className="site-header">
       <div className="site-header__bar">
         <a className="site-header__brand" href={home} aria-label={t.homeLink}>
-          <span className="site-header__mark" aria-hidden="true" />
+          {/* No logo icon until the trust sends its own logo (client, Nov 2026). */}
           <span className="site-header__name">{TRUST_FACTS.siteName}</span>
         </a>
 

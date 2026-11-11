@@ -184,7 +184,7 @@ describe('linked from the footer and from forms', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Privacy policy' })).toBeVisible();
   });
 
-  it('the donation form (final call to action) shows the policy notice', () => {
+  it('the home donation section shows the policy notice', () => {
     renderRoute('/');
     const give = document.getElementById('give')!;
     expect(within(give).getByRole('link', { name: 'Terms of use' })).toHaveAttribute(

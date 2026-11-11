@@ -12,13 +12,13 @@ describe('home route', () => {
   it('renders one top-level heading in each language (the placeholder text was replaced in #12)', () => {
     renderRoute('/');
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole('heading', { level: 2, name: 'Ways we help' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 2, name: 'Where help is needed' })).toBeVisible();
   });
 
   it('renders the Tamil page under /ta/', () => {
     renderRoute('/ta/');
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole('heading', { level: 2, name: 'நாங்கள் உதவும் வழிகள்' })).toBeVisible();
+    expect(screen.getByRole('heading', { level: 2, name: 'எங்கே உதவி தேவை' })).toBeVisible();
     expect(document.documentElement.lang).toBe('ta');
   });
 
@@ -47,7 +47,9 @@ describe('unknown routes', () => {
   it('lets the visitor return home from the not-found page', async () => {
     renderRoute('/missing');
     await userEvent.click(screen.getByRole('link', { name: 'Go to the home page' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Theonetrust.in' })).toBeVisible();
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Together, we can make a difference.' }),
+    ).toBeVisible();
   });
 
   it('has no WCAG 2.2 AA violations on the not-found page', async () => {

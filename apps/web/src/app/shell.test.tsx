@@ -42,14 +42,14 @@ describe('landmarks and skip link', () => {
 });
 
 describe('header', () => {
-  it('links the five sections, Get Help and Donate to anchors on the single page', () => {
+  it('links the five sections (in page order), Get Help and Donate to anchors on the single page', () => {
     renderRoute('/');
     const nav = within(banner()).getByRole('navigation', { name: 'Sections' });
     expect(
       within(nav)
         .getAllByRole('link')
         .map((a) => a.getAttribute('href')),
-    ).toEqual(['/#about', '/#ways-we-help', '/#impact', '/#transparency', '/#contact']);
+    ).toEqual(['/#about', '/#ways-we-help', '/#services', '/#impact', '/#contact']);
     expect(within(banner()).getByRole('link', { name: 'Donate' })).toHaveAttribute(
       'href',
       '/#donate',
@@ -67,9 +67,9 @@ describe('header', () => {
   it('Tamil page uses Tamil labels and /ta/ anchors (same English IDs)', () => {
     renderRoute('/ta/');
     const nav = within(banner()).getByRole('navigation', { name: 'பிரிவுகள்' });
-    expect(within(nav).getByRole('link', { name: 'வெளிப்படைத்தன்மை' })).toHaveAttribute(
+    expect(within(nav).getByRole('link', { name: 'சேவைகள்' })).toHaveAttribute(
       'href',
-      '/ta/#transparency',
+      '/ta/#services',
     );
     expect(within(banner()).getByRole('link', { name: 'நன்கொடை' })).toHaveAttribute(
       'href',

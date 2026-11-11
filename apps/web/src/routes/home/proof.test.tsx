@@ -18,6 +18,7 @@ import {
 import { useDonationDraft } from '../../state/donation-draft.ts';
 import { HomePage } from './HomePage.tsx';
 import type { ProofProps } from './ProofSections.tsx';
+import { HOME_TEXT } from './home-content.ts';
 
 afterEach(() => {
   document.documentElement.lang = 'en';
@@ -192,14 +193,19 @@ describe('impact', () => {
   it('with no verified data shows a factual statement, never zeros', () => {
     renderHome();
     const impact = section('impact');
-    expect(
-      within(impact).getByRole('heading', { name: 'Figures will be published here' }),
-    ).toBeVisible();
+    expect(impact).toHaveTextContent(HOME_TEXT.impactEmpty.en);
     expect(impact).not.toHaveTextContent(/\b0\b/);
-    expect(within(impact).getByRole('link', { name: 'See our documents' })).toHaveAttribute(
-      'href',
-      '/#transparency',
-    );
+    // No documents yet, so no link to the (hidden) transparency section.
+    expect(within(impact).queryByRole('link', { name: 'See our documents' })).toBeNull();
+  });
+
+  it('links to the documents once the trust has published one', () => {
+    renderHome('/', {
+      proof: { ...withData, impact: { ...withData.impact, metrics: [], stories: [] } },
+    });
+    expect(
+      within(section('impact')).getByRole('link', { name: 'See our documents' }),
+    ).toHaveAttribute('href', '#transparency');
   });
 
   it('shows only publishable, confirmed metrics with source, period and date', () => {
@@ -234,11 +240,10 @@ describe('impact', () => {
 });
 
 describe('transparency centre', () => {
-  it('empty: says documents will be published, no fake entries', () => {
+  it('hidden until the trust approves a document (no empty table, no fake entries)', () => {
     renderHome();
-    const t = section('transparency');
-    expect(within(t).getByText('Documents will be published here')).toBeVisible();
-    expect(within(t).queryByRole('link', { name: /Download/ })).not.toBeInTheDocument();
+    expect(document.getElementById('transparency')).toBeNull();
+    expect(document.body).not.toHaveTextContent('Documents will be published here');
   });
 
   it('lists approved documents with title, language, period, date and type', () => {
@@ -285,7 +290,7 @@ describe('FAQ', () => {
   it('answers appear in Tamil on /ta/', () => {
     renderHome('/ta/');
     const faq = section('faq');
-    expect(within(faq).getByRole('heading', { name: 'கேள்விகள்' })).toBeVisible();
+    expect(within(faq).getByRole('heading', { name: HOME_TEXT.faqTitle.ta })).toBeVisible();
     expect(within(faq).getByText('வரி விலக்கு கிடைக்குமா?')).toBeInTheDocument();
     expect(faq).toHaveTextContent('இப்போதைக்கு இல்லை.');
   });
@@ -354,7 +359,7 @@ describe('contact', () => {
     expect(c).toHaveTextContent('Kanchipuram, Tamil Nadu');
     expect(c).toHaveTextContent('Every day, 8 AM – 10 PM');
     expect(c).not.toHaveTextContent('Address');
-    expect(within(c).getByRole('link', { name: 'WhatsApp us' })).toHaveAttribute(
+    expect(within(c).getByRole('link', { name: 'WhatsApp' })).toHaveAttribute(
       'href',
       'https://wa.me/919600516999',
     );
@@ -362,7 +367,7 @@ describe('contact', () => {
 
   it('Get Help is the secondary style, never the Donate style', () => {
     renderHome();
-    const help = within(section('contact')).getByRole('link', { name: 'Get Help' });
+    const help = within(section('contact')).getByRole('link', { name: HOME_TEXT.askHelp.en });
     expect(help).toHaveAttribute('href', '/#get-help');
     expect(help).toHaveClass('ui-button--secondary');
     expect(help).not.toHaveClass('ui-button--donate');
@@ -379,55 +384,51 @@ describe('contact', () => {
     });
     const c = section('contact');
     expect(c).toHaveTextContent('Address1 Example Street');
-    expect(within(c).queryByRole('link', { name: 'WhatsApp us' })).not.toBeInTheDocument();
+    expect(within(c).queryByRole('link', { name: 'WhatsApp' })).not.toBeInTheDocument();
     expect(c).not.toHaveTextContent('Email');
   });
 });
 
-describe('final call to action', () => {
-  it('uses the neutral title on the live page and the draft title only in preview', () => {
-    const { unmount } = renderHome();
-    expect(within(section('give')).getByRole('heading', { level: 2 })).toHaveTextContent(
-      'Make a donation',
-    );
-    unmount();
-    renderHome('/', { showDrafts: true });
-    const give = section('give');
-    expect(within(give).getByRole('heading', { level: 2 })).toHaveTextContent(
-      'Your contribution can change a life.',
-    );
-    expect(give).toHaveTextContent('Draft — not yet confirmed');
-  });
-
-  it('Donate without an amount opens the panel; with an amount it pre-fills and sets the draft', async () => {
-    const user = userEvent.setup();
+describe('donation section', () => {
+  it('has its title, the policy links and a Donate button that opens the pop-up', () => {
     renderHome();
     const give = section('give');
-    const donate = within(give).getByRole('link', { name: 'Donate now' });
-    expect(donate).toHaveAttribute('href', '/#donate');
-    await user.click(within(give).getByRole('radio', { name: '₹2,000' }));
-    expect(donate).toHaveAttribute('href', '/?amount=2000#donate');
-    await user.click(donate);
+    expect(within(give).getByRole('heading', { level: 2 })).toHaveTextContent(
+      HOME_TEXT.donateTitle.en,
+    );
+    expect(within(give).getByRole('link', { name: HOME_TEXT.donateNow.en })).toHaveAttribute(
+      'href',
+      '#donate',
+    );
+    expect(within(give).getByRole('link', { name: 'Terms of use' })).toHaveAttribute(
+      'href',
+      '/terms',
+    );
+  });
+
+  it('an amount chip pre-fills the donation draft', async () => {
+    const user = userEvent.setup();
+    renderHome();
+    const chip = within(section('give')).getByRole('link', { name: '₹2,000' });
+    expect(chip).toHaveAttribute('href', '/?amount=2000#donate');
+    await user.click(chip);
     expect(probe.draft!.amountPaise).toBe(200000);
   });
 
-  it('clicking Donate with no amount leaves the draft amount empty', async () => {
+  it('Donate alone leaves the draft amount empty', async () => {
     const user = userEvent.setup();
     renderHome();
-    await user.click(within(section('give')).getByRole('link', { name: 'Donate now' }));
+    await user.click(within(section('give')).getByRole('link', { name: HOME_TEXT.donateNow.en }));
     expect(probe.draft!.amountPaise).toBeNull();
   });
 
-  it('Tamil page: Tamil labels and /ta/ link', () => {
+  it('Tamil page: Tamil labels', () => {
     renderHome('/ta/');
     const give = section('give');
-    expect(
-      within(give).getByRole('group', { name: 'தொகையைத் தேர்ந்தெடுங்கள்' }),
-    ).toBeInTheDocument();
-    expect(within(give).getByRole('link', { name: 'இப்போதே நன்கொடை கொடுங்கள்' })).toHaveAttribute(
-      'href',
-      '/ta/#donate',
+    expect(within(give).getByRole('heading', { level: 2 })).toHaveTextContent(
+      HOME_TEXT.donateTitle.ta,
     );
+    expect(within(give).getByRole('link', { name: HOME_TEXT.donateNow.ta })).toBeVisible();
   });
 });
 

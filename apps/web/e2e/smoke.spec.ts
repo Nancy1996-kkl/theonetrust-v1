@@ -4,13 +4,13 @@ test.describe('public smoke', () => {
   test('home page loads with title, heading and Tamil text', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/^Theonetrust\.in/);
-    await expect(page.getByRole('heading', { level: 1, name: 'Theonetrust.in' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Together, we can make a difference.' }),
+    ).toBeVisible();
     // The bilingual placeholder was replaced by real sections in #12; Tamil lives under /ta/.
     await page.goto('/ta/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ta');
-    await expect(
-      page.getByRole('heading', { level: 2, name: 'நாங்கள் உதவும் வழிகள்' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { level: 2, name: 'எங்கே உதவி தேவை' })).toBeVisible();
   });
 
   test('unknown route shows the not-found page and recovers to home', async ({ page }) => {
@@ -19,14 +19,18 @@ test.describe('public smoke', () => {
     await expect(page).toHaveTitle(/Page not found/);
     await page.getByRole('link', { name: 'Go to the home page' }).click();
     await expect(page).toHaveURL('/');
-    await expect(page.getByRole('heading', { level: 1, name: 'Theonetrust.in' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Together, we can make a difference.' }),
+    ).toBeVisible();
   });
 
   test('browser back and forward keep the right page', async ({ page }) => {
     await page.goto('/');
     await page.goto('/missing');
     await page.goBack();
-    await expect(page.getByRole('heading', { level: 1, name: 'Theonetrust.in' })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Together, we can make a difference.' }),
+    ).toBeVisible();
     await page.goForward();
     await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
   });
