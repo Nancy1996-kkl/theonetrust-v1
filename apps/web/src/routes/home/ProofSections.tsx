@@ -5,7 +5,13 @@ import { StateBlock } from '../../components/ui/StateBlock.tsx';
 import { StatusPill } from '../../components/ui/StatusPill.tsx';
 import type { TrustFacts } from '../../config/trust-facts.ts';
 import type { Bilingual, LandingContent } from '../../content/landing.ts';
-import type { ProofContent, TransparencyDocument } from '../../content/proof.ts';
+import {
+  isPublishableAllocation,
+  isWellFormedAllocation,
+  type Allocation,
+  type ProofContent,
+  type TransparencyDocument,
+} from '../../content/proof.ts';
 import { useLang } from '../../i18n/use-lang.ts';
 import { READY, useDate } from './section-state.ts';
 import { Reveal } from './Reveal.tsx';
@@ -88,16 +94,65 @@ function SectionFrame({
   );
 }
 
+/** Where donations go — text percentages with bars (never colour or length alone). */
+function AllocationChart({
+  allocation,
+  proof,
+  showDrafts,
+  draftLabel,
+}: {
+  allocation: Allocation;
+  proof: ProofContent;
+  showDrafts: boolean;
+  draftLabel: Bilingual;
+}) {
+  const lang = useLang();
+  const { transparency: t } = proof;
+  const show =
+    isPublishableAllocation(allocation) || (showDrafts && isWellFormedAllocation(allocation));
+  if (!show) return null;
+  const percent = new Intl.NumberFormat(lang === 'ta' ? 'ta-IN' : 'en-IN', {
+    style: 'percent',
+    maximumFractionDigits: 1,
+  });
+  return (
+    <figure className="proof-allocation" aria-labelledby="allocation-title">
+      <h3 id="allocation-title" className="proof-allocation__title">
+        {t.allocationTitle[lang]}
+      </h3>
+      <Draft confirmed={allocation.confirmed} label={draftLabel} />
+      <ul className="proof-allocation__list">
+        {allocation.items.map((item) => (
+          <li key={item.id} className="proof-allocation__item">
+            <span className="proof-allocation__label">{item.label[lang]}</span>
+            <span className="proof-allocation__value">{percent.format(item.percent / 100)}</span>
+            <span className="proof-allocation__track" aria-hidden="true">
+              <span className="proof-allocation__bar" style={{ inlineSize: `${item.percent}%` }} />
+            </span>
+          </li>
+        ))}
+      </ul>
+      <figcaption className="proof-allocation__meta">
+        {t.allocationSourceLabel[lang]}: {allocation.source?.[lang]} ·{' '}
+        {t.allocationPeriodLabel[lang]}: {allocation.period?.[lang]}
+      </figcaption>
+    </figure>
+  );
+}
+
 /** 8 · Transparency centre — owner-approved documents only; never fake entries. */
-export function TransparencySection({ proof, states }: ProofProps) {
+export function TransparencySection({ proof, landing, showDrafts, states }: ProofProps) {
   const lang = useLang();
   const date = useDate();
   const { transparency: t } = proof;
   const docs = t.documents.filter((d) => d.approved);
-  // Hidden until the trust approves its first document in the dashboard (client, Nov 2026);
-  // it then appears by itself. Loading / error states still show so a failure is never silent.
+  const chart =
+    isPublishableAllocation(t.allocation) || (showDrafts && isWellFormedAllocation(t.allocation));
+  // Hidden until the trust approves its first document or confirms its "where donations go"
+  // figures in the dashboard (client, Nov 2026); it then appears by itself. Loading / error states
+  // still show so a failure is never silent.
   const status = (states?.transparency ?? READY).status;
-  if (status === 'ready' && docs.length === 0) return null;
+  if (status === 'ready' && docs.length === 0 && !chart) return null;
   const columns: Column<TransparencyDocument>[] = [
     { key: 'title', header: t.columns.document[lang], cell: (d) => d.title[lang], rowHeader: true },
     {
@@ -133,6 +188,12 @@ export function TransparencySection({ proof, states }: ProofProps) {
       state={states?.transparency ?? READY}
       proof={proof}
     >
+      <AllocationChart
+        allocation={t.allocation}
+        proof={proof}
+        showDrafts={showDrafts}
+        draftLabel={landing.draftLabel}
+      />
       <DataTable
         caption={t.tableCaption[lang]}
         hideCaption

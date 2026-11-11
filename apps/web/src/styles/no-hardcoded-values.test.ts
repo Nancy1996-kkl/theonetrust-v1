@@ -140,11 +140,11 @@ describe('guard self-test: catches what it claims to catch', () => {
 });
 
 describe('documented exceptions', () => {
-  it('index.html theme-color equals --palette-primary (meta tags cannot read CSS variables)', () => {
+  it('index.html theme-color equals --palette-forest (meta tags cannot read CSS variables)', () => {
     const html = readFileSync(join(webRoot, 'index.html'), 'utf8');
     const themeColor = /<meta name="theme-color" content="(#[0-9a-f]{6})"/i.exec(html)?.[1];
     const tokens = parseRootTokens(readFileSync(join(webRoot, TOKEN_FILE), 'utf8'));
-    expect(themeColor?.toLowerCase()).toBe(tokens.get('--palette-primary'));
+    expect(themeColor?.toLowerCase()).toBe(tokens.get('--palette-forest'));
     const otherColours = html.match(/#[0-9a-f]{6}\b/gi) ?? [];
     expect(otherColours).toHaveLength(1);
   });

@@ -16,23 +16,19 @@ The public website should feel premium, elegant, trustworthy, human-centred, and
 
 ### 2. Brand Identity
 
-**Selected colour palette: Green (client decision, Nov 2026)** — replaces Midnight Navy.
+**Selected colour palette: Forest & Gold** (owner brief, 5 Nov 2026 — replaces Midnight Navy)
 
-Primary is dark green; the site uses white, dark green and light green surfaces. The values
-below are placeholders until the client sends the exact colour codes; they live only in
-`apps/web/src/styles/tokens.css` (palette layer), so replacing them changes the whole site.
-
-| Colour | HEX | Purpose | Token |
-|---|---|---|---|
-| Dark green | #14532D | Primary brand, buttons, dark bands | `--palette-primary` |
-| Light green | #9FD8AD | Accent: the one donate button, accents on dark green | `--palette-accent` |
-| Light green tint | #E3F1E7 | Secondary background, dividers | `--palette-mist` |
-| Near-white | #F6FAF7 | Main background | `--palette-canvas` |
-| Mid green | #3D6B4F | Secondary text, form borders | `--palette-primary-soft` |
-| Green-black | #1F2D25 | Body text | `--palette-ink` |
-| White | #FFFFFF | Cards | `--palette-white` |
-
-Previous palette (Midnight Navy #172B46, Champagne Gold #C6A76B, …) is retired.
+| Colour | HEX | Purpose |
+|---|---|---|
+| Deep Forest | #0F2A1D | Primary brand, hero and impact bands, headings |
+| Trust Green | #3C763A | Focus ring, icons, primary hover |
+| Mint | #B7E4C7 | Story cards, lead text on forest |
+| Sage | #A8D5BA | Borders and quiet accents on forest |
+| Gold | #D4AF37 | Donate button, 1px rules, impact numbers, small icons |
+| Gold text | #8A6D1F | Small gold labels on ivory/white only |
+| Champagne | #F7E7CE | Stories band |
+| Ivory | #FFFDF8 | Main background |
+| Body | #4A5A50 | Body text |
 
 Additional semantic colours:
 - Success: #287A55
@@ -40,7 +36,18 @@ Additional semantic colours:
 - Error: #B42318
 - Information: #3568A8
 
-Use champagne gold sparingly. It should highlight important elements rather than dominate the interface.
+Making it luxurious and engaging:
+- **Alternate dark and light sections**: forest hero → ivory sections → forest impact band →
+  champagne stories. That rhythm is what makes the site feel premium.
+- **Gold only for a few things**: the Donate button, thin 1px divider lines, impact numbers and
+  small icons. Never paragraphs. (Gold text fails contrast on light backgrounds; see
+  `docs/design/tokens.md` rule 4.)
+- **Donate button**: gold background, forest text, a soft gold glow on hover; in the sticky header
+  and in every forest section.
+- **Emotion**: real, consented beneficiary photos under a forest gradient; counters that animate on
+  scroll (verified figures only); story cards on mint.
+- **Trust signals**: registration badges such as 80G / 12A in gold outline style, and simple charts
+  of where donations go — only once the trust has confirmed the facts (issue #1).
 
 ### 3. Selected Design Language
 
@@ -75,7 +82,7 @@ Avoid excessive glassmorphism, neumorphism, gradients, animations, decorative il
 ### 4. Typography System
 
 English:
-- Headings: Libre Baskerville.
+- Headings: Playfair Display (elegant serif; italic for the accent word in the hero).
 - Body: Inter.
 - Statistics: Inter.
 

@@ -70,6 +70,8 @@
 
 .ui-button--donate:hover {
   background: var(--color-action-donate-bg-hover);
+  /* Soft gold glow (brand brief): the only element on the page that glows. */
+  box-shadow: var(--shadow-glow-gold);
 }
 
 .ui-button--donate:active {
@@ -326,6 +328,11 @@
 
 .ui-radio-card__label:hover {
   background: var(--color-action-secondary-bg-hover);
+}
+
+/* Muted text is only 4.35:1 on the mint hover; body text keeps AA (5.2:1). */
+.ui-radio-card__label:hover .ui-radio-card__desc {
+  color: var(--color-text);
 }
 
 /* Selected: heavier border + filled radio dot (not colour alone). */

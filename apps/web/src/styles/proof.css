@@ -16,25 +16,48 @@
 .proof-metrics__item {
   display: grid;
   gap: var(--space-1);
+  align-content: start;
   min-width: 0;
-  padding: var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-sm);
+  padding-block: var(--space-5) 0;
+  /* Impact sits on the forest band: a thin gold rule, not a card. */
+  border-block-start: var(--border-width) solid var(--color-rule-accent);
 }
 
 .proof-metrics__value {
   font-family: var(--font-heading);
-  font-size: var(--text-h2);
+  font-size: var(--text-h1);
   font-weight: var(--weight-bold);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums lining-nums;
+  /* Impact numbers are one of the few gold elements (7.3:1 on forest). */
+  color: var(--color-text-accent-on-inverse);
+}
+
+.proof-metrics__label {
+  font-weight: var(--weight-semibold);
   color: var(--color-text-heading);
 }
 
 .proof-metrics__meta {
   font-size: var(--text-small);
-  color: var(--color-text-muted);
+  color: var(--color-text-inverse-muted);
 }
 
+.proof-band-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  margin-block-start: var(--space-8);
+}
+
+.proof-band-cta__note {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--color-text-inverse-muted);
+}
+
+/* Stories: champagne band, mint cards. Body text on mint (5.2:1), never secondary text. */
 .proof-stories {
   display: grid;
   gap: var(--space-4);
@@ -43,14 +66,72 @@
 }
 
 .proof-stories__item {
-  padding: var(--space-5);
+  --color-text-muted: var(--color-text);
+
+  padding: var(--space-6);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  background: var(--color-surface-accent);
   box-shadow: var(--shadow-sm);
 }
 
 .proof-stories__item h3 {
   margin-block-start: 0;
+}
+
+/* Where donations go — percentages in text, bars as reinforcement only. */
+.proof-allocation {
+  display: grid;
+  gap: var(--space-3);
+  max-width: var(--measure);
+  margin: 0 0 var(--space-8);
+  padding: var(--space-6);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.proof-allocation__title {
+  margin: 0;
+}
+
+.proof-allocation__list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.proof-allocation__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-3);
+}
+
+.proof-allocation__value {
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-heading);
+}
+
+.proof-allocation__track {
+  grid-column: 1 / -1;
+  block-size: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-accent);
+  overflow: hidden;
+}
+
+.proof-allocation__bar {
+  display: block;
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--color-action-primary-bg);
+}
+
+.proof-allocation__meta {
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
 }
 
 /* ── FAQ ─────────────────────────────────────────────────────────── */

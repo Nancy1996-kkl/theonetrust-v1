@@ -139,7 +139,6 @@ describe('live page (drafts hidden)', () => {
   it('hero uses the approved wording and never shows unconfirmed dashboard text', () => {
     renderHome();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(HOME_TEXT.heroTitle.en);
-    expect(document.body).not.toHaveTextContent(LANDING_CONTENT.hero.headline.value.en);
     expect(document.body).not.toHaveTextContent('Draft —');
   });
 

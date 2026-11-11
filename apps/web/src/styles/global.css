@@ -3,8 +3,8 @@
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/noto-sans-tamil';
 @import '@fontsource/noto-serif-tamil/tamil-700.css'; /* Tamil headings (bold only) */
-@import '@fontsource/libre-baskerville/400.css';
-@import '@fontsource/libre-baskerville/700.css';
+@import '@fontsource-variable/playfair-display/wght.css'; /* English headings (split by unicode-range) */
+@import '@fontsource-variable/playfair-display/wght-italic.css'; /* hero accent word */
 @import './tokens.css';
 @import './components.css';
 @import './shell.css';
@@ -131,9 +131,9 @@ button {
   outline-offset: var(--focus-ring-offset);
 }
 
-/* Dark green bands re-map the ROLE tokens, so headings, links, body text, outline buttons,
+/* Forest bands re-map the ROLE tokens, so headings, links, body text, outline buttons,
    form borders and the focus ring inside them all switch together (setting only `color`
-   leaves dark green headings on dark green). */
+   leaves forest headings on forest). */
 .surface-inverse {
   --color-text: var(--color-text-inverse);
   --color-text-muted: var(--color-text-inverse);
@@ -149,18 +149,18 @@ button {
   color: var(--color-text);
 }
 
-/* A light card placed inside a dark green band restores the light-surface role tokens.
+/* A light card placed inside a forest band restores the light-surface role tokens.
    Must mirror the :root values — tokens.test.ts checks they stay identical. */
 .surface {
-  --color-text: var(--palette-ink);
-  --color-text-muted: var(--palette-primary-soft);
-  --color-text-heading: var(--palette-primary);
-  --color-link: var(--palette-primary);
-  --color-focus: var(--palette-info);
-  --color-action-secondary-text: var(--palette-primary);
-  --color-action-secondary-border: var(--palette-primary);
-  --color-action-secondary-bg-hover: var(--palette-mist);
-  --color-border-input: var(--palette-primary-soft);
+  --color-text: var(--palette-body);
+  --color-text-muted: var(--palette-moss);
+  --color-text-heading: var(--palette-forest);
+  --color-link: var(--palette-green-deep);
+  --color-focus: var(--palette-green);
+  --color-action-secondary-text: var(--palette-forest);
+  --color-action-secondary-border: var(--palette-forest);
+  --color-action-secondary-bg-hover: var(--palette-mint);
+  --color-border-input: var(--palette-body);
 
   background: var(--color-surface);
   color: var(--color-text);

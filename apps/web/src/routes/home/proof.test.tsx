@@ -10,8 +10,11 @@ import { TRUST_FACTS, type TrustFacts } from '../../config/trust-facts.ts';
 import type { Bilingual } from '../../content/landing.ts';
 import {
   PROOF_CONTENT,
+  isPublishableAllocation,
   isPublishableMetric,
   isPublishableStory,
+  isWellFormedAllocation,
+  type Allocation,
   type ImpactMetric,
   type ProofContent,
 } from '../../content/proof.ts';
@@ -218,11 +221,16 @@ describe('impact', () => {
     expect(within(items[0]!).getByText('30 Apr 2026')).toHaveAttribute('datetime', '2026-04-30');
   });
 
-  it('shows stories only with consent', () => {
+  it('shows stories only with consent, inside the impact section', () => {
     renderHome('/', { proof: withData });
     const impact = section('impact');
     expect(within(impact).getByRole('heading', { name: 'A consented story' })).toBeVisible();
     expect(within(impact).queryByText('No consent story')).not.toBeInTheDocument();
+  });
+
+  it('stories wait while impact data is loading', () => {
+    renderHome('/', { proof: withData, states: { impact: { status: 'loading' } } });
+    expect(section('impact')).not.toHaveTextContent('A consented story');
   });
 
   it('preview shows draft metrics labelled Draft', () => {
@@ -235,7 +243,103 @@ describe('impact', () => {
   it('stories without metrics still render (no empty state)', () => {
     renderHome('/', { proof: { ...withData, impact: { ...withData.impact, metrics: [] } } });
     expect(within(section('impact')).queryByRole('list')).not.toBeInTheDocument();
+    expect(section('impact')).not.toHaveTextContent(HOME_TEXT.impactEmpty.en);
     expect(within(section('impact')).getByText('A consented story')).toBeVisible();
+  });
+});
+
+const allocation: Allocation = {
+  confirmed: true,
+  items: [
+    { id: 'food', label: { en: 'Food', ta: 'உணவு' }, percent: 60 },
+    { id: 'edu', label: { en: 'Education', ta: 'கல்வி' }, percent: 30.5 },
+    { id: 'ops', label: { en: 'Running costs', ta: 'இயக்கச் செலவு' }, percent: 9.5 },
+  ],
+  period: { en: 'Apr 2025 – Mar 2026', ta: 'ஏப் 2025 – மார் 2026' },
+  source: { en: 'Audited accounts', ta: 'தணிக்கை செய்யப்பட்ட கணக்குகள்' },
+};
+
+const withAllocation = (a: Allocation): ProofContent => ({
+  ...PROOF_CONTENT,
+  transparency: { ...PROOF_CONTENT.transparency, allocation: a },
+});
+
+describe('where donations go', () => {
+  it('is hidden on the live site until the trust confirms real figures', () => {
+    renderHome();
+    expect(document.getElementById('transparency')).toBeNull();
+    expect(isPublishableAllocation(PROOF_CONTENT.transparency.allocation)).toBe(false);
+  });
+
+  it('shows each share as text with a bar, plus source and period', () => {
+    renderHome('/', { proof: withAllocation(allocation) });
+    const chart = within(section('transparency')).getByRole('figure', {
+      name: 'Where donations go',
+    });
+    const items = within(chart).getAllByRole('listitem');
+    expect(items).toHaveLength(3);
+    expect(items[0]).toHaveTextContent('Food60%');
+    expect(items[1]).toHaveTextContent('30.5%');
+    const bar = items[0]!.querySelector<HTMLElement>('.proof-allocation__bar')!;
+    expect(bar.style.inlineSize).toBe('60%');
+    expect(bar.closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(chart).toHaveTextContent('Source: Audited accounts · Period: Apr 2025 – Mar 2026');
+  });
+
+  it('Tamil chart uses Tamil labels', () => {
+    renderHome('/ta/', { proof: withAllocation(allocation) });
+    expect(within(section('transparency')).getByText('நன்கொடைகள் எங்கு செல்கின்றன')).toBeVisible();
+    expect(within(section('transparency')).getByText('கல்வி')).toBeVisible();
+  });
+
+  it('an unconfirmed chart shows only in preview, labelled Draft', () => {
+    const draft = withAllocation({ ...allocation, confirmed: false });
+    renderHome('/', { proof: draft });
+    expect(document.querySelector('#transparency figure')).toBeNull();
+  });
+
+  it('preview labels an unconfirmed chart as Draft', () => {
+    renderHome('/', {
+      proof: withAllocation({ ...allocation, confirmed: false }),
+      showDrafts: true,
+    });
+    const chart = within(section('transparency')).getByRole('figure');
+    expect(chart).toHaveTextContent('Draft — not yet confirmed');
+  });
+
+  it.each([
+    ['shares that do not add up to 100', { items: [{ ...allocation.items[0]!, percent: 70 }] }],
+    [
+      'a negative share',
+      {
+        items: [
+          { ...allocation.items[0]!, percent: -5 },
+          { ...allocation.items[1]!, percent: 105 },
+        ],
+      },
+    ],
+    ['a share that is not a number', { items: [{ ...allocation.items[0]!, percent: Number.NaN }] }],
+    ['no items', { items: [] }],
+    ['no source', { source: { en: 'x', ta: ' ' } }],
+    ['no period', { period: { en: '', ta: 'x' } }],
+  ])('is never shown with %s, even in preview', (_case, patch) => {
+    const bad = { ...allocation, ...patch } as Allocation;
+    expect(isWellFormedAllocation(bad)).toBe(false);
+    renderHome('/', { proof: withAllocation(bad), showDrafts: true });
+    expect(document.querySelector('#transparency figure')).toBeNull();
+  });
+
+  it('accepts rounding to within half a percent', () => {
+    expect(
+      isWellFormedAllocation({
+        ...allocation,
+        items: [
+          { ...allocation.items[0]!, percent: 33.3 },
+          { ...allocation.items[1]!, percent: 33.3 },
+          { ...allocation.items[2]!, percent: 33.3 },
+        ],
+      }),
+    ).toBe(true);
   });
 });
 
