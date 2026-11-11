@@ -16,6 +16,7 @@ import {
   FaqSection,
   FinalCtaSection,
   ImpactSection,
+  StoriesSection,
   TransparencySection,
   type ProofProps,
 } from './ProofSections.tsx';
@@ -61,6 +62,7 @@ export function HomePage({
       <DonationHelpsSection {...props} />
       <HowItWorksSection {...props} />
       <ImpactSection {...proofProps} />
+      <StoriesSection {...proofProps} />
       <TransparencySection {...proofProps} />
       <FaqSection {...proofProps} />
       <ContactSection {...proofProps} />

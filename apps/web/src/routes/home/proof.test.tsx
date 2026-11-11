@@ -10,8 +10,11 @@ import { TRUST_FACTS, type TrustFacts } from '../../config/trust-facts.ts';
 import type { Bilingual } from '../../content/landing.ts';
 import {
   PROOF_CONTENT,
+  isPublishableAllocation,
   isPublishableMetric,
   isPublishableStory,
+  isWellFormedAllocation,
+  type Allocation,
   type ImpactMetric,
   type ProofContent,
 } from '../../content/proof.ts';
@@ -212,11 +215,54 @@ describe('impact', () => {
     expect(within(items[0]!).getByText('30 Apr 2026')).toHaveAttribute('datetime', '2026-04-30');
   });
 
-  it('shows stories only with consent', () => {
+  it('shows stories only with consent, in their own champagne Stories band with mint cards', () => {
     renderHome('/', { proof: withData });
+    const stories = section('stories');
+    expect(stories).toHaveClass('landing-section--champagne');
+    expect(
+      within(stories).getByRole('heading', { level: 2, name: 'Stories of change' }),
+    ).toBeVisible();
+    const card = within(stories)
+      .getByRole('heading', { name: 'A consented story' })
+      .closest('article');
+    expect(card).toHaveClass('proof-stories__item');
+    expect(within(stories).queryByText('No consent story')).not.toBeInTheDocument();
+    expect(section('impact')).not.toHaveTextContent('A consented story');
+  });
+
+  it('no consented stories: the Stories band is not rendered at all', () => {
+    renderHome();
+    expect(document.getElementById('stories')).toBeNull();
+  });
+
+  it('Stories band waits while impact data is loading or failed', () => {
+    renderHome('/', { proof: withData, states: { impact: { status: 'loading' } } });
+    expect(document.getElementById('stories')).toBeNull();
+  });
+
+  it('impact is a forest band with Donate and the verified-payment note, also when empty', () => {
+    renderHome();
     const impact = section('impact');
-    expect(within(impact).getByRole('heading', { name: 'A consented story' })).toBeVisible();
-    expect(within(impact).queryByText('No consent story')).not.toBeInTheDocument();
+    expect(impact).toHaveClass('landing-section--forest', 'surface-inverse');
+    expect(within(impact).getByRole('link', { name: 'Donate now' })).toHaveAttribute(
+      'href',
+      '/#donate',
+    );
+    expect(impact).toHaveTextContent('acknowledgement only after your payment is verified');
+  });
+
+  it('Tamil impact band keeps Donate on the Tamil page', () => {
+    renderHome('/ta/');
+    expect(
+      within(section('impact')).getByRole('link', { name: PROOF_CONTENT.impact.donateCta.ta }),
+    ).toHaveAttribute('href', '/ta/#donate');
+  });
+
+  it('metric values are read once, as published (moving digits are hidden)', () => {
+    renderHome('/', { proof: withData });
+    const item = within(section('impact')).getAllByRole('listitem')[0]!;
+    expect(item.querySelector('.visually-hidden')).toHaveTextContent('42');
+    expect(item.querySelector('[aria-hidden="true"].count-up__digits')).toHaveTextContent('42');
   });
 
   it('preview shows draft metrics labelled Draft', () => {
@@ -229,7 +275,135 @@ describe('impact', () => {
   it('stories without metrics still render (no empty state)', () => {
     renderHome('/', { proof: { ...withData, impact: { ...withData.impact, metrics: [] } } });
     expect(within(section('impact')).queryByRole('list')).not.toBeInTheDocument();
-    expect(within(section('impact')).getByText('A consented story')).toBeVisible();
+    expect(
+      within(section('impact')).queryByText('Figures will be published here'),
+    ).not.toBeInTheDocument();
+    expect(within(section('stories')).getByText('A consented story')).toBeVisible();
+  });
+});
+
+const allocation: Allocation = {
+  confirmed: true,
+  items: [
+    { id: 'food', label: { en: 'Food', ta: 'உணவு' }, percent: 60 },
+    { id: 'edu', label: { en: 'Education', ta: 'கல்வி' }, percent: 30.5 },
+    { id: 'ops', label: { en: 'Running costs', ta: 'இயக்கச் செலவு' }, percent: 9.5 },
+  ],
+  period: { en: 'Apr 2025 – Mar 2026', ta: 'ஏப் 2025 – மார் 2026' },
+  source: { en: 'Audited accounts', ta: 'தணிக்கை செய்யப்பட்ட கணக்குகள்' },
+};
+
+const withAllocation = (a: Allocation): ProofContent => ({
+  ...PROOF_CONTENT,
+  transparency: { ...PROOF_CONTENT.transparency, allocation: a },
+});
+
+describe('where donations go', () => {
+  it('is hidden on the live site until the trust confirms real figures', () => {
+    renderHome();
+    expect(within(section('transparency')).queryByText('Where donations go')).toBeNull();
+    expect(isPublishableAllocation(PROOF_CONTENT.transparency.allocation)).toBe(false);
+  });
+
+  it('shows each share as text with a bar, plus source and period', () => {
+    renderHome('/', { proof: withAllocation(allocation) });
+    const chart = within(section('transparency')).getByRole('figure', {
+      name: 'Where donations go',
+    });
+    const items = within(chart).getAllByRole('listitem');
+    expect(items).toHaveLength(3);
+    expect(items[0]).toHaveTextContent('Food60%');
+    expect(items[1]).toHaveTextContent('30.5%');
+    const bar = items[0]!.querySelector<HTMLElement>('.proof-allocation__bar')!;
+    expect(bar.style.inlineSize).toBe('60%');
+    expect(bar.closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(chart).toHaveTextContent('Source: Audited accounts · Period: Apr 2025 – Mar 2026');
+  });
+
+  it('Tamil chart uses Tamil labels', () => {
+    renderHome('/ta/', { proof: withAllocation(allocation) });
+    expect(within(section('transparency')).getByText('நன்கொடைகள் எங்கு செல்கின்றன')).toBeVisible();
+    expect(within(section('transparency')).getByText('கல்வி')).toBeVisible();
+  });
+
+  it('an unconfirmed chart shows only in preview, labelled Draft', () => {
+    const draft = withAllocation({ ...allocation, confirmed: false });
+    renderHome('/', { proof: draft });
+    expect(within(section('transparency')).queryByRole('figure')).toBeNull();
+  });
+
+  it('preview labels an unconfirmed chart as Draft', () => {
+    renderHome('/', {
+      proof: withAllocation({ ...allocation, confirmed: false }),
+      showDrafts: true,
+    });
+    const chart = within(section('transparency')).getByRole('figure');
+    expect(chart).toHaveTextContent('Draft — not yet confirmed');
+  });
+
+  it.each([
+    ['shares that do not add up to 100', { items: [{ ...allocation.items[0]!, percent: 70 }] }],
+    [
+      'a negative share',
+      {
+        items: [
+          { ...allocation.items[0]!, percent: -5 },
+          { ...allocation.items[1]!, percent: 105 },
+        ],
+      },
+    ],
+    ['a share that is not a number', { items: [{ ...allocation.items[0]!, percent: Number.NaN }] }],
+    ['no items', { items: [] }],
+    ['no source', { source: { en: 'x', ta: ' ' } }],
+    ['no period', { period: { en: '', ta: 'x' } }],
+  ])('is never shown with %s, even in preview', (_case, patch) => {
+    const bad = { ...allocation, ...patch } as Allocation;
+    expect(isWellFormedAllocation(bad)).toBe(false);
+    renderHome('/', { proof: withAllocation(bad), showDrafts: true });
+    expect(within(section('transparency')).queryByRole('figure')).toBeNull();
+  });
+
+  it('accepts rounding to within half a percent', () => {
+    expect(
+      isWellFormedAllocation({
+        ...allocation,
+        items: [
+          { ...allocation.items[0]!, percent: 33.3 },
+          { ...allocation.items[1]!, percent: 33.3 },
+          { ...allocation.items[2]!, percent: 33.3 },
+        ],
+      }),
+    ).toBe(true);
+  });
+});
+
+describe('section rhythm', () => {
+  it('forest hero → ivory → white → ivory → forest impact → ivory → champagne → white → forest', () => {
+    renderHome();
+    const bands = [...document.querySelectorAll('main section')].map((el) => {
+      if (el.classList.contains('surface-inverse')) return `${el.id}:forest`;
+      if (el.classList.contains('landing-section--champagne')) return `${el.id}:champagne`;
+      if (el.classList.contains('landing-section--white')) return `${el.id}:white`;
+      return `${el.id}:ivory`;
+    });
+    expect(bands).toEqual([
+      'top:forest',
+      'about:ivory',
+      'ways-we-help:white',
+      'how-it-works:ivory',
+      'impact:forest',
+      'transparency:ivory',
+      'faq:champagne',
+      'contact:white',
+      'give:forest',
+    ]);
+  });
+
+  it('every forest band has a Donate button', () => {
+    renderHome();
+    for (const band of document.querySelectorAll('main section.surface-inverse')) {
+      expect(band.querySelector('.ui-button--donate')).not.toBeNull();
+    }
   });
 });
 

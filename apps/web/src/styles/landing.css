@@ -20,12 +20,35 @@
   scroll-margin-block-start: var(--space-16);
 }
 
-.landing-section:nth-of-type(even) {
+/* Bands (see routes/home/bands.ts): ivory is the page background. */
+.landing-section--white {
   background: var(--color-surface);
+}
+
+.landing-section--champagne {
+  background: var(--color-surface-muted);
+}
+
+/* Forest bands are framed by thin gold rules, like the hero. */
+.landing-section--forest {
+  border-block: var(--border-width) solid var(--color-rule-accent);
 }
 
 .landing-section h2 {
   margin-block: 0 var(--space-4);
+}
+
+/* A short 1px gold rule above every section title — gold as an accent, never as text. */
+.landing-section h2::before {
+  content: '';
+  display: block;
+  inline-size: var(--space-12);
+  margin-block-end: var(--space-4);
+  border-block-start: var(--border-width) solid var(--color-rule-accent);
+}
+
+.landing-section--forest .landing__intro {
+  color: var(--color-text-inverse-muted);
 }
 
 .landing__intro {
@@ -44,21 +67,178 @@
 }
 
 /* ── Hero ────────────────────────────────────────────────────────── */
+/* Forest band (.surface-inverse re-maps text, links, outline buttons and focus to the dark set).
+   Phones/tablets: banner on top fading into forest, text below. Laptop+: text on the left over
+   solid forest, banner on the right behind a forest scrim, so text never sits on the photo. */
 .landing-hero {
-  padding-block: var(--space-section);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   scroll-margin-block-start: var(--space-16);
+  border-block-end: var(--border-width) solid var(--color-rule-accent);
 }
 
-.landing-hero__grid {
-  display: grid;
-  gap: var(--space-8);
-  align-items: center;
+.landing-hero__media {
+  position: relative;
+  /* Short enough that headline + Donate stay above the fold on a 360 × 800 phone in Tamil. */
+  aspect-ratio: 3 / 2;
+  background: var(--color-surface-inverse);
 }
 
-@media (min-width: 64em) {
-  .landing-hero__grid {
-    grid-template-columns: 3fr 2fr;
+@media (min-width: 48em) {
+  .landing-hero__media {
+    aspect-ratio: 16 / 9;
+    max-block-size: 30rem;
+    inline-size: 100%;
   }
+}
+
+/* Carousel: slides are stacked and crossfade; each clip fades in over its still once it is
+   actually painting, so a slow network never shows a blank box. */
+.hero-carousel__slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--duration-entrance) var(--ease-entrance);
+}
+
+.hero-carousel__slide[data-active] {
+  opacity: 1;
+}
+
+.landing-hero__poster,
+.landing-hero__video {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  max-width: none;
+  object-fit: cover;
+}
+
+.landing-hero__video {
+  opacity: 0;
+  transition: opacity var(--duration-entrance) var(--ease-entrance);
+}
+
+/* Framing: keep the people in view as the box changes shape. */
+[data-slide='smile'] > * {
+  object-position: 72% 30%;
+}
+
+[data-slide='notebook'] > * {
+  object-position: 62% 40%;
+}
+
+[data-slide='supplies'] > * {
+  object-position: 50% 45%;
+}
+
+[data-slide='wheelchair'] > * {
+  object-position: 40% 50%;
+}
+
+.hero-carousel__slide[data-painting] .landing-hero__video {
+  opacity: 1;
+}
+
+/* Scrim: fades the photo into the forest band so the text below always reads on forest. */
+.landing-hero__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-hero-scrim-stacked);
+  pointer-events: none;
+}
+
+/* Controls sit above the scrim: pause + one slim progress segment per clip. */
+.hero-carousel__controls {
+  position: absolute;
+  z-index: 1;
+  /* Phones/tablets: top-right, clear of the headline that overlaps the banner's faded foot. */
+  inset-block-start: var(--space-3);
+  inset-inline-end: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hero-carousel__dots {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.hero-carousel__dot {
+  display: grid;
+  align-items: center;
+  inline-size: var(--space-10);
+  min-height: var(--control-height-sm);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.hero-carousel__dot:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.hero-carousel__track {
+  display: block;
+  block-size: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--color-border-input);
+  overflow: hidden;
+}
+
+/* Gold fill = how far the current clip has played; a small gold accent, never text. */
+.hero-carousel__fill {
+  display: block;
+  block-size: 100%;
+  background: var(--color-rule-accent);
+  transform: scaleX(var(--progress, 0));
+  transform-origin: left center;
+  transition: transform var(--duration-base) linear;
+}
+
+.hero-carousel__dot[aria-current='true'] .hero-carousel__track {
+  background: var(--color-text-inverse-muted);
+}
+
+/* Still mode (reduced motion / data saver): the current segment is simply full. */
+.hero-carousel:not(:has(video)) .hero-carousel__dot[aria-current='true'] .hero-carousel__fill {
+  --progress: 1;
+}
+
+.hero-carousel__dot:hover .hero-carousel__track {
+  background: var(--color-text-inverse);
+}
+
+.landing-hero__motion {
+  display: grid;
+  place-items: center;
+  inline-size: var(--control-height-sm);
+  min-height: var(--control-height-sm);
+  padding: 0;
+  border: var(--border-width) solid var(--color-border-input);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-inverse);
+  color: var(--color-text-inverse);
+  opacity: 0.85;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.landing-hero__motion:hover,
+.landing-hero__motion:focus-visible {
+  opacity: 1;
+}
+
+.landing-hero__inner {
+  position: relative;
+  /* Pull the text up over the faded bottom of the banner on small screens. */
+  margin-block-start: calc(var(--space-12) * -1);
+  padding-block: 0 var(--space-section);
 }
 
 .landing-hero__text {
@@ -66,67 +246,206 @@
   gap: var(--space-4);
   justify-items: start;
   min-width: 0;
+  max-width: 36rem;
 }
 
 .landing-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
   margin: 0;
   font-size: var(--text-small);
   font-weight: var(--weight-semibold);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--color-text-inverse);
+}
+
+/* Thin gold rule before the eyebrow — one of the few places gold is used. */
+.landing-hero__eyebrow::before {
+  content: '';
+  flex: none;
+  inline-size: var(--space-8);
+  border-block-start: var(--border-width) solid var(--color-rule-accent);
+}
+
+:lang(ta) .landing-hero__eyebrow {
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .landing-hero__title {
   margin: 0;
   font-size: var(--text-hero);
-  max-width: 18ch;
+  font-weight: var(--weight-semibold);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--color-text-inverse);
   /* The fallback headline is one long word (the site name): let it break at 200% zoom. */
   overflow-wrap: anywhere;
 }
 
+.landing-hero__accent {
+  display: block;
+  font-style: italic;
+  font-weight: var(--weight-medium);
+  color: var(--color-text-inverse-muted);
+}
+
 :lang(ta) .landing-hero__title {
-  max-width: none;
+  font-size: var(--text-hero-ta);
+  font-weight: var(--weight-bold);
+  line-height: 1.4; /* tighter than body Tamil, still clear of stacked vowel signs */
+  letter-spacing: 0;
+}
+
+:lang(ta) .landing-hero__accent {
+  font-style: normal;
+  font-weight: var(--weight-bold);
 }
 
 .landing-hero__lead {
   margin: 0;
-  max-width: var(--measure);
-  color: var(--color-text-muted);
+  max-width: 34rem;
+  color: var(--color-text-inverse-muted);
 }
 
 .landing-hero__actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
+  margin-block-start: var(--space-2);
 }
 
-.landing-hero__note {
-  margin: 0;
-  font-size: var(--text-small);
-  color: var(--color-text-muted);
-}
-
-/* Typographic visual: a calm dark green panel with an accent rule — no stock people (spec §4.2). */
-.landing-hero__art {
-  display: none;
-  place-items: center;
-  min-block-size: 18rem;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
-}
-
-@media (min-width: 64em) {
-  .landing-hero__art {
+/* Phones: full-width buttons, so long Tamil labels stay on one line. */
+@media (max-width: 29.99em) {
+  .landing-hero__actions {
     display: grid;
+    inline-size: 100%;
   }
 }
 
-.landing-hero__mark {
-  inline-size: var(--space-24);
-  block-size: var(--space-24);
-  border: var(--border-width-strong) solid var(--color-focus-on-inverse);
-  border-radius: var(--radius-pill);
+.landing-hero__icon {
+  flex: none;
+  inline-size: 1.15em;
+  block-size: 1.15em;
+}
+
+.landing-hero__actions .ui-button {
+  transition:
+    background-color var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.landing-hero__actions .ui-button [data-icon='arrow'] {
+  transition: translate var(--duration-base) var(--ease-standard);
+}
+
+.landing-hero__actions .ui-button:hover [data-icon='arrow'] {
+  translate: var(--space-1) 0;
+}
+
+.landing-hero__help,
+.landing-hero__place,
+.landing-hero__note {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--color-text-inverse-muted);
+}
+
+.landing-hero__help-link {
+  color: var(--color-text-inverse);
+  font-weight: var(--weight-semibold);
+  text-underline-offset: 0.25em;
+  text-decoration-color: var(--color-rule-accent);
+}
+
+.landing-hero__place {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block-start: var(--space-4);
+  border-block-start: var(--border-width) solid var(--color-border-input);
+}
+
+.landing-hero__place .landing-hero__icon {
+  color: var(--color-text-accent-on-inverse);
+}
+
+/* Laptop and up: side-by-side composition from the approved hero design. */
+@media (min-width: 64em) {
+  .landing-hero {
+    display: grid;
+    align-items: center;
+    min-block-size: clamp(30rem, 66vh, 38rem);
+  }
+
+  .landing-hero__media {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    inline-size: 74%;
+    max-block-size: none;
+    aspect-ratio: auto;
+  }
+
+  .landing-hero__media::after {
+    background: var(--gradient-hero-scrim);
+  }
+
+  .hero-carousel__controls {
+    inset-block: auto var(--space-6);
+    inset-inline-end: var(--space-6);
+  }
+
+  /* Wide banner: the portrait is low-res, so show more of the frame rather than the face. */
+  [data-slide='smile'] > * {
+    object-position: 100% 35%;
+  }
+
+  .landing-hero__inner {
+    inline-size: 100%;
+    margin-block-start: 0;
+    padding-block: var(--space-16);
+  }
+
+  .landing-hero__text {
+    max-width: 34rem;
+    gap: var(--space-5);
+  }
+
+  :lang(ta) .landing-hero__text {
+    /* Wider than English for longer Tamil words, still inside the solid part of the scrim. */
+    max-width: 36rem;
+  }
+}
+
+/* One orchestrated entrance on load; everything is visible without it. */
+@media (prefers-reduced-motion: no-preference) {
+  .landing-hero__text > * {
+    animation: landing-hero-rise var(--duration-entrance) var(--ease-entrance) both;
+  }
+
+  .landing-hero__text > :nth-child(2) {
+    animation-delay: calc(var(--duration-fast) * 0.5);
+  }
+
+  .landing-hero__text > :nth-child(3) {
+    animation-delay: var(--duration-fast);
+  }
+
+  .landing-hero__text > :nth-child(n + 4) {
+    animation-delay: calc(var(--duration-fast) * 1.5);
+  }
+}
+
+/* No opacity change: text keeps its full contrast at every frame (axe and real readers alike);
+   a short rise with a soft focus-in gives the same entrance. */
+@keyframes landing-hero-rise {
+  from {
+    translate: 0 var(--space-4);
+    filter: blur(6px);
+  }
 }
 
 /* ── Facts strip ─────────────────────────────────────────────────── */
@@ -153,6 +472,38 @@
 
 .landing-facts__item dd {
   margin: 0;
+}
+
+/* Trust badges (registration, tax approval): gold outline, forest text. */
+.landing-facts__item--badge {
+  border-color: var(--color-rule-accent);
+  box-shadow: inset 0 0 0 var(--border-width) var(--color-rule-accent);
+}
+
+.landing-facts__item--badge dt {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-accent);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+:lang(ta) .landing-facts__item--badge dt {
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.landing-facts__item--badge dd {
+  font-family: var(--font-heading);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-heading);
+}
+
+.landing-facts__seal {
+  flex: none;
+  inline-size: 1.25em;
+  block-size: 1.25em;
 }
 
 /* ── Ways we help ────────────────────────────────────────────────── */
@@ -247,9 +598,12 @@
   inline-size: var(--space-10);
   block-size: var(--space-10);
   border-radius: var(--radius-pill);
-  background: var(--color-action-primary-bg);
-  color: var(--color-action-primary-text);
+  background: var(--color-surface-inverse);
+  /* Gold numeral on forest (7.3:1) — a "small icon" use of gold. */
+  color: var(--color-text-accent-on-inverse);
+  font-family: var(--font-heading);
   font-weight: var(--weight-bold);
+  font-variant-numeric: lining-nums;
 }
 
 /* ── Scroll reveal (motion only when the visitor allows it) ─────── */

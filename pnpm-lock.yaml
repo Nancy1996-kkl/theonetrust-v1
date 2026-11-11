@@ -105,7 +105,7 @@ importers:
       '@fontsource-variable/noto-sans-tamil':
         specifier: 5.3.0
         version: 5.3.0
-      '@fontsource/libre-baskerville':
+      '@fontsource-variable/playfair-display':
         specifier: 5.3.0
         version: 5.3.0
       '@fontsource/noto-serif-tamil':
@@ -585,8 +585,8 @@ packages:
   '@fontsource-variable/noto-sans-tamil@5.3.0':
     resolution: {integrity: sha512-zyyajkRVJb7Uy6T2+ws2hR+0U7FnJqMfzakls3WgWNZ4ia0EFHLyFAHLZdUV5yiFzHufc701KOxktrwrI3J7FQ==}
 
-  '@fontsource/libre-baskerville@5.3.0':
-    resolution: {integrity: sha512-IA6OLq36/JWMX70Fha15sri2qWsijFh7hgdDXCRZHjKUHtWarLQoiGilvm7iMqm7HiYFEv9acF3+IuRHO9kUiA==}
+  '@fontsource-variable/playfair-display@5.3.0':
+    resolution: {integrity: sha512-IHdzTvE8eGIXHteZql7KXoqdc3Gfm+Zs1u4XlSC3MeplkwviT3sx/P6gI0tLwg/xIYLF4ZJYveZ5V+bl9cnDwA==}
 
   '@fontsource/noto-serif-tamil@5.3.0':
     resolution: {integrity: sha512-Ksc/mqtACXTPzFQac1DF4xi4Cu4YhMYGQavu/DJX/wNxCIoCD/YUtYlK2tFDGs/uvKa8YbPXvGbIZP/j3C+7pQ==}
@@ -3319,7 +3319,7 @@ snapshots:
 
   '@fontsource-variable/noto-sans-tamil@5.3.0': {}
 
-  '@fontsource/libre-baskerville@5.3.0': {}
+  '@fontsource-variable/playfair-display@5.3.0': {}
 
   '@fontsource/noto-serif-tamil@5.3.0': {}
 

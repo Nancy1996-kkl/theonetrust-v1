@@ -111,13 +111,46 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     fg: '--color-text-inverse',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Text, headings, links on dark green band',
+    where: 'Text, headings, links on forest band',
   },
   {
     fg: '--color-text-accent-on-inverse',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Accent label on dark green',
+    where: 'Gold label on forest',
+  },
+  {
+    fg: '--color-text-inverse-muted',
+    bg: '--color-surface-inverse',
+    use: 'text',
+    where: 'Lead text on forest band',
+  },
+  { fg: '--color-text-accent', bg: '--color-bg', use: 'text', where: 'Gold label on page' },
+  { fg: '--color-text-accent', bg: '--color-surface', use: 'text', where: 'Gold label on cards' },
+  {
+    fg: '--color-text',
+    bg: '--color-surface-accent',
+    use: 'text',
+    where: 'Body text on mint card',
+  },
+  {
+    fg: '--color-text-heading',
+    bg: '--color-surface-accent',
+    use: 'text',
+    where: 'Headings on mint card',
+  },
+  { fg: '--color-link', bg: '--color-surface-accent', use: 'text', where: 'Links on mint card' },
+  {
+    fg: '--color-focus',
+    bg: '--color-surface-accent',
+    use: 'ui',
+    where: 'Focus ring on mint card',
+  },
+  {
+    fg: '--color-status-warning-text',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Warning message on muted band',
   },
   {
     fg: '--color-action-primary-text',
@@ -211,31 +244,19 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     fg: '--color-focus-on-inverse',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Focus ring on dark green',
+    where: 'Focus ring on forest',
   },
   {
     fg: '--color-border-input-on-inverse',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Form field border on dark green',
+    where: 'Form field border on forest',
   },
   {
     fg: '--color-text-inverse',
     bg: '--color-action-secondary-bg-hover-on-inverse',
     use: 'text',
-    where: 'Outline button hover on dark green',
-  },
-  {
-    fg: '--color-status-warning-text',
-    bg: '--color-surface-muted',
-    use: 'text',
-    where: 'Warning text on muted band (passes with the green palette)',
-  },
-  {
-    fg: '--color-status-success',
-    bg: '--color-surface-muted',
-    use: 'text',
-    where: 'Success text on muted band (passes with the medium-green palette)',
+    where: 'Outline button hover on forest',
   },
 ];
 
@@ -244,8 +265,8 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
  * rule stays documented and nobody quietly moves them into CONTRAST_PAIRS.
  */
 export const FORBIDDEN_PAIRS: ContrastPair[] = [
-  { fg: '--palette-accent', bg: '--color-bg', use: 'text', where: 'Accent text on page' },
-  { fg: '--palette-accent', bg: '--color-surface', use: 'text', where: 'Accent text on cards' },
+  { fg: '--palette-gold', bg: '--color-bg', use: 'text', where: 'Gold text on page' },
+  { fg: '--palette-gold', bg: '--color-surface', use: 'text', where: 'Gold text on cards' },
   {
     fg: '--color-status-warning',
     bg: '--color-surface',
@@ -253,22 +274,46 @@ export const FORBIDDEN_PAIRS: ContrastPair[] = [
     where: 'Warning orange as text',
   },
   {
+    fg: '--color-status-success',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Success text on muted band',
+  },
+  {
+    fg: '--color-text-accent',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Gold text on champagne band',
+  },
+  {
+    fg: '--palette-green',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Brand green as text on champagne',
+  },
+  {
+    fg: '--color-text-muted',
+    bg: '--color-surface-accent',
+    use: 'text',
+    where: 'Secondary text on mint card',
+  },
+  {
     fg: '--color-focus',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Blue focus ring on dark green',
+    where: 'Green focus ring on forest',
   },
   {
     fg: '--color-border-input',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Steel input border on dark green',
+    where: 'Body-green input border on forest',
   },
   {
     fg: '--color-action-secondary-text',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Dark green outline button on dark green',
+    where: 'Forest outline button on forest',
   },
 ];
 
