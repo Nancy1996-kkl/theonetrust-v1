@@ -51,11 +51,7 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
 | `--palette-champagne`    | #F7E7CE | Champagne — stories and muted bands                                   |
 | `--palette-ivory`        | #FFFDF8 | Ivory — page background                                               |
 | `--palette-body`         | #4A5A50 | Body text, form borders                                               |
-| `--palette-home-ivory`   | #F7F5EF | Home redesign — page background                                       |
-| `--palette-peach`        | #FCF1E5 | Home redesign — warm section background                               |
-| `--palette-home-sage`    | #76968A | Home redesign — shapes, frames, icons (never body text)               |
-| `--palette-sage-tint`    | #E6EEE9 | Home redesign — soft sage band                                        |
-| `--palette-navy`         | #002C61 | Home redesign — headings, impact band, footer                         |
+| `--palette-sage-tint`    | #E6EEE9 | Home page — soft sage band                                            |
 | `--palette-white`        | #FFFFFF | Card surfaces, text on forest                                         |
 | `--palette-success`      | #287A55 | Success                                                               |
 | `--palette-warning`      | #B7791F | Warning icons/borders                                                 |

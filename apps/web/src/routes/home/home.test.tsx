@@ -1,3 +1,4 @@
+import { LANDING_CONTENT } from '../../content/landing.ts';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RouterProvider, createMemoryRouter } from 'react-router';
@@ -106,7 +107,10 @@ describe('home page design (client, Nov 2026)', () => {
   it('works in Tamil', async () => {
     renderAt('/ta/');
     expect(
-      await screen.findByRole('heading', { level: 1, name: HOME_TEXT.heroTitle.ta }),
+      await screen.findByRole('heading', {
+        level: 1,
+        name: LANDING_CONTENT.hero.headline.value.ta,
+      }),
     ).toBeVisible();
     expect(screen.getByRole('tab', { name: 'கல்வி' })).toBeVisible();
   });

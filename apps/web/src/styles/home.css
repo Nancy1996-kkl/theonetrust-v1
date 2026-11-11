@@ -1,6 +1,6 @@
 /*
  * Home page redesign preview (client, Nov 2026) — scoped to `.hp` so the live page is untouched.
- * Palette: ivory background, peach and sage bands, navy headings and footer, green actions.
+ * Palette: ivory background, peach and sage bands, forest headings and footer, green actions.
  * Photos sit in a different outline in every section and swap sides section by section.
  */
 .hp {
@@ -20,7 +20,7 @@
   overflow-x: clip;
 }
 
-.hp-tint-peach {
+.hp-tint-warm {
   background: var(--color-home-warm);
 }
 
@@ -98,7 +98,7 @@
 }
 
 .hp-hero .ui-button--donate.hp-btn {
-  border-color: var(--color-home-on-navy);
+  border-color: var(--color-home-on-dark);
 }
 
 .hp-btn:hover {
@@ -114,7 +114,7 @@
   background: linear-gradient(
     110deg,
     transparent 30%,
-    color-mix(in srgb, var(--color-home-on-navy) 45%, transparent) 50%,
+    color-mix(in srgb, var(--color-home-on-dark) 45%, transparent) 50%,
     transparent 70%
   );
   translate: -100% 0;
@@ -241,22 +241,22 @@
   scale: 1.05;
 }
 
-/* ── 1 · Hero: navy band, white text ── */
+/* ── 1 · Hero: forest band, white text ── */
 .hp-hero {
-  background: var(--color-home-navy);
-  color: var(--color-home-on-navy);
+  background: var(--color-home-dark);
+  color: var(--color-home-on-dark);
 }
 
 .hp-hero h1,
 .hp-hero .hp-kicker,
 .hp-hero .hp-note,
 .hp-hero .hp-link {
-  color: var(--color-home-on-navy);
+  color: var(--color-home-on-dark);
 }
 
 .hp-hero .ui-button--secondary {
-  border-color: var(--color-home-on-navy);
-  color: var(--color-home-on-navy);
+  border-color: var(--color-home-on-dark);
+  color: var(--color-home-on-dark);
   background: transparent;
 }
 
@@ -537,9 +537,9 @@
 }
 
 .hp-tab[aria-selected='true'] {
-  border-color: var(--color-home-navy);
-  background: var(--color-home-navy);
-  color: var(--color-home-on-navy);
+  border-color: var(--color-home-dark);
+  background: var(--color-home-dark);
+  color: var(--color-home-on-dark);
 }
 
 .hp-explore__title {
@@ -568,15 +568,15 @@
   font-weight: 700;
 }
 
-/* ── 5 · Impact (navy) ── */
-.hp-navy {
-  background: var(--color-home-navy);
-  color: var(--color-home-on-navy);
+/* ── 5 · Impact (forest) ── */
+.hp-dark {
+  background: var(--color-home-dark);
+  color: var(--color-home-on-dark);
 }
 
-.hp-navy h2,
-.hp-navy .hp-kicker {
-  color: var(--color-home-on-navy);
+.hp-dark h2,
+.hp-dark .hp-kicker {
+  color: var(--color-home-on-dark);
 }
 
 .hp-stats {
@@ -743,8 +743,8 @@
   margin-block-start: var(--space-10);
   padding: var(--space-6) var(--space-8);
   border-radius: var(--radius-xl);
-  background: var(--color-home-navy);
-  color: var(--color-home-on-navy);
+  background: var(--color-home-dark);
+  color: var(--color-home-on-dark);
 }
 
 .hp-band__title {
@@ -759,7 +759,7 @@
 }
 
 .hp-band a {
-  color: var(--color-home-on-navy);
+  color: var(--color-home-on-dark);
   font-weight: 700;
 }
 
@@ -845,7 +845,7 @@
   padding: 0 var(--space-6) var(--space-4);
 }
 
-/* ── 10 · Footer (navy) ── */
+/* ── 10 · Footer (forest) ── */
 
 /* ── Light motion: only when the visitor allows it ── */
 .hp-card,
@@ -1210,8 +1210,8 @@
   margin-top: var(--space-6);
 }
 
-/* Links on the navy band (impact empty state → transparency) stay readable and underlined. */
-.hp-navy a {
-  color: var(--color-home-on-navy);
+/* Links on the forest band (impact empty state → transparency) stay readable and underlined. */
+.hp-dark a {
+  color: var(--color-home-on-dark);
   text-decoration: underline;
 }

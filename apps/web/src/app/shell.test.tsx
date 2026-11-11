@@ -42,6 +42,28 @@ describe('landmarks and skip link', () => {
 });
 
 describe('header', () => {
+  it('home: floats see-through over the hero, turns solid once scrolled (client, Nov 2026)', () => {
+    renderRoute('/');
+    expect(banner()).toHaveClass('site-header--home', 'site-header--overlay');
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { value: 200, configurable: true });
+      fireEvent.scroll(window);
+    });
+    expect(banner()).toHaveClass('site-header--home');
+    expect(banner()).not.toHaveClass('site-header--overlay');
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+      fireEvent.scroll(window);
+    });
+    expect(banner()).toHaveClass('site-header--overlay');
+  });
+
+  it('other pages keep the solid header', () => {
+    renderRoute('/privacy');
+    expect(banner()).not.toHaveClass('site-header--home');
+    expect(banner()).not.toHaveClass('site-header--overlay');
+  });
+
   it('links the five sections (in page order), Get Help and Donate to anchors on the single page', () => {
     renderRoute('/');
     const nav = within(banner()).getByRole('navigation', { name: 'Sections' });

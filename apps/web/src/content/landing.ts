@@ -118,12 +118,13 @@ export const LANDING_CONTENT: LandingContent = {
         ta: 'ஒன்றாகச் சேர்ந்தால், மாற்றம் கொண்டுவர முடியும்.',
       },
     },
-    headlineAccent: null,
+    headlineAccent: { en: 'make a difference.', ta: 'மாற்றம் கொண்டுவர முடியும்.' },
     lead: {
       confirmed: true,
       value: {
-        en: 'We are a non-profit trust working for the development and a better future of underprivileged children and communities.',
-        ta: 'பின்தங்கிய குழந்தைகள் மற்றும் சமூகங்களின் வளர்ச்சிக்காகவும் சிறந்த எதிர்காலத்துக்காகவும் செயல்படும் லாப நோக்கற்ற அறக்கட்டளை நாங்கள்.',
+        // Hero description from the home design the client approved (Nov 2026).
+        en: 'Supporting education, caring for the sick and the elderly, and standing with families when life gets hard.',
+        ta: 'படிப்புக்குத் துணை, நோயாளிகளுக்கும் முதியவர்களுக்கும் கவனிப்பு, கஷ்டமான நேரத்தில் குடும்பங்களுக்கு ஆதரவு.',
       },
     },
     donateCta: { en: 'Donate now', ta: 'இப்போதே நன்கொடை கொடுங்கள்' },

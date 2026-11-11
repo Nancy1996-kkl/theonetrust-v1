@@ -21,23 +21,6 @@ export interface Step {
 
 export const HOME_TEXT = {
   photo: { en: 'Photo', ta: 'படம்' },
-  heroFallbackLead: { en: 'Theonetrust.in', ta: 'Theonetrust.in' },
-
-  // 1 · Hero (client's wording)
-  heroTitle: {
-    en: 'Together, we can make a difference.',
-    ta: 'ஒன்றாகச் சேர்ந்தால், மாற்றம் கொண்டுவர முடியும்.',
-  },
-  heroLead: {
-    en: 'Supporting education, caring for the sick and the elderly, and standing with families when life gets hard.',
-    ta: 'படிப்புக்குத் துணை, நோயாளிகளுக்கும் முதியவர்களுக்கும் கவனிப்பு, கஷ்டமான நேரத்தில் குடும்பங்களுக்கு ஆதரவு.',
-  },
-  ourActivities: { en: 'See our work', ta: 'எங்கள் பணிகளைப் பாருங்கள்' },
-  trustNote: {
-    en: 'Secure payment · Every gift checked by the trust · Acknowledgement online',
-    ta: 'பாதுகாப்பான பணம் செலுத்துதல் · ஒவ்வொரு நன்கொடையையும் அறக்கட்டளை சரிபார்க்கிறது · இணையத்தில் ஒப்புகை',
-  },
-
   // 2 · Mission & vision
   visionKicker: { en: 'About the trust', ta: 'அறக்கட்டளையைப் பற்றி' },
   visionTitle: { en: 'Our mission & vision', ta: 'எங்கள் பணியும் கனவும்' },

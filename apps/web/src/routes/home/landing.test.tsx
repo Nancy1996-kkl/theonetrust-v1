@@ -138,7 +138,9 @@ describe('live page (drafts hidden)', () => {
 
   it('hero uses the approved wording and never shows unconfirmed dashboard text', () => {
     renderHome();
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(HOME_TEXT.heroTitle.en);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      LANDING_CONTENT.hero.headline.value.en,
+    );
     expect(document.body).not.toHaveTextContent('Draft —');
   });
 
@@ -163,7 +165,7 @@ describe('live page (drafts hidden)', () => {
     const hero = document.getElementById('top')!;
     expect(within(hero).getByRole('link', { name: 'Donate now' })).toHaveAttribute(
       'href',
-      '#donate',
+      '/#donate',
     );
     expect(within(hero).getByRole('link', { name: /Get Help/ })).toHaveAttribute(
       'href',
@@ -255,27 +257,33 @@ describe('scroll reveal', () => {
   });
 
   it('waits, then reveals when the section scrolls into view, and disconnects', () => {
-    const observers: Array<{ cb: IntersectionObserverCallback; disconnect: () => void }> = [];
+    // The hero video carousel also observes the page, so match the observer to its element.
+    const observers: Array<{
+      cb: IntersectionObserverCallback;
+      disconnect: () => void;
+      target?: Element;
+    }> = [];
     class FakeObserver {
       disconnect = vi.fn();
+      entry: (typeof observers)[number];
       constructor(cb: IntersectionObserverCallback) {
-        observers.push({ cb, disconnect: this.disconnect });
+        this.entry = { cb, disconnect: this.disconnect };
+        observers.push(this.entry);
       }
-      observe() {}
+      observe(el: Element) {
+        this.entry.target = el;
+      }
     }
     vi.stubGlobal('IntersectionObserver', FakeObserver);
     renderHome();
     const first = document.querySelector('.reveal')!;
+    const observer = observers.find((o) => o.target === first)!;
     expect(first).toHaveAttribute('data-reveal', 'waiting');
-    act(() =>
-      observers[0]!.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as never),
-    );
+    act(() => observer.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as never));
     expect(first).toHaveAttribute('data-reveal', 'waiting');
-    act(() =>
-      observers[0]!.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as never),
-    );
+    act(() => observer.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as never));
     expect(first).toHaveAttribute('data-reveal', 'shown');
-    expect(observers[0]!.disconnect).toHaveBeenCalled();
+    expect(observer.disconnect).toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 });

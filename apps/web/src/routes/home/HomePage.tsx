@@ -2,12 +2,7 @@ import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'rea
 import { Link } from 'react-router';
 import { PAISE_PER_RUPEE, formatInr, type Paise } from '@theonetrust/contracts';
 import { TRUST_FACTS, type TrustFacts } from '../../config/trust-facts.ts';
-import {
-  draftsVisible,
-  visible,
-  type Bilingual,
-  type LandingContent,
-} from '../../content/landing.ts';
+import { draftsVisible, type Bilingual, type LandingContent } from '../../content/landing.ts';
 import { isPublishableMetric, isPublishableStory, type ProofContent } from '../../content/proof.ts';
 import { usePublicContent } from '../../content/use-public-content.ts';
 import { DONATE_PRESETS_RUPEES } from '../../donate/donate-messages.ts';
@@ -16,6 +11,7 @@ import { useDonationDraft } from '../../state/donation-draft.ts';
 import { useLang } from '../../i18n/use-lang.ts';
 import { PolicyNotice } from '../policy/PolicyNotice.tsx';
 import { PageMeta } from '../../seo/PageMeta.tsx';
+import { HeroSection } from './LandingSections.tsx';
 import { Reveal } from './Reveal.tsx';
 import {
   Draft,
@@ -56,7 +52,7 @@ export function HomePage({
   return (
     <div className="hp">
       <PageMeta path="/" organisation />
-      <Hero content={content} facts={facts} showDrafts={showDrafts} />
+      <HeroSection content={content} facts={facts} showDrafts={showDrafts} />
       <VisionMission />
       <WhereNeeded content={content} showDrafts={showDrafts} />
       <Services />
@@ -198,55 +194,11 @@ function SectionHead({
   );
 }
 
-// 1 · Hero — text left, photo right.
-function Hero({
-  content,
-  facts,
-  showDrafts,
-}: {
-  content: LandingContent;
-  facts: TrustFacts;
-  showDrafts: boolean;
-}) {
-  const lang = useLang();
-  const headline = visible(content.hero.headline, showDrafts);
-  const lead = visible(content.hero.lead, showDrafts);
-  return (
-    <section id="top" className="hp-section hp-hero" aria-labelledby="hp-hero-title">
-      <Reveal>
-        <div className="hp-wrap hp-split">
-          <div className="hp-split__text">
-            {facts.area && <p className="hp-kicker">{facts.area[lang]}</p>}
-            {/* Client's wording (Nov 2026); a confirmed headline from the dashboard wins. */}
-            <h1 id="hp-hero-title" className="hp-hero__title">
-              {headline?.confirmed ? headline.value[lang] : T.heroTitle[lang]}
-            </h1>
-            <p className="hp-lead">{lead?.confirmed ? lead.value[lang] : T.heroLead[lang]}</p>
-            <div className="hp-actions">
-              <a className="ui-button ui-button--donate hp-btn" href="#donate">
-                {content.hero.donateCta[lang]}
-              </a>
-              <a className="ui-button ui-button--secondary hp-btn" href="#explore">
-                {T.ourActivities[lang]}
-              </a>
-              <Link className="hp-link" to="#get-help">
-                {content.hero.getHelpCta[lang]} <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-            <p className="hp-note">{T.trustNote[lang]}</p>
-          </div>
-          <Photo shape="leaf" label={T.heroFallbackLead} photo={PHOTOS.hero} />
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
 // 2 · Vision & mission — photo left, text right.
 function VisionMission() {
   const lang = useLang();
   return (
-    <section id="about" className="hp-section hp-tint-peach" aria-labelledby="hp-vision-title">
+    <section id="about" className="hp-section hp-tint-warm" aria-labelledby="hp-vision-title">
       <Reveal>
         <div className="hp-wrap hp-split hp-split--reverse">
           <div className="hp-split__text">
@@ -487,7 +439,7 @@ function Impact({
     (st) => isPublishableStory(st) && (st.confirmed || showDrafts),
   );
   return (
-    <section id="impact" className="hp-section hp-navy" aria-labelledby="hp-impact-title">
+    <section id="impact" className="hp-section hp-dark" aria-labelledby="hp-impact-title">
       <Reveal>
         <div className="hp-wrap">
           <SectionHead id="hp-impact-title" kicker={T.impactKicker} title={impact.title} />
@@ -576,7 +528,7 @@ function Donation() {
   const { updateDraft } = useDonationDraft();
   const locale = lang === 'ta' ? 'ta-IN' : 'en-IN';
   return (
-    <section id="give" className="hp-section hp-tint-peach" aria-labelledby="hp-donate-title">
+    <section id="give" className="hp-section hp-tint-warm" aria-labelledby="hp-donate-title">
       <Reveal>
         <div className="hp-wrap hp-donate">
           <div className="hp-donate__main">

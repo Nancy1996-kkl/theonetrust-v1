@@ -5,7 +5,6 @@ import donate from '../../assets/home/donate-children.jpg';
 import education from '../../assets/home/education-schoolgirls.jpg';
 import elderly from '../../assets/home/elderly-women.jpg';
 import healthcare from '../../assets/home/healthcare-camp.jpg';
-import hero from '../../assets/home/hero-children.jpg';
 import vision from '../../assets/home/vision-children-walk.jpg';
 
 /**
@@ -23,18 +22,6 @@ export interface HomePhoto {
 const BY = 'CC BY 2.0';
 
 export const PHOTOS = {
-  hero: {
-    src: hero,
-    alt: {
-      en: 'A group of smiling children standing together',
-      ta: 'ஒன்றாகச் சிரித்தபடி நிற்கும் குழந்தைகள்',
-    },
-    credit: {
-      author: 'Unsplash',
-      license: 'Unsplash License',
-      url: 'https://unsplash.com/license',
-    },
-  },
   vision: {
     src: vision,
     alt: {

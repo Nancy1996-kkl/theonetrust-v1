@@ -12,7 +12,7 @@ for (const [path, h1, donate] of [
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1, name: h1 })).toBeVisible();
     await expect(page.locator('meta[name="robots"][content*="noindex"]')).toHaveCount(0);
-    await expect(page.locator('.hp-section')).toHaveCount(10);
+    await expect(page.locator('.hp-section')).toHaveCount(9);
     // Transparency stays hidden until the trust publishes its first document.
     await expect(page.locator('#transparency')).toHaveCount(0);
     await expect(page.locator('footer')).toHaveCount(1);
