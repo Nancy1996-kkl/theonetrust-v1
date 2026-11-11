@@ -42,6 +42,8 @@ const receiptRoute: RouteObject = { path: 'receipt/:token', element: <ReceiptPag
 /** Private manage link for monthly giving (#32): random token, never indexed. */
 const manageRoute: RouteObject = { path: 'manage/:token', element: <ManagePage /> };
 
+/** Home page redesign for the trust's approval (client, Nov 2026): not linked, never indexed. */
+
 /**
  * Route table shared by the browser router and tests.
  * Planned routes and their Tamil /ta/ mirrors are listed in docs/design/sitemap.md;

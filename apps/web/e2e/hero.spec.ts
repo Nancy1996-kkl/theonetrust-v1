@@ -5,7 +5,10 @@ import { expect, test } from './fixtures/guard.ts';
  * The auto bug detector also checks axe (incl. contrast of text over the banner), overflow,
  * console errors and failed requests after every test.
  */
-const HEADLINE = { en: 'Build a Better Tomorrow', ta: 'சிறந்த நாளையை ஒன்றாக உருவாக்குவோம்' };
+const HEADLINE = {
+  en: 'Together, we can make a difference.',
+  ta: 'ஒன்றாகச் சேர்ந்தால், மாற்றம் கொண்டுவர முடியும்.',
+};
 const DONATE = { en: 'Donate now', ta: 'இப்போதே நன்கொடை கொடுங்கள்' };
 
 for (const lang of ['en', 'ta'] as const) {

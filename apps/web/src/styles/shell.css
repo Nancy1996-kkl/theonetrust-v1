@@ -9,9 +9,84 @@
   position: sticky;
   inset-block-start: 0;
   z-index: var(--z-header);
-  background: var(--color-surface);
-  border-block-end: var(--border-width) solid var(--color-border-subtle);
+  background: var(--color-home-bg);
+  border-block-end: var(--border-width) solid var(--color-home-sage-tint);
   box-shadow: var(--shadow-sm);
+}
+
+/* Home page (client, Nov 2026): the header sits on top of the full-height hero video.
+   At the top it is see-through (words only, no bar); once the visitor scrolls it becomes a
+   solid forest bar that stays at the top. Other pages keep the light sticky header above. */
+.site-header.site-header--home {
+  position: fixed;
+  inset-inline: 0;
+  border-block-end: 0;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.site-header.site-header--overlay {
+  /* A soft forest fade behind the words keeps them readable over any video frame. */
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-surface-inverse) 70%, transparent),
+    transparent
+  );
+  box-shadow: none;
+}
+
+.site-header--home .site-header__brand {
+  color: var(--color-text-inverse);
+}
+
+.site-header--home .site-header__nav ul {
+  border-color: var(--color-home-line-on-dark);
+  background: transparent;
+}
+
+.site-header--home .site-header__nav a {
+  color: var(--color-text-inverse);
+}
+
+.site-header--home .site-header__nav a:hover,
+.site-header--home .site-header__nav a:focus-visible {
+  background: color-mix(in srgb, var(--color-text-inverse) 15%, transparent);
+}
+
+.site-header--home .site-header__menu-button {
+  border-color: var(--color-text-inverse);
+  background: transparent;
+  color: var(--color-text-inverse);
+}
+
+/* Small phones in Tamil: a tighter Donate button keeps the header on one line, so it never
+   grows over the hero video. */
+@media (max-width: 29.99em) {
+  :lang(ta) .site-header__donate {
+    padding-inline: var(--space-3);
+    font-size: var(--text-small);
+  }
+}
+
+/* Phones and tablets: the video starts just below the floating header, so the header never
+   covers the carousel's slide and pause buttons. */
+@media (max-width: 63.99em) {
+  section.landing-hero {
+    padding-block-start: calc(var(--space-16) + var(--space-2));
+  }
+}
+
+/* Laptop and up: the hero fills the first screen and its words start below the floating
+   header. Phones keep the video on top (under the header) and the words below it. */
+@media (min-width: 64em) {
+  section.landing-hero {
+    min-block-size: 100svh;
+  }
+
+  .landing-hero .landing-hero__inner {
+    padding-block-start: calc(var(--space-16) + var(--space-8));
+  }
 }
 
 .site-header__bar {
@@ -20,7 +95,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  max-width: var(--content-max);
+  /* The bar's own padding sits outside the content width, so the row lines up with the page. */
+  max-width: calc(var(--content-max) + 2 * var(--gutter));
   min-height: var(--space-16);
   margin-inline: auto;
   padding: var(--space-2) var(--gutter);
@@ -33,19 +109,10 @@
   min-width: 0;
   min-height: var(--control-height-sm);
   margin-inline-end: auto;
-  color: var(--color-text-heading);
+  color: var(--color-home-heading);
   font-family: var(--font-heading);
   font-weight: var(--weight-bold);
   text-decoration: none;
-}
-
-.site-header__mark {
-  flex: none;
-  inline-size: var(--space-8);
-  block-size: var(--space-8);
-  border: var(--border-width-strong) solid var(--color-text-heading);
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-muted);
 }
 
 .site-header__name {
@@ -70,18 +137,33 @@
 .site-header__nav ul {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4);
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-home-sage-tint);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
 }
 
+/* Section links: a calm pill row; the hovered or focused link fills with sage. */
 .site-header__nav a {
   display: inline-flex;
   align-items: center;
   min-height: var(--control-height-sm);
-  color: var(--color-link);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-pill);
+  color: var(--color-home-heading);
   font-size: var(--text-small);
-  font-weight: var(--weight-medium);
-  text-underline-offset: 0.3em;
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
   white-space: nowrap;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.site-header__nav a:hover,
+.site-header__nav a:focus-visible {
+  background: var(--color-home-sage-tint);
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
 }
 
 .site-header__actions {
@@ -94,7 +176,8 @@
 
 .site-header__actions .ui-button {
   min-height: var(--control-height-sm);
-  padding-inline: var(--space-4);
+  padding-inline: var(--space-5);
+  border-radius: var(--radius-pill);
   white-space: nowrap;
 }
 
@@ -112,8 +195,8 @@
   min-inline-size: var(--control-height-sm);
   padding: var(--space-1) var(--space-3);
   border: var(--border-width-strong) solid var(--color-action-secondary-border);
-  border-radius: var(--radius-md);
-  background: transparent;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
   color: var(--color-action-secondary-text);
   font-weight: var(--weight-semibold);
 }
@@ -174,7 +257,8 @@
   max-block-size: calc(100dvh - var(--space-16));
   overflow-y: auto;
   padding: var(--space-4) var(--gutter) var(--space-6);
-  border-block-end: var(--border-width) solid var(--color-border-subtle);
+  border-block-end: var(--border-width) solid var(--color-home-sage-tint);
+  background: var(--color-home-bg);
   box-shadow: var(--shadow-lg);
 }
 
@@ -186,9 +270,19 @@
   display: flex;
   align-items: center;
   min-height: var(--control-height);
-  border-block-end: var(--border-width) solid var(--color-border-subtle);
-  color: var(--color-link);
-  font-weight: var(--weight-medium);
+  padding-inline: var(--space-3);
+  border-block-end: var(--border-width) solid var(--color-home-sage-tint);
+  color: var(--color-home-heading);
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+}
+
+.site-header__sheet nav a:hover,
+.site-header__sheet nav a:focus-visible {
+  background: var(--color-home-sage-tint);
+  text-decoration: underline;
 }
 
 @media (min-width: 48em) {
@@ -208,8 +302,18 @@
     display: none;
   }
 
+  /* Tamil labels are longer: tighter spacing keeps the whole header on one line. */
   :lang(ta) .site-header__nav ul {
-    gap: var(--space-3);
+    gap: 0;
+  }
+
+  :lang(ta) .site-header__nav a {
+    padding-inline: var(--space-2);
+  }
+
+  :lang(ta) .site-header__actions .ui-button,
+  :lang(ta) .site-header__lang .ui-lang__option {
+    padding-inline: var(--space-3);
   }
 }
 

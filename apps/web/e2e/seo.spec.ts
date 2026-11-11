@@ -10,7 +10,7 @@ test.describe('prerendered HTML (no JavaScript)', () => {
     const html = await (await request.get('/ta/')).text();
     expect(html).toMatch(/<html lang="ta">/);
     expect(html).toContain('<h1 id="hero-title"');
-    expect(html).toContain('நாங்கள் உதவும் வழிகள்');
+    expect(html).toContain('எங்கே உதவி தேவை');
     expect(html).toContain('<link rel="canonical" href="https://theonetrust.in/ta/" />');
     expect(html).toContain('hreflang="x-default"');
     expect(html).toContain('application/ld+json');

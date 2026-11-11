@@ -86,9 +86,6 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
               <a href={`${home}#impact`}>{t.navImpact}</a>
             </li>
             <li>
-              <a href={`${home}#transparency`}>{t.navTransparency}</a>
-            </li>
-            <li>
               <a href={`${home}#faq`}>{t.navFaq}</a>
             </li>
           </ul>

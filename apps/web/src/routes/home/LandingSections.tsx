@@ -1,16 +1,12 @@
 import { Link } from 'react-router';
-import { BentoGrid, BentoTile } from '../../components/ui/Card.tsx';
 import { StatusPill } from '../../components/ui/StatusPill.tsx';
 import type { TrustFacts } from '../../config/trust-facts.ts';
-import type { Bilingual, Gated, LandingContent, Programme } from '../../content/landing.ts';
+import type { Bilingual, Gated, LandingContent } from '../../content/landing.ts';
 import { visible } from '../../content/landing.ts';
-import { homePath, localizedPath } from '../../i18n/lang.ts';
+import { homePath } from '../../i18n/lang.ts';
 import { useLang } from '../../i18n/use-lang.ts';
-import { useDonationDraft } from '../../state/donation-draft.ts';
-import { bandClass } from './bands.ts';
 import { HeroCarousel } from './HeroCarousel.tsx';
-import { ArrowIcon, HeartIcon, PinIcon, SealIcon } from './hero-icons.tsx';
-import { Reveal } from './Reveal.tsx';
+import { ArrowIcon, HeartIcon, PinIcon } from './hero-icons.tsx';
 
 export interface SectionProps {
   content: LandingContent;
@@ -62,6 +58,7 @@ function HeroTitle({ text, accent }: { text: string; accent: string | null }) {
 }
 
 /** 2 · Hero — forest band, beneficiary banner with a forest scrim, Donate first. */
+/** Hero kept from the client's own design (#90): video carousel; only the words changed. */
 export function HeroSection({ content, facts, showDrafts }: SectionProps) {
   const lang = useLang();
   const home = homePath(lang);
@@ -124,170 +121,6 @@ export function HeroSection({ content, facts, showDrafts }: SectionProps) {
           />
         </div>
       </div>
-    </section>
-  );
-}
-
-/** 3 · About + trust facts strip — only verified facts; unknown ones are not rendered at all. */
-export function AboutSection({ content, facts, showDrafts }: SectionProps) {
-  const lang = useLang();
-  const { about, draftLabel } = content;
-  // Registration and tax approval are trust signals: shown as gold-outline badges, and only
-  // once confirmed in issue #1 (TRUST_FACTS keeps them null until then).
-  const rows: Array<[Bilingual, string, boolean]> = [];
-  if (facts.registration) rows.push([about.factLabels.registration, facts.registration, true]);
-  if (facts.taxApproval) rows.push([about.factLabels.taxApproval, facts.taxApproval[lang], true]);
-  if (facts.legalName) rows.push([about.factLabels.legalName, facts.legalName, false]);
-  if (facts.established) rows.push([about.factLabels.established, facts.established, false]);
-  if (facts.area) rows.push([about.factLabels.area, facts.area[lang], false]);
-
-  return (
-    <section id="about" className="landing-section" aria-labelledby="about-title">
-      <Reveal className="landing__wrap">
-        <h2 id="about-title">{about.title[lang]}</h2>
-        <GatedText
-          item={visible(about.intro, showDrafts)}
-          className="landing__intro"
-          draftLabel={draftLabel}
-        />
-        {rows.length > 0 && (
-          <dl className="landing-facts">
-            {rows.map(([label, value, badge]) => (
-              <div
-                key={label.en}
-                className={
-                  badge ? 'landing-facts__item landing-facts__item--badge' : 'landing-facts__item'
-                }
-              >
-                <dt>
-                  {badge && <SealIcon />}
-                  {label[lang]}
-                </dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
-      </Reveal>
-    </section>
-  );
-}
-
-function ProgrammeCard({ programme, content }: { programme: Programme; content: LandingContent }) {
-  const lang = useLang();
-  const { updateDraft } = useDonationDraft();
-  const { ways, draftLabel } = content;
-  const href = `${homePath(lang)}?programme=${programme.slug}#donate`;
-  return (
-    <BentoTile
-      title={programme.title[lang]}
-      span={programme.featured ? 2 : 1}
-      className={['landing-card', programme.featured && 'landing-card--featured']
-        .filter(Boolean)
-        .join(' ')}
-      action={
-        <Link
-          to={href}
-          className="landing-card__link"
-          onClick={() => updateDraft({ programme: programme.slug })}
-        >
-          {ways.giveCta[lang]}
-          <span className="visually-hidden">: {programme.title[lang]}</span>
-          <span aria-hidden="true"> →</span>
-        </Link>
-      }
-    >
-      <DraftBadge item={programme} label={draftLabel} />
-      {programme.summary && <p>{programme.summary[lang]}</p>}
-      {programme.whoFor && (
-        <p className="landing-card__who">
-          <strong>{ways.whoForLabel[lang]}:</strong> {programme.whoFor[lang]}
-        </p>
-      )}
-      <StatusPill tone={programme.fund === 'general' ? 'info' : 'neutral'}>
-        {ways.fundLabels[programme.fund][lang]}
-      </StatusPill>
-    </BentoTile>
-  );
-}
-
-/** 4 · Ways we help — bento grid; each card pre-selects its need in the donate panel. */
-export function WaysWeHelpSection({ content, showDrafts }: SectionProps) {
-  const lang = useLang();
-  const { ways, draftLabel } = content;
-  const programmes = ways.programmes.filter((p) => p.confirmed || showDrafts);
-  return (
-    <section id="ways-we-help" className={bandClass('white')} aria-labelledby="ways-title">
-      <Reveal className="landing__wrap">
-        <h2 id="ways-title">{ways.title[lang]}</h2>
-        <GatedText
-          item={visible(ways.intro, showDrafts)}
-          className="landing__intro"
-          draftLabel={draftLabel}
-        />
-        <BentoGrid className="landing-ways">
-          {programmes.map((programme) => (
-            <ProgrammeCard key={programme.slug} programme={programme} content={content} />
-          ))}
-        </BentoGrid>
-      </Reveal>
-    </section>
-  );
-}
-
-/** 5 · How a donation helps — rendered only when at least one verified example exists. */
-export function DonationHelpsSection({ content, showDrafts }: SectionProps) {
-  const lang = useLang();
-  const { donationHelps, draftLabel } = content;
-  const examples = donationHelps.examples.filter((e) => e.confirmed || showDrafts);
-  if (examples.length === 0) return null;
-  const locale = lang === 'ta' ? 'ta-IN' : 'en-IN';
-  const rupees = new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  });
-  return (
-    <section id="how-donations-help" className={bandClass('white')} aria-labelledby="helps-title">
-      <Reveal className="landing__wrap">
-        <h2 id="helps-title">{donationHelps.title[lang]}</h2>
-        <ul className="landing-helps">
-          {examples.map((example) => (
-            <li key={example.amountRupees} className="landing-helps__item">
-              <strong>{rupees.format(example.amountRupees)}</strong>
-              <span>{example.covers[lang]}</span>
-              <DraftBadge item={example} label={draftLabel} />
-            </li>
-          ))}
-        </ul>
-        <p className="landing__note">{donationHelps.illustrativeNote[lang]}</p>
-      </Reveal>
-    </section>
-  );
-}
-
-/** 6 · How it works — four steps, with the payment-help policy link. */
-export function HowItWorksSection({ content }: SectionProps) {
-  const lang = useLang();
-  const { howItWorks } = content;
-  return (
-    <section id="how-it-works" className="landing-section" aria-labelledby="how-title">
-      <Reveal className="landing__wrap">
-        <h2 id="how-title">{howItWorks.title[lang]}</h2>
-        <ol className="landing-steps">
-          {howItWorks.steps.map((step, i) => (
-            <li key={step.en} className="landing-steps__item">
-              <span className="landing-steps__number" aria-hidden="true">
-                {i + 1}
-              </span>
-              <span>{step[lang]}</span>
-            </li>
-          ))}
-        </ol>
-        <p>
-          <Link to={localizedPath('/refund-policy', lang)}>{howItWorks.policyLink[lang]}</Link>
-        </p>
-      </Reveal>
     </section>
   );
 }

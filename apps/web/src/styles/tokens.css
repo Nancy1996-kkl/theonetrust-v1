@@ -19,6 +19,12 @@
   --palette-body: #4a5a50; /* Body text (7.2:1 on ivory) */
   --palette-white: #ffffff;
 
+  /* Home page (client, Nov 2026) — one soft green band; everything else uses the palette above */
+  --palette-sage-tint: #e6eee9; /* soft sage band */
+  --palette-peach: #fcf1e5; /* warm section background (client-approved, Nov 2026) */
+  --palette-home-ivory: #f7f5ef; /* home page background (client-approved) */
+  --palette-home-sage: #76968a; /* shapes, frames, icons — never body text (3.2:1 on white) */
+
   --palette-success: #287a55;
   --palette-warning: #b7791f; /* 3.6:1 on white: icons/borders only, never body text */
   --palette-warning-dark: #8f5e14; /* derived for AA text (5.5:1 on white) */
@@ -61,6 +67,16 @@
   --color-action-donate-glow: color-mix(in srgb, var(--palette-gold) 45%, transparent);
   --color-action-secondary-text: var(--palette-forest);
   --color-action-secondary-border: var(--palette-forest);
+
+  /* Home page roles (client, Nov 2026): the approved colours, with forest in place of navy */
+  --color-home-bg: var(--palette-home-ivory);
+  --color-home-warm: var(--palette-peach);
+  --color-home-sage: var(--palette-home-sage);
+  --color-home-sage-tint: var(--palette-sage-tint);
+  --color-home-dark: var(--palette-forest);
+  --color-home-heading: var(--palette-forest);
+  --color-home-on-dark: var(--palette-white);
+  --color-home-line-on-dark: color-mix(in srgb, var(--palette-white) 35%, transparent);
 
   /* Interaction states */
   --color-action-primary-bg-hover: var(--palette-green);

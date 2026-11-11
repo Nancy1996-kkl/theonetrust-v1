@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { LanguageSwitch } from '../components/ui/LanguageSwitch.tsx';
 import type { UiLang } from '../components/ui/ui-strings.ts';
 import { focusableIn } from '../components/ui/focus.ts';
@@ -26,6 +26,25 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const sheetId = useId();
+  // Home page (client, Nov 2026): the header floats over the hero video, see-through, until the
+  // visitor scrolls; then it becomes a solid sticky bar. Other pages keep the solid header.
+  const onHome = /^(\/ta)?\/?$/.test(useLocation().pathname);
+  const [atTop, setAtTop] = useState(true);
+  useEffect(() => {
+    if (!onHome) return;
+    const update = () => setAtTop(window.scrollY < 8);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, [onHome]);
+  const overlay = onHome && atTop && !open;
+  const headerClass = [
+    'site-header',
+    onHome && 'site-header--home surface-inverse',
+    overlay && 'site-header--overlay',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   useEffect(() => {
     if (!open) return;
@@ -77,10 +96,10 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
   ));
 
   return (
-    <header ref={headerRef} className="site-header">
+    <header ref={headerRef} className={headerClass}>
       <div className="site-header__bar">
         <a className="site-header__brand" href={home} aria-label={t.homeLink}>
-          <span className="site-header__mark" aria-hidden="true" />
+          {/* No logo icon until the trust sends its own logo (client, Nov 2026). */}
           <span className="site-header__name">{TRUST_FACTS.siteName}</span>
         </a>
 

@@ -42,14 +42,36 @@ describe('landmarks and skip link', () => {
 });
 
 describe('header', () => {
-  it('links the five sections, Get Help and Donate to anchors on the single page', () => {
+  it('home: floats see-through over the hero, turns solid once scrolled (client, Nov 2026)', () => {
+    renderRoute('/');
+    expect(banner()).toHaveClass('site-header--home', 'site-header--overlay');
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { value: 200, configurable: true });
+      fireEvent.scroll(window);
+    });
+    expect(banner()).toHaveClass('site-header--home');
+    expect(banner()).not.toHaveClass('site-header--overlay');
+    act(() => {
+      Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
+      fireEvent.scroll(window);
+    });
+    expect(banner()).toHaveClass('site-header--overlay');
+  });
+
+  it('other pages keep the solid header', () => {
+    renderRoute('/privacy');
+    expect(banner()).not.toHaveClass('site-header--home');
+    expect(banner()).not.toHaveClass('site-header--overlay');
+  });
+
+  it('links the five sections (in page order), Get Help and Donate to anchors on the single page', () => {
     renderRoute('/');
     const nav = within(banner()).getByRole('navigation', { name: 'Sections' });
     expect(
       within(nav)
         .getAllByRole('link')
         .map((a) => a.getAttribute('href')),
-    ).toEqual(['/#about', '/#ways-we-help', '/#impact', '/#transparency', '/#contact']);
+    ).toEqual(['/#about', '/#ways-we-help', '/#services', '/#impact', '/#contact']);
     expect(within(banner()).getByRole('link', { name: 'Donate' })).toHaveAttribute(
       'href',
       '/#donate',
@@ -67,9 +89,9 @@ describe('header', () => {
   it('Tamil page uses Tamil labels and /ta/ anchors (same English IDs)', () => {
     renderRoute('/ta/');
     const nav = within(banner()).getByRole('navigation', { name: 'பிரிவுகள்' });
-    expect(within(nav).getByRole('link', { name: 'வெளிப்படைத்தன்மை' })).toHaveAttribute(
+    expect(within(nav).getByRole('link', { name: 'சேவைகள்' })).toHaveAttribute(
       'href',
-      '/ta/#transparency',
+      '/ta/#services',
     );
     expect(within(banner()).getByRole('link', { name: 'நன்கொடை' })).toHaveAttribute(
       'href',

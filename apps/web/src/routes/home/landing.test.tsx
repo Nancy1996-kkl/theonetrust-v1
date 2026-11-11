@@ -16,6 +16,7 @@ import {
 import { useDonationDraft } from '../../state/donation-draft.ts';
 import { RootLayout } from '../../app/RootLayout.tsx';
 import { HomePage } from './HomePage.tsx';
+import { HOME_TEXT } from './home-content.ts';
 
 afterEach(() => {
   document.documentElement.lang = 'en';
@@ -117,7 +118,7 @@ describe('landing content file', () => {
 });
 
 describe('live page (drafts hidden)', () => {
-  it('shows sections in plan order with one h1', () => {
+  it('shows sections in order with one h1, keeping the menu anchors', () => {
     renderHome();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     const ids = [...document.querySelectorAll('main section[id]')].map((s) => s.id);
@@ -125,149 +126,74 @@ describe('live page (drafts hidden)', () => {
       'top',
       'about',
       'ways-we-help',
-      'how-it-works',
+      'services',
+      'explore',
       'impact',
-      'transparency',
-      'faq',
-      'contact',
+      'how-it-works',
       'give',
+      'contact',
+      'faq',
     ]);
   });
 
-  it('hero shows the approved headline with its accent words on their own line', () => {
+  it('hero uses the approved wording and never shows unconfirmed dashboard text', () => {
     renderHome();
-    const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1).toHaveTextContent('Build a Better Tomorrow');
-    expect(h1.querySelector('.landing-hero__accent')).toHaveTextContent('Tomorrow');
-    expect(screen.getByText('Together we can')).toHaveClass('landing-hero__eyebrow');
-    expect(screen.getByText(/underprivileged children and communities/)).toBeVisible();
-    // The payment note stays hidden until Razorpay is live.
-    expect(document.body).not.toHaveTextContent('Razorpay');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      LANDING_CONTENT.hero.headline.value.en,
+    );
     expect(document.body).not.toHaveTextContent('Draft —');
   });
 
-  it('hero headline in Tamil keeps the same structure', () => {
-    renderHome('/ta/');
-    const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1).toHaveTextContent(LANDING_CONTENT.hero.headline.value.ta);
-    expect(h1.querySelector('.landing-hero__accent')).toHaveTextContent('சிறந்த நாளையை');
-  });
-
-  it('hero falls back to the site name when the headline is unconfirmed', () => {
-    const content: LandingContent = {
-      ...LANDING_CONTENT,
-      hero: {
-        ...LANDING_CONTENT.hero,
-        headline: { confirmed: false, value: { en: 'Unconfirmed claim', ta: 'உறுதியற்றது' } },
+  it('a confirmed headline from the dashboard wins over the default wording', () => {
+    renderHome('/', {
+      content: {
+        ...LANDING_CONTENT,
+        hero: {
+          ...LANDING_CONTENT.hero,
+          headline: {
+            confirmed: true,
+            value: { en: 'Confirmed headline', ta: 'உறுதியான தலைப்பு' },
+          },
+        },
       },
-    };
-    renderHome('/', { content });
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(TRUST_FACTS.siteName);
-    expect(document.body).not.toHaveTextContent('Unconfirmed claim');
+    });
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Confirmed headline');
   });
 
-  it('an owner-edited headline without the accent words renders as plain text', () => {
-    const content: LandingContent = {
-      ...LANDING_CONTENT,
-      hero: {
-        ...LANDING_CONTENT.hero,
-        headline: { confirmed: true, value: { en: 'Kindness in Kanchipuram', ta: 'கருணை' } },
-      },
-    };
-    renderHome('/', { content });
-    const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1).toHaveTextContent('Kindness in Kanchipuram');
-    expect(h1.querySelector('.landing-hero__accent')).toBeNull();
-  });
-
-  it('hero has Donate (primary), Learn more and Get Help actions', () => {
+  it('hero has Donate (primary) and Get Help actions', () => {
     renderHome();
     const hero = document.getElementById('top')!;
     expect(within(hero).getByRole('link', { name: 'Donate now' })).toHaveAttribute(
       'href',
       '/#donate',
     );
-    expect(within(hero).getByRole('link', { name: 'Learn more' })).toHaveAttribute(
-      'href',
-      '/#about',
-    );
-    expect(within(hero).getByRole('link', { name: 'Get Help' })).toHaveAttribute(
+    expect(within(hero).getByRole('link', { name: /Get Help/ })).toHaveAttribute(
       'href',
       '/#get-help',
     );
-    expect(within(hero).getByText('Kanchipuram, Tamil Nadu')).toBeVisible();
   });
 
-  it('Tamil hero actions stay on the Tamil page', () => {
-    renderHome('/ta/');
-    const hero = document.getElementById('top')!;
+  it('hero shows the area only when it is verified', () => {
+    const { unmount } = renderHome();
     expect(
-      within(hero).getByRole('link', { name: LANDING_CONTENT.hero.donateCta.ta }),
-    ).toHaveAttribute('href', '/ta/#donate');
-    expect(
-      within(hero).getByRole('link', { name: LANDING_CONTENT.hero.learnMoreCta.ta }),
-    ).toHaveAttribute('href', '/ta/#about');
-    expect(within(hero).getByText('காஞ்சிபுரம், தமிழ்நாடு')).toBeVisible();
-  });
-
-  it('facts strip shows only verified facts (area) and hides unknown ones', () => {
-    renderHome();
-    const about = document.getElementById('about')!;
-    expect(within(about).getByText('Area')).toBeInTheDocument();
-    expect(within(about).getByText('Kanchipuram, Tamil Nadu')).toBeInTheDocument();
-    for (const hidden of ['Legal name', 'Registration', 'Established', 'Tax approval']) {
-      expect(within(about).queryByText(hidden)).not.toBeInTheDocument();
-    }
-  });
-
-  it('confirmed registration and tax approval show first, as gold-outline trust badges', () => {
-    renderHome('/', {
-      facts: {
-        ...TRUST_FACTS,
-        registration: '12A/TEST/0001',
-        taxApproval: { en: '80G approved (test)', ta: '80G ஒப்புதல் (சோதனை)' },
-      },
-    });
-    const items = [...document.querySelectorAll('.landing-facts__item')];
-    expect(items.map((i) => i.querySelector('dt')!.textContent)).toEqual([
-      'Registration',
-      'Tax approval',
-      'Area',
-    ]);
-    expect(items[0]).toHaveClass('landing-facts__item--badge');
-    expect(items[1]).toHaveClass('landing-facts__item--badge');
-    expect(items[2]).not.toHaveClass('landing-facts__item--badge');
-    // The seal is decorative and sits inside the term, keeping the <dl> valid.
-    expect(items[0]!.querySelector('dt [data-icon="seal"]')).toHaveAttribute('aria-hidden', 'true');
-    expect(items[0]).toHaveTextContent('12A/TEST/0001');
-  });
-
-  it('trust badges have no WCAG 2.2 AA violations (valid definition list)', async () => {
-    const { container } = renderHome('/', {
-      facts: { ...TRUST_FACTS, registration: '12A/TEST/0001' },
-    });
-    await expectNoA11yViolations(container.querySelector('#about')!);
-  });
-
-  it('facts strip disappears completely when no fact is verified', () => {
+      within(document.getElementById('top')!).getByText('Kanchipuram, Tamil Nadu'),
+    ).toBeVisible();
+    unmount();
     renderHome('/', { facts: { ...TRUST_FACTS, area: null } });
-    expect(document.querySelector('.landing-facts')).toBeNull();
+    expect(document.getElementById('top')).not.toHaveTextContent('Kanchipuram');
   });
 
-  it('ways we help shows only confirmed cards with who-for and general/earmarked label', () => {
+  it('where help is needed shows only confirmed programmes with who-for and fund label', () => {
     renderHome();
     const ways = document.getElementById('ways-we-help')!;
-    const cards = within(ways).getAllByRole('article');
-    expect(cards).toHaveLength(1);
-    expect(
-      within(cards[0]!).getByRole('heading', { name: 'Where it’s needed most' }),
-    ).toBeVisible();
-    expect(cards[0]).toHaveTextContent('For: Whoever needs it most at the time');
-    expect(cards[0]).toHaveTextContent('General fund');
-    expect(within(ways).queryByText('Education')).not.toBeInTheDocument();
+    const rows = ways.querySelectorAll('.hp-need-row');
+    expect(rows).toHaveLength(1);
+    expect(within(ways).getByRole('heading', { name: 'Where it’s needed most' })).toBeVisible();
+    expect(rows[0]).toHaveTextContent('For: Whoever needs it most at the time');
+    expect(rows[0]).toHaveTextContent('General fund');
   });
 
-  it('a card passes its programme to the donate panel and the draft', async () => {
+  it('a programme’s Give link passes the programme to the donate panel and the draft', async () => {
     const user = userEvent.setup();
     renderHome();
     const link = screen.getByRole('link', { name: /^Give\W+Where it’s needed most/ });
@@ -276,15 +202,10 @@ describe('live page (drafts hidden)', () => {
     expect(probe.draft!.programme).toBe('general');
   });
 
-  it('how a donation helps is hidden while no example is verified', () => {
-    renderHome();
-    expect(document.getElementById('how-donations-help')).toBeNull();
-  });
-
   it('how it works lists four steps and links to the refund/payment-help policy', () => {
     renderHome();
     const how = document.getElementById('how-it-works')!;
-    expect(within(how).getAllByRole('listitem')).toHaveLength(4);
+    expect(how.querySelectorAll('.hp-step')).toHaveLength(4);
     expect(
       within(how).getByRole('link', { name: 'Payment help, refunds and corrections' }),
     ).toHaveAttribute('href', '/refund-policy');
@@ -292,14 +213,11 @@ describe('live page (drafts hidden)', () => {
 
   it('Tamil page uses Tamil content and /ta/ links', () => {
     renderHome('/ta/');
-    expect(screen.getByRole('heading', { level: 2, name: 'நாங்கள் உதவும் வழிகள்' })).toBeVisible();
-    expect(screen.getByRole('link', { name: /நன்கொடை கொடுக்க/ })).toHaveAttribute(
+    expect(screen.getByRole('heading', { level: 2, name: HOME_TEXT.needTitle.ta })).toBeVisible();
+    expect(document.querySelector('#ways-we-help .hp-need-row__give')).toHaveAttribute(
       'href',
       '/ta/?programme=general#donate',
     );
-    expect(
-      within(document.getElementById('about')!).getByText('காஞ்சிபுரம், தமிழ்நாடு'),
-    ).toBeInTheDocument();
     expect(
       screen.getByRole('link', {
         name: 'பணம் செலுத்துவதில் உதவி, பணம் திரும்பத் தருதல், திருத்தங்கள்',
@@ -313,65 +231,19 @@ describe('live page (drafts hidden)', () => {
   });
 });
 
-describe('preview page (drafts visible, always labelled)', () => {
-  const withExample: LandingContent = {
-    ...LANDING_CONTENT,
-    hero: {
-      ...LANDING_CONTENT.hero,
-      eyebrow: { confirmed: true, value: { en: 'Kanchipuram', ta: 'காஞ்சிபுரம்' } },
-      lead: { confirmed: false, value: { en: 'Draft lead', ta: 'வரைவு முன்னுரை' } },
-    },
-    about: {
-      ...LANDING_CONTENT.about,
-      intro: { confirmed: true, value: { en: 'Verified intro', ta: 'உறுதியான அறிமுகம்' } },
-    },
-    donationHelps: {
-      ...LANDING_CONTENT.donationHelps,
-      examples: [
-        {
-          amountRupees: 500,
-          covers: { en: 'Draft example', ta: 'வரைவு எடுத்துக்காட்டு' },
-          confirmed: false,
-        },
-      ],
-    },
-  };
-
-  it('shows the confirmed headline without a Draft label, and the draft payment note and programmes marked Draft', () => {
+describe('drafts visible (preview mode), always labelled', () => {
+  it('shows all programmes, each unconfirmed one marked Draft', () => {
     renderHome('/', { showDrafts: true });
-    const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1).toHaveTextContent('Build a Better Tomorrow');
-    expect(h1).not.toHaveTextContent('Draft');
     const ways = document.getElementById('ways-we-help')!;
-    expect(within(ways).getAllByRole('article')).toHaveLength(7);
-    expect(within(ways).getAllByText('Draft — not yet confirmed')).toHaveLength(6);
-    expect(screen.getByText(/Secure payment via Razorpay/)).toBeInTheDocument();
-  });
-
-  it('shows examples with the illustrative note, confirmed text without a Draft label', () => {
-    renderHome('/', { showDrafts: true, content: withExample });
-    const helps = document.getElementById('how-donations-help')!;
-    expect(helps).toHaveTextContent('₹500');
-    expect(helps).toHaveTextContent('Illustrative examples');
-    expect(screen.getByText('Verified intro')).toBeInTheDocument();
-    expect(screen.getByText('Verified intro')).not.toHaveTextContent('Draft');
-    expect(screen.getByText(/Draft lead/)).toHaveTextContent('Draft — not yet confirmed');
-    expect(screen.getByText(/Kanchipuram/, { selector: '.landing-hero__eyebrow' })).toBeVisible();
-  });
-
-  it('Tamil example amounts use Indian formatting', () => {
-    renderHome('/ta/', { showDrafts: true, content: withExample });
-    expect(document.getElementById('how-donations-help')).toHaveTextContent('₹500');
-  });
-
-  it('hides examples on the live page even when they exist unconfirmed', () => {
-    renderHome('/', { showDrafts: false, content: withExample });
-    expect(document.getElementById('how-donations-help')).toBeNull();
-    expect(screen.queryByText(/Draft lead/)).not.toBeInTheDocument();
+    const all = LANDING_CONTENT.ways.programmes;
+    expect(ways.querySelectorAll('.hp-need-row')).toHaveLength(all.length);
+    expect(within(ways).getAllByText('Draft — not yet confirmed')).toHaveLength(
+      all.filter((p) => !p.confirmed).length,
+    );
   });
 
   it('has no axe violations with drafts shown', async () => {
-    const { container } = renderHome('/', { showDrafts: true, content: withExample });
+    const { container } = renderHome('/', { showDrafts: true });
     await expectNoA11yViolations(container);
   });
 });
@@ -385,32 +257,33 @@ describe('scroll reveal', () => {
   });
 
   it('waits, then reveals when the section scrolls into view, and disconnects', () => {
-    // Other components (the hero carousel) observe too, so find the reveal's own observer.
+    // The hero video carousel also observes the page, so match the observer to its element.
     const observers: Array<{
       cb: IntersectionObserverCallback;
       disconnect: () => void;
-      targets: Element[];
+      target?: Element;
     }> = [];
     class FakeObserver {
       disconnect = vi.fn();
-      targets: Element[] = [];
+      entry: (typeof observers)[number];
       constructor(cb: IntersectionObserverCallback) {
-        observers.push({ cb, disconnect: this.disconnect, targets: this.targets });
+        this.entry = { cb, disconnect: this.disconnect };
+        observers.push(this.entry);
       }
       observe(el: Element) {
-        this.targets.push(el);
+        this.entry.target = el;
       }
     }
     vi.stubGlobal('IntersectionObserver', FakeObserver);
     renderHome();
     const first = document.querySelector('.reveal')!;
-    const own = observers.find((o) => o.targets.includes(first))!;
+    const observer = observers.find((o) => o.target === first)!;
     expect(first).toHaveAttribute('data-reveal', 'waiting');
-    act(() => own.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as never));
+    act(() => observer.cb([{ isIntersecting: false } as IntersectionObserverEntry], {} as never));
     expect(first).toHaveAttribute('data-reveal', 'waiting');
-    act(() => own.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as never));
+    act(() => observer.cb([{ isIntersecting: true } as IntersectionObserverEntry], {} as never));
     expect(first).toHaveAttribute('data-reveal', 'shown');
-    expect(own.disconnect).toHaveBeenCalled();
+    expect(observer.disconnect).toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 });
