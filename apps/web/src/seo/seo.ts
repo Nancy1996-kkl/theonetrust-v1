@@ -1,5 +1,5 @@
 import type { UiLang } from '../components/ui/ui-strings.ts';
-import type { TrustFacts } from '../config/trust-facts.ts';
+import { TRUST_FACTS, type TrustFacts } from '../config/trust-facts.ts';
 import { POLICIES } from '../content/policies.ts';
 import { localizedPath } from '../i18n/lang.ts';
 
@@ -179,4 +179,45 @@ export function buildRobotsTxt(origin = SITE_ORIGIN): string {
     `Sitemap: ${origin}/sitemap.xml`,
     '',
   ].join('\n');
+}
+
+/**
+ * llms.txt (client, Nov 2026): a short, plain summary of the public site for AI assistants
+ * (https://llmstxt.org). Built from the same page list as the sitemap and from confirmed trust
+ * facts only — unconfirmed facts (null) are left out, nothing is invented.
+ */
+export function buildLlmsTxt(
+  origin = SITE_ORIGIN,
+  facts: TrustFacts = TRUST_FACTS,
+  pages = INDEXABLE_PAGES,
+): string {
+  const where = facts.area ? ` in ${facts.area.en}` : '';
+  const lines = [
+    `# ${facts.legalName ?? facts.siteName}`,
+    '',
+    `> A small charitable trust${where}. Donate online (UPI, card or netbanking through Razorpay) or ask for help — in Tamil or English.`,
+    '',
+    '## Pages',
+    '',
+    ...pages.flatMap((page) => [
+      `- [${page.title.en}](${absoluteUrl(localizedPath(page.path, 'en'), origin)}): ${page.description.en}`,
+      `- [${page.title.ta}](${absoluteUrl(localizedPath(page.path, 'ta'), origin)}): Tamil version`,
+    ]),
+  ];
+  const contact = [
+    facts.phone && `- Phone / WhatsApp: ${facts.phone.display}`,
+    facts.email && `- Email: ${facts.email}`,
+    facts.area && `- Location: ${facts.area.en}`,
+  ].filter((line): line is string => Boolean(line));
+  if (contact.length > 0) lines.push('', '## Contact', '', ...contact);
+  lines.push(
+    '',
+    '## Notes',
+    '',
+    '- A donation counts only after the payment is verified by the trust’s server; a screenshot or UPI reference is not proof of payment.',
+    '- The trust does not yet have approval for tax-deductible donations; donors receive a donation acknowledgement, not a tax certificate.',
+    '- Donation acknowledgement, donation-management and admin pages are private and not listed here.',
+    '',
+  );
+  return lines.join('\n');
 }
