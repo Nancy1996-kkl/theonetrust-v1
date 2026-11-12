@@ -463,7 +463,7 @@ describe('contact', () => {
     expect(c).toHaveTextContent('Kanchipuram, Tamil Nadu');
     expect(c).toHaveTextContent('Every day, 8 AM – 10 PM');
     expect(c).not.toHaveTextContent('Address');
-    expect(within(c).getByRole('link', { name: 'WhatsApp' })).toHaveAttribute(
+    expect(within(c).getByRole('link', { name: 'Chat on WhatsApp' })).toHaveAttribute(
       'href',
       'https://wa.me/919600516999',
     );
@@ -488,7 +488,7 @@ describe('contact', () => {
     });
     const c = section('contact');
     expect(c).toHaveTextContent('Address1 Example Street');
-    expect(within(c).queryByRole('link', { name: 'WhatsApp' })).not.toBeInTheDocument();
+    expect(within(c).queryByRole('link', { name: 'Chat on WhatsApp' })).not.toBeInTheDocument();
     expect(c).not.toHaveTextContent('Email');
   });
 });

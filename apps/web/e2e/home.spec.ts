@@ -30,4 +30,12 @@ test('explore tabs change the panel', async ({ page }) => {
   await expect(page.getByRole('tabpanel')).toContainText('Treatment on time');
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Elderly' })).toHaveAttribute('aria-selected', 'true');
+  // Let the scroll-reveal fades finish, so the bug detector's contrast check reads final colours
+  // (it measured a services card halfway through its fade-in). Looping decorations are ignored.
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+      .every((a) => a.playState !== 'running'),
+  );
 });

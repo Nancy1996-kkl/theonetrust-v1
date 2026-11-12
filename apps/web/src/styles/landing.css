@@ -294,14 +294,15 @@
 
 :lang(ta) .landing-hero__title {
   font-size: var(--text-hero-ta);
-  font-weight: var(--weight-bold);
-  line-height: 1.4; /* tighter than body Tamil, still clear of stacked vowel signs */
+  font-weight: var(--weight-semibold);
+  overflow-wrap: break-word;
+  line-height: 1.3; /* tighter than body Tamil, still clear of stacked vowel signs */
   letter-spacing: 0;
 }
 
 :lang(ta) .landing-hero__accent {
   font-style: normal;
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-semibold);
 }
 
 .landing-hero__lead {
@@ -337,6 +338,19 @@
     box-shadow var(--duration-base) var(--ease-standard);
 }
 
+/* Laptops: Tamil labels are long, so slimmer side padding keeps both buttons on one row,
+   like English (client, Nov 2026). */
+@media (min-width: 64em) {
+  :lang(ta) .landing-hero__actions .ui-button {
+    padding-inline: var(--space-3);
+  }
+
+  /* The decorative heart is dropped here so the long Tamil Donate label still fits. */
+  :lang(ta) .landing-hero__actions [data-icon='heart'] {
+    display: none;
+  }
+}
+
 .landing-hero__actions .ui-button [data-icon='arrow'] {
   transition: translate var(--duration-base) var(--ease-standard);
 }
@@ -370,6 +384,25 @@
 
 .landing-hero__place .landing-hero__icon {
   color: var(--color-text-accent-on-inverse);
+}
+
+/* Tablet and up (client, Nov 2026): the accent stays on one line, so the English title is two
+   lines. Phones let it wrap so it never runs off a narrow screen. */
+@media (min-width: 48em) {
+  .landing-hero__accent {
+    white-space: nowrap;
+  }
+
+  /* Tamil: two lines on laptops too (client, Nov 2026); the accent wraps only below 64em. */
+  :lang(ta) .landing-hero__accent {
+    white-space: normal;
+  }
+}
+
+@media (min-width: 64em) {
+  :lang(ta) .landing-hero__accent {
+    white-space: nowrap;
+  }
 }
 
 /* Laptop and up: side-by-side composition from the approved hero design. */

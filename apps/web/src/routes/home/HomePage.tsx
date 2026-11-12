@@ -11,6 +11,7 @@ import { useDonationDraft } from '../../state/donation-draft.ts';
 import { useLang } from '../../i18n/use-lang.ts';
 import { PolicyNotice } from '../policy/PolicyNotice.tsx';
 import { PageMeta } from '../../seo/PageMeta.tsx';
+import { ChatIcon } from './hero-icons.tsx';
 import { HeroSection } from './LandingSections.tsx';
 import { Reveal } from './Reveal.tsx';
 import {
@@ -636,11 +637,12 @@ function Contact({ facts, proof }: { facts: TrustFacts; proof: ProofContent }) {
               </Link>
               {facts.whatsappUrl && (
                 <a
-                  className="ui-button ui-button--ghost hp-btn"
+                  className="ui-button ui-button--primary hp-btn"
                   href={facts.whatsappUrl}
                   rel="noopener noreferrer"
                 >
-                  WhatsApp
+                  <ChatIcon />
+                  {T.whatsappUs[lang]}
                 </a>
               )}
             </div>

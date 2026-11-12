@@ -790,14 +790,19 @@
 }
 
 /* ── Language switch ─────────────────────────────────────────────── */
+/* Both languages get the same width (client, Nov 2026): Tamil no longer takes most of the pill. */
 .ui-lang {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
   border: var(--border-width) solid var(--color-action-secondary-border);
   border-radius: var(--radius-pill);
   overflow: hidden;
 }
 
 .ui-lang__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: var(--control-height-sm);
   padding: var(--space-1) var(--space-4);
   border: 0;

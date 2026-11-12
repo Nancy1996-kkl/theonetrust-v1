@@ -41,6 +41,8 @@
 .hp-head h2 {
   margin: 0 0 var(--space-3);
   font-size: var(--text-h2);
+  /* Semi-bold reads calmer than bold for the section titles (client review, Nov 2026). */
+  font-weight: var(--weight-semibold);
 }
 
 .hp-kicker {
@@ -49,10 +51,16 @@
   gap: var(--space-2);
   margin: 0 0 var(--space-2);
   color: var(--color-action-primary-bg);
-  font-weight: 700;
+  font-weight: var(--weight-bold);
   font-size: var(--text-small);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+/* Tamil has no capitals: no letter-spacing, and a touch less weight so it stays readable. */
+:lang(ta) .hp-kicker {
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0;
 }
 
 .hp-kicker::before {
@@ -301,7 +309,7 @@
 
 .hp-card h3 {
   margin: 0 0 var(--space-2);
-  font-size: var(--text-h3);
+  font-size: var(--text-card-title);
 }
 
 .hp-card p {
@@ -392,7 +400,7 @@
 
 .hp-need-row__body h3 {
   margin: 0 0 var(--space-2);
-  font-size: var(--text-h3);
+  font-size: var(--text-card-title);
 }
 
 .hp-need-row__body p {
@@ -483,7 +491,7 @@
 
 .hp-service h3 {
   margin: var(--space-4) 0 var(--space-2);
-  font-size: var(--text-h3);
+  font-size: var(--text-card-title);
 }
 
 .hp-service p {
@@ -677,7 +685,7 @@
 
 .hp-step__title {
   margin: 0 0 var(--space-2);
-  font-size: var(--text-h3);
+  font-size: var(--text-card-title);
 }
 
 .hp-step p {
@@ -708,7 +716,8 @@
 
 .hp-chips {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  /* Wide enough for "வேறு தொகை" / "Other amount" on one line. */
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   gap: var(--space-2);
   margin: 0 0 var(--space-4);
   padding: 0;

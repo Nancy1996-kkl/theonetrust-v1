@@ -24,6 +24,16 @@ export function HeartIcon() {
   );
 }
 
+/** A plain chat bubble (not a brand logo) for the WhatsApp button. */
+export function ChatIcon() {
+  return (
+    <svg {...common} data-icon="chat">
+      <path d="M4 18.5 5.3 15A7.5 7.5 0 1 1 9 18.6L4 18.5z" />
+      <path d="M9 11h.01M12 11h.01M15 11h.01" />
+    </svg>
+  );
+}
+
 export function ArrowIcon() {
   return (
     <svg {...common} data-icon="arrow">

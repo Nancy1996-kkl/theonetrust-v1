@@ -1,10 +1,9 @@
 /* Self-hosted fonts (no third-party requests). Most packages split files by unicode-range so a page
-   loads only the scripts it shows; Noto Serif Tamil is imported as its Tamil-only subset file. */
-@import '@fontsource-variable/inter';
+   loads only the scripts it shows. */
 @import '@fontsource-variable/noto-sans-tamil';
-@import '@fontsource/noto-serif-tamil/tamil-700.css'; /* Tamil headings (bold only) */
-@import '@fontsource-variable/playfair-display/wght.css'; /* English headings (split by unicode-range) */
-@import '@fontsource-variable/playfair-display/wght-italic.css'; /* hero accent word */
+/* English headings and body: Plus Jakarta Sans (client review, Nov 2026 — modern and warm). */
+@import '@fontsource-variable/plus-jakarta-sans/wght.css';
+@import '@fontsource-variable/plus-jakarta-sans/wght-italic.css'; /* hero accent words */
 @import './tokens.css';
 @import './components.css';
 @import './shell.css';
@@ -69,6 +68,13 @@ p {
   text-wrap: pretty;
 }
 
+/* Tamil headings (client, Nov 2026): Noto Sans Tamil, semi-bold, one size step calmer, and
+   whole words only — a heading never splits in the middle of a word. */
+:lang(ta) :is(h1, h2, h3) {
+  font-weight: var(--weight-semibold);
+  overflow-wrap: break-word;
+}
+
 /* Long-form reading width — opt in, so heroes, CTAs and admin tables are not narrowed. */
 .prose > * {
   max-width: var(--measure);
@@ -88,6 +94,9 @@ small {
   --font-body: var(--font-tamil);
   --leading-body: var(--leading-body-ta);
   --leading-heading: var(--leading-heading-ta);
+  /* Calmer Tamil heading sizes reach every rule that uses the h2/h3 tokens (client, Nov 2026). */
+  --text-h2: var(--text-h2-ta);
+  --text-h3: var(--text-h3-ta);
 
   font-family: var(--font-body);
   line-height: var(--leading-body);
