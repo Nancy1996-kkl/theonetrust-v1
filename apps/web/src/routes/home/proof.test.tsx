@@ -165,9 +165,24 @@ describe('proof content file', () => {
         'request-help',
         'data-use',
         'report-concern',
+        // Client review (Nov 2026): the questions donors ask first.
+        'how-to-donate',
+        'smallest-amount',
+        'refund',
       ]),
     );
     expect(new Set(ids).size).toBe(ids.length);
+    // Ordered as a donor thinks: how to give first, privacy and help last.
+    expect(ids[0]).toBe('how-to-donate');
+    expect(ids.at(-1)).toBe('report-concern');
+  });
+
+  it('no FAQ answer puts the donor off with "later" (client, Nov 2026)', () => {
+    for (const f of PROOF_CONTENT.faq.items) {
+      expect(f.answer.en, f.id).not.toMatch(
+        /will (update|publish|be added)|coming soon|after (we|the site)/i,
+      );
+    }
   });
 
   it('the tax answer never promises a deduction', () => {
@@ -400,12 +415,15 @@ describe('FAQ', () => {
   });
 
   it('preview shows every question; unconfirmed ones are labelled', () => {
-    renderHome('/', { showDrafts: true });
+    // All shipped answers are confirmed now, so mark one as a draft for this check.
+    const items = PROOF_CONTENT.faq.items.map((f, i) => (i === 0 ? { ...f, confirmed: false } : f));
+    renderHome('/', {
+      showDrafts: true,
+      proof: { ...PROOF_CONTENT, faq: { ...PROOF_CONTENT.faq, items } },
+    });
     const faq = section('faq');
-    expect(faq.querySelectorAll('summary')).toHaveLength(PROOF_CONTENT.faq.items.length);
-    expect(within(faq).getAllByText('Draft — not yet confirmed')).toHaveLength(
-      PROOF_CONTENT.faq.items.filter((f) => !f.confirmed).length,
-    );
+    expect(faq.querySelectorAll('summary')).toHaveLength(items.length);
+    expect(within(faq).getAllByText('Draft — not yet confirmed')).toHaveLength(1);
   });
 
   it('empty state when no answer is confirmed', () => {
