@@ -46,6 +46,12 @@ export const POLICY_UI = {
     ta: 'எங்களைத் தொடர்பு கொள்ளுங்கள், சீக்கிரம் பதில் சொல்கிறோம்:',
   },
   otherPolicies: { en: 'Other policies', ta: 'மற்ற கொள்கைகள்' },
+  kicker: { en: 'Our policies', ta: 'எங்கள் கொள்கைகள்' },
+  onThisPage: { en: 'On this page', ta: 'இந்தப் பக்கத்தில்' },
+  emailUs: { en: 'Email us', ta: 'மின்னஞ்சல் அனுப்புங்கள்' },
+  callUs: { en: 'Call us', ta: 'அழைக்கவும்' },
+  whatsappUs: { en: 'Chat on WhatsApp', ta: 'WhatsApp-இல் பேசுங்கள்' },
+  callHours: { en: 'Call hours', ta: 'அழைக்கும் நேரம்' },
   formNotice: {
     en: 'By continuing you agree to our',
     ta: 'தொடர்ந்தால், இவற்றை ஏற்றுக்கொள்கிறீர்கள்:',

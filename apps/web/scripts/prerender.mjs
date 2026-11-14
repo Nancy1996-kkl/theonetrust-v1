@@ -28,8 +28,8 @@ const HOISTED =
 function fontPreloads(lang) {
   const wanted =
     lang === 'ta'
-      ? [/^noto-sans-tamil-tamil-wght-normal-/, /^inter-latin-wght-normal-/]
-      : [/^inter-latin-wght-normal-/, /^playfair-display-latin-wght-normal-/];
+      ? [/^noto-sans-tamil-tamil-wght-normal-/, /^plus-jakarta-sans-latin-wght-normal-/]
+      : [/^plus-jakarta-sans-latin-wght-normal-/];
   return wanted
     .map((re) => fonts.find((f) => re.test(f)))
     .filter(Boolean)

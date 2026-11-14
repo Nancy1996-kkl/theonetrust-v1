@@ -129,14 +129,14 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
 
 ## Typography
 
-| Token          | Mobile (360px) | Desktop (1440px) | Font             |
-| -------------- | -------------- | ---------------- | ---------------- |
-| `--text-hero`  | 38px           | 64px             | Playfair Display |
-| `--text-h1`    | 34px           | 48px             | Playfair Display |
-| `--text-h2`    | 28px           | 38px             | Playfair Display |
-| `--text-h3`    | 22px           | 26px             | Playfair Display |
-| `--text-body`  | 16px           | 17px             | Inter            |
-| `--text-small` | 13px           | 14px             | Inter            |
+| Token          | Mobile (360px) | Desktop (1440px) | Font              |
+| -------------- | -------------- | ---------------- | ----------------- |
+| `--text-hero`  | 34px           | 52px             | Plus Jakarta Sans |
+| `--text-h1`    | 34px           | 48px             | Playfair Display  |
+| `--text-h2`    | 28px           | 38px             | Playfair Display  |
+| `--text-h3`    | 22px           | 26px             | Playfair Display  |
+| `--text-body`  | 16px           | 17px             | Inter             |
+| `--text-small` | 13px           | 14px             | Inter             |
 
 - Sizes are fluid `clamp()` values in `rem` + `vw`: exact at 360 and 1440 px, smooth in between,
   and they still scale with browser zoom and the user's font-size setting.

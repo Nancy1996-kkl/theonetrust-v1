@@ -47,7 +47,7 @@ test.describe('type scale', () => {
   test('the home hero headline uses the hero scale', async ({ page }) => {
     const width = page.viewportSize()!.width;
     await page.goto('/');
-    expect((await computed(page, 'h1')).fontSize).toBeCloseTo(fluid(38, 64, width), 0);
+    expect((await computed(page, 'h1')).fontSize).toBeCloseTo(fluid(34, 52, width), 0);
   });
 
   test('the scale follows the user font-size setting (rem-based)', async ({ page }) => {
@@ -61,7 +61,7 @@ test.describe('type scale', () => {
 });
 
 test.describe('fonts', () => {
-  test('Inter, Playfair Display, Noto Sans Tamil and Noto Serif Tamil load from our own origin', async ({
+  test('Plus Jakarta Sans and Noto Sans Tamil load from our own origin', async ({
     page,
     baseURL,
   }) => {
@@ -74,10 +74,10 @@ test.describe('fonts', () => {
 
     const loaded = await page.evaluate(async () => {
       const probes = {
-        inter: ['16px "Inter Variable"', 'Donate'],
-        playfair: ['600 34px "Playfair Display Variable"', 'Theonetrust'],
+        body: ['16px "Plus Jakarta Sans Variable"', 'Donate'],
+        jakarta: ['600 34px "Plus Jakarta Sans Variable"', 'Theonetrust'],
         tamil: ['16px "Noto Sans Tamil Variable"', 'தமிழ் நன்கொடை'],
-        tamilHeading: ['700 28px "Noto Serif Tamil"', 'தமிழ் தலைப்பு'],
+        tamilHeading: ['600 28px "Noto Sans Tamil Variable"', 'தமிழ் தலைப்பு'],
       } as const;
       const out: Record<string, boolean> = {};
       for (const [key, [font, text]] of Object.entries(probes)) {
@@ -87,20 +87,22 @@ test.describe('fonts', () => {
       }
       return out;
     });
-    expect(loaded).toEqual({ inter: true, playfair: true, tamil: true, tamilHeading: true });
+    expect(loaded).toEqual({ body: true, jakarta: true, tamil: true, tamilHeading: true });
 
     expect(fontRequests.length).toBeGreaterThan(0);
     const origin = new URL(baseURL!).origin;
     for (const url of fontRequests) expect(new URL(url).origin).toBe(origin);
   });
 
-  test('Tamil headings use Noto Serif Tamil; Tamil body and buttons use Noto Sans Tamil', async ({
+  test('Tamil headings, body and buttons: Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (client, Nov 2026)', async ({
     page,
   }) => {
     await page.goto('/');
     await injectSpecimen(page);
     for (const selector of ['#tamil-specimen h2', '#tamil-specimen h3', '#inverse-band h3']) {
-      expect((await computed(page, selector)).fontFamily, selector).toMatch(/^"?Noto Serif Tamil/);
+      expect((await computed(page, selector)).fontFamily, selector).toMatch(
+        /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
+      );
     }
     for (const selector of [
       '#tamil-specimen p',
@@ -108,11 +110,11 @@ test.describe('fonts', () => {
       '[data-check="card"] button',
     ]) {
       expect((await computed(page, selector)).fontFamily, selector).toMatch(
-        /^"?Noto Sans Tamil Variable/,
+        /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
       );
     }
-    // English headings are unaffected.
-    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Playfair Display Variable/);
+    // Every heading and title: Plus Jakarta Sans (client, Nov 2026).
+    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Plus Jakarta Sans Variable/);
   });
 });
 
@@ -245,10 +247,10 @@ test.describe('Tamil specimen at this viewport', () => {
     });
     for (const selector of ['body', '[data-check="card"] button']) {
       expect((await computed(page, selector)).fontFamily, selector).toMatch(
-        /^"?Noto Sans Tamil Variable/,
+        /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
       );
     }
-    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Noto Serif Tamil/);
+    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Plus Jakarta Sans Variable/);
     const body = await computed(page, 'body');
     expect(body.lineHeight / body.fontSize).toBeGreaterThanOrEqual(1.75);
   });
@@ -259,7 +261,9 @@ test.describe('Tamil specimen at this viewport', () => {
     await page.goto('/');
     await injectSpecimen(page);
     const styled = await computed(page, '#class-styled');
-    expect(styled.fontFamily).toMatch(/^"?Noto Serif Tamil/);
+    expect(styled.fontFamily).toMatch(
+      /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
+    );
     expect(styled.lineHeight / styled.fontSize).toBeGreaterThanOrEqual(1.45);
   });
 
