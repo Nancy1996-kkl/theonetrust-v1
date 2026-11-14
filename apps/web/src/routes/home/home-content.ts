@@ -101,7 +101,7 @@ export const HOME_TEXT = {
     en: 'Want to know more before you give, or need help yourself? Call or WhatsApp us — a real person from the trust will answer.',
     ta: 'கொடுப்பதற்கு முன் இன்னும் தெரிந்துகொள்ள வேண்டுமா, அல்லது உங்களுக்கே உதவி தேவையா? போன் செய்யுங்கள் அல்லது WhatsApp-இல் எழுதுங்கள் — அறக்கட்டளையிலிருந்து ஒருவர் நேரடியாகப் பதில் சொல்வார்.',
   },
-  askHelp: { en: 'Ask for help', ta: 'உதவி கேளுங்கள்' },
+  askHelp: { en: 'Request Help', ta: 'உதவி கோருங்கள்' },
 
   // 9 · FAQ
   faqKicker: { en: 'Good to know', ta: 'தெரிந்துகொள்ளுங்கள்' },
