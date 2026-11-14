@@ -32,7 +32,7 @@
   max-width: 100%;
   padding: var(--space-2) var(--control-padding-inline);
   border: var(--border-width-strong) solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-weight: var(--weight-semibold);
   text-align: center;
   text-decoration: none;
@@ -793,7 +793,7 @@
 .ui-lang {
   display: inline-flex;
   border: var(--border-width) solid var(--color-action-secondary-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 

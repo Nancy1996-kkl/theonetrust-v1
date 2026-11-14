@@ -17,6 +17,8 @@ export interface TrustFacts {
   area: Record<UiLang, string> | null;
   address: Record<UiLang, string> | null;
   callHours: Record<UiLang, string> | null;
+  /** Map link for the area (opens Google Maps). Swap for the exact address once confirmed. */
+  mapUrl?: string | null;
 }
 
 export const TRUST_FACTS: TrustFacts = {
@@ -31,4 +33,6 @@ export const TRUST_FACTS: TrustFacts = {
   area: { en: 'Kanchipuram, Tamil Nadu', ta: 'காஞ்சிபுரம், தமிழ்நாடு' },
   address: null, // [CONFIRM] #1 — postal address pending from the client
   callHours: { en: 'Every day, 8 AM – 10 PM', ta: 'தினமும், காலை 8 – இரவு 10' },
+  // Town-level placeholder (client, Nov 2026); replace with the trust's exact location later.
+  mapUrl: 'https://www.google.com/maps/search/?api=1&query=Kanchipuram%2C+Tamil+Nadu',
 };

@@ -183,6 +183,44 @@ describe('live page (drafts hidden)', () => {
     expect(document.getElementById('top')).not.toHaveTextContent('Kanchipuram');
   });
 
+  it('hero area is a map link that opens in a new tab, in English and Tamil', () => {
+    const { unmount } = renderHome();
+    const map = within(document.getElementById('top')!).getByRole('link', {
+      name: /Kanchipuram, Tamil Nadu/,
+    });
+    expect(map).toHaveAttribute('href', TRUST_FACTS.mapUrl);
+    expect(map).toHaveAttribute('target', '_blank');
+    expect(map).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(map).toHaveAccessibleName(/opens in a new tab/);
+    unmount();
+    renderHome('/ta');
+    expect(
+      within(document.getElementById('top')!).getByRole('link', { name: /காஞ்சிபுரம்/ }),
+    ).toHaveAccessibleName(/புதிய தாவலில்/);
+  });
+
+  it('the area is a map link in three places: hero, contact and footer', () => {
+    renderHome();
+    const places = [
+      document.getElementById('top')!,
+      document.getElementById('contact')!,
+      screen.getByRole('contentinfo'),
+    ];
+    for (const place of places) {
+      expect(within(place).getByRole('link', { name: /Kanchipuram, Tamil Nadu/ })).toHaveAttribute(
+        'href',
+        TRUST_FACTS.mapUrl,
+      );
+    }
+  });
+
+  it('hero area stays plain text when there is no map link', () => {
+    renderHome('/', { facts: { ...TRUST_FACTS, mapUrl: null } });
+    const top = document.getElementById('top')!;
+    expect(within(top).getByText('Kanchipuram, Tamil Nadu')).toBeVisible();
+    expect(within(top).queryByRole('link', { name: /Kanchipuram/ })).toBeNull();
+  });
+
   it('where help is needed shows only confirmed programmes with who-for and fund label', () => {
     renderHome();
     const ways = document.getElementById('ways-we-help')!;

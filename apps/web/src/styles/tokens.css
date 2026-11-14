@@ -132,12 +132,17 @@
     0 0 0 4px var(--color-action-donate-glow), 0 8px 24px var(--color-action-donate-glow);
 
   /* ── Typography ───────────────────────────────────────────────────── */
+  /* One family across the whole site (client, Nov 2026): Plus Jakarta Sans for headings, menus,
+     buttons and text. It has no Tamil letters, so the browser takes those from Noto Sans Tamil,
+     while English words and numbers on Tamil pages stay in Plus Jakarta Sans. */
   --font-heading:
-    'Playfair Display Variable', 'Playfair Display', Georgia, 'Times New Roman', serif;
-  --font-body: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-tamil: 'Noto Sans Tamil Variable', 'Noto Sans Tamil', Latha, var(--font-body);
-  /* Classic printed-Tamil look for headings (owner chose this over legacy Bamini, #46). */
-  --font-heading-ta: 'Noto Serif Tamil', var(--font-tamil);
+    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
+    sans-serif;
+  --font-body: var(--font-heading);
+  --font-tamil:
+    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable',
+    'Noto Sans Tamil', Latha, sans-serif;
+  --font-heading-ta: var(--font-tamil);
 
   /* Fluid scale: exact mobile value at 360px, exact desktop value at 1440px, rem-based so
      browser zoom and user font settings still work (WCAG 1.4.4). */

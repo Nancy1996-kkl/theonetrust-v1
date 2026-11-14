@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { AreaLink } from '../../components/ui/AreaLink.tsx';
 import { StatusPill } from '../../components/ui/StatusPill.tsx';
 import type { TrustFacts } from '../../config/trust-facts.ts';
 import type { Bilingual, Gated, LandingContent } from '../../content/landing.ts';
@@ -110,8 +111,10 @@ export function HeroSection({ content, facts, showDrafts }: SectionProps) {
           </p>
           {facts.area && (
             <p className="landing-hero__place">
-              <PinIcon />
-              {facts.area[lang]}
+              <span className="landing-hero__pin">
+                <PinIcon />
+              </span>
+              <AreaLink facts={facts} lang={lang} className="landing-hero__map" />
             </p>
           )}
           <GatedText

@@ -1,16 +1,16 @@
 import type { Bilingual } from '../../content/landing.ts';
-import children from '../../assets/home/children-girl.jpg';
+import children from '../../assets/home/children-books-madurai.jpg';
 import contact from '../../assets/home/contact-smiles.jpg';
-import donate from '../../assets/home/donate-children.jpg';
-import education from '../../assets/home/education-schoolgirls.jpg';
-import elderly from '../../assets/home/elderly-women.jpg';
-import healthcare from '../../assets/home/healthcare-camp.jpg';
+import donate from '../../assets/home/donate-kids-smile.jpg';
+import education from '../../assets/home/education-girls-study.jpg';
+import elderly from '../../assets/home/elderly-grandparents.jpg';
+import healthcare from '../../assets/home/healthcare-bp-check.jpg';
 import vision from '../../assets/home/vision-children-walk.jpg';
 
 /**
  * SAMPLE photos for the home page design (client, Nov 2026): real camera photos from Unsplash
- * (Unsplash License, no credit needed) and Flickr (Creative Commons — credited on hover, as the
- * licence requires). They are NOT the trust's beneficiaries — replace every one with the trust's
+ * and Pexels (free licences, no credit needed). Activity photos are from Tamil Nadu / South India so local visitors
+ * connect with them (client). They are NOT the trust's beneficiaries — replace every one with the trust's
  * own photos (with consent) before launch.
  */
 export interface HomePhoto {
@@ -18,8 +18,6 @@ export interface HomePhoto {
   alt: Bilingual;
   credit: { author: string; license: string; url: string };
 }
-
-const BY = 'CC BY 2.0';
 
 export const PHOTOS = {
   vision: {
@@ -37,58 +35,61 @@ export const PHOTOS = {
   education: {
     src: education,
     alt: {
-      en: 'Schoolgirls in uniform walking to school',
-      ta: 'சீருடையில் பள்ளிக்குச் செல்லும் மாணவிகள்',
+      en: 'Two schoolgirls in uniform studying at their desk',
+      ta: 'மேசையில் அமர்ந்து படிக்கும் சீருடை அணிந்த இரண்டு மாணவிகள்',
     },
     credit: {
-      author: 'Nithi clicks',
-      license: BY,
-      url: 'https://www.flickr.com/photos/47850033@N08/47393681652',
+      author: 'Unsplash',
+      license: 'Unsplash License',
+      url: 'https://unsplash.com/s/photos/indian-school-uniform',
     },
   },
   children: {
     src: children,
     alt: {
-      en: 'Two children playing together outdoors',
-      ta: 'வெளியே ஒன்றாக விளையாடும் இரண்டு குழந்தைகள்',
+      en: 'Schoolboys choosing Tamil books at a book fair in Madurai',
+      ta: 'மதுரை புத்தகக் கண்காட்சியில் தமிழ்ப் புத்தகங்களைப் பார்க்கும் பள்ளி மாணவர்கள்',
     },
     credit: {
-      author: 'Unsplash',
-      license: 'Unsplash License',
-      url: 'https://unsplash.com/license',
+      author: 'Pexels',
+      license: 'Pexels License',
+      url: 'https://www.pexels.com/photo/children-exploring-books-at-madurai-literature-event-28963924/',
     },
   },
   healthcare: {
     src: healthcare,
     alt: {
-      en: 'A doctor talking a patient through her report',
-      ta: 'நோயாளியிடம் அறிக்கையை விளக்கும் மருத்துவர்',
+      en: 'A doctor checking a patient’s blood pressure at a clinic',
+      ta: 'மருத்துவமனையில் ஒருவரின் இரத்த அழுத்தத்தைப் பரிசோதிக்கும் மருத்துவர்',
     },
     credit: {
-      author: 'Unsplash',
-      license: 'Unsplash License',
-      url: 'https://unsplash.com/license',
+      author: 'Pexels',
+      license: 'Pexels License',
+      url: 'https://www.pexels.com/photo/a-doctor-taking-a-patient-s-blood-pressure-14558560/',
     },
   },
   elderly: {
     src: elderly,
-    alt: { en: 'A group of smiling older women', ta: 'புன்னகைக்கும் வயதான பெண்கள்' },
+    alt: {
+      en: 'Grandparents laughing with their grandchild in the garden',
+      ta: 'தோட்டத்தில் பேரக்குழந்தையுடன் சிரிக்கும் தாத்தா பாட்டி',
+    },
     credit: {
-      author: 'Find Your Feet',
-      license: BY,
-      url: 'https://www.flickr.com/photos/31042566@N06/3693611933',
+      author: 'Pexels',
+      license: 'Pexels License',
+      url: 'https://www.pexels.com/photo/woman-and-man-sitting-with-child-18394079/',
     },
   },
   donate: {
     src: donate,
     alt: {
-      en: 'Schoolboys in uniform smiling and waving together',
-      ta: 'சீருடையில் சிரித்தபடி கையசைக்கும் பள்ளி மாணவர்கள்',
+      en: 'Smiling children standing together in front of a yellow door',
+      ta: 'மஞ்சள் கதவின் முன் ஒன்றாக நின்று புன்னகைக்கும் குழந்தைகள்',
     },
     credit: {
-      author: 'Unsplash',
-      license: 'Unsplash License',
-      url: 'https://unsplash.com/license',
+      author: 'Pexels',
+      license: 'Pexels License',
+      url: 'https://www.pexels.com/photo/kids-smiling-at-the-camera-3920704/',
     },
   },
   contact: {

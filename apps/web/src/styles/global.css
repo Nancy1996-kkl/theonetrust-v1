@@ -1,13 +1,9 @@
 /* Self-hosted fonts (no third-party requests). Most packages split files by unicode-range so a page
-   loads only the scripts it shows; Noto Serif Tamil is imported as its Tamil-only subset file. */
-@import '@fontsource-variable/inter';
+   loads only the scripts it shows. */
 @import '@fontsource-variable/noto-sans-tamil';
-@import '@fontsource/noto-serif-tamil/tamil-700.css'; /* Tamil headings (bold only) */
-@import '@fontsource-variable/playfair-display/wght.css'; /* English headings (split by unicode-range) */
-@import '@fontsource-variable/playfair-display/wght-italic.css'; /* hero accent word */
-/* Titles: Plus Jakarta Sans (client, Nov 2026). */
+/* Plus Jakarta Sans everywhere (client, Nov 2026). */
 @import '@fontsource-variable/plus-jakarta-sans/wght.css';
-@import '@fontsource-variable/plus-jakarta-sans/wght-italic.css';
+@import '@fontsource-variable/plus-jakarta-sans/wght-italic.css'; /* hero accent words */
 @import './tokens.css';
 @import './components.css';
 @import './shell.css';

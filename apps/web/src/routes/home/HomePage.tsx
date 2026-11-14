@@ -1,18 +1,20 @@
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { Link } from 'react-router';
+import { AreaLink } from '../../components/ui/AreaLink.tsx';
 import { PAISE_PER_RUPEE, formatInr, type Paise } from '@theonetrust/contracts';
 import { TRUST_FACTS, type TrustFacts } from '../../config/trust-facts.ts';
 import { draftsVisible, type Bilingual, type LandingContent } from '../../content/landing.ts';
 import { isPublishableMetric, isPublishableStory, type ProofContent } from '../../content/proof.ts';
 import { usePublicContent } from '../../content/use-public-content.ts';
 import { DONATE_PRESETS_RUPEES } from '../../donate/donate-messages.ts';
-import { homePath, localizedPath } from '../../i18n/lang.ts';
+import { homePath } from '../../i18n/lang.ts';
 import { useDonationDraft } from '../../state/donation-draft.ts';
 import { useLang } from '../../i18n/use-lang.ts';
 import { PolicyNotice } from '../policy/PolicyNotice.tsx';
 import { PageMeta } from '../../seo/PageMeta.tsx';
 import { HeroSection } from './LandingSections.tsx';
 import { Reveal } from './Reveal.tsx';
+import { GiftJourney } from './GiftJourney.tsx';
 import {
   Draft,
   StateGate,
@@ -22,7 +24,7 @@ import {
 } from './ProofSections.tsx';
 import { READY, useDate } from './section-state.ts';
 import { PHOTOS, TAB_PHOTOS, type HomePhoto } from './photos.ts';
-import { EXPLORE_TABS, HOME_TEXT as T, SERVICES, STEPS, type Service } from './home-content.ts';
+import { EXPLORE_TABS, HOME_TEXT as T, SERVICES, type Service } from './home-content.ts';
 
 /**
  * The home page (redesign approved by the client, Nov 2026), in order: hero, mission & vision,
@@ -70,7 +72,7 @@ export function HomePage({
         showDrafts={showDrafts}
         {...(states ? { states } : {})}
       />
-      <HowItWorks content={content} />
+      <GiftJourney content={content} />
       <Donation />
       <Contact facts={facts} proof={proof} />
       <Faq proof={proof} landing={content} showDrafts={showDrafts} state={states?.faq ?? READY} />
@@ -322,6 +324,12 @@ function Services() {
           <ul className="hp-services hp-stagger">
             {SERVICES.map((s, i) => (
               <li key={s.id} className={`hp-service${i === 1 ? ' hp-service--feature' : ''}`}>
+                {i === 1 && (
+                  // Gold line that traces the card from its top-left corner (client, Nov 2026).
+                  <svg className="hp-service__trace" aria-hidden="true" focusable="false">
+                    <rect pathLength={100} />
+                  </svg>
+                )}
                 <ServiceIcon icon={s.icon} />
                 <h3>{s.title[lang]}</h3>
                 <p>{s.body[lang]}</p>
@@ -493,36 +501,6 @@ function Impact({
 }
 
 // 6 · How it works — numbered steps joined by a line.
-function HowItWorks({ content }: { content: LandingContent }) {
-  const lang = useLang();
-  return (
-    <section id="how-it-works" className="hp-section" aria-labelledby="hp-how-title">
-      <Reveal>
-        <div className="hp-wrap">
-          <SectionHead id="hp-how-title" kicker={T.howKicker} title={T.howTitle} />
-          <ol className="hp-steps hp-stagger">
-            {STEPS.map((s, i) => (
-              <li key={s.title.en} className="hp-step">
-                <span className="hp-step__num" aria-hidden="true">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <h3 className="hp-step__title">{s.title[lang]}</h3>
-                <p>{s.body[lang]}</p>
-              </li>
-            ))}
-          </ol>
-          <p className="hp-note">
-            <Link to={localizedPath('/refund-policy', lang)}>
-              {content.howItWorks.policyLink[lang]}
-            </Link>
-          </p>
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
-// 7 · Donation — text left, photo right — amount chips open the centred donate pop-up pre-filled.
 function Donation() {
   const lang = useLang();
   const { updateDraft } = useDonationDraft();
@@ -607,7 +585,8 @@ function Contact({ facts, proof }: { facts: TrustFacts; proof: ProofContent }) {
       { en: 'Email', ta: 'மின்னஞ்சல்' },
       <a href={`mailto:${facts.email}`}>{facts.email}</a>,
     ]);
-  if (facts.area) rows.push([{ en: 'Location', ta: 'இடம்' }, facts.area[lang]]);
+  if (facts.area)
+    rows.push([{ en: 'Location', ta: 'இடம்' }, <AreaLink facts={facts} lang={lang} />]);
   if (facts.address) rows.push([proof.contact.addressLabel, facts.address[lang]]);
   if (facts.callHours)
     rows.push([{ en: 'Call hours', ta: 'அழைக்கும் நேரம்' }, facts.callHours[lang]]);

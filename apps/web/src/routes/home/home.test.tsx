@@ -69,6 +69,27 @@ describe('home page design (client, Nov 2026)', () => {
     await expectNoA11yViolations(container);
   });
 
+  it('only the Education card carries the gold tracing border, hidden from screen readers', async () => {
+    renderAt('/');
+    const services = await screen.findByRole('heading', {
+      level: 2,
+      name: HOME_TEXT.servicesTitle.en,
+    });
+    const cards = [...services.closest('section')!.querySelectorAll('.hp-service')];
+    const traced = cards.filter((c) => c.querySelector('.hp-service__trace'));
+    expect(traced).toHaveLength(1);
+    expect(traced[0]).toHaveTextContent(SERVICES[1]!.title.en);
+    expect(traced[0]!.querySelector('.hp-service__trace')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('amount cards keep the rupee amounts as their link text', async () => {
+    renderAt('/');
+    const give = (
+      await screen.findByRole('heading', { level: 2, name: HOME_TEXT.donateTitle.en })
+    ).closest('section')!;
+    expect(within(give).getByRole('link', { name: '₹500' })).toHaveClass('hp-chip');
+  });
+
   it('explore tabs switch with a click and with the arrow keys', async () => {
     const user = userEvent.setup();
     renderAt('/');

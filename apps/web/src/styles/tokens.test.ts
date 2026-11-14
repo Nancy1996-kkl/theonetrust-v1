@@ -185,9 +185,16 @@ describe('type scale (UX brief §4: mobile @360 → desktop @1440)', () => {
     expect(Math.min(...weights)).toBeGreaterThanOrEqual(400);
   });
 
-  it('Tamil headings use a Unicode serif face, falling back to the Tamil body font', () => {
+  it('one family site-wide: Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (client, Nov 2026)', () => {
     // Legacy non-Unicode fonts such as Bamini break SEO, screen readers and typing (#46).
-    expect(tokens.get('--font-heading-ta')).toBe("'Noto Serif Tamil', var(--font-tamil)");
+    expect(tokens.get('--font-heading')).toMatch(
+      /^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans'/,
+    );
+    expect(tokens.get('--font-body')).toBe('var(--font-heading)');
+    expect(tokens.get('--font-tamil')).toMatch(
+      /^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable'/,
+    );
+    expect(tokens.get('--font-heading-ta')).toBe('var(--font-tamil)');
     expect(tokens.get('--font-heading-ta')).not.toMatch(/bamini/i);
   });
 
