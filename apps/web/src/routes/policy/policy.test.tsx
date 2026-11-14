@@ -102,6 +102,22 @@ describe.each([
     for (const link of links) expect(link.getAttribute('href')).toMatch(/^\/ta\//);
   });
 
+  it('has an "On this page" list linking to every section', () => {
+    renderRoute(path);
+    const toc = screen.getByRole('navigation', { name: POLICY_UI.onThisPage.en });
+    const links = within(toc).getAllByRole('link');
+    expect(links).toHaveLength(POLICIES[id].sections.length);
+    POLICIES[id].sections.forEach((section, i) => {
+      expect(links[i]).toHaveAttribute('href', `#${section.id}`);
+      expect(document.getElementById(section.id)).not.toBeNull();
+    });
+  });
+
+  it('Tamil page uses the Tamil "On this page" label', () => {
+    renderRoute(`/ta${path}`);
+    expect(screen.getByRole('navigation', { name: POLICY_UI.onThisPage.ta })).toBeInTheDocument();
+  });
+
   it.each(['', '/ta'])('%s has no axe violations', async (prefix) => {
     const { container } = renderRoute(`${prefix}${path}`);
     await expectNoA11yViolations(container);
@@ -157,21 +173,47 @@ describe('unconfirmed sections', () => {
 });
 
 describe('contact block', () => {
-  it('shows the verified email and phone, hides missing ones', () => {
-    const { unmount } = renderRoute('/terms');
-    const contact = screen.getByRole('heading', {
-      name: POLICY_UI.contactHeading.en,
-    }).parentElement!;
-    expect(within(contact).getByRole('link', { name: 'info.theonetrust@gmail.com' })).toBeVisible();
-    expect(within(contact).getByRole('link', { name: '+91 96005 16999' })).toBeVisible();
-    unmount();
+  const contactSection = () =>
+    screen.getByRole('heading', { name: POLICY_UI.contactHeading.en }).closest('section')!;
+
+  it('shows WhatsApp, call and email as buttons with the verified details', () => {
+    renderRoute('/terms');
+    const contact = contactSection();
+    const whatsapp = within(contact).getByRole('link', { name: POLICY_UI.whatsappUs.en });
+    expect(whatsapp).toHaveAttribute('href', 'https://wa.me/919600516999');
+    expect(whatsapp).toHaveClass('ui-button--primary');
+    const call = within(contact).getByRole('link', { name: 'Call us +91 96005 16999' });
+    expect(call).toHaveAttribute('href', 'tel:+919600516999');
+    expect(call).toHaveClass('ui-button');
+    const email = within(contact).getByRole('link', {
+      name: 'Email us info.theonetrust@gmail.com',
+    });
+    expect(email).toHaveAttribute('href', 'mailto:info.theonetrust@gmail.com');
+    expect(contact).toHaveTextContent('Every day, 8 AM – 10 PM');
+  });
+
+  it('Tamil contact buttons use Tamil labels', () => {
+    renderRoute('/ta/terms');
+    const contact = screen
+      .getByRole('heading', { name: POLICY_UI.contactHeading.ta })
+      .closest('section')!;
+    expect(within(contact).getByRole('link', { name: POLICY_UI.whatsappUs.ta })).toBeVisible();
+    expect(contact).toHaveTextContent(POLICY_UI.callUs.ta);
+    expect(contact).toHaveTextContent(POLICY_UI.emailUs.ta);
+    expect(contact).toHaveTextContent(POLICY_UI.callHours.ta);
+  });
+
+  it('hides missing channels', () => {
     render(
       <MemoryRouter>
-        <PolicyPage id="terms" facts={{ ...TRUST_FACTS, email: null, phone: null }} />
+        <PolicyPage
+          id="terms"
+          facts={{ ...TRUST_FACTS, email: null, phone: null, whatsappUrl: null, callHours: null }}
+        />
       </MemoryRouter>,
     );
-    const empty = screen.getByRole('heading', { name: POLICY_UI.contactHeading.en }).parentElement!;
-    expect(within(empty).queryAllByRole('link')).toHaveLength(0);
+    expect(within(contactSection()).queryAllByRole('link')).toHaveLength(0);
+    expect(contactSection()).not.toHaveTextContent(POLICY_UI.callHours.en);
   });
 });
 

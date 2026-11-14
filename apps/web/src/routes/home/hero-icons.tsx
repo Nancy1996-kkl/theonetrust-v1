@@ -24,6 +24,35 @@ export function HeartIcon() {
   );
 }
 
+/** A plain chat bubble (not a brand logo) for the WhatsApp button. */
+export function ChatIcon() {
+  return (
+    <svg {...common} data-icon="chat">
+      <path d="M4 18.5 5.3 15A7.5 7.5 0 1 1 9 18.6L4 18.5z" />
+      <path d="M9 11h.01M12 11h.01M15 11h.01" />
+    </svg>
+  );
+}
+
+/** A plain phone handset. */
+export function PhoneIcon() {
+  return (
+    <svg {...common} data-icon="phone">
+      <path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" />
+    </svg>
+  );
+}
+
+/** A plain envelope. */
+export function MailIcon() {
+  return (
+    <svg {...common} data-icon="mail">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  );
+}
+
 export function ArrowIcon() {
   return (
     <svg {...common} data-icon="arrow">

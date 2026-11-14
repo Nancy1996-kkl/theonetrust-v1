@@ -5,6 +5,9 @@
 @import '@fontsource/noto-serif-tamil/tamil-700.css'; /* Tamil headings (bold only) */
 @import '@fontsource-variable/playfair-display/wght.css'; /* English headings (split by unicode-range) */
 @import '@fontsource-variable/playfair-display/wght-italic.css'; /* hero accent word */
+/* Titles: Plus Jakarta Sans (client, Nov 2026). */
+@import '@fontsource-variable/plus-jakarta-sans/wght.css';
+@import '@fontsource-variable/plus-jakarta-sans/wght-italic.css';
 @import './tokens.css';
 @import './components.css';
 @import './shell.css';
@@ -217,4 +220,13 @@ button {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Client (Nov 2026): every heading and title in Plus Jakarta Sans, whatever a component sets.
+   "Plus Jakarta Sans Variable" is the name of our self-hosted file; Plus Jakarta has no Tamil
+   letters, so those come from Noto Sans Tamil. */
+:is(h1, h2, h3, h4, h5, h6, [class*='__title'], [class*='__brand']),
+:is(h1, h2, h3, h4, h5, h6, [class*='__title'], [class*='__brand']) * {
+  font-family:
+    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable', sans-serif !important;
 }

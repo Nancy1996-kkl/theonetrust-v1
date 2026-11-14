@@ -156,7 +156,7 @@ describe('surface classes', () => {
 
 describe('type scale (UX brief §4: mobile @360 → desktop @1440)', () => {
   const expected: Record<string, [number, number]> = {
-    '--text-hero': [38, 64],
+    '--text-hero': [34, 52], // client, Nov 2026: headline in two lines
     '--text-h1': [34, 48],
     '--text-h2': [28, 38],
     '--text-h3': [22, 26],

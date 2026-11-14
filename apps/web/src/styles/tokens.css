@@ -141,7 +141,7 @@
 
   /* Fluid scale: exact mobile value at 360px, exact desktop value at 1440px, rem-based so
      browser zoom and user font settings still work (WCAG 1.4.4). */
-  --text-hero: clamp(2.375rem, 1.8333rem + 2.4074vw, 4rem); /* 38 → 64px */
+  --text-hero: clamp(2.125rem, 1.75rem + 1.6667vw, 3.25rem); /* 34 → 52px (client: two lines) */
   /* Tamil hero: longer words, so one step smaller (30 → 46px) */
   --text-hero-ta: clamp(1.875rem, 1.5417rem + 1.4815vw, 2.875rem);
   --text-h1: clamp(2.125rem, 1.8333rem + 1.2963vw, 3rem); /* 34 → 48px */

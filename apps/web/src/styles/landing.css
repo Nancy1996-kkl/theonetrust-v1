@@ -285,6 +285,13 @@
   overflow-wrap: anywhere;
 }
 
+/* Client (Nov 2026): headline in two lines on tablets and desktops. */
+@media (min-width: 48em) {
+  .landing-hero__accent:not(:lang(ta)) {
+    white-space: nowrap;
+  }
+}
+
 .landing-hero__accent {
   display: block;
   font-style: italic;
