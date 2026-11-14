@@ -313,7 +313,7 @@ export const PROOF_CONTENT: ProofContent = {
   contact: {
     title: { en: 'Contact us', ta: 'எங்களைத் தொடர்பு கொள்ள' },
     addressLabel: { en: 'Address', ta: 'முகவரி' },
-    helpTitle: { en: 'Ask for help', ta: 'உதவி கேளுங்கள்' },
+    helpTitle: { en: 'Request Help', ta: 'உதவி கோருங்கள்' },
     helpBody: {
       en: 'For yourself or for someone you know. Tell us briefly what is needed and we will call you back. Sending a request does not guarantee help.',
       ta: 'உங்களுக்கோ உங்களுக்குத் தெரிந்தவருக்கோ கேட்கலாம். என்ன தேவை என்று சுருக்கமாகச் சொல்லுங்கள், நாங்கள் உங்களைத் திரும்ப அழைப்போம். கோரிக்கை அனுப்பினாலே உதவி கிடைக்கும் என்று உறுதி சொல்ல முடியாது.',
