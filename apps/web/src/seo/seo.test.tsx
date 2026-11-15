@@ -8,6 +8,7 @@ import {
   DISALLOWED_PATHS,
   INDEXABLE_PAGES,
   SITE_ORIGIN,
+  buildLlmsTxt,
   buildRobotsTxt,
   buildSitemapXml,
   headTags,
@@ -176,5 +177,31 @@ describe('sitemap.xml and robots.txt', () => {
     for (const path of DISALLOWED_PATHS) expect(robots).toContain(`Disallow: ${path}`);
     expect(robots).toContain(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`);
     expect(robots).not.toMatch(/Disallow: \/\n/);
+  });
+});
+
+describe('llms.txt (client, Nov 2026)', () => {
+  it('lists every public page in both languages and the confirmed contact details', () => {
+    const txt = buildLlmsTxt();
+    expect(txt).toMatch(/^# Theonetrust\.in\n/);
+    for (const page of INDEXABLE_PAGES) {
+      expect(txt).toContain(`(${SITE_ORIGIN}${page.path})`);
+      expect(txt).toContain(`(${SITE_ORIGIN}/ta${page.path === '/' ? '/' : page.path})`);
+    }
+    expect(txt).toContain('Phone / WhatsApp: +91 96005 16999');
+    expect(txt).toContain('Email: info.theonetrust@gmail.com');
+    for (const path of DISALLOWED_PATHS) expect(txt).not.toContain(`${SITE_ORIGIN}${path}`);
+  });
+
+  it('never invents facts: unconfirmed details are left out', () => {
+    const txt = buildLlmsTxt(SITE_ORIGIN, {
+      ...TRUST_FACTS,
+      phone: null,
+      email: null,
+      area: null,
+    });
+    expect(txt).not.toContain('## Contact');
+    expect(txt).not.toMatch(/\[CONFIRM\]|null|undefined/);
+    expect(txt).toContain('not a tax certificate');
   });
 });

@@ -24,6 +24,7 @@ export async function render(url: string): Promise<string> {
 
 export {
   INDEXABLE_PAGES,
+  buildLlmsTxt,
   buildRobotsTxt,
   buildSitemapXml,
   headTags,
