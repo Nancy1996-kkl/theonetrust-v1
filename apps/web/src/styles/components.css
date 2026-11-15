@@ -32,7 +32,7 @@
   max-width: 100%;
   padding: var(--space-2) var(--control-padding-inline);
   border: var(--border-width-strong) solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   font-weight: var(--weight-semibold);
   text-align: center;
   text-decoration: none;
@@ -328,6 +328,11 @@
 
 .ui-radio-card__label:hover {
   background: var(--color-action-secondary-bg-hover);
+}
+
+/* Muted text is only 4.35:1 on the mint hover; body text keeps AA (5.2:1). */
+.ui-radio-card__label:hover .ui-radio-card__desc {
+  color: var(--color-text);
 }
 
 /* Selected: heavier border + filled radio dot (not colour alone). */
@@ -788,7 +793,7 @@
 .ui-lang {
   display: inline-flex;
   border: var(--border-width) solid var(--color-action-secondary-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 

@@ -54,7 +54,12 @@ export default defineConfig({
   plugins: [react(), prerenderedPages(), securityHeaders()],
   server: { port: 5173, strictPort: true },
   preview: { port: 4173, strictPort: true },
-  build: { sourcemap: true },
+  build: {
+    sourcemap: true,
+    // Never inline fonts as data: URIs — the CSP only allows fonts from our own origin, and some
+    // font subsets are small enough that Vite would otherwise inline them.
+    assetsInlineLimit: (file: string) => (file.endsWith('.woff2') ? false : undefined),
+  },
   test: {
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
