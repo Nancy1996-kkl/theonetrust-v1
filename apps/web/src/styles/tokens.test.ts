@@ -185,8 +185,6 @@ describe('type scale (UX brief §4: mobile @360 → desktop @1440)', () => {
     expect(Math.min(...weights)).toBeGreaterThanOrEqual(400);
   });
 
-  it('Tamil headings use the Unicode Tamil sans face (client, Nov 2026)', () => {
-    // Legacy non-Unicode fonts such as Bamini break SEO, screen readers and typing (#46).
   it('one family site-wide: Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (client, Nov 2026)', () => {
     // Legacy non-Unicode fonts such as Bamini break SEO, screen readers and typing (#46).
     expect(tokens.get('--font-heading')).toMatch(

@@ -1024,10 +1024,6 @@
    hover — easier to tap than plain outlined boxes. "Other amount" spans the row. */
 .hp-chips {
   display: grid;
-  /* Wide enough for "வேறு தொகை" / "Other amount" on one line. */
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-  gap: var(--space-2);
-  margin: 0 0 var(--space-4);
   grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
   gap: var(--space-3);
   margin: 0 0 var(--space-5);
@@ -1292,10 +1288,12 @@
   }
 }
 
+/* Text entrances never animate opacity: text keeps full contrast on every frame (readers and the
+   axe check in every e2e test alike); a short rise with a soft focus-in reads the same. */
 @keyframes hp-rise {
   from {
-    opacity: 0;
     translate: 0 var(--space-6);
+    filter: blur(6px);
   }
 }
 
@@ -1307,8 +1305,8 @@
 
 @keyframes hp-pop {
   from {
-    opacity: 0;
     scale: 0.5;
+    filter: blur(4px);
   }
 }
 
