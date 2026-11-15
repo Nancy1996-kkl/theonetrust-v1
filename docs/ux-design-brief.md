@@ -89,6 +89,8 @@ English:
 Tamil:
 - Noto Sans Tamil.
 
+> **Update Nov 2026 (client review):** Tamil headings now use **Noto Sans Tamil** (semi-bold); see ADR 0003.
+>
 > **Update 31 Oct 2026 (#46, ADR 0003):** Tamil **headings** use **Noto Serif Tamil** (700); Tamil
 > body text and buttons use Noto Sans Tamil. Legacy non-Unicode fonts such as Bamini are not used.
 

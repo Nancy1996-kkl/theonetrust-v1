@@ -190,29 +190,66 @@ export const PROOF_CONTENT: ProofContent = {
   faq: {
     title: { en: 'Questions', ta: 'கேள்விகள்' },
     emptyTitle: { en: 'Answers will be added soon', ta: 'பதில்கள் விரைவில் சேர்க்கப்படும்' },
+    // Ordered as a donor thinks (client, Nov 2026): giving → after paying → trust & tax → privacy & help.
     items: [
       {
-        id: 'donation-use',
-        confirmed: false, // [CONFIRM] #1 — the trust's own allocation policy
+        id: 'how-to-donate',
+        confirmed: true,
         question: {
-          en: 'How is my donation used?',
-          ta: 'என் நன்கொடை எப்படிப் பயன்படுத்தப்படுகிறது?',
+          en: 'How can I donate?',
+          ta: 'நான் எப்படி நன்கொடை கொடுப்பது?',
         },
         answer: {
-          en: 'General donations go where the need is greatest at the time. The trust will publish how funds are allocated in its transparency documents.',
-          ta: 'பொது நன்கொடைகள் அந்த நேரத்தில் அதிகம் தேவைப்படும் இடத்துக்குப் போகும். பணம் எப்படிப் பிரித்துச் செலவிடப்படுகிறது என்பதை அறக்கட்டளை தன் வெளிப்படைத்தன்மை ஆவணங்களில் சொல்லும்.',
+          en: 'Press “Donate”, choose a need and an amount, add your name and contact, then pay by UPI app, card or netbanking in Razorpay’s secure checkout. For larger gifts, bank transfer is also offered when the trust has switched it on.',
+          ta: '“நன்கொடை” என்பதை அழுத்தி, ஒரு தேவையையும் தொகையையும் தேர்வு செய்து, உங்கள் பெயரையும் தொடர்பு விவரத்தையும் கொடுங்கள். பிறகு Razorpay-இன் பாதுகாப்பான பக்கத்தில் UPI செயலி, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்துங்கள். பெரிய தொகைக்கு, அறக்கட்டளை இயக்கியிருந்தால், வங்கிப் பரிமாற்றம் (bank transfer) மூலமும் கொடுக்கலாம்.',
+        },
+      },
+      {
+        id: 'smallest-amount',
+        confirmed: true,
+        question: {
+          en: 'Is there a minimum amount?',
+          ta: 'குறைந்தபட்சம் எவ்வளவு கொடுக்க வேண்டும்?',
+        },
+        answer: {
+          en: 'No. You can give any amount from ₹1 — once, or every month. Every gift helps.',
+          ta: 'இல்லை. ₹1 முதல் எந்தத் தொகையும் கொடுக்கலாம் — ஒருமுறையோ, மாதந்தோறுமோ. ஒவ்வொரு நன்கொடையும் உதவும்.',
+        },
+      },
+      {
+        id: 'stop-monthly',
+        confirmed: true,
+        question: {
+          en: 'Can I give every month, and stop any time?',
+          ta: 'மாதந்தோறும் கொடுக்கலாமா? எப்போது வேண்டுமானாலும் நிறுத்தலாமா?',
+        },
+        answer: {
+          en: 'Yes. Choose “Monthly” in the donate pop-up. To stop, use the “manage” link in your monthly-giving email — no login needed. If you used UPI AutoPay, you can also pause or cancel it in your UPI app.',
+          ta: 'ஆம். நன்கொடைப் பகுதியில் “மாதந்தோறும்” என்பதைத் தேர்வு செய்யுங்கள். நிறுத்த வேண்டுமென்றால், மாதாந்திர நன்கொடை மின்னஞ்சலில் உள்ள “நிர்வகி” இணைப்பைத் திறந்து, கணக்கில் நுழையாமலே ரத்து செய்யலாம். UPI AutoPay பயன்படுத்தியிருந்தால், உங்கள் UPI செயலியிலேயே நிறுத்தி வைக்கலாம் அல்லது ரத்து செய்யலாம்.',
         },
       },
       {
         id: 'earmarking',
-        confirmed: false, // [CONFIRM] #1 — whether separate accounting per need is possible
+        confirmed: true, // fully-funded rule: [CONFIRM] with the trust before adding it
         question: {
           en: 'Can I choose what my donation is for?',
           ta: 'என் நன்கொடை எதற்குப் போக வேண்டும் என்று நானே தேர்வு செய்யலாமா?',
         },
         answer: {
-          en: 'Yes. Choose a need on a “Ways we help” card, or “Where it’s needed most” for the general fund. If a need is fully funded or closes, the amount is used for the most urgent needs.',
-          ta: 'ஆம். “நாங்கள் உதவும் வழிகள்” பகுதியில் ஒரு தேவையைத் தேர்வு செய்யுங்கள், அல்லது பொது நிதிக்கு “அதிகம் தேவைப்படும் இடத்துக்கு” என்பதைத் தேர்வு செய்யுங்கள். ஒரு தேவைக்கு வேண்டிய முழுப் பணமும் வந்துவிட்டாலோ, அந்த வேலை முடிந்துவிட்டாலோ, மீதித் தொகை மிக அவசரமான தேவைக்குப் பயன்படும்.',
+          en: 'Yes. In the donate pop-up, choose a need — or “Where it’s needed most” for the general fund. Your choice is saved with your donation.',
+          ta: 'ஆம். நன்கொடைப் பகுதியில் ஒரு தேவையைத் தேர்வு செய்யுங்கள் — அல்லது பொது நிதிக்கு “அதிகம் தேவைப்படும் இடத்துக்கு” என்பதைத் தேர்வு செய்யுங்கள். நீங்கள் தேர்வு செய்தது உங்கள் நன்கொடையுடன் பதிவாகும்.',
+        },
+      },
+      {
+        id: 'acknowledgement',
+        confirmed: true,
+        question: {
+          en: 'When do I get my acknowledgement?',
+          ta: 'ஒப்புகை எப்போது கிடைக்கும்?',
+        },
+        answer: {
+          en: 'Right after your payment is verified — never before. The pop-up shows a link to your donation acknowledgement (for gifts at or above the minimum shown there), and we email it to you if you gave an email address.',
+          ta: 'உங்கள் பணம் வந்தது உறுதியான உடனே — அதற்கு முன் இல்லை. நன்கொடைப் பகுதியிலேயே உங்கள் ஒப்புகைக்கான இணைப்பு வரும் (அங்கே காட்டும் குறைந்த தொகைக்கு மேல் கொடுத்தால்). மின்னஞ்சல் கொடுத்திருந்தால் அதையும் அனுப்புவோம்.',
         },
       },
       {
@@ -237,21 +274,27 @@ export const PROOF_CONTENT: ProofContent = {
         },
       },
       {
-        id: 'acknowledgement',
+        id: 'refund',
         confirmed: true,
-        question: { en: 'When do I get my acknowledgement?', ta: 'ஒப்புகை எப்போது கிடைக்கும்?' },
+        question: {
+          en: 'Can I get a refund?',
+          ta: 'பணத்தைத் திருப்பிப் பெற முடியுமா?',
+        },
         answer: {
-          en: 'As soon as your payment is verified — never before. Above the minimum amount shown in the donate panel you can view a donation acknowledgement online, and we email the link if you gave an email address.',
-          ta: 'உங்கள் பணம் வந்தது உறுதியானவுடன் — அதற்கு முன் எப்போதும் இல்லை. நன்கொடைப் பகுதியில் சொல்லியிருக்கும் குறைந்த தொகைக்கு மேல் கொடுத்தால், ஒப்புகையை இணையத்தில் பார்க்கலாம்; மின்னஞ்சல் கொடுத்திருந்தால் அதன் இணைப்பையும் அனுப்புவோம்.',
+          en: 'Donations are normally not refunded. We do refund if you were charged twice, entered a wrong amount by mistake, or the payment was made without your permission. Contact us with the date, amount and payment reference; the refund goes back to your original payment method through Razorpay. The refund policy has the details.',
+          ta: 'பொதுவாக நன்கொடை திருப்பித் தரப்படாது. ஆனால் ஒரே நன்கொடைக்கு இரண்டு முறை பணம் எடுக்கப்பட்டிருந்தால், தொகையைத் தவறாகப் போட்டிருந்தால், அல்லது உங்கள் அனுமதி இல்லாமல் பணம் செலுத்தப்பட்டிருந்தால் திருப்பித் தருவோம். தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண்ணுடன் எங்களைத் தொடர்பு கொள்ளுங்கள்; பணம் Razorpay வழியாக நீங்கள் செலுத்திய அதே முறைக்குத் திரும்ப வரும். முழு விவரம் பணம் திருப்பித் தருதல் கொள்கையில் உள்ளது.',
         },
       },
       {
         id: 'tax',
-        confirmed: true, // honest status — update only when the CA confirms approval
-        question: { en: 'Can I claim a tax deduction?', ta: 'வரி விலக்கு கிடைக்குமா?' },
+        confirmed: true, // honest status — change only when the CA confirms approval
+        question: {
+          en: 'Can I claim a tax deduction?',
+          ta: 'வரி விலக்கு கிடைக்குமா?',
+        },
         answer: {
-          en: 'Not at the moment. The trust has not yet confirmed approval for donations to be tax-deductible, so we do not promise a deduction. You receive a donation acknowledgement, not a tax certificate. We will update this answer if approval is confirmed.',
-          ta: 'இப்போதைக்கு இல்லை. நன்கொடைக்கு வரி விலக்கு தருவதற்கான ஒப்புதல் அறக்கட்டளைக்கு இன்னும் உறுதியாகவில்லை, அதனால் வரி விலக்கு கிடைக்கும் என்று நாங்கள் சொல்ல முடியாது. உங்களுக்கு நன்கொடை ஒப்புகை கிடைக்கும், வரிச் சான்றிதழ் அல்ல. ஒப்புதல் கிடைத்தவுடன் இந்தப் பதிலை மாற்றுவோம்.',
+          en: 'Not at the moment. The trust does not yet have confirmed approval for tax-deductible donations, so we do not promise a deduction. You receive a donation acknowledgement, not a tax certificate.',
+          ta: 'இப்போதைக்கு இல்லை. நன்கொடைக்கு வரி விலக்கு தருவதற்கான ஒப்புதல் அறக்கட்டளைக்கு இன்னும் உறுதியாகவில்லை, அதனால் வரி விலக்கு கிடைக்கும் என்று நாங்கள் சொல்வதில்லை. உங்களுக்கு நன்கொடை ஒப்புகை கிடைக்கும், வரிச் சான்றிதழ் அல்ல.',
         },
       },
       {
@@ -267,15 +310,27 @@ export const PROOF_CONTENT: ProofContent = {
         },
       },
       {
-        id: 'stop-monthly',
-        confirmed: false, // [CONFIRM] — monthly giving enablement (#32)
+        id: 'donation-use',
+        confirmed: true,
         question: {
-          en: 'How do I stop monthly giving?',
-          ta: 'மாதாந்திர நன்கொடையை எப்படி நிறுத்துவது?',
+          en: 'How do I know my money is used well?',
+          ta: 'என் பணம் சரியாகப் பயன்படுகிறது என்று எப்படித் தெரிந்துகொள்வது?',
         },
         answer: {
-          en: 'Use the “manage” link in your monthly-giving email to cancel at any time, without logging in. UPI AutoPay can also be paused or cancelled in your UPI app.',
-          ta: 'மாதாந்திர நன்கொடை மின்னஞ்சலில் இருக்கும் “நிர்வகி” இணைப்பைத் திறந்து, கணக்கில் நுழையாமலே எப்போது வேண்டுமானாலும் ரத்து செய்யலாம். UPI AutoPay-ஐ உங்கள் UPI செயலியிலேயே நிறுத்தி வைக்கலாம் அல்லது ரத்து செய்யலாம்.',
+          en: 'We publish figures only when they have a source and a date, and the trust’s documents appear in the Transparency section once approved. You can also call or WhatsApp us any time to ask what your gift did.',
+          ta: 'ஆதாரமும் தேதியும் உள்ள எண்களை மட்டுமே வெளியிடுவோம்; அறக்கட்டளையின் ஆவணங்கள் ஒப்புதலுக்குப் பிறகு வெளிப்படைத்தன்மைப் பகுதியில் வரும். உங்கள் நன்கொடை என்ன செய்தது என்று எப்போது வேண்டுமானாலும் எங்களை அழைத்தோ WhatsApp செய்தோ கேட்கலாம்.',
+        },
+      },
+      {
+        id: 'data-use',
+        confirmed: true,
+        question: {
+          en: 'Is my information safe?',
+          ta: 'என் விவரங்கள் பாதுகாப்பாக இருக்குமா?',
+        },
+        answer: {
+          en: 'Yes. Your name and contact details are used only for your donation or request — to send your acknowledgement and to contact you about it. They are never shown publicly or sold. Payments are handled by Razorpay; we never see your card details or UPI PIN. The privacy policy has the details.',
+          ta: 'ஆம். உங்கள் பெயரையும் தொடர்பு விவரங்களையும் உங்கள் நன்கொடை அல்லது கோரிக்கைக்கு மட்டுமே — ஒப்புகை அனுப்பவும், அதைப் பற்றி உங்களிடம் பேசவும் — பயன்படுத்துவோம். அவற்றை யாருக்கும் காட்டுவதும் இல்லை, விற்பதும் இல்லை. பணம் செலுத்துதலை Razorpay கவனித்துக்கொள்கிறது; உங்கள் கார்டு விவரங்களையோ UPI PIN-ஐயோ நாங்கள் பார்ப்பதில்லை. முழு விவரம் தனியுரிமைக் கொள்கையில் உள்ளது.',
         },
       },
       {
@@ -285,18 +340,6 @@ export const PROOF_CONTENT: ProofContent = {
         answer: {
           en: 'Press “Get Help” and tell us briefly what is needed, or call or WhatsApp us. We will call you back. Sending a request does not guarantee help.',
           ta: '“உதவி பெற” என்பதை அழுத்தி, என்ன தேவை என்று சுருக்கமாகச் சொல்லுங்கள். இல்லையென்றால் எங்களை அழையுங்கள் அல்லது WhatsApp செய்யுங்கள். நாங்கள் உங்களைத் திரும்ப அழைப்போம். கோரிக்கை அனுப்பினாலே உதவி கிடைக்கும் என்று உறுதி சொல்ல முடியாது.',
-        },
-      },
-      {
-        id: 'data-use',
-        confirmed: true,
-        question: {
-          en: 'How is my information used?',
-          ta: 'என் விவரங்களை எதற்குப் பயன்படுத்துவீர்கள்?',
-        },
-        answer: {
-          en: 'Your name and contact details are used only to process your donation or request, send your acknowledgement and contact you about it. They are never shown publicly or sold. The privacy policy has the details.',
-          ta: 'உங்கள் பெயரையும் தொடர்பு விவரங்களையும் உங்கள் நன்கொடையையோ கோரிக்கையையோ கவனிக்க, ஒப்புகை அனுப்ப, அதைப் பற்றி உங்களிடம் பேச — இதற்கு மட்டுமே பயன்படுத்துவோம். அவற்றை யாருக்கும் காட்டுவதும் இல்லை, விற்பதும் இல்லை. முழு விவரம் தனியுரிமைக் கொள்கையில் உள்ளது.',
         },
       },
       {
