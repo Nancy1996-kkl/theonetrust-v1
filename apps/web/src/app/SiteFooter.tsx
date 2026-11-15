@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { AreaLink } from '../components/ui/AreaLink.tsx';
 import { LanguageSwitch } from '../components/ui/LanguageSwitch.tsx';
 import type { UiLang } from '../components/ui/ui-strings.ts';
 import { TRUST_FACTS, type TrustFacts } from '../config/trust-facts.ts';
@@ -59,7 +60,9 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
             {facts.area && (
               <div>
                 <dt>{t.location}</dt>
-                <dd>{facts.area[lang]}</dd>
+                <dd>
+                  <AreaLink facts={facts} lang={lang} />
+                </dd>
               </div>
             )}
             {facts.callHours && (

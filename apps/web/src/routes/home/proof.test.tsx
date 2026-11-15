@@ -477,6 +477,21 @@ describe('contact', () => {
     expect(help).not.toHaveClass('ui-button--donate');
   });
 
+  it('labels the help button "Request Help" in English', () => {
+    renderHome();
+    expect(
+      within(section('contact')).getByRole('link', { name: 'Request Help' }),
+    ).toBeInTheDocument();
+    expect(within(section('contact')).queryByRole('link', { name: 'Ask for help' })).toBeNull();
+  });
+
+  it('labels the help button "உதவி கோருங்கள்" on the Tamil page', () => {
+    renderHome('/ta');
+    expect(
+      within(section('contact')).getByRole('link', { name: 'உதவி கோருங்கள்' }),
+    ).toBeInTheDocument();
+  });
+
   it('shows the address once confirmed, and hides missing channels', () => {
     renderHome('/', {
       facts: {

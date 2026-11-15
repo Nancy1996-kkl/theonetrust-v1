@@ -51,11 +51,13 @@ describe('header', () => {
     });
     expect(banner()).toHaveClass('site-header--home');
     expect(banner()).not.toHaveClass('site-header--overlay');
+    // Scrolled: the light-green glass bar with dark words, not the dark inverse surface.
+    expect(banner()).not.toHaveClass('surface-inverse');
     act(() => {
       Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
       fireEvent.scroll(window);
     });
-    expect(banner()).toHaveClass('site-header--overlay');
+    expect(banner()).toHaveClass('site-header--overlay', 'surface-inverse');
   });
 
   it('other pages keep the solid header', () => {
