@@ -1288,10 +1288,12 @@
   }
 }
 
+/* Text entrances never animate opacity: text keeps full contrast on every frame (readers and the
+   axe check in every e2e test alike); a short rise with a soft focus-in reads the same. */
 @keyframes hp-rise {
   from {
-    opacity: 0;
     translate: 0 var(--space-6);
+    filter: blur(6px);
   }
 }
 
@@ -1303,8 +1305,8 @@
 
 @keyframes hp-pop {
   from {
-    opacity: 0;
     scale: 0.5;
+    filter: blur(4px);
   }
 }
 
