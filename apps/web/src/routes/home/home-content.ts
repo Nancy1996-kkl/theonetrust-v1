@@ -70,6 +70,7 @@ export const HOME_TEXT = {
   // 6 · How it works
   howKicker: { en: 'Simple and safe', ta: 'எளிது, பாதுகாப்பானது' },
   howTitle: { en: 'How your gift reaches people', ta: 'உங்கள் நன்கொடை எப்படிப் போய்ச் சேருகிறது' },
+  paySuccess: { en: 'Payment successful', ta: 'பணம் செலுத்தப்பட்டது' },
 
   // 7 · Donation
   donateKicker: { en: 'Give today', ta: 'இன்றே கொடுங்கள்' },
@@ -103,6 +104,7 @@ export const HOME_TEXT = {
   },
   whatsappUs: { en: 'Chat on WhatsApp', ta: 'WhatsApp-இல் பேசுங்கள்' },
   askHelp: { en: 'Ask for help', ta: 'உதவி கேளுங்கள்' },
+  askHelp: { en: 'Request Help', ta: 'உதவி கோருங்கள்' },
 
   // 9 · FAQ
   faqKicker: { en: 'Good to know', ta: 'தெரிந்துகொள்ளுங்கள்' },

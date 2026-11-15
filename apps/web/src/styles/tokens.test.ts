@@ -156,7 +156,7 @@ describe('surface classes', () => {
 
 describe('type scale (UX brief §4: mobile @360 → desktop @1440)', () => {
   const expected: Record<string, [number, number]> = {
-    '--text-hero': [38, 64],
+    '--text-hero': [34, 52], // client, Nov 2026: headline in two lines
     '--text-h1': [34, 48],
     '--text-h2': [28, 38],
     '--text-h3': [22, 26],
@@ -187,6 +187,15 @@ describe('type scale (UX brief §4: mobile @360 → desktop @1440)', () => {
 
   it('Tamil headings use the Unicode Tamil sans face (client, Nov 2026)', () => {
     // Legacy non-Unicode fonts such as Bamini break SEO, screen readers and typing (#46).
+  it('one family site-wide: Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (client, Nov 2026)', () => {
+    // Legacy non-Unicode fonts such as Bamini break SEO, screen readers and typing (#46).
+    expect(tokens.get('--font-heading')).toMatch(
+      /^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans'/,
+    );
+    expect(tokens.get('--font-body')).toBe('var(--font-heading)');
+    expect(tokens.get('--font-tamil')).toMatch(
+      /^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable'/,
+    );
     expect(tokens.get('--font-heading-ta')).toBe('var(--font-tamil)');
     expect(tokens.get('--font-heading-ta')).not.toMatch(/bamini/i);
   });
