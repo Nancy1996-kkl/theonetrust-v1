@@ -40,8 +40,9 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
   const overlay = onHome && atTop && !open;
   const headerClass = [
     'site-header',
-    onHome && 'site-header--home surface-inverse',
-    overlay && 'site-header--overlay',
+    onHome && 'site-header--home',
+    // White words only while the header floats over the dark hero video.
+    overlay && 'site-header--overlay surface-inverse',
   ]
     .filter(Boolean)
     .join(' ');
