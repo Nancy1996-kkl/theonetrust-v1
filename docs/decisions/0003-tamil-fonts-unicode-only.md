@@ -33,3 +33,9 @@ A legacy font stores Tamil as Latin characters that only _look_ Tamil while that
 - `tokens.test.ts` pins `--font-heading-ta` and rejects legacy font names.
 - e2e tests require the serif face to load from our origin and assert headings vs body fonts.
 - The owner compared five Unicode options (rendered samples) before choosing.
+
+## Update — November 2026
+
+After the client review the Tamil headings moved from Noto Serif Tamil to **Noto Sans Tamil**
+(semi-bold, one size step calmer than English): the serif looked heavy and dated on screen. Still
+Unicode only; nothing in this decision about legacy fonts changes.

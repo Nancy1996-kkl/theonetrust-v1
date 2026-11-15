@@ -75,6 +75,7 @@ test.describe('fonts', () => {
     const loaded = await page.evaluate(async () => {
       const probes = {
         body: ['16px "Plus Jakarta Sans Variable"', 'Donate'],
+        heading: ['600 34px "Plus Jakarta Sans Variable"', 'Theonetrust'],
         jakarta: ['600 34px "Plus Jakarta Sans Variable"', 'Theonetrust'],
         tamil: ['16px "Noto Sans Tamil Variable"', 'தமிழ் நன்கொடை'],
         tamilHeading: ['600 28px "Noto Sans Tamil Variable"', 'தமிழ் தலைப்பு'],
@@ -87,6 +88,7 @@ test.describe('fonts', () => {
       }
       return out;
     });
+    expect(loaded).toEqual({ body: true, heading: true, tamil: true, tamilHeading: true });
     expect(loaded).toEqual({ body: true, jakarta: true, tamil: true, tamilHeading: true });
 
     expect(fontRequests.length).toBeGreaterThan(0);
@@ -94,6 +96,7 @@ test.describe('fonts', () => {
     for (const url of fontRequests) expect(new URL(url).origin).toBe(origin);
   });
 
+  test('Tamil headings, body and buttons all use Noto Sans Tamil (client, Nov 2026)', async ({
   test('Tamil headings, body and buttons: Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (client, Nov 2026)', async ({
     page,
   }) => {
@@ -101,6 +104,7 @@ test.describe('fonts', () => {
     await injectSpecimen(page);
     for (const selector of ['#tamil-specimen h2', '#tamil-specimen h3', '#inverse-band h3']) {
       expect((await computed(page, selector)).fontFamily, selector).toMatch(
+        /^"?Noto Sans Tamil Variable/,
         /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
       );
     }
@@ -113,6 +117,7 @@ test.describe('fonts', () => {
         /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
       );
     }
+    // English headings are unaffected.
     // Every heading and title: Plus Jakarta Sans (client, Nov 2026).
     expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Plus Jakarta Sans Variable/);
   });
@@ -250,6 +255,7 @@ test.describe('Tamil specimen at this viewport', () => {
         /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
       );
     }
+    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Noto Sans Tamil Variable/);
     expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Plus Jakarta Sans Variable/);
     const body = await computed(page, 'body');
     expect(body.lineHeight / body.fontSize).toBeGreaterThanOrEqual(1.75);
@@ -261,6 +267,7 @@ test.describe('Tamil specimen at this viewport', () => {
     await page.goto('/');
     await injectSpecimen(page);
     const styled = await computed(page, '#class-styled');
+    expect(styled.fontFamily).toMatch(/^"?Noto Sans Tamil Variable/);
     expect(styled.fontFamily).toMatch(
       /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
     );
