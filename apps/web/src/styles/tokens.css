@@ -138,12 +138,7 @@
   --font-heading:
     'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
     sans-serif;
-  --font-body:
-    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
-    sans-serif;
-  --font-tamil: 'Noto Sans Tamil Variable', 'Noto Sans Tamil', Latha, var(--font-body);
-  /* Classic printed-Tamil look for headings (owner chose this over legacy Bamini, #46). */
-  /* Modern Noto Sans Tamil for headings too (client, Nov 2026: the serif looked heavy and dated). */
+  /* One family site-wide (client, Nov 2026); Tamil letters come from Noto Sans Tamil (#46). */
   --font-body: var(--font-heading);
   --font-tamil:
     'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable',

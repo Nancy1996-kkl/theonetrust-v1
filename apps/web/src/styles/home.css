@@ -1024,10 +1024,6 @@
    hover — easier to tap than plain outlined boxes. "Other amount" spans the row. */
 .hp-chips {
   display: grid;
-  /* Wide enough for "வேறு தொகை" / "Other amount" on one line. */
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-  gap: var(--space-2);
-  margin: 0 0 var(--space-4);
   grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
   gap: var(--space-3);
   margin: 0 0 var(--space-5);
