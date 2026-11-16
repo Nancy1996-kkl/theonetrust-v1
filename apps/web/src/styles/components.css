@@ -65,8 +65,7 @@
   }
 }
 
-/* First-load splash: covers the page only until the app has started (see main.tsx), once
-   per visit. Without JavaScript it hides itself, so content is never trapped behind it. */
+/* First-load splash: covers the page only until the app has started (see main.tsx). Without JavaScript it hides itself, so content is never trapped behind it. */
 .boot-splash {
   position: fixed;
   z-index: var(--z-splash);
@@ -81,10 +80,6 @@
 
 .boot-splash--done {
   animation: boot-splash-out var(--duration-slow) var(--ease-standard) forwards;
-}
-
-.boot-seen .boot-splash {
-  display: none;
 }
 
 @keyframes boot-splash-out {

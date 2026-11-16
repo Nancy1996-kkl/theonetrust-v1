@@ -13,14 +13,6 @@
     <title>Theonetrust.in</title>
   </head>
   <body>
-    <script>
-      // First-load splash shows once per visit (sessionStorage); repeat page loads skip it.
-      try {
-        if (sessionStorage.getItem('boot-seen'))
-          document.documentElement.classList.add('boot-seen');
-        sessionStorage.setItem('boot-seen', '1');
-      } catch {}
-    </script>
     <div id="boot-splash" class="boot-splash" aria-hidden="true">
       <span class="ui-logo-spinner ui-logo-spinner--splash">
         <span class="ui-logo-spinner__ring"></span>

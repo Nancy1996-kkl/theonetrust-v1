@@ -30,11 +30,11 @@ describe('LogoSpinner', () => {
 describe('first-load splash (index.html)', () => {
   const html = readFileSync(join(process.cwd(), 'index.html'), 'utf8');
 
-  it('sits outside #root, is hidden from screen readers and shown once per visit', () => {
+  it('sits outside #root, is hidden from screen readers and needs no inline script (CSP)', () => {
     expect(html.indexOf('id="boot-splash"')).toBeGreaterThan(-1);
     expect(html.indexOf('id="boot-splash"')).toBeLessThan(html.indexOf('id="root"'));
     expect(html).toMatch(/id="boot-splash"[^>]*aria-hidden="true"/);
-    expect(html).toContain("sessionStorage.getItem('boot-seen')");
+    expect(html).not.toMatch(/<script>(?!\s*<\/script>)/);
   });
 
   it('hides itself without JavaScript and never blocks taps', () => {
