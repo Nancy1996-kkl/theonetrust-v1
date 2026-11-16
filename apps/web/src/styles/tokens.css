@@ -218,6 +218,8 @@
   --duration-base: 200ms;
   --duration-slow: 250ms;
   --duration-entrance: 700ms; /* one-off page-load reveals and the banner fade-in only */
+  --duration-spinner: 1.1s; /* one turn of the logo spinner ring */
+  --duration-splash-max: 4s; /* first-load splash hides itself after this even without JS */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
   --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
@@ -226,6 +228,7 @@
   --z-header: 50;
   --z-overlay: 90;
   --z-modal: 100;
+  --z-splash: 110; /* first-load splash, above everything until the app starts */
   --z-toast: 110;
   --z-skip-link: 120;
 }
@@ -240,5 +243,7 @@
     --duration-base: 0.01ms;
     --duration-slow: 0.01ms;
     --duration-entrance: 0.01ms;
+    --duration-spinner: 0.01ms;
+    --duration-splash-max: 0.01ms;
   }
 }
