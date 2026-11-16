@@ -111,7 +111,7 @@ test.describe('hero preferences', () => {
     await expect(page.locator('[data-slide="supplies"] .landing-hero__poster')).toBeVisible();
   });
 
-  test('Donate glows gold on hover', async ({ page, isMobile }) => {
+  test('Donate glows orange on hover', async ({ page, isMobile }) => {
     test.skip(isMobile, 'hover only applies to pointer devices');
     await page.goto('/');
     const donate = page.locator('#top').getByRole('link', { name: DONATE.en });

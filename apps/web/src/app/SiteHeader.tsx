@@ -6,6 +6,7 @@ import { focusableIn } from '../components/ui/focus.ts';
 import { TRUST_FACTS } from '../config/trust-facts.ts';
 import { homePath } from '../i18n/lang.ts';
 import { useLang, useMessages } from '../i18n/use-lang.ts';
+import emblemUrl from '../assets/brand/emblem.webp';
 import { NAV_SECTIONS } from './nav-sections.ts';
 
 interface SiteHeaderProps {
@@ -100,7 +101,8 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
     <header ref={headerRef} className={headerClass}>
       <div className="site-header__bar">
         <a className="site-header__brand" href={home} aria-label={t.homeLink}>
-          {/* No logo icon until the trust sends its own logo (client, Nov 2026). */}
+          {/* Trust logo emblem (client, 16 Nov 2026). Decorative: the link has an aria-label. */}
+          <img className="site-header__logo" src={emblemUrl} alt="" width={131} height={112} />
           <span className="site-header__name">{TRUST_FACTS.siteName}</span>
         </a>
 

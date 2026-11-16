@@ -59,10 +59,14 @@ describe('colour contrast (WCAG 2.2 AA)', () => {
     }
   });
 
-  it('only uses bright gold as a text colour on forest', () => {
-    const goldForegrounds = results.filter((r) => r.fgHex === tokens.get('--palette-gold'));
-    expect(goldForegrounds.length).toBeGreaterThan(0);
-    for (const pair of goldForegrounds) expect(pair.bg).toBe('--color-surface-inverse');
+  it('never uses the bright logo colours (orange, turquoise, green) as a text colour', () => {
+    const bright = ['--palette-orange', '--palette-turquoise', '--palette-green'].map((n) =>
+      tokens.get(n),
+    );
+    const brightText = results.filter(
+      (r) => bright.includes(r.fgHex) && (r.use === 'text' || r.use === 'large-text'),
+    );
+    expect(brightText).toEqual([]);
   });
 
   it('keeps the documented contrast table in sync with the tokens', () => {

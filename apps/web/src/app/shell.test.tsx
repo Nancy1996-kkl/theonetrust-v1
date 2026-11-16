@@ -101,6 +101,16 @@ describe('header', () => {
     );
   });
 
+  it('shows the trust logo emblem in header and footer as decoration (the link keeps its name)', () => {
+    renderRoute('/');
+    for (const region of [banner(), footer()]) {
+      const logo = region.querySelector('img[class$="__logo"]');
+      expect(logo).not.toBeNull();
+      expect(logo).toHaveAttribute('alt', '');
+    }
+    expect(within(banner()).getAllByRole('link')[0]).toHaveAccessibleName();
+  });
+
   it('does not invent a trust name: shows only the site name', () => {
     renderRoute('/');
     expect(banner()).toHaveTextContent(TRUST_FACTS.siteName);

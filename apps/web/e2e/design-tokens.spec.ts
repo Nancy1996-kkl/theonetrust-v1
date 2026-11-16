@@ -185,10 +185,10 @@ test.describe('Tamil specimen at this viewport', () => {
     const light = await ringOf('[data-check="card"] button');
     expect(light.style).toBe('solid');
     expect(light.width).toBeGreaterThanOrEqual(2);
-    expect(light.color).toBe('rgb(60, 118, 58)'); // --palette-green
+    expect(light.color).toBe('rgb(0, 119, 123)'); // --palette-turquoise-ink
 
     const dark = await ringOf('#inverse-button');
-    expect(dark.color).toBe('rgb(212, 175, 55)'); // --palette-gold on forest
+    expect(dark.color).toBe('rgb(255, 242, 229)'); // --palette-peach on teal
   });
 
   test('forest band turns headings, body text and links white (never forest on forest)', async ({
@@ -204,7 +204,7 @@ test.describe('Tamil specimen at this viewport', () => {
       link: getComputedStyle(el.querySelector('a')!).color,
     }));
     expect(colours).toEqual({
-      background: 'rgb(15, 42, 29)', // --palette-forest
+      background: 'rgb(2, 93, 98)', // --palette-teal
       heading: 'rgb(255, 255, 255)',
       text: 'rgb(255, 255, 255)',
       link: 'rgb(255, 255, 255)',
@@ -230,10 +230,10 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(result).toEqual({
       outlineText: 'rgb(255, 255, 255)',
       outlineBorder: 'rgb(255, 255, 255)',
-      inputBorder: 'rgb(168, 213, 186)', // --palette-sage, 9.4:1 on forest
+      inputBorder: 'rgb(223, 233, 229)', // --palette-border, 6.2:1 on teal
       cardBackground: 'rgb(255, 255, 255)',
-      cardHeading: 'rgb(15, 42, 29)', // forest again on the light card
-      cardLink: 'rgb(47, 94, 46)', // --palette-green-deep
+      cardHeading: 'rgb(1, 66, 70)', // teal-deep on the light card
+      cardLink: 'rgb(2, 93, 98)', // --palette-teal
     });
   });
 

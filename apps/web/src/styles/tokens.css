@@ -1,29 +1,35 @@
 /*
  * Design tokens — the ONLY place raw colours, font sizes and timing values may appear.
- * Source: docs/ux-design-brief.md §2–4 (Forest & Gold system). Documentation and the
+ * Source: docs/ux-design-brief.md §2–4 (logo palette, revamp G1 16 Nov 2026). Documentation and the
  * contrast table: docs/design/tokens.md (kept in sync by src/styles/tokens.test.ts).
  *
  * Layers: 1) palette (raw brand values)  2) roles (what components use).
  * Components must use ROLE tokens, never palette tokens directly.
  */
 :root {
-  /* ── 1. Palette (approved brand colours — "Forest & Gold", owner brief 5 Nov 2026) ── */
-  --palette-forest: #0f2a1d; /* Deep Forest — primary brand, headings, inverse bands */
-  --palette-green: #3c763a; /* Trust Green — focus ring, icons, primary hover */
-  --palette-mint: #b7e4c7; /* Mint — story cards */
-  --palette-sage: #a8d5ba; /* Sage — borders and quiet accents on forest */
-  --palette-gold: #d4af37; /* Gold — Donate, 1px rules, impact numbers on forest. Never paragraphs */
-  --palette-gold-text: #8a6d1f; /* Gold for small text on ivory/white only (4.8:1) */
-  --palette-champagne: #f7e7ce; /* Champagne — stories / muted bands */
-  --palette-ivory: #fffdf8; /* Ivory — main background */
-  --palette-body: #4a5a50; /* Body text (7.2:1 on ivory) */
+  /* ── 1. Palette (approved logo palette — "Vibrant Humanitarian", owner G1 16 Nov 2026) ── */
+  --palette-teal: #025d62; /* Deep Teal — primary brand, links, dark bands */
+  --palette-turquoise: #00aeb4; /* Bright Turquoise — fills and icons only (2.7:1 on white) */
+  --palette-orange: #f07800; /* Warm Orange — glow, rules and fills only, never text */
+  --palette-green: #4a9200; /* Natural Green — icons and fills only, never text */
+  --palette-cloud: #f7faf8; /* Cloud White — page background */
+  --palette-mint: #eaf3ef; /* Soft Mint — muted bands, tablist */
+  --palette-charcoal: #263b3b; /* Charcoal — body text (11.9:1 on white) */
+  --palette-peach: #fff2e5; /* Peach — warm bands; accent text and focus on teal (6.95:1) */
+  --palette-leaf: #f0f6e8; /* Leaf Tint — story and growth tiles */
   --palette-white: #ffffff;
+  --palette-border: #dfe9e5; /* decorative dividers and disabled surfaces only */
 
-  /* Home page (client, Nov 2026) — one soft green band; everything else uses the palette above */
-  --palette-sage-tint: #e6eee9; /* soft sage band */
-  --palette-peach: #fcf1e5; /* warm section background (client-approved, Nov 2026) */
-  --palette-home-ivory: #f7f5ef; /* home page background (client-approved) */
-  --palette-home-sage: #76968a; /* shapes, frames, icons — never body text (3.2:1 on white) */
+  /* Ink tones derived for text and UI (each checked in CONTRAST_PAIRS) */
+  --palette-teal-deep: #014246; /* headings, scrim, dark footer (11.2:1 on white) */
+  --palette-turquoise-ink: #00777b; /* focus ring and info labels on light (≥ 4.3:1) */
+  --palette-orange-ink: #b04f00; /* Donate fill (white 5.3:1) and orange labels */
+  --palette-orange-ink-light: #bc5400; /* Donate gradient start (white 4.77:1) */
+  --palette-orange-ink-hover: #9c4600; /* Donate hover / gradient end (white 6.38:1) */
+  --palette-orange-ink-pressed: #863c00; /* Donate pressed (white 7.89:1) */
+  --palette-green-ink: #3a7300; /* growth labels (5.8:1 on white) */
+  --palette-muted: #4f6262; /* secondary, placeholder and disabled text (6.4:1 on white) */
+  --palette-field-border: #6a8282; /* input borders (≥ 3.3:1 on every light surface) */
 
   --palette-success: #287a55;
   --palette-warning: #b7791f; /* 3.6:1 on white: icons/borders only, never body text */
@@ -31,63 +37,61 @@
   --palette-error: #b42318;
   --palette-info: #3568a8;
 
-  /* Derived tones (each checked in CONTRAST_PAIRS) */
-  --palette-green-deep: #2f5e2e; /* links: brand green is only 4.49:1 on champagne */
-  --palette-moss: #556659; /* secondary text (5.0:1 on champagne) */
-  --palette-forest-deep: #081a11; /* primary pressed */
-  --palette-forest-soft: #1d4430; /* outline-button hover on forest */
-  --palette-gold-light: #e2c25a; /* donate hover (8.8:1 with forest text) */
-  --palette-gold-dark: #b8962a; /* donate pressed (5.4:1 with forest text) */
-  --palette-linen: #ede8dd; /* disabled surfaces, decorative dividers */
-  --palette-slate: #5c6b61; /* placeholder and disabled text (5.6:1 on white) */
-
   /* ── 2. Roles ─────────────────────────────────────────────────────── */
-  /* Surfaces: forest → ivory → forest → champagne rhythm (docs/ux-design-brief.md §2) */
-  --color-bg: var(--palette-ivory);
+  /* Surfaces: cloud → mint → peach → teal band rhythm (revamp plan, G1 16 Nov 2026) */
+  --color-bg: var(--palette-cloud);
   --color-surface: var(--palette-white);
-  --color-surface-muted: var(--palette-champagne);
-  --color-surface-accent: var(--palette-mint); /* story cards */
-  --color-surface-inverse: var(--palette-forest);
+  --color-surface-muted: var(--palette-mint);
+  --color-surface-accent: var(--palette-leaf);
+  --color-surface-inverse: var(--palette-teal);
 
   /* Text */
-  --color-text: var(--palette-body);
-  --color-text-muted: var(--palette-moss);
-  --color-text-heading: var(--palette-forest);
+  --color-text: var(--palette-charcoal);
+  --color-text-muted: var(--palette-muted);
+  --color-text-heading: var(--palette-teal-deep);
   --color-text-inverse: var(--palette-white);
-  --color-text-inverse-muted: var(--palette-mint); /* lead text on forest */
-  --color-text-accent: var(--palette-gold-text); /* small gold labels on ivory/white only */
-  --color-text-accent-on-inverse: var(--palette-gold); /* gold text on forest */
-  --color-link: var(--palette-green-deep);
+  --color-text-inverse-muted: var(--palette-mint);
+  --color-text-accent: var(--palette-orange-ink);
+  --color-text-accent-on-inverse: var(--palette-peach);
+  --color-link: var(--palette-teal);
 
   /* Actions */
-  --color-action-primary-bg: var(--palette-forest);
+  --color-action-primary-bg: var(--palette-teal);
   --color-action-primary-text: var(--palette-white);
-  --color-action-donate-bg: var(--palette-gold); /* the one gold CTA */
-  --color-action-donate-text: var(--palette-forest);
-  --color-action-donate-glow: color-mix(in srgb, var(--palette-gold) 45%, transparent);
-  --color-action-secondary-text: var(--palette-forest);
-  --color-action-secondary-border: var(--palette-forest);
+  --color-action-donate-bg: var(--palette-orange-ink);
+  --color-action-donate-text: var(--palette-white);
+  --color-action-donate-glow: color-mix(in srgb, var(--palette-orange) 45%, transparent);
+  /* 2px Donate edge on teal bands (G1 S3) */
+  --color-action-donate-border-on-inverse: var(--palette-peach);
+  /* Donate fill: subtle burnt-orange gradient; white text stays ≥ 4.77:1 at both stops (G1) */
+  --gradient-action-donate: linear-gradient(
+    135deg,
+    var(--palette-orange-ink-light) 0%,
+    var(--palette-orange-ink-hover) 100%
+  );
+  --color-action-secondary-text: var(--palette-teal);
+  --color-action-secondary-border: var(--palette-teal);
 
-  /* Home page roles (client, Nov 2026): the approved colours, with forest in place of navy */
-  --color-home-bg: var(--palette-home-ivory);
+  /* Home page roles (client, Nov 2026), on the approved logo palette */
+  --color-home-bg: var(--palette-cloud);
   --color-home-warm: var(--palette-peach);
-  --color-home-sage: var(--palette-home-sage);
-  --color-home-sage-tint: var(--palette-sage-tint);
-  --color-home-dark: var(--palette-forest);
-  --color-home-heading: var(--palette-forest);
+  --color-home-sage: var(--palette-turquoise);
+  --color-home-sage-tint: var(--palette-mint);
+  --color-home-dark: var(--palette-teal);
+  --color-home-heading: var(--palette-teal-deep);
   --color-home-on-dark: var(--palette-white);
   --color-home-line-on-dark: color-mix(in srgb, var(--palette-white) 35%, transparent);
 
   /* Interaction states */
-  --color-action-primary-bg-hover: var(--palette-green);
-  --color-action-primary-bg-active: var(--palette-forest-deep);
-  --color-action-donate-bg-hover: var(--palette-gold-light);
-  --color-action-donate-bg-active: var(--palette-gold-dark);
+  --color-action-primary-bg-hover: var(--palette-teal-deep);
+  --color-action-primary-bg-active: var(--palette-charcoal);
+  --color-action-donate-bg-hover: var(--palette-orange-ink-hover);
+  --color-action-donate-bg-active: var(--palette-orange-ink-pressed);
   --color-action-secondary-bg-hover: var(--palette-mint);
-  --color-text-placeholder: var(--palette-slate);
-  --color-text-disabled: var(--palette-slate); /* WCAG exempts disabled controls; kept readable */
-  --color-surface-disabled: var(--palette-linen);
-  --color-border-disabled: var(--palette-linen);
+  --color-text-placeholder: var(--palette-muted);
+  --color-text-disabled: var(--palette-muted);
+  --color-surface-disabled: var(--palette-border);
+  --color-border-disabled: var(--palette-border);
 
   /* Status (always paired with an icon or text — never colour alone) */
   --color-status-success: var(--palette-success);
@@ -97,37 +101,37 @@
   --color-status-info: var(--palette-info);
 
   /* Lines and focus */
-  --color-border-subtle: var(--palette-linen); /* decorative dividers only */
-  --color-rule-accent: var(--palette-gold); /* thin 1px gold rules (decorative) */
-  --color-border-input: var(--palette-body); /* ≥ 3:1 for form controls (WCAG 1.4.11) */
-  --color-focus: var(--palette-green); /* on light surfaces */
-  --color-focus-on-inverse: var(--palette-gold); /* on forest: green is only 2.8:1 there */
-  --color-border-input-on-inverse: var(--palette-sage); /* body green is only 2.1:1 on forest */
-  --color-action-secondary-bg-hover-on-inverse: var(--palette-forest-soft);
+  --color-border-subtle: var(--palette-border);
+  --color-rule-accent: var(--palette-orange);
+  --color-border-input: var(--palette-field-border);
+  --color-focus: var(--palette-turquoise-ink);
+  --color-focus-on-inverse: var(--palette-peach);
+  --color-border-input-on-inverse: var(--palette-border);
+  --color-action-secondary-bg-hover-on-inverse: var(--palette-teal-deep);
 
-  /* Hero scrim: forest gradient over beneficiary photos so text always sits on ≥ 92% forest */
+  /* Hero scrim: teal-deep gradient over hero video so text always sits on ≥ 92% teal-deep */
   --gradient-hero-scrim: linear-gradient(
     90deg,
-    var(--palette-forest) 0%,
-    color-mix(in srgb, var(--palette-forest) 92%, transparent) 35%,
-    color-mix(in srgb, var(--palette-forest) 50%, transparent) 47%,
+    var(--palette-teal-deep) 0%,
+    color-mix(in srgb, var(--palette-teal-deep) 92%, transparent) 35%,
+    color-mix(in srgb, var(--palette-teal-deep) 50%, transparent) 47%,
     transparent 62%
   );
   --gradient-hero-scrim-stacked: linear-gradient(
     180deg,
     transparent 40%,
-    color-mix(in srgb, var(--palette-forest) 70%, transparent) 75%,
-    var(--palette-forest) 100%
+    color-mix(in srgb, var(--palette-teal-deep) 70%, transparent) 75%,
+    var(--palette-teal-deep) 100%
   );
 
-  /* Elevation (forest-tinted, subtle) — derived from the palette so they never drift */
+  /* Elevation (teal-tinted, subtle) — derived from the palette so they never drift */
   --shadow-sm:
-    0 1px 2px color-mix(in srgb, var(--palette-forest) 6%, transparent),
-    0 1px 3px color-mix(in srgb, var(--palette-forest) 8%, transparent);
+    0 1px 2px color-mix(in srgb, var(--palette-teal-deep) 6%, transparent),
+    0 1px 3px color-mix(in srgb, var(--palette-teal-deep) 8%, transparent);
   --shadow-md:
-    0 4px 12px color-mix(in srgb, var(--palette-forest) 8%, transparent),
-    0 2px 4px color-mix(in srgb, var(--palette-forest) 6%, transparent);
-  --shadow-lg: 0 12px 32px color-mix(in srgb, var(--palette-forest) 12%, transparent);
+    0 4px 12px color-mix(in srgb, var(--palette-teal-deep) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--palette-teal-deep) 6%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, var(--palette-teal-deep) 12%, transparent);
   --shadow-glow-gold:
     0 0 0 4px var(--color-action-donate-glow), 0 8px 24px var(--color-action-donate-glow);
 
@@ -214,6 +218,8 @@
   --duration-base: 200ms;
   --duration-slow: 250ms;
   --duration-entrance: 700ms; /* one-off page-load reveals and the banner fade-in only */
+  --duration-spinner: 1.1s; /* one turn of the logo spinner ring */
+  --duration-splash-max: 4s; /* first-load splash hides itself after this even without JS */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
   --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
@@ -222,6 +228,7 @@
   --z-header: 50;
   --z-overlay: 90;
   --z-modal: 100;
+  --z-splash: 110; /* first-load splash, above everything until the app starts */
   --z-toast: 110;
   --z-skip-link: 120;
 }
@@ -236,5 +243,7 @@
     --duration-base: 0.01ms;
     --duration-slow: 0.01ms;
     --duration-entrance: 0.01ms;
+    --duration-spinner: 0.01ms;
+    --duration-splash-max: 0.01ms;
   }
 }

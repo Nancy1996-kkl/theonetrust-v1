@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Spinner, StatusIcon, type StatusTone } from './icons.tsx';
+import { StatusIcon, type StatusTone } from './icons.tsx';
+import { LogoSpinner } from './LogoSpinner.tsx';
 import { useUiStrings } from './ui-strings.ts';
 
 export type BlockState = 'empty' | 'no-results' | 'loading' | 'error' | 'success';
@@ -46,7 +47,7 @@ export function StateBlock({
       aria-busy={state === 'loading' || undefined}
     >
       <span className="ui-state__icon">
-        {state === 'loading' ? <Spinner /> : <StatusIcon tone={TONE[state]} />}
+        {state === 'loading' ? <LogoSpinner /> : <StatusIcon tone={TONE[state]} />}
       </span>
       <Heading className="ui-state__title">
         {state === 'error' && <span className="visually-hidden">{strings.errorPrefix}</span>}
