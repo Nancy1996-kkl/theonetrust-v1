@@ -111,19 +111,19 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     fg: '--color-text-inverse',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Text, headings, links on forest band',
+    where: 'Text, headings, links on teal band',
   },
   {
     fg: '--color-text-accent-on-inverse',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Gold label on forest',
+    where: 'Peach label on teal band',
   },
   {
     fg: '--color-text-inverse-muted',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Lead text on forest band',
+    where: 'Lead text on teal band',
   },
   { fg: '--color-text-accent', bg: '--color-bg', use: 'text', where: 'Gold label on page' },
   { fg: '--color-text-accent', bg: '--color-surface', use: 'text', where: 'Gold label on cards' },
@@ -244,19 +244,77 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     fg: '--color-focus-on-inverse',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Focus ring on forest',
+    where: 'Focus ring on teal band',
   },
   {
     fg: '--color-border-input-on-inverse',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Form field border on forest',
+    where: 'Form field border on teal band',
   },
   {
     fg: '--color-text-inverse',
     bg: '--color-action-secondary-bg-hover-on-inverse',
     use: 'text',
-    where: 'Outline button hover on forest',
+    where: 'Outline button hover on teal band',
+  },
+  // Revamp (G1, 16 Nov 2026): surfaces and states added by the logo palette
+  {
+    fg: '--color-text-accent',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Orange label on mint band',
+  },
+  {
+    fg: '--color-text-muted',
+    bg: '--color-surface-accent',
+    use: 'text',
+    where: 'Secondary text on leaf card',
+  },
+  {
+    fg: '--color-status-success',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Success text on mint band',
+  },
+  { fg: '--color-focus', bg: '--color-surface-muted', use: 'ui', where: 'Focus ring on mint band' },
+  { fg: '--color-focus', bg: '--color-home-warm', use: 'ui', where: 'Focus ring on peach band' },
+  { fg: '--color-border-input', bg: '--color-bg', use: 'ui', where: 'Field border on page' },
+  {
+    fg: '--color-border-input',
+    bg: '--color-surface-muted',
+    use: 'ui',
+    where: 'Field border on mint band',
+  },
+  {
+    fg: '--color-home-heading',
+    bg: '--color-home-warm',
+    use: 'text',
+    where: 'Heading on peach band',
+  },
+  {
+    fg: '--color-action-donate-text',
+    bg: '--palette-orange-ink-light',
+    use: 'text',
+    where: 'Donate label on gradient start',
+  },
+  {
+    fg: '--color-action-donate-text',
+    bg: '--palette-orange-ink-hover',
+    use: 'text',
+    where: 'Donate label on gradient end',
+  },
+  {
+    fg: '--color-action-donate-border-on-inverse',
+    bg: '--color-surface-inverse',
+    use: 'ui',
+    where: 'Peach Donate edge on teal band',
+  },
+  {
+    fg: '--color-text-disabled',
+    bg: '--color-surface-disabled',
+    use: 'text',
+    where: 'Disabled label',
   },
 ];
 
@@ -265,8 +323,39 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
  * rule stays documented and nobody quietly moves them into CONTRAST_PAIRS.
  */
 export const FORBIDDEN_PAIRS: ContrastPair[] = [
-  { fg: '--palette-gold', bg: '--color-bg', use: 'text', where: 'Gold text on page' },
-  { fg: '--palette-gold', bg: '--color-surface', use: 'text', where: 'Gold text on cards' },
+  // The three bright logo colours are fills, rules and icons only — never text (revamp G1).
+  { fg: '--palette-orange', bg: '--color-bg', use: 'text', where: 'Bright orange text on page' },
+  {
+    fg: '--palette-orange',
+    bg: '--color-surface',
+    use: 'text',
+    where: 'Bright orange text on cards',
+  },
+  {
+    fg: '--palette-orange',
+    bg: '--color-surface-inverse',
+    use: 'ui',
+    where: 'Bright orange ring or icon on teal band',
+  },
+  {
+    fg: '--palette-turquoise',
+    bg: '--color-surface',
+    use: 'text',
+    where: 'Bright turquoise text on cards',
+  },
+  {
+    fg: '--palette-turquoise',
+    bg: '--color-surface-inverse',
+    use: 'ui',
+    where: 'Bright turquoise ring or icon on teal band',
+  },
+  { fg: '--palette-green', bg: '--color-surface', use: 'text', where: 'Bright green as text' },
+  {
+    fg: '--palette-green',
+    bg: '--color-surface-muted',
+    use: 'text',
+    where: 'Bright green as text on mint band',
+  },
   {
     fg: '--color-status-warning',
     bg: '--color-surface',
@@ -274,46 +363,28 @@ export const FORBIDDEN_PAIRS: ContrastPair[] = [
     where: 'Warning orange as text',
   },
   {
-    fg: '--color-status-success',
-    bg: '--color-surface-muted',
-    use: 'text',
-    where: 'Success text on muted band',
-  },
-  {
-    fg: '--color-text-accent',
-    bg: '--color-surface-muted',
-    use: 'text',
-    where: 'Gold text on champagne band',
-  },
-  {
-    fg: '--palette-green',
-    bg: '--color-surface-muted',
-    use: 'text',
-    where: 'Brand green as text on champagne',
-  },
-  {
-    fg: '--color-text-muted',
-    bg: '--color-surface-accent',
-    use: 'text',
-    where: 'Secondary text on mint card',
-  },
-  {
     fg: '--color-focus',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Green focus ring on forest',
+    where: 'Turquoise-ink focus ring on teal band',
   },
   {
     fg: '--color-border-input',
     bg: '--color-surface-inverse',
     use: 'ui',
-    where: 'Body-green input border on forest',
+    where: 'Light-surface input border on teal band',
   },
   {
     fg: '--color-action-secondary-text',
     bg: '--color-surface-inverse',
     use: 'text',
-    where: 'Forest outline button on forest',
+    where: 'Teal outline button on teal band',
+  },
+  {
+    fg: '--color-text-heading',
+    bg: '--color-surface-inverse',
+    use: 'text',
+    where: 'Teal-deep heading on teal band',
   },
 ];
 

@@ -29,7 +29,8 @@
 }
 
 .site-header.site-header--overlay {
-  /* A soft forest fade behind the words keeps them readable over any video frame. */
+  --color-focus: var(--color-focus-on-inverse); /* sits over the teal hero */
+  /* A soft teal fade behind the words keeps them readable over any video frame. */
   background: linear-gradient(
     to bottom,
     color-mix(in srgb, var(--color-surface-inverse) 70%, transparent),

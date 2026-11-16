@@ -12,22 +12,21 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
    (`apps/web/src/styles/design-tokens.ts`). The test enforces WCAG 2.2 AA and regenerates the
    table below: `UPDATE_TOKEN_DOCS=1 pnpm --filter @theonetrust/web test`.
 3. **Status is never colour alone**: always pair with an icon and words.
-4. **Gold is an accent — never paragraphs**: the Donate button, thin 1px rules
-   (`--color-rule-accent`), impact numbers and small icons. Bright gold text is allowed only on
-   forest (7.3:1); on light surfaces it is ~2:1 and fails AA. Small gold labels on ivory/white use
-   `--color-text-accent` (#8A6D1F, 4.8:1), which fails on champagne (4.0:1) — `FORBIDDEN_PAIRS`
-   keeps both rules enforced.
+4. **Orange is the action colour**: the Donate button (burnt-orange gradient `#BC5400 → #9C4600`
+   with a white label, 4.77–6.38:1), thin 1px rules (`--color-rule-accent`) and the hover glow.
+   Small orange labels use `--color-text-accent` (`#B04F00`, ≥ 4.68:1 on every light surface).
+   Numbers and accents on teal bands use peach (`--color-text-accent-on-inverse`, 6.95:1).
 5. **Warning orange** (`--color-status-warning`) is for icons and borders only (3.6:1). Warning
    text uses `--color-status-warning-text` (derived darker tone, 5.5:1).
-6. **Focus ring**: trust green on light surfaces; gold inside `.surface-inverse` (green is only 2.8:1 on forest).
+6. **Focus ring**: turquoise-ink on light surfaces; peach inside `.surface-inverse` and the dark home bands (turquoise-ink is only 1.4:1 on teal).
 
-7. **Forest bands** use `.surface-inverse`, which re-maps the role tokens (text, headings, links,
+7. **Teal bands** use `.surface-inverse`, which re-maps the role tokens (text, headings, links,
    focus ring) — never set only `color` on a dark container.
-8. **Success text never sits on the champagne band** (`--color-surface-muted`, 4.3:1). Brand green
-   `#3C763A` is also 4.49:1 there, so links use `--palette-green-deep`. Secondary text never sits
-   on mint cards (`--color-surface-accent`) — use body text there.
-9. **Section rhythm**: forest hero → ivory sections → forest impact band → champagne stories,
-   with mint story cards. The Donate button appears in the sticky header and every forest band.
+8. **Bright logo colours are never text.** Orange, turquoise and green fail AA as text on every
+   light surface; text uses the derived ink tones (`--palette-*-ink`). `tokens.test.ts` enforces it.
+9. **Section rhythm**: teal hero → cloud sections → mint and peach bands → teal impact band, with
+   leaf tiles. The Donate button (burnt-orange gradient, white label) appears in the sticky header
+   and every teal band, where it gets a 2px peach edge.
 10. **Interaction states** use the state tokens (`--color-action-*-bg-hover/-active`,
     `--color-text-placeholder`, `--color-text-disabled`, `--color-surface-disabled`). Disabled
     controls are exempt from WCAG contrast but stay readable.
@@ -40,35 +39,33 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
 
 ## Colour
 
-| Palette token            | Value   | Role                                                                  |
-| ------------------------ | ------- | --------------------------------------------------------------------- |
-| `--palette-forest`       | #0F2A1D | Deep Forest — primary brand, headings, primary buttons, inverse bands |
-| `--palette-green`        | #3C763A | Trust Green — focus ring, icons, primary hover                        |
-| `--palette-mint`         | #B7E4C7 | Mint — story cards, lead text on forest                               |
-| `--palette-sage`         | #A8D5BA | Sage — form borders and quiet accents on forest                       |
-| `--palette-gold`         | #D4AF37 | Gold — Donate background, 1px rules, impact numbers on forest         |
-| `--palette-gold-text`    | #8A6D1F | Gold for small labels on ivory/white only (4.8:1)                     |
-| `--palette-champagne`    | #F7E7CE | Champagne — stories and muted bands                                   |
-| `--palette-ivory`        | #FFFDF8 | Ivory — page background                                               |
-| `--palette-body`         | #4A5A50 | Body text, form borders                                               |
-| `--palette-sage-tint`    | #E6EEE9 | Home page — soft sage band                                            |
-| `--palette-peach`        | #FCF1E5 | Home page — warm section background                                   |
-| `--palette-home-ivory`   | #F7F5EF | Home page — page background                                           |
-| `--palette-home-sage`    | #76968A | Home page — shapes, frames, icons (never body text)                   |
-| `--palette-white`        | #FFFFFF | Card surfaces, text on forest                                         |
-| `--palette-success`      | #287A55 | Success                                                               |
-| `--palette-warning`      | #B7791F | Warning icons/borders                                                 |
-| `--palette-warning-dark` | #8F5E14 | Warning text (derived for AA)                                         |
-| `--palette-error`        | #B42318 | Error                                                                 |
-| `--palette-info`         | #3568A8 | Information                                                           |
-| `--palette-green-deep`   | #2F5E2E | Links (derived; 6.2:1 on champagne)                                   |
-| `--palette-moss`         | #556659 | Secondary text (derived; 5.0:1 on champagne)                          |
-| `--palette-forest-deep`  | #081A11 | Primary button pressed (derived)                                      |
-| `--palette-forest-soft`  | #1D4430 | Outline button hover on forest (derived)                              |
-| `--palette-gold-light`   | #E2C25A | Donate hover (derived; 8.8:1 with forest text)                        |
-| `--palette-gold-dark`    | #B8962A | Donate pressed (derived; 5.4:1 with forest text)                      |
-| `--palette-linen`        | #EDE8DD | Disabled surfaces, decorative dividers (derived)                      |
-| `--palette-slate`        | #5C6B61 | Placeholder and disabled text (derived; 5.6:1 on white)               |
+| Palette token                  | Value   | Role                                                                 |
+| ------------------------------ | ------- | -------------------------------------------------------------------- |
+| `--palette-teal`               | #025D62 | Deep Teal — primary brand, links, primary buttons, teal bands        |
+| `--palette-turquoise`          | #00AEB4 | Bright Turquoise — fills and icons only (2.7:1 on white, never text) |
+| `--palette-orange`             | #F07800 | Warm Orange — Donate glow, 1px rules, fills only (never text)        |
+| `--palette-green`              | #4A9200 | Natural Green — icons and fills only (never text)                    |
+| `--palette-cloud`              | #F7FAF8 | Cloud White — page background                                        |
+| `--palette-mint`               | #EAF3EF | Soft Mint — muted bands, tablist, lead text on teal                  |
+| `--palette-charcoal`           | #263B3B | Charcoal — body text; primary pressed                                |
+| `--palette-peach`              | #FFF2E5 | Peach — warm bands; accent text, focus ring and Donate edge on teal  |
+| `--palette-leaf`               | #F0F6E8 | Leaf Tint — story and growth tiles                                   |
+| `--palette-white`              | #FFFFFF | Card surfaces, text on teal                                          |
+| `--palette-border`             | #DFE9E5 | Decorative dividers and disabled surfaces only                       |
+| `--palette-teal-deep`          | #014246 | Headings, hero scrim, primary hover (derived; 11.2:1 on white)       |
+| `--palette-turquoise-ink`      | #00777B | Focus ring and info labels on light (derived; ≥ 4.3:1)               |
+| `--palette-orange-ink`         | #B04F00 | Donate fill and orange labels (derived; white 5.3:1)                 |
+| `--palette-orange-ink-light`   | #BC5400 | Donate gradient start (derived; white 4.77:1)                        |
+| `--palette-orange-ink-hover`   | #9C4600 | Donate hover and gradient end (derived; white 6.38:1)                |
+| `--palette-orange-ink-pressed` | #863C00 | Donate pressed (derived; white 7.89:1)                               |
+| `--palette-green-ink`          | #3A7300 | Growth labels (derived; 5.8:1 on white)                              |
+| `--palette-muted`              | #4F6262 | Secondary, placeholder and disabled text (derived; 6.4:1 on white)   |
+| `--palette-field-border`       | #6A8282 | Input borders (derived; ≥ 3.3:1 on every light surface)              |
+| `--palette-success`            | #287A55 | Success                                                              |
+| `--palette-warning`            | #B7791F | Warning icons/borders                                                |
+| `--palette-warning-dark`       | #8F5E14 | Warning text (derived for AA)                                        |
+| `--palette-error`              | #B42318 | Error                                                                |
+| `--palette-info`               | #3568A8 | Information                                                          |
 
 ### Contrast (generated — do not edit by hand)
 
@@ -76,54 +73,66 @@ Brand direction: [`docs/ux-design-brief.md`](../ux-design-brief.md) §2–4 (For
 <!-- contrast-table:start -->
 | Where | Foreground | Background | Use | Ratio | AA minimum | Result |
 |---|---|---|---|---|---|---|
-| Body text on page | `--color-text` #4A5A50 | `--color-bg` #FFFDF8 | text | 7.19:1 | 4.5:1 | ✔ AA |
-| Body text on cards | `--color-text` #4A5A50 | `--color-surface` #FFFFFF | text | 7.31:1 | 4.5:1 | ✔ AA |
-| Body text on muted band | `--color-text` #4A5A50 | `--color-surface-muted` #F7E7CE | text | 6.02:1 | 4.5:1 | ✔ AA |
-| Secondary text on page | `--color-text-muted` #556659 | `--color-bg` #FFFDF8 | text | 6.02:1 | 4.5:1 | ✔ AA |
-| Secondary text on cards | `--color-text-muted` #556659 | `--color-surface` #FFFFFF | text | 6.12:1 | 4.5:1 | ✔ AA |
-| Secondary text on muted band | `--color-text-muted` #556659 | `--color-surface-muted` #F7E7CE | text | 5.03:1 | 4.5:1 | ✔ AA |
-| Headings on page | `--color-text-heading` #0F2A1D | `--color-bg` #FFFDF8 | text | 15.08:1 | 4.5:1 | ✔ AA |
-| Headings on cards | `--color-text-heading` #0F2A1D | `--color-surface` #FFFFFF | text | 15.33:1 | 4.5:1 | ✔ AA |
-| Headings on muted band | `--color-text-heading` #0F2A1D | `--color-surface-muted` #F7E7CE | text | 12.61:1 | 4.5:1 | ✔ AA |
-| Links on page | `--color-link` #2F5E2E | `--color-bg` #FFFDF8 | text | 7.48:1 | 4.5:1 | ✔ AA |
-| Links on cards | `--color-link` #2F5E2E | `--color-surface` #FFFFFF | text | 7.60:1 | 4.5:1 | ✔ AA |
-| Links on muted band | `--color-link` #2F5E2E | `--color-surface-muted` #F7E7CE | text | 6.25:1 | 4.5:1 | ✔ AA |
-| Text, headings, links on forest band | `--color-text-inverse` #FFFFFF | `--color-surface-inverse` #0F2A1D | text | 15.33:1 | 4.5:1 | ✔ AA |
-| Gold label on forest | `--color-text-accent-on-inverse` #D4AF37 | `--color-surface-inverse` #0F2A1D | text | 7.29:1 | 4.5:1 | ✔ AA |
-| Lead text on forest band | `--color-text-inverse-muted` #B7E4C7 | `--color-surface-inverse` #0F2A1D | text | 10.90:1 | 4.5:1 | ✔ AA |
-| Gold label on page | `--color-text-accent` #8A6D1F | `--color-bg` #FFFDF8 | text | 4.81:1 | 4.5:1 | ✔ AA |
-| Gold label on cards | `--color-text-accent` #8A6D1F | `--color-surface` #FFFFFF | text | 4.89:1 | 4.5:1 | ✔ AA |
-| Body text on mint card | `--color-text` #4A5A50 | `--color-surface-accent` #B7E4C7 | text | 5.20:1 | 4.5:1 | ✔ AA |
-| Headings on mint card | `--color-text-heading` #0F2A1D | `--color-surface-accent` #B7E4C7 | text | 10.90:1 | 4.5:1 | ✔ AA |
-| Links on mint card | `--color-link` #2F5E2E | `--color-surface-accent` #B7E4C7 | text | 5.40:1 | 4.5:1 | ✔ AA |
-| Focus ring on mint card | `--color-focus` #3C763A | `--color-surface-accent` #B7E4C7 | ui | 3.88:1 | 3:1 | ✔ AA |
-| Warning message on muted band | `--color-status-warning-text` #8F5E14 | `--color-surface-muted` #F7E7CE | text | 4.57:1 | 4.5:1 | ✔ AA |
-| Primary button | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg` #0F2A1D | text | 15.33:1 | 4.5:1 | ✔ AA |
-| Primary button hover | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-hover` #3C763A | text | 5.46:1 | 4.5:1 | ✔ AA |
-| Primary button pressed | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-active` #081A11 | text | 18.00:1 | 4.5:1 | ✔ AA |
-| Donate button | `--color-action-donate-text` #0F2A1D | `--color-action-donate-bg` #D4AF37 | text | 7.29:1 | 4.5:1 | ✔ AA |
-| Donate button hover | `--color-action-donate-text` #0F2A1D | `--color-action-donate-bg-hover` #E2C25A | text | 8.83:1 | 4.5:1 | ✔ AA |
-| Donate button pressed | `--color-action-donate-text` #0F2A1D | `--color-action-donate-bg-active` #B8962A | text | 5.42:1 | 4.5:1 | ✔ AA |
-| Secondary button label | `--color-action-secondary-text` #0F2A1D | `--color-surface` #FFFFFF | text | 15.33:1 | 4.5:1 | ✔ AA |
-| Secondary button hover | `--color-action-secondary-text` #0F2A1D | `--color-action-secondary-bg-hover` #B7E4C7 | text | 10.90:1 | 4.5:1 | ✔ AA |
-| Secondary button border | `--color-action-secondary-border` #0F2A1D | `--color-bg` #FFFDF8 | ui | 15.08:1 | 3:1 | ✔ AA |
-| Input placeholder | `--color-text-placeholder` #5C6B61 | `--color-surface` #FFFFFF | text | 5.62:1 | 4.5:1 | ✔ AA |
+| Body text on page | `--color-text` #263B3B | `--color-bg` #F7FAF8 | text | 11.28:1 | 4.5:1 | ✔ AA |
+| Body text on cards | `--color-text` #263B3B | `--color-surface` #FFFFFF | text | 11.85:1 | 4.5:1 | ✔ AA |
+| Body text on muted band | `--color-text` #263B3B | `--color-surface-muted` #EAF3EF | text | 10.48:1 | 4.5:1 | ✔ AA |
+| Secondary text on page | `--color-text-muted` #4F6262 | `--color-bg` #F7FAF8 | text | 6.13:1 | 4.5:1 | ✔ AA |
+| Secondary text on cards | `--color-text-muted` #4F6262 | `--color-surface` #FFFFFF | text | 6.44:1 | 4.5:1 | ✔ AA |
+| Secondary text on muted band | `--color-text-muted` #4F6262 | `--color-surface-muted` #EAF3EF | text | 5.70:1 | 4.5:1 | ✔ AA |
+| Headings on page | `--color-text-heading` #014246 | `--color-bg` #F7FAF8 | text | 10.69:1 | 4.5:1 | ✔ AA |
+| Headings on cards | `--color-text-heading` #014246 | `--color-surface` #FFFFFF | text | 11.23:1 | 4.5:1 | ✔ AA |
+| Headings on muted band | `--color-text-heading` #014246 | `--color-surface-muted` #EAF3EF | text | 9.93:1 | 4.5:1 | ✔ AA |
+| Links on page | `--color-link` #025D62 | `--color-bg` #F7FAF8 | text | 7.28:1 | 4.5:1 | ✔ AA |
+| Links on cards | `--color-link` #025D62 | `--color-surface` #FFFFFF | text | 7.65:1 | 4.5:1 | ✔ AA |
+| Links on muted band | `--color-link` #025D62 | `--color-surface-muted` #EAF3EF | text | 6.76:1 | 4.5:1 | ✔ AA |
+| Text, headings, links on teal band | `--color-text-inverse` #FFFFFF | `--color-surface-inverse` #025D62 | text | 7.65:1 | 4.5:1 | ✔ AA |
+| Peach label on teal band | `--color-text-accent-on-inverse` #FFF2E5 | `--color-surface-inverse` #025D62 | text | 6.95:1 | 4.5:1 | ✔ AA |
+| Lead text on teal band | `--color-text-inverse-muted` #EAF3EF | `--color-surface-inverse` #025D62 | text | 6.76:1 | 4.5:1 | ✔ AA |
+| Gold label on page | `--color-text-accent` #B04F00 | `--color-bg` #F7FAF8 | text | 5.04:1 | 4.5:1 | ✔ AA |
+| Gold label on cards | `--color-text-accent` #B04F00 | `--color-surface` #FFFFFF | text | 5.29:1 | 4.5:1 | ✔ AA |
+| Body text on mint card | `--color-text` #263B3B | `--color-surface-accent` #F0F6E8 | text | 10.75:1 | 4.5:1 | ✔ AA |
+| Headings on mint card | `--color-text-heading` #014246 | `--color-surface-accent` #F0F6E8 | text | 10.19:1 | 4.5:1 | ✔ AA |
+| Links on mint card | `--color-link` #025D62 | `--color-surface-accent` #F0F6E8 | text | 6.94:1 | 4.5:1 | ✔ AA |
+| Focus ring on mint card | `--color-focus` #00777B | `--color-surface-accent` #F0F6E8 | ui | 4.85:1 | 3:1 | ✔ AA |
+| Warning message on muted band | `--color-status-warning-text` #8F5E14 | `--color-surface-muted` #EAF3EF | text | 4.91:1 | 4.5:1 | ✔ AA |
+| Primary button | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg` #025D62 | text | 7.65:1 | 4.5:1 | ✔ AA |
+| Primary button hover | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-hover` #014246 | text | 11.23:1 | 4.5:1 | ✔ AA |
+| Primary button pressed | `--color-action-primary-text` #FFFFFF | `--color-action-primary-bg-active` #263B3B | text | 11.85:1 | 4.5:1 | ✔ AA |
+| Donate button | `--color-action-donate-text` #FFFFFF | `--color-action-donate-bg` #B04F00 | text | 5.29:1 | 4.5:1 | ✔ AA |
+| Donate button hover | `--color-action-donate-text` #FFFFFF | `--color-action-donate-bg-hover` #9C4600 | text | 6.38:1 | 4.5:1 | ✔ AA |
+| Donate button pressed | `--color-action-donate-text` #FFFFFF | `--color-action-donate-bg-active` #863C00 | text | 7.89:1 | 4.5:1 | ✔ AA |
+| Secondary button label | `--color-action-secondary-text` #025D62 | `--color-surface` #FFFFFF | text | 7.65:1 | 4.5:1 | ✔ AA |
+| Secondary button hover | `--color-action-secondary-text` #025D62 | `--color-action-secondary-bg-hover` #EAF3EF | text | 6.76:1 | 4.5:1 | ✔ AA |
+| Secondary button border | `--color-action-secondary-border` #025D62 | `--color-bg` #F7FAF8 | ui | 7.28:1 | 3:1 | ✔ AA |
+| Input placeholder | `--color-text-placeholder` #4F6262 | `--color-surface` #FFFFFF | text | 6.44:1 | 4.5:1 | ✔ AA |
 | Success message | `--color-status-success` #287A55 | `--color-surface` #FFFFFF | text | 5.24:1 | 4.5:1 | ✔ AA |
-| Success message on page | `--color-status-success` #287A55 | `--color-bg` #FFFDF8 | text | 5.15:1 | 4.5:1 | ✔ AA |
+| Success message on page | `--color-status-success` #287A55 | `--color-bg` #F7FAF8 | text | 4.98:1 | 4.5:1 | ✔ AA |
 | Error message | `--color-status-error` #B42318 | `--color-surface` #FFFFFF | text | 6.57:1 | 4.5:1 | ✔ AA |
-| Error message on page | `--color-status-error` #B42318 | `--color-bg` #FFFDF8 | text | 6.46:1 | 4.5:1 | ✔ AA |
+| Error message on page | `--color-status-error` #B42318 | `--color-bg` #F7FAF8 | text | 6.25:1 | 4.5:1 | ✔ AA |
 | Info message | `--color-status-info` #3568A8 | `--color-surface` #FFFFFF | text | 5.68:1 | 4.5:1 | ✔ AA |
-| Info message on page | `--color-status-info` #3568A8 | `--color-bg` #FFFDF8 | text | 5.58:1 | 4.5:1 | ✔ AA |
+| Info message on page | `--color-status-info` #3568A8 | `--color-bg` #F7FAF8 | text | 5.40:1 | 4.5:1 | ✔ AA |
 | Warning message | `--color-status-warning-text` #8F5E14 | `--color-surface` #FFFFFF | text | 5.55:1 | 4.5:1 | ✔ AA |
-| Warning message on page | `--color-status-warning-text` #8F5E14 | `--color-bg` #FFFDF8 | text | 5.46:1 | 4.5:1 | ✔ AA |
+| Warning message on page | `--color-status-warning-text` #8F5E14 | `--color-bg` #F7FAF8 | text | 5.28:1 | 4.5:1 | ✔ AA |
 | Warning icon/border | `--color-status-warning` #B7791F | `--color-surface` #FFFFFF | ui | 3.64:1 | 3:1 | ✔ AA |
-| Form field border | `--color-border-input` #4A5A50 | `--color-surface` #FFFFFF | ui | 7.31:1 | 3:1 | ✔ AA |
-| Focus ring on page | `--color-focus` #3C763A | `--color-bg` #FFFDF8 | ui | 5.37:1 | 3:1 | ✔ AA |
-| Focus ring on cards | `--color-focus` #3C763A | `--color-surface` #FFFFFF | ui | 5.46:1 | 3:1 | ✔ AA |
-| Focus ring on muted band | `--color-focus` #3C763A | `--color-surface-muted` #F7E7CE | ui | 4.49:1 | 3:1 | ✔ AA |
-| Focus ring on forest | `--color-focus-on-inverse` #D4AF37 | `--color-surface-inverse` #0F2A1D | ui | 7.29:1 | 3:1 | ✔ AA |
-| Form field border on forest | `--color-border-input-on-inverse` #A8D5BA | `--color-surface-inverse` #0F2A1D | ui | 9.41:1 | 3:1 | ✔ AA |
-| Outline button hover on forest | `--color-text-inverse` #FFFFFF | `--color-action-secondary-bg-hover-on-inverse` #1D4430 | text | 10.92:1 | 4.5:1 | ✔ AA |
+| Form field border | `--color-border-input` #6A8282 | `--color-surface` #FFFFFF | ui | 4.09:1 | 3:1 | ✔ AA |
+| Focus ring on page | `--color-focus` #00777B | `--color-bg` #F7FAF8 | ui | 5.09:1 | 3:1 | ✔ AA |
+| Focus ring on cards | `--color-focus` #00777B | `--color-surface` #FFFFFF | ui | 5.35:1 | 3:1 | ✔ AA |
+| Focus ring on muted band | `--color-focus` #00777B | `--color-surface-muted` #EAF3EF | ui | 4.73:1 | 3:1 | ✔ AA |
+| Focus ring on teal band | `--color-focus-on-inverse` #FFF2E5 | `--color-surface-inverse` #025D62 | ui | 6.95:1 | 3:1 | ✔ AA |
+| Form field border on teal band | `--color-border-input-on-inverse` #DFE9E5 | `--color-surface-inverse` #025D62 | ui | 6.16:1 | 3:1 | ✔ AA |
+| Outline button hover on teal band | `--color-text-inverse` #FFFFFF | `--color-action-secondary-bg-hover-on-inverse` #014246 | text | 11.23:1 | 4.5:1 | ✔ AA |
+| Orange label on mint band | `--color-text-accent` #B04F00 | `--color-surface-muted` #EAF3EF | text | 4.68:1 | 4.5:1 | ✔ AA |
+| Secondary text on leaf card | `--color-text-muted` #4F6262 | `--color-surface-accent` #F0F6E8 | text | 5.85:1 | 4.5:1 | ✔ AA |
+| Success text on mint band | `--color-status-success` #287A55 | `--color-surface-muted` #EAF3EF | text | 4.63:1 | 4.5:1 | ✔ AA |
+| Focus ring on mint band | `--color-focus` #00777B | `--color-surface-muted` #EAF3EF | ui | 4.73:1 | 3:1 | ✔ AA |
+| Focus ring on peach band | `--color-focus` #00777B | `--color-home-warm` #FFF2E5 | ui | 4.86:1 | 3:1 | ✔ AA |
+| Field border on page | `--color-border-input` #6A8282 | `--color-bg` #F7FAF8 | ui | 3.89:1 | 3:1 | ✔ AA |
+| Field border on mint band | `--color-border-input` #6A8282 | `--color-surface-muted` #EAF3EF | ui | 3.62:1 | 3:1 | ✔ AA |
+| Heading on peach band | `--color-home-heading` #014246 | `--color-home-warm` #FFF2E5 | text | 10.21:1 | 4.5:1 | ✔ AA |
+| Donate label on gradient start | `--color-action-donate-text` #FFFFFF | `--palette-orange-ink-light` #BC5400 | text | 4.76:1 | 4.5:1 | ✔ AA |
+| Donate label on gradient end | `--color-action-donate-text` #FFFFFF | `--palette-orange-ink-hover` #9C4600 | text | 6.38:1 | 4.5:1 | ✔ AA |
+| Peach Donate edge on teal band | `--color-action-donate-border-on-inverse` #FFF2E5 | `--color-surface-inverse` #025D62 | ui | 6.95:1 | 3:1 | ✔ AA |
+| Disabled label | `--color-text-disabled` #4F6262 | `--color-surface-disabled` #DFE9E5 | text | 5.19:1 | 4.5:1 | ✔ AA |
 <!-- contrast-table:end -->
 <!-- prettier-ignore-end -->
 
