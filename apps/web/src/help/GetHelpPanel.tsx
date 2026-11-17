@@ -35,15 +35,28 @@ import {
   HELP_MESSAGES,
   type HelpMessageKey,
 } from './help-messages.ts';
+import {
+  buildWhatsAppText,
+  isTrustWhatsAppUrl,
+  parseAge,
+  whatsAppSendUrl,
+  type CertAnswer,
+  type ContactWay,
+} from './help-whatsapp.ts';
 
 export const GET_HELP_HASH = '#get-help';
 
-type Screen = 'start' | 'wizard' | 'callback' | 'sent' | 'network' | 'rate_limited' | 'invalid';
+type Screen =
+  'start' | 'wizard' | 'callback' | 'sent' | 'wa-sent' | 'network' | 'rate_limited' | 'invalid';
 type Step = 1 | 2 | 3 | 4 | 5;
 
 interface Answers {
   helpFor: HelpFor | null;
+  age: string;
   kinds: HelpKind[];
+  otherNeed: string;
+  cert: CertAnswer | null;
+  contactWay: ContactWay;
   description: string;
   phone: string;
   personNameOrVillage: string;
@@ -54,7 +67,15 @@ interface Answers {
   website: string;
 }
 
-type ErrorKey = 'helpFor' | 'kinds' | 'phone' | 'consentContact' | 'consentThirdParty';
+type ErrorKey =
+  | 'helpFor'
+  | 'age'
+  | 'kinds'
+  | 'otherNeed'
+  | 'cert'
+  | 'phone'
+  | 'consentContact'
+  | 'consentThirdParty';
 
 const STEP_LABELS: HelpMessageKey[] = [
   'stepWho',
@@ -67,7 +88,11 @@ const STEP_LABELS: HelpMessageKey[] = [
 function emptyAnswers(lang: UiLang): Answers {
   return {
     helpFor: null,
+    age: '',
     kinds: [],
+    otherNeed: '',
+    cert: null,
+    contactWay: 'whatsapp',
     description: '',
     phone: '',
     personNameOrVillage: '',
@@ -85,7 +110,8 @@ const skipsDescription = (kinds: HelpKind[]) => kinds.length === 1 && kinds[0] =
 /**
  * Get Help panel (issue #15, wireframe #8): opens on the single page at #get-help.
  * Start → 5-step wizard or one-field "call me back" → sent with a reference. Errors never lose
- * the answers. No field accepts documents, Aadhaar, medical records, income proof or photos.
+ * the answers. No field accepts documents: an income certificate for education help is sent by
+ * the person on WhatsApp only (help-whatsapp.ts), never through this website.
  */
 export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
   const lang = useLang();
@@ -94,6 +120,10 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
   const location = useLocation();
   const navigate = useNavigate();
   const open = location.hash === GET_HELP_HASH;
+  /** No online inbox yet: the form hands the request to the trust's WhatsApp instead. */
+  const whatsappMode = !client.acceptsRequests && isTrustWhatsAppUrl(facts.whatsappUrl);
+  const formOpen = client.acceptsRequests || whatsappMode;
+  const [waUrl, setWaUrl] = useState('');
 
   const [screen, setScreen] = useState<Screen>('start');
   const [step, setStep] = useState<Step>(1);
@@ -116,7 +146,7 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
 
   function close() {
     navigate({ pathname: location.pathname, search: location.search }, { replace: true });
-    if (screen === 'sent') {
+    if (screen === 'sent' || screen === 'wa-sent') {
       setScreen('start');
       setStep(1);
       setAnswers(emptyAnswers(lang));
@@ -126,8 +156,12 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
   function validateStep(current: Step): Partial<Record<ErrorKey, true>> {
     const found: Partial<Record<ErrorKey, true>> = {};
     if (current === 1 && !answers.helpFor) found.helpFor = true;
+    if (current === 1 && parseAge(answers.age) === null) found.age = true;
     if (current === 2 && answers.kinds.length === 0) found.kinds = true;
-    if (current === 4 && !normalizeIndianMobile(answers.phone)) found.phone = true;
+    if (current === 2 && answers.kinds.includes('other') && answers.otherNeed.trim().length < 2)
+      found.otherNeed = true;
+    if (current === 2 && answers.kinds.includes('education') && !answers.cert) found.cert = true;
+    if (current === 4 && !whatsappMode && !normalizeIndianMobile(answers.phone)) found.phone = true;
     if (current === 5) {
       if (!answers.consentContact) found.consentContact = true;
       if (answers.helpFor !== 'self' && !answers.consentThirdParty) found.consentThirdParty = true;
@@ -212,6 +246,32 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
     else setScreen('network'); // network and unavailable: answers kept, human channels offered
   }
 
+  function sendOnWhatsApp() {
+    const found = validateStep(5);
+    if (Object.keys(found).length > 0 || !isTrustWhatsAppUrl(facts.whatsappUrl)) {
+      setErrors(found);
+      return;
+    }
+    const text = buildWhatsAppText(
+      {
+        helpFor: answers.helpFor ?? 'self',
+        age: parseAge(answers.age) ?? 0,
+        kinds: answers.kinds,
+        otherNeed: answers.otherNeed,
+        cert: answers.kinds.includes('education') ? answers.cert : null,
+        contactWay: answers.contactWay,
+        description: skipsDescription(answers.kinds) ? '' : answers.description,
+        callLanguage: answers.callLanguage,
+        bestTime: answers.bestTime,
+      },
+      lang,
+    );
+    const url = whatsAppSendUrl(facts.whatsappUrl, text);
+    setWaUrl(url);
+    setScreen('wa-sent');
+    window.open(url, '_blank', 'noopener');
+  }
+
   const humanChannels = <HumanChannels facts={facts} lang={lang} t={t} />;
   const heading = (text: string) => (
     <h3 ref={headingRef} tabIndex={-1} className="help__heading">
@@ -225,9 +285,9 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
   if (screen === 'start') {
     body = (
       <>
-        {heading(client.acceptsRequests ? t.startTitle : t.closedTitle)}
-        <p className="help__muted">{client.acceptsRequests ? t.startWho : t.closedText}</p>
-        {client.acceptsRequests && (
+        {heading(formOpen ? t.startTitle : t.closedTitle)}
+        <p className="help__muted">{formOpen ? t.startWho : t.closedText}</p>
+        {formOpen && (
           <div className="help__actions">
             <Button
               fullWidth
@@ -238,9 +298,11 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
             >
               {t.fillForm}
             </Button>
-            <Button fullWidth variant="secondary" onClick={() => setScreen('callback')}>
-              {t.callMeBack}
-            </Button>
+            {client.acceptsRequests && (
+              <Button fullWidth variant="secondary" onClick={() => setScreen('callback')}>
+                {t.callMeBack}
+              </Button>
+            )}
           </div>
         )}
         {humanChannels}
@@ -268,6 +330,17 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
               onChange={(v) => update('helpFor', v as HelpFor)}
               {...(errors.helpFor ? { error: t.whoError } : {})}
             />
+            <TextField
+              label={answers.helpFor === 'self' ? t.ageSelfLabel : t.ageLabel}
+              hint={t.ageHint}
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={3}
+              required
+              value={answers.age}
+              onChange={(e) => update('age', e.target.value.replace(/\D/g, ''))}
+              {...(errors.age ? { error: t.ageError } : {})}
+            />
           </>
         )}
         {step === 2 && (
@@ -281,6 +354,47 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
               onChange={(kinds) => update('kinds', kinds)}
               error={errors.kinds ? t.kindError : undefined}
             />
+            {answers.kinds.includes('other') && (
+              <TextField
+                label={t.otherLabel}
+                hint={t.otherHint}
+                maxLength={HELP_PERSON_MAX}
+                autoComplete="off"
+                required
+                value={answers.otherNeed}
+                onChange={(e) => update('otherNeed', e.target.value)}
+                {...(errors.otherNeed ? { error: t.otherError } : {})}
+              />
+            )}
+            {answers.kinds.includes('education') && (
+              <div className="help__cert">
+                <RadioCardGroup
+                  legend={t.certTitle}
+                  hint={t.certHint}
+                  name="help-cert"
+                  options={[
+                    { value: 'have', label: t.certHave },
+                    { value: 'none', label: t.certNone },
+                  ]}
+                  value={answers.cert ?? ''}
+                  onChange={(v) => update('cert', v as CertAnswer)}
+                  {...(errors.cert ? { error: t.certError } : {})}
+                />
+                {answers.cert === 'have' && <Callout>{t.certHaveNote}</Callout>}
+                {answers.cert === 'none' && (
+                  <RadioCardGroup
+                    legend={t.contactWayTitle}
+                    name="help-contact-way"
+                    options={[
+                      { value: 'whatsapp', label: t.contactWayWhatsapp },
+                      { value: 'phone', label: t.contactWayPhone },
+                    ]}
+                    value={answers.contactWay}
+                    onChange={(v) => update('contactWay', v as ContactWay)}
+                  />
+                )}
+              </div>
+            )}
             <Callout tone="error">{t.danger}</Callout>
           </>
         )}
@@ -300,18 +414,20 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
         {step === 4 && (
           <>
             {heading(t.contactTitle)}
-            <TextField
-              label={t.yourMobile}
-              hint={t.mobileHint}
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel-national"
-              required
-              value={answers.phone}
-              onChange={(e) => update('phone', e.target.value)}
-              {...(errors.phone ? { error: t.mobileError } : {})}
-            />
-            {answers.helpFor !== 'self' && (
+            {!whatsappMode && (
+              <TextField
+                label={t.yourMobile}
+                hint={t.mobileHint}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel-national"
+                required
+                value={answers.phone}
+                onChange={(e) => update('phone', e.target.value)}
+                {...(errors.phone ? { error: t.mobileError } : {})}
+              />
+            )}
+            {!whatsappMode && answers.helpFor !== 'self' && (
               <TextField
                 label={t.theirName}
                 hint={t.theirNameHint}
@@ -389,6 +505,8 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
         )}
         {step < 5 ? (
           <Button onClick={next}>{t.continue}</Button>
+        ) : whatsappMode ? (
+          <Button onClick={sendOnWhatsApp}>{t.waSend}</Button>
         ) : (
           <Button
             loading={submitting}
@@ -439,6 +557,26 @@ export function GetHelpPanel({ facts = TRUST_FACTS }: { facts?: TrustFacts }) {
         </Button>
       </>
     );
+  } else if (screen === 'wa-sent') {
+    body = (
+      <>
+        <div className="help__result">
+          <StatusIcon tone="success" />
+          {heading(t.waSentTitle)}
+        </div>
+        <p role="status">{t.waSentText}</p>
+        <a
+          className="ui-button ui-button--primary ui-button--full"
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="help-wa-open"
+        >
+          {t.waOpenAgain}
+        </a>
+      </>
+    );
+    footer = <Button onClick={close}>{t.backToPage}</Button>;
   } else if (screen === 'sent') {
     body = (
       <>
