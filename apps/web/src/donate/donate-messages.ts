@@ -142,6 +142,10 @@ const en = {
   qrExpiredText: 'If you already paid, we will confirm it shortly. Otherwise, make a new QR.',
   qrNew: 'Make a new QR',
   qrPaid: 'I have paid — check now',
+  linkLead: "You'll continue on Razorpay's secure payment page, set up for the trust.",
+  linkMethods: 'Pay by UPI (any app or QR), debit or credit card, or netbanking.',
+  linkContinue: 'Continue to secure payment',
+  linkReceipt: 'Razorpay emails your receipt as soon as the payment succeeds.',
 };
 
 export type DonateMessageKey = keyof typeof en;
@@ -301,6 +305,12 @@ const ta: Record<DonateMessageKey, string> = {
     'ஏற்கெனவே பணம் அனுப்பியிருந்தால், சீக்கிரம் உறுதி செய்வோம். இல்லையென்றால் புது QR எடுங்கள்.',
   qrNew: 'புது QR எடு',
   qrPaid: 'பணம் அனுப்பிவிட்டேன் — இப்போது பார்',
+  linkLead:
+    'அறக்கட்டளைக்காக அமைக்கப்பட்ட Razorpay-யின் பாதுகாப்பான பக்கத்தில் பணம் செலுத்துவீர்கள்.',
+  linkMethods:
+    'UPI (எந்த ஆப் அல்லது QR), டெபிட் / கிரெடிட் கார்டு, அல்லது நெட்பேங்கிங் மூலம் செலுத்தலாம்.',
+  linkContinue: 'பாதுகாப்பாகப் பணம் செலுத்தத் தொடரவும்',
+  linkReceipt: 'பணம் செலுத்தியவுடன் Razorpay உங்கள் ரசீதை மின்னஞ்சலில் அனுப்பும்.',
 };
 
 export const DONATE_MESSAGES: Record<UiLang, Record<DonateMessageKey, string>> = { en, ta };

@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_HELP_ADAPTER?: string;
   /** Donate panel adapter: 'api' (live, #24/#26), 'mock' (dev/e2e only) or 'unavailable'. */
   readonly VITE_DONATE_ADAPTER?: string;
+  /** Razorpay Payment Page link (https://pages.razorpay.com/… or rzp.io). Set = Payment Page mode. */
+  readonly VITE_DONATE_PAGE_URL?: string;
 }
 
 interface ImportMeta {
