@@ -112,10 +112,10 @@ test('pending verification never shows success until checked again', async ({ pa
 });
 
 test('the chosen amount survives a language switch', async ({ page }) => {
-  await page.goto('/?amount=2000#donate');
+  await page.goto('/?amount=1000#donate');
   const panel = page.getByRole('dialog');
   await panel.getByRole('button', { name: 'Continue' }).click();
-  await expect(panel.getByRole('radio', { name: '₹2,000' })).toBeChecked();
+  await expect(panel.getByRole('radio', { name: '₹1,000' })).toBeChecked();
   await page.keyboard.press('Escape');
   await page
     .getByRole('contentinfo')
@@ -124,7 +124,7 @@ test('the chosen amount survives a language switch', async ({ page }) => {
     .click();
   await page.getByRole('banner').getByRole('link', { name: 'நன்கொடை', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'தொடரவும்' }).click();
-  await expect(page.getByRole('dialog').getByRole('radio', { name: '₹2,000' })).toBeChecked();
+  await expect(page.getByRole('dialog').getByRole('radio', { name: '₹1,000' })).toBeChecked();
 });
 
 test('bank transfer: account details + reference; "not confirmed yet" until the trust confirms', async ({

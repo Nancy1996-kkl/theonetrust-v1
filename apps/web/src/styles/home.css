@@ -499,6 +499,21 @@
   translate: 0 calc(-1 * var(--space-1));
 }
 
+/* Cards light up one by one as the section scrolls in — the gift-journey rhythm (client,
+   Nov 2026): gold border, gold glow and a small lift on the current card. */
+[data-sequence='animated'] .hp-service {
+  transition:
+    border-color 400ms var(--ease-standard),
+    box-shadow 400ms var(--ease-standard),
+    translate 400ms var(--ease-standard);
+}
+
+[data-sequence='animated'] .hp-service.is-current {
+  border-color: var(--color-rule-accent);
+  box-shadow: var(--shadow-glow-gold);
+  translate: 0 calc(-1 * var(--space-2));
+}
+
 .hp-service h3 {
   margin: var(--space-4) 0 var(--space-2);
   font-size: var(--text-card-title);

@@ -546,10 +546,10 @@ describe('donation section', () => {
   it('an amount chip pre-fills the donation draft', async () => {
     const user = userEvent.setup();
     renderHome();
-    const chip = within(section('give')).getByRole('link', { name: '₹2,000' });
-    expect(chip).toHaveAttribute('href', '/?amount=2000#donate');
+    const chip = within(section('give')).getByRole('link', { name: '₹1,000' });
+    expect(chip).toHaveAttribute('href', '/?amount=1000#donate');
     await user.click(chip);
-    expect(probe.draft!.amountPaise).toBe(200000);
+    expect(probe.draft!.amountPaise).toBe(100000);
   });
 
   it('Donate alone leaves the draft amount empty', async () => {

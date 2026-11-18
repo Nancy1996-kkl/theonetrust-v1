@@ -16,6 +16,7 @@ import { ChatIcon } from './hero-icons.tsx';
 import { HeroSection } from './LandingSections.tsx';
 import { Reveal } from './Reveal.tsx';
 import { GiftJourney } from './GiftJourney.tsx';
+import { useCardSequence } from './use-card-sequence.ts';
 import {
   Draft,
   StateGate,
@@ -317,14 +318,32 @@ function ServiceIcon({ icon }: { icon: Service['icon'] }) {
 // 3b · Our services — four icon cards, the first one highlighted.
 function Services() {
   const lang = useLang();
+  const ref = useRef<HTMLElement>(null);
+  // Cards light up one by one as the section scrolls in, like "How your gift reaches people".
+  const { animate, current } = useCardSequence(ref, SERVICES.length);
   return (
-    <section id="services" className="hp-section hp-tint-sage" aria-labelledby="hp-services-title">
+    <section
+      ref={ref}
+      id="services"
+      className="hp-section hp-tint-sage"
+      aria-labelledby="hp-services-title"
+      data-sequence={animate ? 'animated' : 'static'}
+    >
       <Reveal>
         <div className="hp-wrap">
           <SectionHead id="hp-services-title" kicker={T.servicesKicker} title={T.servicesTitle} />
           <ul className="hp-services hp-stagger">
             {SERVICES.map((s, i) => (
-              <li key={s.id} className={`hp-service${i === 1 ? ' hp-service--feature' : ''}`}>
+              <li
+                key={s.id}
+                className={[
+                  'hp-service',
+                  i === 1 && 'hp-service--feature',
+                  i === current && 'is-current',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
                 {i === 1 && (
                   // Gold line that traces the card from its top-left corner (client, Nov 2026).
                   <svg className="hp-service__trace" aria-hidden="true" focusable="false">

@@ -59,11 +59,11 @@ describe('DonateCheckoutPanel (pay inside the pop-up)', () => {
       'aria-current',
       'step',
     );
-    expect(screen.getByRole('radio', { name: '₹1,000' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '₹100' })).toBeChecked();
     expect(screen.getByText(en.checkoutMethodUpi)).toBeVisible();
     expect(screen.getByText(en.checkoutMethodCard)).toBeVisible();
     expect(screen.getByText(en.checkoutMethodNetbanking)).toBeVisible();
-    expect(screen.getByTestId('donate-checkout-pay')).toHaveTextContent('Donate ₹1,000 securely');
+    expect(screen.getByTestId('donate-checkout-pay')).toHaveTextContent('Donate ₹100 securely');
   });
 
   it('stays closed without #donate', () => {
@@ -72,24 +72,24 @@ describe('DonateCheckoutPanel (pay inside the pop-up)', () => {
   });
 
   it('starts from the amount a home-page chip chose', () => {
-    renderPanel({ amountPaise: 50000 as Paise });
-    expect(screen.getByRole('radio', { name: '₹500' })).toBeChecked();
-    expect(screen.getByTestId('donate-checkout-pay')).toHaveTextContent('₹500');
+    renderPanel({ amountPaise: 1000 as Paise });
+    expect(screen.getByRole('radio', { name: '₹10' })).toBeChecked();
+    expect(screen.getByTestId('donate-checkout-pay')).toHaveTextContent('₹10');
   });
 
   it('opens Razorpay with the chosen amount in rupees, then step 2 → close → step 3', async () => {
     const user = userEvent.setup();
     openRazorpayButton.mockResolvedValue('opened');
     const { updateDraft } = renderPanel();
-    await user.click(screen.getByRole('radio', { name: '₹2,000' }));
-    expect(updateDraft).toHaveBeenCalledWith({ amountPaise: 200000 });
+    await user.click(screen.getByRole('radio', { name: '₹1,000' }));
+    expect(updateDraft).toHaveBeenCalledWith({ amountPaise: 100000 });
     await user.click(screen.getByTestId('donate-checkout-pay'));
 
     expect(openRazorpayButton).toHaveBeenCalledTimes(1);
     const [host, cfg, rupees] = openRazorpayButton.mock.calls[0]!;
     expect(host).toBeInstanceOf(HTMLElement);
     expect(cfg).toEqual(config);
-    expect(rupees).toBe(2000);
+    expect(rupees).toBe(1000);
     expect(await screen.findByText(en.checkoutPayingTitle)).toBeVisible();
     expect(screen.getByText(en.checkoutStepPay).closest('li')).toHaveAttribute(
       'aria-current',
@@ -122,7 +122,7 @@ describe('DonateCheckoutPanel (pay inside the pop-up)', () => {
     // Try again re-opens Razorpay straight away with the same amount.
     await user.click(screen.getByTestId('donate-checkout-retry'));
     expect(openRazorpayButton).toHaveBeenCalledTimes(2);
-    expect(openRazorpayButton.mock.calls[1]![2]).toBe(2000);
+    expect(openRazorpayButton.mock.calls[1]![2]).toBe(1000);
     expect(await screen.findByText(en.checkoutPayingTitle)).toBeVisible();
 
     closeMessage();
