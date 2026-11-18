@@ -294,7 +294,12 @@ describe('worker: send, retry, give up — the payment stays PAID', () => {
     // …the donor's own email repeats neither, and no email carries card data or a PAN.
     expect(`${donor.text}${donor.html}`).not.toMatch(/donor\.notify|9876543210/);
     for (const mail of [owner, donor]) {
-      const body = `${mail.text}${mail.html}`.replaceAll('919876543210', '');
+      // Strip the values the trust itself generates at random (reference, link token): by
+      // chance they can look like a PAN (e.g. "…BVRHF1113C…"), which made this test flaky.
+      const body = `${mail.text}${mail.html}`
+        .replaceAll('919876543210', '')
+        .replaceAll(d.ref, '')
+        .replaceAll(d.receiptToken ?? '', '');
       expect(body).not.toMatch(/\b\d{12,19}\b|[A-Z]{5}\d{4}[A-Z]/);
     }
     // The donor's acknowledgement link works.
