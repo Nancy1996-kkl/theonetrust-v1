@@ -554,6 +554,10 @@
 }
 
 /* Side panel: full screen on phones, slides in from the end edge on wider screens. */
+.ui-dialog--wide {
+  inline-size: min(100%, 44rem);
+}
+
 .ui-dialog-root--panel {
   place-items: stretch end;
   padding: 0;

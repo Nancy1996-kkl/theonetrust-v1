@@ -12,7 +12,12 @@ test('the CSP allows only our origin, the API origin and Razorpay; never inline 
     apiBaseUrl: 'https://api.theonetrust.in/api/v1',
     production: true,
   });
-  assert.match(csp, /script-src 'self' https:\/\/checkout\.razorpay\.com;/);
+  assert.match(
+    csp,
+    /script-src 'self' https:\/\/checkout\.razorpay\.com https:\/\/cdn\.razorpay\.com;/,
+  );
+  // The Payment Button's form is an iframe on razorpay.com (pay inside the Donate pop-up).
+  assert.match(csp, /frame-src [^;]*https:\/\/razorpay\.com(;| )/);
   assert.doesNotMatch(csp, /script-src[^;]*unsafe/);
   assert.match(
     csp,
@@ -23,6 +28,8 @@ test('the CSP allows only our origin, the API origin and Razorpay; never inline 
     csp,
     /img-src 'self' data: https:\/\/api\.theonetrust\.in https:\/\/\*\.razorpay\.com;/,
   );
+  assert.match(csp, /style-src 'self' 'unsafe-inline' https:\/\/fonts\.googleapis\.com;/);
+  assert.match(csp, /font-src 'self' https:\/\/fonts\.gstatic\.com;/);
   assert.match(csp, /frame-ancestors 'none'/);
   assert.match(csp, /object-src 'none'/);
   assert.match(csp, /upgrade-insecure-requests$/);

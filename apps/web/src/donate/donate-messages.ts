@@ -146,6 +146,35 @@ const en = {
   linkMethods: 'Pay by UPI (any app or QR), debit or credit card, or netbanking.',
   linkContinue: 'Continue to secure payment',
   linkReceipt: 'Razorpay emails your receipt as soon as the payment succeeds.',
+  checkoutProgress: 'Donation progress',
+  checkoutStepAmount: 'Amount',
+  checkoutStepPay: 'Pay securely',
+  checkoutStepReceipt: 'Receipt',
+  checkoutAmountLegend: 'Choose an amount',
+  checkoutPay: 'Donate {amount} securely',
+  checkoutAmountMissing: 'Choose an amount, or type one of ₹1 or more.',
+  checkoutMethodsTitle: 'Pay your way',
+  checkoutMethodUpi: 'UPI apps or QR',
+  checkoutMethodCard: 'Debit or credit card',
+  checkoutMethodNetbanking: 'Netbanking',
+  checkoutPrivacy:
+    'Razorpay asks for your name, email and phone only to send your receipt. This website never shows them.',
+  checkoutSecure:
+    'Payments are handled by Razorpay. This website never sees your card, UPI or bank details.',
+  checkoutOpening: 'Opening Razorpay’s secure window…',
+  checkoutPayingTitle: 'Finish your donation in the Razorpay window',
+  checkoutPayingText:
+    'Enter your details, then pay with a UPI app, QR, card or netbanking. On a phone, your UPI apps open directly.',
+  checkoutFallback: 'Window didn’t open? Use Razorpay’s secure page',
+  checkoutFailed:
+    'Razorpay’s window couldn’t open here. Your network or an ad blocker may be stopping it.',
+  checkoutAfterTitle: 'What happens next',
+  checkoutAfterPaid:
+    'If your payment went through, Razorpay emails your receipt within a few minutes.',
+  checkoutAfterCancelled: 'If you closed the window before paying, nothing was charged.',
+  checkoutAgain: 'Start again',
+  checkoutChangeAmount: 'Change amount',
+  checkoutClose: 'Close',
 };
 
 export type DonateMessageKey = keyof typeof en;
@@ -311,6 +340,36 @@ const ta: Record<DonateMessageKey, string> = {
     'UPI (எந்த ஆப் அல்லது QR), டெபிட் / கிரெடிட் கார்டு, அல்லது நெட்பேங்கிங் மூலம் செலுத்தலாம்.',
   linkContinue: 'பாதுகாப்பாகப் பணம் செலுத்தத் தொடரவும்',
   linkReceipt: 'பணம் செலுத்தியவுடன் Razorpay உங்கள் ரசீதை மின்னஞ்சலில் அனுப்பும்.',
+  checkoutProgress: 'நன்கொடை முன்னேற்றம்',
+  checkoutStepAmount: 'தொகை',
+  checkoutStepPay: 'பாதுகாப்பாகச் செலுத்து',
+  checkoutStepReceipt: 'ரசீது',
+  checkoutAmountLegend: 'தொகையைத் தேர்ந்தெடுங்கள்',
+  checkoutPay: '{amount} பாதுகாப்பாக நன்கொடை அளி',
+  checkoutAmountMissing: 'ஒரு தொகையைத் தேர்ந்தெடுங்கள், அல்லது ₹1 அல்லது அதற்கு மேல் எழுதுங்கள்.',
+  checkoutMethodsTitle: 'உங்களுக்கு வசதியான வழியில் செலுத்தலாம்',
+  checkoutMethodUpi: 'UPI ஆப் அல்லது QR',
+  checkoutMethodCard: 'டெபிட் / கிரெடிட் கார்டு',
+  checkoutMethodNetbanking: 'நெட்பேங்கிங்',
+  checkoutPrivacy:
+    'உங்கள் பெயர், மின்னஞ்சல், தொலைபேசி எண்ணை ரசீது அனுப்ப மட்டுமே Razorpay கேட்கும். இந்த இணையதளம் அவற்றை எங்கும் காட்டாது.',
+  checkoutSecure:
+    'பணப் பரிவர்த்தனையை Razorpay கையாளும். உங்கள் கார்டு, UPI, வங்கி விவரங்களை இந்த இணையதளம் பார்ப்பதில்லை.',
+  checkoutOpening: 'Razorpay-யின் பாதுகாப்பான சாளரம் திறக்கிறது…',
+  checkoutPayingTitle: 'Razorpay சாளரத்தில் உங்கள் நன்கொடையை முடியுங்கள்',
+  checkoutPayingText:
+    'உங்கள் விவரங்களை நிரப்பி, UPI ஆப், QR, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்துங்கள். போனில் உங்கள் UPI ஆப்கள் நேரடியாகத் திறக்கும்.',
+  checkoutFallback: 'சாளரம் திறக்கவில்லையா? Razorpay-யின் பாதுகாப்பான பக்கத்தைப் பயன்படுத்துங்கள்',
+  checkoutFailed:
+    'Razorpay சாளரம் இங்கே திறக்கவில்லை. உங்கள் நெட்வொர்க் அல்லது ஆட் பிளாக்கர் அதைத் தடுத்திருக்கலாம்.',
+  checkoutAfterTitle: 'அடுத்து என்ன',
+  checkoutAfterPaid:
+    'பணம் செலுத்தப்பட்டிருந்தால், சில நிமிடங்களில் Razorpay உங்கள் ரசீதை மின்னஞ்சலில் அனுப்பும்.',
+  checkoutAfterCancelled:
+    'பணம் செலுத்தும் முன் சாளரத்தை மூடியிருந்தால், எந்தத் தொகையும் எடுக்கப்படவில்லை.',
+  checkoutAgain: 'மீண்டும் தொடங்கு',
+  checkoutChangeAmount: 'தொகையை மாற்று',
+  checkoutClose: 'மூடு',
 };
 
 export const DONATE_MESSAGES: Record<UiLang, Record<DonateMessageKey, string>> = { en, ta };

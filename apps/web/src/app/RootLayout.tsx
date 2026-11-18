@@ -12,9 +12,11 @@ import {
 } from '../state/donation-draft.ts';
 import { SiteFooter } from './SiteFooter.tsx';
 import { SiteHeader } from './SiteHeader.tsx';
+import { DonateCheckoutPanel } from '../donate/DonateCheckoutPanel.tsx';
 import { DonateLinkPanel } from '../donate/DonateLinkPanel.tsx';
 import { DonatePanel } from '../donate/DonatePanel.tsx';
 import { DONATE_PAGE_URL } from '../donate/donate-page-link.ts';
+import { DONATE_BUTTON } from '../donate/razorpay-button.ts';
 import { GetHelpPanel } from '../help/GetHelpPanel.tsx';
 
 function sessionStore(): Storage | undefined {
@@ -82,8 +84,15 @@ export function RootLayout() {
           </main>
           <SiteFooter onLanguageChange={changeLanguage} />
           <GetHelpPanel />
-          {/* Razorpay Payment Page mode when its link is configured; otherwise the full panel. */}
-          {DONATE_PAGE_URL ? <DonateLinkPanel url={DONATE_PAGE_URL} /> : <DonatePanel />}
+          {/* Razorpay Payment Button (pay inside the pop-up) when configured, else the Payment
+              Page link, else the full panel. */}
+          {DONATE_BUTTON ? (
+            <DonateCheckoutPanel config={DONATE_BUTTON} />
+          ) : DONATE_PAGE_URL ? (
+            <DonateLinkPanel url={DONATE_PAGE_URL} />
+          ) : (
+            <DonatePanel />
+          )}
           {/* New pages open at the top (or at their #anchor); back/forward restore the old position.
               The key ignores the /ta prefix, so switching language keeps the reader's place. */}
           <ScrollRestoration getKey={(loc) => loc.pathname.replace(/^\/ta(?=\/|$)/, '') || '/'} />
