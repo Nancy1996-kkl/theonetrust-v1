@@ -161,15 +161,15 @@ button {
 /* A light card placed inside a forest band restores the light-surface role tokens.
    Must mirror the :root values — tokens.test.ts checks they stay identical. */
 .surface {
-  --color-text: var(--palette-body);
-  --color-text-muted: var(--palette-moss);
-  --color-text-heading: var(--palette-forest);
-  --color-link: var(--palette-green-deep);
-  --color-focus: var(--palette-green);
-  --color-action-secondary-text: var(--palette-forest);
-  --color-action-secondary-border: var(--palette-forest);
+  --color-text: var(--palette-charcoal);
+  --color-text-muted: var(--palette-muted);
+  --color-text-heading: var(--palette-teal-deep);
+  --color-link: var(--palette-teal);
+  --color-focus: var(--palette-turquoise-ink);
+  --color-action-secondary-text: var(--palette-teal);
+  --color-action-secondary-border: var(--palette-teal);
   --color-action-secondary-bg-hover: var(--palette-mint);
-  --color-border-input: var(--palette-body);
+  --color-border-input: var(--palette-field-border);
 
   background: var(--color-surface);
   color: var(--color-text);

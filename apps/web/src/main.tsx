@@ -12,3 +12,11 @@ createRoot(container).render(
     <RouterProvider router={createBrowserRouter(routes)} />
   </StrictMode>,
 );
+
+// The app has started: fade the first-load splash out, then remove it.
+const splash = document.getElementById('boot-splash');
+if (splash) {
+  requestAnimationFrame(() => splash.classList.add('boot-splash--done'));
+  splash.addEventListener('animationend', () => splash.remove(), { once: true });
+  window.setTimeout(() => splash.remove(), 1000);
+}

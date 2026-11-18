@@ -29,7 +29,8 @@
 }
 
 .site-header.site-header--overlay {
-  /* A soft forest fade behind the words keeps them readable over any video frame. */
+  --color-focus: var(--color-focus-on-inverse); /* sits over the teal hero */
+  /* A soft teal fade behind the words keeps them readable over any video frame. */
   background: linear-gradient(
     to bottom,
     color-mix(in srgb, var(--color-surface-inverse) 70%, transparent),
@@ -62,6 +63,27 @@
   border-color: var(--color-text-inverse);
   background: transparent;
   color: var(--color-text-inverse);
+}
+
+/* Small phones: the emblem alone stands for the trust so the header stays on one line;
+   the brand link keeps its accessible name (aria-label). */
+@media (max-width: 29.99em) {
+  .site-header__name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+/* Over the teal hero the emblem sits on a white tile so its teal heart keeps its shape. */
+.site-header--overlay .site-header__logo {
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
 /* Small phones in Tamil: a tighter Donate button keeps the header on one line, so it never
@@ -117,6 +139,28 @@
   font-family: var(--font-heading);
   font-weight: var(--weight-bold);
   text-decoration: none;
+}
+
+.site-header__logo {
+  flex: none;
+  width: auto;
+  height: var(--control-height-sm);
+}
+
+.site-footer__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* The emblem sits on a white disc in the teal footer so the teal heart keeps its shape. */
+.site-footer__logo {
+  flex: none;
+  width: auto;
+  height: var(--control-height);
+  padding: var(--space-1);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
 }
 
 .site-header__name {
