@@ -24,6 +24,11 @@ import { bytesFor, cmsErrorText, fileToBase64, rupeesToPaise, statusLabel } from
 import { CMS_STRINGS } from './cms-strings.ts';
 import { ADMIN_STRINGS } from './strings.ts';
 
+// These are long multi-step admin journeys (1.3 s alone locally). On CI, with coverage and every
+// test file running in parallel, two of them crossed Vitest's 5 s default and failed at random
+// (Nov 2026). The assertions are unchanged; only the time budget per test is larger.
+vi.setConfig({ testTimeout: 20_000 });
+
 const c = CMS_STRINGS.en;
 const REASON = 'Owner checked this';
 const ACTIVE: AdminSessionResponse = {
