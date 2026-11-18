@@ -16,6 +16,13 @@
  * and dashboard are. The site never sees card, UPI or bank details.
  */
 
+/**
+ * Razorpay sends the donor here after a successful payment when the button's "Redirect URL"
+ * is set to https://<site>/#donate-thanks. The pop-up then opens on its thank-you screen. It is a
+ * courtesy screen, not proof: anyone can open that URL, so it never shows an amount or "paid".
+ */
+export const DONATE_THANKS_HASH = '#donate-thanks';
+
 export const RAZORPAY_BUTTON_SCRIPT = 'https://checkout.razorpay.com/v1/payment-button.js';
 /** Origin of the payment form iframe that posts close_modal. */
 export const RAZORPAY_FORM_ORIGIN = 'https://razorpay.com';
