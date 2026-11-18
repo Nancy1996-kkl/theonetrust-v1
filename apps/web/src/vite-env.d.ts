@@ -13,6 +13,10 @@ interface ImportMetaEnv {
   readonly VITE_DONATE_ADAPTER?: string;
   /** Razorpay Payment Page link (https://pages.razorpay.com/… or rzp.io). Set = Payment Page mode. */
   readonly VITE_DONATE_PAGE_URL?: string;
+  /** Razorpay Payment Button id (pl_…, public). Set = pay inside the Donate pop-up. */
+  readonly VITE_DONATE_BUTTON_ID?: string;
+  /** The button's amount field label in snake_case, for pre-filling the chosen amount. */
+  readonly VITE_DONATE_AMOUNT_FIELD?: string;
 }
 
 interface ImportMeta {

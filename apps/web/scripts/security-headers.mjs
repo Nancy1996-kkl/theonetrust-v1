@@ -8,12 +8,19 @@
  * fast first paint (scripts, the real XSS risk, stay strict).
  */
 export const RAZORPAY = {
-  script: 'https://checkout.razorpay.com',
-  // Checkout opens its own frame and talks to Razorpay's API [CONFIRM against Razorpay's CSP
-  // guidance with a test-mode payment before launch].
-  frame: ['https://api.razorpay.com', 'https://checkout.razorpay.com'],
+  // checkout.razorpay.com serves Checkout and the Payment Button embed; the embed then loads
+  // its helpers from cdn.razorpay.com (seen with a test-mode button, Nov 2026).
+  script: ['https://checkout.razorpay.com', 'https://cdn.razorpay.com'],
+  // Checkout opens its own frame and talks to Razorpay's API; the Payment Button form is an
+  // iframe on razorpay.com [CONFIRM against Razorpay's CSP guidance with a test-mode payment
+  // before launch].
+  frame: ['https://api.razorpay.com', 'https://checkout.razorpay.com', 'https://razorpay.com'],
   connect: ['https://api.razorpay.com', 'https://lumberjack.razorpay.com'],
   img: 'https://*.razorpay.com',
+  // The Payment Button embed adds a Google Fonts stylesheet for its own button. Our pages keep
+  // self-hosted fonts; only this Razorpay request uses these origins.
+  style: 'https://fonts.googleapis.com',
+  font: 'https://fonts.gstatic.com',
 };
 
 /** The API's origin from VITE_API_BASE_URL; null when the API is same-origin (relative URL). */
@@ -30,11 +37,11 @@ export function contentSecurityPolicy({ apiBaseUrl, production }) {
   const api = apiOrigin(apiBaseUrl);
   const directives = [
     "default-src 'self'",
-    `script-src 'self' ${RAZORPAY.script}`,
-    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' ${RAZORPAY.script.join(' ')}`,
+    `style-src 'self' 'unsafe-inline' ${RAZORPAY.style}`,
     // The one-time UPI QR image is served by the API (never hot-linked from Razorpay).
     ['img-src', "'self'", 'data:', api, RAZORPAY.img].filter(Boolean).join(' '),
-    "font-src 'self'",
+    `font-src 'self' ${RAZORPAY.font}`,
     ['connect-src', "'self'", api, ...RAZORPAY.connect].filter(Boolean).join(' '),
     `frame-src ${RAZORPAY.frame.join(' ')}`,
     "frame-ancestors 'none'",

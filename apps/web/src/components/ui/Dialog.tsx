@@ -18,6 +18,8 @@ export interface DialogProps {
   dismissible?: boolean;
   /** `panel` slides in from the side on wide screens (Donate / Get Help); `modal` is centred. */
   variant?: 'modal' | 'panel';
+  /** Modal width: `wide` gives checkout-style flows room for side-by-side choices. */
+  size?: 'default' | 'wide';
 }
 
 /**
@@ -37,6 +39,7 @@ export function Dialog({
   initialFocusRef,
   dismissible = true,
   variant = 'modal',
+  size = 'default',
 }: DialogProps) {
   const strings = useUiStrings();
   const titleId = useId();
@@ -132,7 +135,7 @@ export function Dialog({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        className={`ui-dialog surface ui-dialog--${variant}`}
+        className={`ui-dialog surface ui-dialog--${variant}${size === 'wide' ? ' ui-dialog--wide' : ''}`}
       >
         <div className="ui-dialog__header">
           <h2 id={titleId} className="ui-dialog__title">
