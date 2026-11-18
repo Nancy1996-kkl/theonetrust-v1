@@ -24,6 +24,11 @@ export interface AmountPickerProps {
   name?: string;
   id?: string;
   required?: boolean;
+  /**
+   * `cards` (default): roomy radio cards. `chips`: one compact row of amount chips for
+   * checkout-style flows; the free-amount chip reads "Other" (its accessible name stays full).
+   */
+  variant?: 'cards' | 'chips';
 }
 
 const CUSTOM = '__custom';
@@ -45,6 +50,7 @@ export function AmountPicker({
   name = 'amount',
   id,
   required,
+  variant = 'cards',
 }: AmountPickerProps) {
   const strings = useUiStrings();
   const lang = useContext(UiLangContext);
@@ -85,7 +91,13 @@ export function AmountPicker({
   return (
     <fieldset
       id={controlId}
-      className={['ui-amount', shownError && 'ui-field--invalid'].filter(Boolean).join(' ')}
+      className={[
+        'ui-amount',
+        variant === 'chips' && 'ui-amount--chips',
+        shownError && 'ui-field--invalid',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       aria-describedby={describedBy}
     >
       <legend className="ui-field__label">
@@ -122,9 +134,12 @@ export function AmountPicker({
             className="ui-radio-card__input"
             checked={mode === 'custom'}
             onChange={() => changeCustom(custom)}
+            aria-label={variant === 'chips' ? strings.otherAmount : undefined}
           />
           <label htmlFor={`${controlId}-${CUSTOM}`} className="ui-radio-card__label">
-            <span className="ui-radio-card__title">{strings.otherAmount}</span>
+            <span className="ui-radio-card__title">
+              {variant === 'chips' ? strings.otherShort : strings.otherAmount}
+            </span>
           </label>
         </div>
       </div>
