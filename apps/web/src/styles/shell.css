@@ -356,13 +356,18 @@
     gap: 0;
   }
 
+  /* Measured: at the widest header (content-max) the Tamil row needed ~1212px of 1200px and
+     wrapped under the logo. These trims leave ~40px of room in every desktop width. */
   :lang(ta) .site-header__nav a {
-    padding-inline: var(--space-2);
+    padding-inline: var(--space-1);
   }
 
-  :lang(ta) .site-header__actions .ui-button,
-  :lang(ta) .site-header__lang .ui-lang__option {
+  :lang(ta) .site-header__actions .ui-button {
     padding-inline: var(--space-3);
+  }
+
+  :lang(ta) .site-header__lang .ui-lang__option {
+    padding-inline: var(--space-2);
   }
 }
 

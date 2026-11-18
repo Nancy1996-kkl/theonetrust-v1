@@ -38,6 +38,15 @@ for (const path of ['/', '/ta/']) {
       .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().right))) {
       expect(box).toBeLessThanOrEqual(width);
     }
+    // One row: nothing wraps under the logo (the longer Tamil labels once did on desktop).
+    const wrapped = await page.locator('.site-header__bar').evaluate((bar) => {
+      const rects = [...bar.children]
+        .filter((el) => getComputedStyle(el).display !== 'none')
+        .map((el) => el.getBoundingClientRect());
+      const first = rects[0]!;
+      return rects.some((r) => r.top >= first.bottom - 1);
+    });
+    expect(wrapped).toBe(false);
     await noHorizontalScroll(page);
   });
 }
