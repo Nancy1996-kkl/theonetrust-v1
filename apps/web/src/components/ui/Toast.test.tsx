@@ -110,6 +110,10 @@ describe('ToastProvider', () => {
     setup();
     const first = show({ message: 'One' });
     show({ message: 'Two' });
+    for (const dismiss of screen.getAllByRole('button', { name: 'Dismiss' })) {
+      expect(dismiss.querySelector('svg.ui-close-icon')).not.toBeNull();
+      expect(dismiss).not.toHaveTextContent('×');
+    }
     fireEvent.click(screen.getAllByRole('button', { name: 'Dismiss' })[1]!);
     expect(screen.getByRole('status')).toHaveTextContent('One');
     expect(screen.getByRole('status')).not.toHaveTextContent('Two');

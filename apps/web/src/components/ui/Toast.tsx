@@ -8,6 +8,7 @@ import {
   type ToastTone,
 } from './toast-context.ts';
 import { useUiStrings, type UiStrings } from './ui-strings.ts';
+import { CloseIcon } from './CloseIcon.tsx';
 
 function prefix(tone: ToastTone, strings: UiStrings): string {
   return {
@@ -113,7 +114,7 @@ function Toast({ item, onDismiss }: { item: ToastItem; onDismiss: (id: number) =
         <span className="visually-hidden">{prefix(item.tone, strings)}</span> {item.message}
       </p>
       <button type="button" className="ui-toast__dismiss" onClick={() => onDismiss(item.id)}>
-        <span aria-hidden="true">×</span>
+        <CloseIcon />
         <span className="visually-hidden">{strings.dismiss}</span>
       </button>
     </div>

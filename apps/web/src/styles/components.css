@@ -603,6 +603,13 @@
   line-height: 1;
 }
 
+.ui-close-icon {
+  display: block;
+  /* Fixed, not em-based: Tamil pages use a different font size, so em made the mark shrink. */
+  inline-size: var(--space-5);
+  block-size: var(--space-5);
+}
+
 .ui-dialog__close:hover,
 .ui-toast__dismiss:hover {
   border-color: var(--color-border-input);

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type ReactNode, type RefObject } from 'react'
 import { createPortal } from 'react-dom';
 import { focusableIn } from './focus.ts';
 import { useUiStrings } from './ui-strings.ts';
+import { CloseIcon } from './CloseIcon.tsx';
 
 export interface DialogProps {
   open: boolean;
@@ -143,7 +144,7 @@ export function Dialog({
           </h2>
           {dismissible && (
             <button type="button" className="ui-dialog__close" onClick={onClose}>
-              <span aria-hidden="true">×</span>
+              <CloseIcon />
               <span className="visually-hidden">{strings.close}</span>
             </button>
           )}
