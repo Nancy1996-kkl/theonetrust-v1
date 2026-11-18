@@ -63,6 +63,14 @@ describe('Dialog', () => {
     expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
   });
 
+  it('draws the close mark as a centred SVG icon, not a "×" text glyph', async () => {
+    renderUi(<Harness />);
+    await openDialog();
+    const close = screen.getByRole('button', { name: 'Close' });
+    expect(close.querySelector('svg.ui-close-icon')).toHaveAttribute('aria-hidden', 'true');
+    expect(close).not.toHaveTextContent('×');
+  });
+
   it('honours initialFocusRef', async () => {
     renderUi(<Harness withInitialFocus />);
     await openDialog();
