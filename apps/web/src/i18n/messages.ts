@@ -22,6 +22,8 @@ const en = {
   footerExplore: 'Explore',
   footerHelp: 'Help',
   footerLegal: 'Legal',
+  footerVision:
+    'No one around us should go without food, schooling or care just because they cannot pay.',
   receiptHelp: 'Receipt help',
   terms: 'Terms',
   privacy: 'Privacy',
@@ -56,6 +58,8 @@ const ta: Messages = {
   footerExplore: 'பக்கங்கள்',
   footerHelp: 'உதவி',
   footerLegal: 'விதிகள், கொள்கைகள்',
+  footerVision:
+    'பணம் இல்லை என்ற ஒரே காரணத்துக்காக, நம்மைச் சுற்றி யாரும் உணவு, படிப்பு, மருத்துவம் இல்லாமல் இருக்கக் கூடாது.',
   receiptHelp: 'ஒப்புகைச் சீட்டு உதவி',
   terms: 'விதிமுறைகள்',
   privacy: 'தனியுரிமை',

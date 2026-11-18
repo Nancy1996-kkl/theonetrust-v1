@@ -371,22 +371,63 @@
   }
 }
 
-/* ── Footer ──────────────────────────────────────────────────────── */
+/* ── Footer (client, Nov 2026) ───────────────────────────────────────
+   Gradient band with a soft glow and a fine dot grid; five columns; a bar with area,
+   copyright and language; a large faded wordmark along the bottom edge. */
 .site-footer {
-  padding: var(--space-12) var(--gutter) var(--space-8);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding: var(--space-16) var(--gutter) 0;
+  background:
+    radial-gradient(circle at 85% 0%, var(--color-footer-glow), transparent 45%),
+    radial-gradient(circle at 10% 100%, var(--color-footer-glow), transparent 40%),
+    linear-gradient(160deg, var(--color-footer-from), var(--color-footer-to) 70%);
 }
 
-.site-footer__grid {
-  display: grid;
-  gap: var(--space-8);
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+/* The dot grid fades out towards the top so the links stay calm to read. */
+.site-footer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(var(--color-footer-dot) 1px, transparent 1.5px);
+  background-size: var(--space-6) var(--space-6);
+  mask-image: linear-gradient(to bottom, transparent, currentcolor 60%);
+  pointer-events: none;
+}
+
+.site-footer__inner {
   max-width: var(--content-max);
   margin-inline: auto;
 }
 
+/* Phones: link groups two by two, so the footer stays short; brand and contact span the row. */
+.site-footer__grid {
+  display: grid;
+  gap: var(--space-8) var(--space-6);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.site-footer__trust,
+.site-footer__contact {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 40em) {
+  .site-footer__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (min-width: 64em) {
   .site-footer__grid {
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1.4fr;
+  }
+
+  .site-footer__trust,
+  .site-footer__contact {
+    grid-column: auto;
   }
 }
 
@@ -401,7 +442,20 @@
 
 .site-footer__title {
   margin: 0;
-  font-size: var(--text-body);
+  font-size: var(--text-card-title);
+}
+
+.site-footer__vision {
+  max-width: 34ch;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.site-footer__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block-start: var(--space-2);
 }
 
 .site-footer ul {
@@ -409,10 +463,16 @@
   gap: var(--space-1);
 }
 
-.site-footer a {
+.site-footer a:not(.ui-button) {
   display: inline-flex;
   align-items: center;
   min-height: var(--control-height-sm);
+  text-decoration-color: var(--color-footer-rule);
+  text-underline-offset: 0.25em;
+}
+
+.site-footer a:not(.ui-button):hover {
+  text-decoration-color: currentColor;
 }
 
 .site-footer__facts {
@@ -424,23 +484,58 @@
 .site-footer__facts dt {
   font-size: var(--text-small);
   font-weight: var(--weight-semibold);
+  opacity: 0.85;
 }
 
 .site-footer__facts dd {
   margin: 0;
 }
 
-.site-footer__facts dd a {
+.site-footer__facts dd a:not(.ui-button) {
   min-height: auto;
   padding-block: var(--space-2);
 }
 
+.site-footer__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-block-start: var(--space-10);
+  padding-block-start: var(--space-6);
+  border-block-start: var(--border-width) solid var(--color-footer-rule);
+}
+
+.site-footer__meta {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.site-footer__meta p {
+  margin: 0;
+}
+
 .site-footer__copyright {
+  font-size: var(--text-small);
+}
+
+/* Big faded name that sits on the bottom edge, cut off like a watermark. */
+.site-footer__wordmark {
   max-width: var(--content-max);
   margin: var(--space-8) auto 0;
-  padding-block-start: var(--space-4);
-  border-block-start: var(--border-width) solid var(--color-text-muted);
-  font-size: var(--text-small);
+  font-family: var(--font-heading);
+  font-size: var(--text-wordmark);
+  font-weight: var(--weight-bold);
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  text-align: center;
+  white-space: nowrap;
+  color: transparent;
+  background: linear-gradient(to bottom, var(--color-footer-wordmark), transparent 85%);
+  background-clip: text;
+  user-select: none;
+  translate: 0 14%;
 }
 
 /* Inside dark green bands the pressed language uses the accent action pair (dark green on dark green otherwise). */
