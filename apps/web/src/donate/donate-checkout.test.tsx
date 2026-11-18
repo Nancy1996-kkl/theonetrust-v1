@@ -144,3 +144,27 @@ describe('DonateCheckoutPanel (pay inside the pop-up)', () => {
     );
   });
 });
+
+describe('DonateCheckoutPanel thank-you screen (#donate-thanks)', () => {
+  it('opens on the thank-you screen after Razorpay redirects back, with step 3 current', async () => {
+    const user = userEvent.setup();
+    renderPanel({ path: '/#donate-thanks' });
+    const thanks = screen.getByTestId('donate-thanks');
+    expect(within(thanks).getByRole('heading', { name: en.thanksTitle })).toBeVisible();
+    expect(within(thanks).getByText(en.thanksReceipt)).toBeVisible();
+    expect(screen.getByText(en.checkoutStepReceipt).closest('li')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    // A courtesy screen anyone can open: no amount and no "paid" claim.
+    expect(thanks).not.toHaveTextContent(/₹|paid|success/i);
+    expect(openRazorpayButton).not.toHaveBeenCalled();
+    await user.click(within(thanks).getByRole('button', { name: en.checkoutClose }));
+    expect(screen.queryByTestId('donate-thanks')).toBeNull();
+  });
+
+  it('shows the Tamil thank-you text on /ta/', () => {
+    renderPanel({ path: '/ta/#donate-thanks', lang: 'ta' });
+    expect(screen.getByText(DONATE_MESSAGES.ta.thanksTitle)).toBeVisible();
+  });
+});

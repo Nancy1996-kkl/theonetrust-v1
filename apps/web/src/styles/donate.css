@@ -214,3 +214,124 @@
     box-shadow: 0 0 0 var(--space-2) var(--color-surface);
   }
 }
+
+/* Thank-you screen after Razorpay's success redirect (#donate-thanks). Gentle, not flashy. */
+.donate-thanks {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-4);
+  text-align: center;
+}
+
+.donate-thanks__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: calc(var(--control-height) * 2.5);
+  block-size: calc(var(--control-height) * 2.5);
+  margin-block-end: var(--space-2);
+}
+
+.donate-thanks__mark img {
+  position: relative;
+  inline-size: 70%;
+  block-size: auto;
+  animation: donate-thanks-pop var(--duration-entrance) var(--ease-entrance) both;
+}
+
+.donate-thanks__wave {
+  position: absolute;
+  inset: 0;
+  border: var(--border-width-strong) solid var(--color-action-primary-bg);
+  border-radius: 50%;
+  opacity: 0;
+  animation: donate-thanks-wave calc(var(--duration-entrance) * 3) var(--ease-standard) 2;
+}
+
+.donate-thanks__wave--late {
+  border-color: var(--color-rule-accent);
+  animation-delay: calc(var(--duration-entrance) / 2);
+}
+
+.donate-thanks__heart {
+  position: absolute;
+  inset-block-end: 20%;
+  color: var(--color-rule-accent);
+  font-size: var(--text-card-title);
+  opacity: 0;
+  animation: donate-thanks-rise calc(var(--duration-entrance) * 3) var(--ease-standard) both;
+}
+
+.donate-thanks__heart--a {
+  inset-inline-start: 8%;
+  animation-delay: var(--duration-base);
+}
+
+.donate-thanks__heart--b {
+  inset-inline-end: 6%;
+  animation-delay: calc(var(--duration-entrance) - var(--duration-base));
+}
+
+.donate-thanks__heart--c {
+  inset-inline-start: 46%;
+  color: var(--color-action-primary-bg);
+  animation-delay: var(--duration-entrance);
+}
+
+.donate-thanks__title {
+  margin: 0;
+  animation: donate-thanks-pop var(--duration-entrance) var(--ease-entrance) var(--duration-base)
+    both;
+}
+
+.donate-thanks__lead {
+  margin: 0;
+  font-size: var(--text-card-title);
+}
+
+@keyframes donate-thanks-pop {
+  from {
+    opacity: 0;
+    scale: 0.7;
+  }
+}
+
+@keyframes donate-thanks-wave {
+  0% {
+    opacity: 0.7;
+    scale: 0.6;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.35;
+  }
+}
+
+@keyframes donate-thanks-rise {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 calc(var(--control-height) * -1.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donate-thanks__mark img,
+  .donate-thanks__title,
+  .donate-thanks__wave,
+  .donate-thanks__heart {
+    animation: none;
+  }
+
+  .donate-thanks__heart,
+  .donate-thanks__wave {
+    display: none;
+  }
+}
