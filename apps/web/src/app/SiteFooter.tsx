@@ -5,6 +5,7 @@ import type { UiLang } from '../components/ui/ui-strings.ts';
 import { TRUST_FACTS, type TrustFacts } from '../config/trust-facts.ts';
 import { homePath, localizedPath } from '../i18n/lang.ts';
 import { useLang, useMessages } from '../i18n/use-lang.ts';
+import emblemUrl from '../assets/brand/emblem.webp';
 
 interface SiteFooterProps {
   onLanguageChange: (lang: UiLang) => void;
@@ -28,7 +29,8 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
     <footer className="site-footer surface-inverse">
       <div className="site-footer__grid">
         <section className="site-footer__group site-footer__trust" aria-labelledby="footer-trust">
-          <h2 id="footer-trust" className="site-footer__title">
+          <h2 id="footer-trust" className="site-footer__title site-footer__brand">
+            <img className="site-footer__logo" src={emblemUrl} alt="" width={131} height={112} />
             {facts.legalName ?? facts.siteName}
           </h2>
           {facts.registration && <p>{facts.registration}</p>}

@@ -22,6 +22,73 @@
   }
 }
 
+/* ── Logo spinner (trust emblem + turning ring) ──────────────────── */
+.ui-logo-spinner {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--logo-spinner-size, calc(var(--control-height) * 1.5));
+  block-size: var(--logo-spinner-size, calc(var(--control-height) * 1.5));
+}
+
+.ui-logo-spinner--splash {
+  --logo-spinner-size: calc(var(--control-height) * 2.5);
+}
+
+.ui-logo-spinner__ring {
+  position: absolute;
+  inset: 0;
+  border: var(--space-1) solid var(--color-border-subtle);
+  border-block-start-color: var(--color-action-primary-bg);
+  border-inline-end-color: var(--color-rule-accent);
+  border-radius: 50%;
+  animation: ui-spin var(--duration-spinner) linear infinite;
+}
+
+.ui-logo-spinner__emblem {
+  inline-size: 62%;
+  block-size: auto;
+  animation: ui-logo-beat var(--duration-spinner) var(--ease-standard) infinite;
+}
+
+@keyframes ui-logo-beat {
+  50% {
+    scale: 1.08;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-logo-spinner__ring,
+  .ui-logo-spinner__emblem {
+    animation: none;
+  }
+}
+
+/* First-load splash: covers the page only until the app has started (see main.tsx). Without JavaScript it hides itself, so content is never trapped behind it. */
+.boot-splash {
+  position: fixed;
+  z-index: var(--z-splash);
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg);
+  pointer-events: none; /* never traps a tap or a test click */
+  animation: boot-splash-out var(--duration-slow) var(--ease-standard) var(--duration-splash-max)
+    forwards;
+}
+
+.boot-splash--done {
+  animation: boot-splash-out var(--duration-slow) var(--ease-standard) forwards;
+}
+
+@keyframes boot-splash-out {
+  to {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
 /* ── Button ───────────────────────────────────────────────────────── */
 .ui-button {
   display: inline-flex;
@@ -65,12 +132,13 @@
 
 .ui-button--donate {
   background: var(--color-action-donate-bg);
+  background-image: var(--gradient-action-donate); /* hover/active fall back to the solid fills */
   color: var(--color-action-donate-text);
 }
 
 .ui-button--donate:hover {
   background: var(--color-action-donate-bg-hover);
-  /* Soft gold glow (brand brief): the only element on the page that glows. */
+  /* Soft orange glow (brand brief): the only element on the page that glows. */
   box-shadow: var(--shadow-glow-gold);
 }
 

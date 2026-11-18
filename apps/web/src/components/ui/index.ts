@@ -29,3 +29,4 @@ export {
   type UiLang,
   type UiStrings,
 } from './ui-strings.ts';
+export { LogoSpinner } from './LogoSpinner.tsx';
