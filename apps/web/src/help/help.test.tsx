@@ -7,6 +7,7 @@ import { HELP_REFERENCE_PATTERN } from '@theonetrust/contracts';
 import { expectNoA11yViolations } from '../test/a11y.ts';
 import { renderRoute } from '../test/render.tsx';
 import { routes as appRoutes } from '../app/routes.tsx';
+import { TRUST_FACTS } from '../config/trust-facts.ts';
 import {
   HelpClientContext,
   createMockHelpClient,
@@ -53,8 +54,10 @@ const dialog = () => screen.getByRole('dialog', { name: /Get Help|உதவி �
 async function walkToContact(user: ReturnType<typeof userEvent.setup>, helpFor = 'self' as const) {
   await user.click(screen.getByRole('button', { name: en.fillForm }));
   await user.click(screen.getByRole('radio', { name: HELP_FOR_LABELS[helpFor].en }));
+  await user.type(screen.getByRole('textbox', { name: /age/i }), '34');
   await user.click(screen.getByRole('button', { name: en.continue }));
   await user.click(screen.getByRole('checkbox', { name: HELP_KIND_LABELS.education.en }));
+  await user.click(screen.getByRole('radio', { name: en.certHave }));
   await user.click(screen.getByRole('button', { name: en.continue }));
   await user.type(screen.getByRole('textbox', { name: en.descLabel }), 'School fees');
   await user.click(screen.getByRole('button', { name: en.continue }));
@@ -140,12 +143,43 @@ describe('opening and closing', () => {
     expect(d).toHaveTextContent(en.noGuarantee);
   });
 
-  it('when requests are not open yet (live default): no form, only human channels', () => {
+  it('when online requests are not open yet: the form still opens and ends in a WhatsApp hand-off', async () => {
+    const user = userEvent.setup();
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
     renderWith(unavailableHelpClient);
     const d = dialog();
-    expect(within(d).getByRole('heading', { name: en.closedTitle })).toBeVisible();
-    expect(within(d).queryByRole('button', { name: en.fillForm })).not.toBeInTheDocument();
-    expect(within(d).getByRole('link', { name: en.whatsapp })).toBeVisible();
+    expect(within(d).getByRole('heading', { name: en.startTitle })).toBeVisible();
+    expect(within(d).queryByRole('button', { name: en.callMeBack })).not.toBeInTheDocument();
+    await walkToContact(user);
+    // WhatsApp mode never asks for a phone number or a name/village on the site.
+    expect(screen.queryByRole('textbox', { name: /Your mobile/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /name or village/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: en.continue }));
+    await user.click(screen.getByRole('checkbox', { name: en.consentContact }));
+    await user.click(screen.getByRole('button', { name: en.waSend }));
+    expect(open).toHaveBeenCalledTimes(1);
+    const url = String(open.mock.calls[0]![0]);
+    expect(url.startsWith('https://wa.me/919600516999?text=')).toBe(true);
+    const text = decodeURIComponent(url.split('?text=')[1]!);
+    expect(text).toContain('34');
+    expect(text).toContain(en.waCertHave);
+    expect(text).not.toMatch(/\d{10}/);
+    expect(await screen.findByRole('heading', { name: en.waSentTitle })).toBeVisible();
+    expect(screen.getByTestId('help-wa-open')).toHaveAttribute('href', url);
+    open.mockRestore();
+  });
+
+  it('with no WhatsApp number configured and requests closed: no form, only human channels', () => {
+    const original = TRUST_FACTS.whatsappUrl;
+    TRUST_FACTS.whatsappUrl = null;
+    try {
+      renderWith(unavailableHelpClient);
+      const d = dialog();
+      expect(within(d).getByRole('heading', { name: en.closedTitle })).toBeVisible();
+      expect(within(d).queryByRole('button', { name: en.fillForm })).not.toBeInTheDocument();
+    } finally {
+      TRUST_FACTS.whatsappUrl = original;
+    }
   });
 });
 
@@ -161,6 +195,9 @@ describe('wizard', () => {
     expect(screen.getByText(en.whoError)).toBeVisible();
     await user.click(screen.getByRole('radio', { name: HELP_FOR_LABELS.self.en }));
     expect(screen.queryByText(en.whoError)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: en.continue }));
+    expect(screen.getByText(en.ageError)).toBeVisible();
+    await user.type(screen.getByRole('textbox', { name: /^Your age/ }), '34');
     await user.click(screen.getByRole('button', { name: en.continue }));
 
     expect(screen.getByRole('heading', { name: en.kindTitle })).toHaveFocus();
@@ -252,6 +289,7 @@ describe('wizard', () => {
     renderWith(client);
     await user.click(screen.getByRole('button', { name: en.fillForm }));
     await user.click(screen.getByRole('radio', { name: HELP_FOR_LABELS.someone.en }));
+    await user.type(screen.getByRole('textbox', { name: /^Their age/ }), '70');
     await user.click(screen.getByRole('button', { name: en.continue }));
     await user.click(screen.getByRole('checkbox', { name: HELP_KIND_LABELS.unsure.en }));
     await user.click(screen.getByRole('button', { name: en.continue }));
@@ -272,8 +310,12 @@ describe('wizard', () => {
     expect(screen.getByRole('heading', { name: en.startTitle })).toBeVisible();
     await user.click(screen.getByRole('button', { name: en.fillForm }));
     await user.click(screen.getByRole('radio', { name: HELP_FOR_LABELS.self.en }));
+    await user.type(screen.getByRole('textbox', { name: /^Your age/ }), '34');
     await user.click(screen.getByRole('button', { name: en.continue }));
     await user.click(screen.getByRole('checkbox', { name: HELP_KIND_LABELS.other.en }));
+    await user.click(screen.getByRole('button', { name: en.continue }));
+    expect(screen.getByText(en.otherError)).toBeVisible();
+    await user.type(screen.getByRole('textbox', { name: /^What other help/ }), 'Rent support');
     await user.click(screen.getByRole('button', { name: en.continue }));
     await user.type(screen.getByRole('textbox', { name: en.descLabel }), 'typed then skipped');
     await user.click(screen.getByRole('button', { name: en.skip }));
