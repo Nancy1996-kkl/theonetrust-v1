@@ -105,13 +105,28 @@ describe('DonateCheckoutPanel (pay inside the pop-up)', () => {
     expect(screen.queryByText(en.checkoutAfterTitle)).toBeNull();
 
     closeMessage();
-    expect(screen.getByText(en.checkoutAfterTitle)).toBeVisible();
-    expect(screen.getByText(en.checkoutAfterPaid)).toBeVisible();
-    expect(screen.getByText(en.checkoutAfterCancelled)).toBeVisible();
-    // Never claims the payment succeeded.
-    expect(screen.getByTestId('donate-checkout')).not.toHaveTextContent(/paid|success|thank/i);
+    const after = screen.getByTestId('donate-after');
+    expect(within(after).getByRole('heading', { name: en.checkoutAfterTitle })).toBeVisible();
+    // Both possible outcomes are explained, side by side.
+    expect(within(after).getByText(en.checkoutNotPaidTitle)).toBeVisible();
+    expect(within(after).getByText(en.checkoutPaidTitle)).toBeVisible();
+    // A closed window is not proof of payment: the progress bar stays on step 2 and nothing
+    // says the payment went through.
+    expect(screen.getByText(en.checkoutStepPay).closest('li')).toHaveAttribute(
+      'aria-current',
+      'step',
+    );
+    expect(after).not.toHaveTextContent(/payment (successful|received|confirmed)/i);
+    expect(screen.queryByText(/By continuing/)).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: en.checkoutAgain }));
+    // Try again re-opens Razorpay straight away with the same amount.
+    await user.click(screen.getByTestId('donate-checkout-retry'));
+    expect(openRazorpayButton).toHaveBeenCalledTimes(2);
+    expect(openRazorpayButton.mock.calls[1]![2]).toBe(2000);
+    expect(await screen.findByText(en.checkoutPayingTitle)).toBeVisible();
+
+    closeMessage();
+    await user.click(screen.getByRole('button', { name: en.checkoutChangeAmount }));
     expect(screen.getByTestId('donate-checkout-pay')).toBeVisible();
   });
 
@@ -130,6 +145,7 @@ describe('DonateCheckoutPanel (pay inside the pop-up)', () => {
     const user = userEvent.setup();
     renderPanel();
     await user.click(screen.getByRole('radio', { name: /Other amount/ }));
+    expect(screen.getByText('Other')).toBeVisible();
     await user.click(screen.getByTestId('donate-checkout-pay'));
     expect(openRazorpayButton).not.toHaveBeenCalled();
     expect(screen.getByText(en.checkoutAmountMissing)).toBeVisible();

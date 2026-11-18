@@ -66,3 +66,13 @@ export function MailIcon() {
     </svg>
   );
 }
+
+/** Circular arrow: try again. */
+export function RetryIcon() {
+  return (
+    <svg {...common} data-icon="retry">
+      <path d="M20 11a8 8 0 1 0-2.3 5.7" />
+      <path d="M20 4v7h-7" />
+    </svg>
+  );
+}

@@ -189,3 +189,23 @@ describe('AmountPicker', () => {
     await expectNoA11yViolations(container);
   });
 });
+
+describe('AmountPicker variant="chips"', () => {
+  it('shows a short "Other" chip whose accessible name stays full, and still emits paise', async () => {
+    const user = userEvent.setup();
+    const { container } = renderUi(<Harness variant="chips" />);
+    expect(container.querySelector('.ui-amount')).toHaveClass('ui-amount--chips');
+    const other = screen.getByRole('radio', { name: 'Other amount (₹)' });
+    expect(screen.getByText('Other')).toBeVisible();
+    await user.click(other);
+    await user.type(screen.getByRole('textbox', { name: /Other amount/ }), '750');
+    expect(screen.getByTestId('value')).toHaveTextContent('75000');
+    await expectNoA11yViolations(container);
+  });
+
+  it('keeps the full label on the default cards', () => {
+    const { container } = renderUi(<Harness />);
+    expect(container.querySelector('.ui-amount')).not.toHaveClass('ui-amount--chips');
+    expect(screen.getByText('Other amount (₹)')).toBeVisible();
+  });
+});

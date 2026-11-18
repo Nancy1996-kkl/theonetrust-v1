@@ -134,27 +134,59 @@
 }
 
 .donate-checkout__methods {
+  display: grid;
+  gap: var(--space-3);
   padding: var(--space-4);
   border: var(--border-width) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-bg);
 }
 
 .donate-checkout__methods-title {
-  margin: 0 0 var(--space-3);
+  margin: 0;
+  font-size: var(--text-body);
   font-weight: var(--weight-semibold);
 }
 
+/* Payment methods as pills: scannable at a glance, wrap on phones. */
 .donate-checkout__methods ul {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.donate-checkout__methods li,
+.donate-checkout__methods li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-size: var(--text-small);
+}
+
+.donate-checkout__secure {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding-block-start: var(--space-3);
+  border-block-start: var(--border-width) solid var(--color-border-subtle);
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+}
+
+.donate-checkout__privacy {
+  margin: 0;
+  font-size: var(--text-small);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
 .donate-checkout__assure {
   display: flex;
   align-items: center;
@@ -334,4 +366,52 @@
   .donate-thanks__wave {
     display: none;
   }
+}
+
+/* Razorpay's window was closed: paid or not is unknown, so both cases are shown side by side,
+   with "try again" first because a successful payment normally redirects to the thank-you. */
+.donate-after {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.donate-after__title {
+  margin: 0;
+  text-align: center;
+}
+
+.donate-after__cases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-3);
+}
+
+.donate-after__case {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.donate-after__case p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-small);
+}
+
+.donate-after__case .donate-after__case-title {
+  margin-block-end: var(--space-1);
+  color: var(--color-text);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+}
+
+.donate-after__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
 }

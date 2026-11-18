@@ -5,7 +5,15 @@ import { AmountPicker, Button, Dialog, LogoSpinner, Stepper } from '../component
 import { useLang } from '../i18n/use-lang.ts';
 import { PolicyNotice } from '../routes/policy/PolicyNotice.tsx';
 import { DonationDraftContext } from '../state/donation-draft.ts';
-import { BankIcon, CardIcon, LockIcon, MailIcon, ShieldIcon, UpiIcon } from './checkout-icons.tsx';
+import {
+  BankIcon,
+  CardIcon,
+  LockIcon,
+  MailIcon,
+  RetryIcon,
+  ShieldIcon,
+  UpiIcon,
+} from './checkout-icons.tsx';
 import { DONATE_HASH } from './DonatePanel.tsx';
 import { DONATE_MESSAGES, DONATE_PRESETS_RUPEES } from './donate-messages.ts';
 import emblemUrl from '../assets/brand/emblem.webp';
@@ -108,7 +116,9 @@ function CheckoutFlow({
     setStep(result === 'opened' ? 'paying' : 'failed');
   }
 
-  const stepIndex = step === 'amount' ? 0 : step === 'after' || step === 'thanks' ? 2 : 1;
+  // A closed Razorpay window may or may not mean a payment, so 'after' stays on step 2; only
+  // Razorpay's success redirect (thanks) reaches step 3.
+  const stepIndex = step === 'amount' ? 0 : step === 'thanks' ? 2 : 1;
   const amountText = amount === null ? '' : formatInr(amount, locale);
   const fallback = (
     <a
@@ -137,26 +147,32 @@ function CheckoutFlow({
             presetsRupees={DONATE_PRESETS_RUPEES}
             value={amount}
             onChange={changeAmount}
-            required
+            variant="chips"
             error={showError ? t.checkoutAmountMissing : undefined}
           />
-          <div className="donate-checkout__methods">
-            <p className="donate-checkout__methods-title">{t.checkoutMethodsTitle}</p>
+          <section className="donate-checkout__methods" aria-labelledby="donate-methods-title">
+            <h3 id="donate-methods-title" className="donate-checkout__methods-title">
+              {t.checkoutMethodsTitle}
+            </h3>
             <ul>
               <li>
                 <UpiIcon />
-                {t.checkoutMethodUpi}
+                <span>{t.checkoutMethodUpi}</span>
               </li>
               <li>
                 <CardIcon />
-                {t.checkoutMethodCard}
+                <span>{t.checkoutMethodCard}</span>
               </li>
               <li>
                 <BankIcon />
-                {t.checkoutMethodNetbanking}
+                <span>{t.checkoutMethodNetbanking}</span>
               </li>
             </ul>
-          </div>
+            <p className="donate-checkout__secure">
+              <ShieldIcon />
+              <span>{t.checkoutSecure}</span>
+            </p>
+          </section>
           <Button
             variant="donate"
             fullWidth
@@ -167,14 +183,7 @@ function CheckoutFlow({
             <LockIcon />
             {amount === null ? t.checkoutStepPay : t.checkoutPay.replace('{amount}', amountText)}
           </Button>
-          <p className="donate-checkout__assure">
-            <ShieldIcon />
-            <span>{t.checkoutSecure}</span>
-          </p>
-          <p className="donate-checkout__assure">
-            <MailIcon />
-            <span>{t.checkoutPrivacy}</span>
-          </p>
+          <p className="donate-checkout__privacy">{t.checkoutPrivacy}</p>
         </>
       )}
 
@@ -210,18 +219,39 @@ function CheckoutFlow({
       )}
 
       {step === 'after' && (
-        <div className="donate-checkout__status" role="status">
-          <h3 className="donate__heading">{t.checkoutAfterTitle}</h3>
-          <p className="donate-checkout__assure">
-            <MailIcon />
-            <span>{t.checkoutAfterPaid}</span>
-          </p>
-          <p>{t.checkoutAfterCancelled}</p>
-          <div className="donate__actions">
-            <Button variant="secondary" onClick={() => setStep('amount')}>
-              {t.checkoutAgain}
+        <div className="donate-after" role="status" data-testid="donate-after">
+          <h3 className="donate-after__title">{t.checkoutAfterTitle}</h3>
+          <div className="donate-after__cases">
+            <div className="donate-after__case">
+              <RetryIcon />
+              <div>
+                <p className="donate-after__case-title">{t.checkoutNotPaidTitle}</p>
+                <p>{t.checkoutNotPaidText}</p>
+              </div>
+            </div>
+            <div className="donate-after__case">
+              <MailIcon />
+              <div>
+                <p className="donate-after__case-title">{t.checkoutPaidTitle}</p>
+                <p>{t.checkoutPaidText}</p>
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="donate"
+            fullWidth
+            onClick={pay}
+            className="donate-checkout__pay"
+            data-testid="donate-checkout-retry"
+          >
+            <LockIcon />
+            {t.checkoutTryAgain.replace('{amount}', amountText)}
+          </Button>
+          <div className="donate-after__links">
+            <Button variant="ghost" onClick={() => setStep('amount')}>
+              {t.checkoutChangeAmount}
             </Button>
-            <Button variant="primary" onClick={onClose}>
+            <Button variant="ghost" onClick={onClose}>
               {t.checkoutClose}
             </Button>
           </div>
@@ -251,7 +281,7 @@ function CheckoutFlow({
         </div>
       )}
 
-      {step !== 'thanks' && <PolicyNotice />}
+      {step === 'amount' && <PolicyNotice />}
       {/* Razorpay's (hidden) button renders here; its window opens over the whole page. */}
       <div ref={hostRef} className="donate-checkout__host" />
     </div>

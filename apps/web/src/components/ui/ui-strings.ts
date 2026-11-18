@@ -18,6 +18,8 @@ export interface UiStrings {
   stepCompleted: string;
   stepCurrent: string;
   otherAmount: string;
+  /** Short label for the free-amount chip (AmountPicker variant="chips"). */
+  otherShort: string;
   amountInvalid: string;
   errorPrefix: string;
   successPrefix: string;
@@ -39,6 +41,7 @@ export const UI_STRINGS: Record<UiLang, UiStrings> = {
     stepCompleted: 'completed',
     stepCurrent: 'current step',
     otherAmount: 'Other amount (₹)',
+    otherShort: 'Other',
     amountInvalid: 'Enter a whole rupee amount of ₹1 or more.',
     errorPrefix: 'Error:',
     successPrefix: 'Success:',
@@ -58,6 +61,7 @@ export const UI_STRINGS: Record<UiLang, UiStrings> = {
     stepCompleted: 'முடிந்தது',
     stepCurrent: 'இப்போது இந்தப் படி',
     otherAmount: 'வேறு தொகை (₹)',
+    otherShort: 'வேறு',
     amountInvalid: '₹1 அல்லது அதற்கு மேல், முழு ரூபாயாகத் தொகையை எழுதுங்கள்.',
     errorPrefix: 'பிழை:',
     successPrefix: 'முடிந்தது:',
