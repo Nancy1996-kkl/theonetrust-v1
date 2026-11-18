@@ -8,14 +8,16 @@ import { DonationDraftContext } from '../state/donation-draft.ts';
 import { BankIcon, CardIcon, LockIcon, MailIcon, ShieldIcon, UpiIcon } from './checkout-icons.tsx';
 import { DONATE_HASH } from './DonatePanel.tsx';
 import { DONATE_MESSAGES, DONATE_PRESETS_RUPEES } from './donate-messages.ts';
+import emblemUrl from '../assets/brand/emblem.webp';
 import {
+  DONATE_THANKS_HASH,
   buttonFallbackUrl,
   isRazorpayCloseMessage,
   openRazorpayButton,
   type DonateButtonConfig,
 } from './razorpay-button.ts';
 
-type Step = 'amount' | 'opening' | 'paying' | 'failed' | 'after';
+type Step = 'amount' | 'opening' | 'paying' | 'failed' | 'after' | 'thanks';
 
 /** Default when no amount came from a home-page chip: a mid preset, editable. */
 const DEFAULT_RUPEES = DONATE_PRESETS_RUPEES[2];
@@ -33,7 +35,8 @@ export function DonateCheckoutPanel({ config }: { config: DonateButtonConfig }) 
   const t = DONATE_MESSAGES[lang];
   const location = useLocation();
   const navigate = useNavigate();
-  const open = location.hash === DONATE_HASH;
+  const thanks = location.hash === DONATE_THANKS_HASH;
+  const open = location.hash === DONATE_HASH || thanks;
 
   function close() {
     navigate({ pathname: location.pathname, search: location.search }, { replace: true });
@@ -43,12 +46,25 @@ export function DonateCheckoutPanel({ config }: { config: DonateButtonConfig }) 
   // every time the pop-up opens.
   return (
     <Dialog open={open} onClose={close} title={t.title} variant="modal" size="wide">
-      <CheckoutFlow config={config} onClose={close} />
+      <CheckoutFlow
+        key={thanks ? 'thanks' : 'donate'}
+        config={config}
+        onClose={close}
+        initialStep={thanks ? 'thanks' : 'amount'}
+      />
     </Dialog>
   );
 }
 
-function CheckoutFlow({ config, onClose }: { config: DonateButtonConfig; onClose: () => void }) {
+function CheckoutFlow({
+  config,
+  onClose,
+  initialStep,
+}: {
+  config: DonateButtonConfig;
+  onClose: () => void;
+  initialStep: Step;
+}) {
   const lang = useLang();
   const t = DONATE_MESSAGES[lang];
   const locale = lang === 'ta' ? 'ta-IN' : 'en-IN';
@@ -58,7 +74,7 @@ function CheckoutFlow({ config, onClose }: { config: DonateButtonConfig; onClose
   const [amount, setAmount] = useState<Paise | null>(
     draftApi?.draft.amountPaise ?? rupeesToPaise(DEFAULT_RUPEES),
   );
-  const [step, setStep] = useState<Step>('amount');
+  const [step, setStep] = useState<Step>(initialStep);
   const [showError, setShowError] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
 
@@ -92,7 +108,7 @@ function CheckoutFlow({ config, onClose }: { config: DonateButtonConfig; onClose
     setStep(result === 'opened' ? 'paying' : 'failed');
   }
 
-  const stepIndex = step === 'amount' ? 0 : step === 'after' ? 2 : 1;
+  const stepIndex = step === 'amount' ? 0 : step === 'after' || step === 'thanks' ? 2 : 1;
   const amountText = amount === null ? '' : formatInr(amount, locale);
   const fallback = (
     <a
@@ -212,7 +228,30 @@ function CheckoutFlow({ config, onClose }: { config: DonateButtonConfig; onClose
         </div>
       )}
 
-      <PolicyNotice />
+      {step === 'thanks' && (
+        <div className="donate-thanks" role="status" data-testid="donate-thanks">
+          <div className="donate-thanks__mark" aria-hidden="true">
+            <span className="donate-thanks__wave" />
+            <span className="donate-thanks__wave donate-thanks__wave--late" />
+            <img src={emblemUrl} alt="" width={131} height={112} />
+            <span className="donate-thanks__heart donate-thanks__heart--a">♥</span>
+            <span className="donate-thanks__heart donate-thanks__heart--b">♥</span>
+            <span className="donate-thanks__heart donate-thanks__heart--c">♥</span>
+          </div>
+          <h3 className="donate-thanks__title">{t.thanksTitle}</h3>
+          <p className="donate-thanks__lead">{t.thanksText}</p>
+          <p className="donate-checkout__assure">
+            <MailIcon />
+            <span>{t.thanksReceipt}</span>
+          </p>
+          <p className="donate__muted">{t.thanksSpam}</p>
+          <Button variant="primary" fullWidth onClick={onClose}>
+            {t.checkoutClose}
+          </Button>
+        </div>
+      )}
+
+      {step !== 'thanks' && <PolicyNotice />}
       {/* Razorpay's (hidden) button renders here; its window opens over the whole page. */}
       <div ref={hostRef} className="donate-checkout__host" />
     </div>

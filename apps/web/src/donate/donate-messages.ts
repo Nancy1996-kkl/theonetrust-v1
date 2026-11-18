@@ -175,6 +175,11 @@ const en = {
   checkoutAgain: 'Start again',
   checkoutChangeAmount: 'Change amount',
   checkoutClose: 'Close',
+  thanksTitle: 'Thank you for giving',
+  thanksText: 'Your kindness reaches people who need it.',
+  thanksReceipt:
+    'Razorpay is emailing your receipt to the address you gave. That email is your confirmation.',
+  thanksSpam: 'No email in a few minutes? Check your spam or promotions folder.',
 };
 
 export type DonateMessageKey = keyof typeof en;
@@ -370,6 +375,11 @@ const ta: Record<DonateMessageKey, string> = {
   checkoutAgain: 'மீண்டும் தொடங்கு',
   checkoutChangeAmount: 'தொகையை மாற்று',
   checkoutClose: 'மூடு',
+  thanksTitle: 'நன்கொடைக்கு நன்றி',
+  thanksText: 'உங்கள் அன்பு தேவையுள்ளவர்களைச் சென்றடைகிறது.',
+  thanksReceipt:
+    'நீங்கள் கொடுத்த மின்னஞ்சலுக்கு Razorpay உங்கள் ரசீதை அனுப்புகிறது. அந்த மின்னஞ்சலே உங்கள் உறுதிப்படுத்தல்.',
+  thanksSpam: 'சில நிமிடங்களில் மின்னஞ்சல் வரவில்லையா? Spam அல்லது Promotions பகுதியைப் பாருங்கள்.',
 };
 
 export const DONATE_MESSAGES: Record<UiLang, Record<DonateMessageKey, string>> = { en, ta };
