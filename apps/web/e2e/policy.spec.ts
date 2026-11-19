@@ -28,7 +28,9 @@ test('footer policy link opens the page (client-side navigation)', async ({ page
   await page.goto('/');
   await page.getByRole('contentinfo').getByRole('link', { name: 'Refund & cancellation' }).click();
   await expect(page).toHaveURL(/\/refund-policy$/);
-  // A new page opens at the top, not where the footer was (ScrollRestoration).
-  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  // A new page opens at the top, not where the footer was (ScrollRestoration). Polled: the
+  // reset lands a frame after the URL changes, and the taller footer (Nov 2026) made the one-shot
+  // read race on the 1440px run.
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   await expect(page.getByRole('heading', { name: 'Shipping' })).toBeVisible();
 });

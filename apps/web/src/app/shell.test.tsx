@@ -10,6 +10,7 @@ import { LANG_STORAGE_KEY } from '../i18n/lang.ts';
 import { useDonationDraft } from '../state/donation-draft.ts';
 import { RootLayout } from './RootLayout.tsx';
 import { SiteFooter } from './SiteFooter.tsx';
+import { MESSAGES } from '../i18n/messages.ts';
 
 afterEach(() => {
   document.documentElement.lang = 'en';
@@ -286,6 +287,21 @@ describe('footer', () => {
     );
     expect(f).toHaveTextContent('Kanchipuram, Tamil Nadu');
     expect(f).toHaveTextContent(`© ${new Date().getFullYear()} Theonetrust.in`);
+  });
+
+  it('redesign (client, Nov 2026): contact column, Donate/Get Help actions, decorative wordmark', () => {
+    renderRoute('/');
+    const f = footer();
+    const contact = within(f)
+      .getByRole('heading', { level: 2, name: 'Contact' })
+      .closest('section')!;
+    expect(within(contact).getByRole('link', { name: '+91 96005 16999' })).toBeInTheDocument();
+    expect(within(f).getByText(MESSAGES.en.footerVision)).toBeVisible();
+    expect(within(f).getByRole('link', { name: 'Donate' })).toHaveAttribute('href', '/#donate');
+    expect(f.querySelector('.site-footer__cta')).toHaveTextContent('Get Help');
+    const wordmark = f.querySelector('.site-footer__wordmark')!;
+    expect(wordmark).toHaveAttribute('aria-hidden', 'true');
+    expect(wordmark).toHaveTextContent(/^Theonetrust$/);
   });
 
   it('policy links follow the language', () => {
