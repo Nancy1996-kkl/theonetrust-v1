@@ -272,7 +272,7 @@ describe('donate panel', () => {
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     expect(within(dialog).getByRole('heading', { name: t.howMuch })).toBeVisible(); // no amount yet
-    await user.click(within(dialog).getByRole('radio', { name: '₹500' }));
+    await user.click(within(dialog).getByRole('radio', { name: '₹1,000' }));
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     expect(within(dialog).getByText(t.nameError)).toBeVisible();
@@ -283,7 +283,7 @@ describe('donate panel', () => {
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     expect(within(dialog).getByText(t.mobileError)).toBeVisible();
     expect(within(dialog).getByText(t.emailError)).toBeVisible();
-    // ₹500 meets the receipt threshold: the acknowledgement option appears.
+    // ₹1,000 meets the ₹500 receipt threshold: the acknowledgement option appears.
     expect(within(dialog).getByLabelText(t.ackOpt)).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: t.back }));
     expect(within(dialog).getByRole('heading', { name: t.howMuch })).toBeVisible();

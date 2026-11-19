@@ -382,5 +382,5 @@ const ta: Record<DonateMessageKey, string> = {
 
 export const DONATE_MESSAGES: Record<UiLang, Record<DonateMessageKey, string>> = { en, ta };
 
-/** Client, Nov 2026: start small (₹1 minimum is the "Other amount" box). */
-export const DONATE_PRESETS_RUPEES = [200, 500, 1000, 2000] as const;
+/** Client, Nov 2026: quick picks ₹1, ₹10, ₹100 and ₹1,000; any amount from ₹1 under "Other". */
+export const DONATE_PRESETS_RUPEES = [1, 10, 100, 1000] as const;

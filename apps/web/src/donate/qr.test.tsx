@@ -68,7 +68,7 @@ async function review(user: ReturnType<typeof userEvent.setup>, donate: DonateCl
   );
   const dialog = await screen.findByRole('dialog');
   await user.click(within(dialog).getByRole('button', { name: t.continue }));
-  await user.click(within(dialog).getByRole('radio', { name: '₹2,000' }));
+  await user.click(within(dialog).getByRole('radio', { name: '₹1,000' }));
   await user.click(within(dialog).getByRole('button', { name: t.continue }));
   await user.type(within(dialog).getByRole('textbox', { name: new RegExp(t.fullName) }), 'A');
   await user.type(within(dialog).getByRole('textbox', { name: t.email }), 'a@b.co');

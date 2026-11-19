@@ -62,9 +62,9 @@ describe('home page design (client, Nov 2026)', () => {
     }
     expect(screen.getByText(HOME_TEXT.impactEmpty.en)).toBeVisible();
     // Donate links stay on the page and open the pop-up pre-filled.
-    expect(screen.getByRole('link', { name: '₹500' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '₹100' })).toHaveAttribute(
       'href',
-      '/?amount=500#donate',
+      '/?amount=100#donate',
     );
     await expectNoA11yViolations(container);
   });
@@ -87,7 +87,9 @@ describe('home page design (client, Nov 2026)', () => {
     const give = (
       await screen.findByRole('heading', { level: 2, name: HOME_TEXT.donateTitle.en })
     ).closest('section')!;
-    expect(within(give).getByRole('link', { name: '₹500' })).toHaveClass('hp-chip');
+    for (const amount of ['₹1', '₹10', '₹100', '₹1,000']) {
+      expect(within(give).getByRole('link', { name: amount })).toHaveClass('hp-chip');
+    }
   });
 
   it('explore tabs switch with a click and with the arrow keys', async () => {
