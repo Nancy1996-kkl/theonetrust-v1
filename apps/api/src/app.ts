@@ -211,6 +211,7 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     prefix: API_V1_PREFIX,
     verifyPerHour: env.DONATION_RATE_LIMIT_PER_HOUR * 3,
     statusPerHour: env.DONATION_RATE_LIMIT_PER_HOUR * 6,
+    failedRecheckWindowMs: env.FAILED_RECHECK_WINDOW_MS,
     now: options.now ?? (() => new Date()),
     ...(keys && { receiptKey: keys.receipt }),
     ...(options.db && { db: options.db }),

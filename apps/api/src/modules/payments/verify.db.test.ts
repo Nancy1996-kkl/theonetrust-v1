@@ -352,6 +352,42 @@ describe('GET /donations/status/:reference', () => {
     expect((await status(none.ref)).json().status).toBe('PENDING');
   });
 
+  it('a young FAILED donation is re-checked (a retry may have succeeded); gateway down → stays FAILED', async () => {
+    const d = await newDonation();
+    const failed = remotePayment(d.orderId, { status: 'failed' });
+    await verify({
+      publicReference: d.ref,
+      orderId: d.orderId,
+      paymentId: failed.paymentId,
+      signature: sign(d.orderId, failed.paymentId),
+    });
+    remotePayment(d.orderId); // the retry on the same order was captured
+    fetchFails = true;
+    expect((await status(d.ref)).json().status).toBe('FAILED'); // never a guess
+    fetchFails = false;
+    expect((await status(d.ref)).json().status).toBe('PAID');
+  });
+
+  it('an old FAILED donation is answered from the ledger, without asking the gateway', async () => {
+    const d = await newDonation();
+    const failed = remotePayment(d.orderId, { status: 'failed' });
+    await verify({
+      publicReference: d.ref,
+      orderId: d.orderId,
+      paymentId: failed.paymentId,
+      signature: sign(d.orderId, failed.paymentId),
+    });
+    const window = loadEnv({ NODE_ENV: 'test' }).FAILED_RECHECK_WINDOW_MS;
+    expect(window).toBe(86_400_000);
+    await db.donationIntent.update({
+      where: { publicReference: d.ref },
+      data: { createdAt: new Date(Date.now() - window - 60_000) },
+    });
+    remotePayment(d.orderId); // captured, but only the owner re-check may find it now
+    expect((await status(d.ref)).json().status).toBe('FAILED');
+    expect(await intentStatus(d.ref)).toBe('FAILED');
+  });
+
   it('settled donations are answered from the ledger; unknown → 404; bad reference → 400', async () => {
     const d = await newDonation();
     const p = remotePayment(d.orderId, { status: 'failed' });
