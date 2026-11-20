@@ -4,6 +4,7 @@ import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { buildApp } from '../../app.ts';
 import { setOwnerPassword } from '../../cli/owner-account.ts';
 import { loadEnv } from '../../config/env.ts';
+import { newDonationReference } from '../../db/references.ts';
 import { deriveAuthKeys } from '../../security/crypto.ts';
 import { unique, useTestDb } from '../../test/db.ts';
 import { base32Decode, hotp, timeStep } from '../auth/totp.ts';
@@ -309,6 +310,40 @@ describe('each charge is its own payment, with a receipt per charge', () => {
     expect(await db.receipt.count({ where: { donationIntent: { subscriptionId: row.id } } })).toBe(
       1,
     );
+  });
+
+  it('a run that died after creating the charge donation is completed by the retry (audit F-3)', async () => {
+    const { subId, row } = await monthly(100_000);
+    const p = payId();
+    // What the first run left behind: the donation and its attempt, never reconciled.
+    const intent = await db.donationIntent.create({
+      data: {
+        publicReference: newDonationReference(),
+        giftPaise: 100_000,
+        amountPaise: 100_000,
+        donorName: row.donorName,
+        hideNamePublicly: true,
+        wantsReceipt: true,
+        consentAt: row.consentAt,
+        locale: row.locale,
+        channel: 'CHECKOUT',
+        subscriptionId: row.id,
+      },
+    });
+    await db.paymentAttempt.create({
+      data: {
+        donationIntentId: intent.id,
+        providerOrderId: `order_Y${p.slice(5)}`,
+        amountPaise: 100_000,
+      },
+    });
+    await event('subscription.charged', subId, 'active', { id: p, amount: 100_000 });
+    await event('subscription.charged', subId, 'active', { id: p, amount: 100_000 });
+    const charges = await chargesOf(row.id);
+    expect(charges).toHaveLength(1);
+    expect(charges[0]).toMatchObject({ id: intent.id, status: 'PAID' });
+    expect(charges[0]?.receipts).toHaveLength(1);
+    expect(charges[0]?.paymentAttempts[0]?.providerPaymentId).toBe(p);
   });
 
   it('two months → two donations and two receipts; the threshold applies per charge', async () => {
