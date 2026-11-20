@@ -35,6 +35,7 @@ describe('donationRepository', () => {
     });
     const orderId = unique('order_SYN');
     await donations.addPaymentAttempt({
+      provider: 'RAZORPAY',
       donationIntentId: intent.id,
       providerOrderId: orderId,
       amountPaise: rupeesToPaise(250),

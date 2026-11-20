@@ -10,6 +10,7 @@ import {
   type DonationIntentResponse,
   type DonationQrResponse,
   type TrustBankAccount,
+  type CheckoutDescriptor,
 } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
 import { donationRepository } from '../../db/repositories/donations.ts';
@@ -17,7 +18,7 @@ import { trustSettingsRepository } from '../../db/repositories/trust-settings.ts
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { feeCoverFor, parseFeeTable, type FeeMethod } from './fees.ts';
-import { PaymentProviderError, type PaymentProvider } from './provider.ts';
+import { checkoutDescriptor, PaymentProviderError, type PaymentProvider } from './provider.ts';
 import { transitionDonation } from '../payments/transitions.ts';
 import { normalizePan, sealAddress, sealPan, taxOptInOffered } from '../tax/identity.ts';
 
@@ -215,7 +216,7 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
         }
         return reply
           .code(200)
-          .send(response(existing, attempt.providerOrderId, provider?.publicKeyId ?? ''));
+          .send(response(existing, checkoutDescriptor(deps().provider, attempt.providerOrderId)));
       }
     }
 
@@ -281,7 +282,7 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       await db.paymentAttempt.create({
         data: {
           donationIntentId: intent.id,
-          provider: 'RAZORPAY',
+          provider: provider.name,
           providerOrderId: made.qrId,
           amountPaise: toPaise(made.amountPaise),
           qrImageUrl: made.imageUrl,
@@ -315,10 +316,11 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
     }
     await donations.addPaymentAttempt({
       donationIntentId: intent.id,
+      provider: provider.name,
       providerOrderId: order.orderId,
       amountPaise: toPaise(order.amountPaise),
     });
-    return reply.code(201).send(response(intent, order.orderId, provider.publicKeyId));
+    return reply.code(201).send(response(intent, checkoutDescriptor(provider, order.orderId)));
   });
 
   /**
@@ -425,8 +427,7 @@ function qrResponse(
 
 function response(
   intent: { publicReference: string; giftPaise: number; feePaise: number; amountPaise: number },
-  orderId: string,
-  keyId: string,
+  checkout: CheckoutDescriptor,
 ): DonationIntentResponse {
   return {
     publicReference: intent.publicReference,
@@ -434,6 +435,6 @@ function response(
     feePaise: intent.feePaise,
     amountPaise: intent.amountPaise,
     currency: 'INR',
-    checkout: { provider: 'RAZORPAY', keyId, orderId },
+    checkout,
   };
 }

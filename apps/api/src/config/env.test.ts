@@ -205,3 +205,11 @@ describe('loadEnv — payment safety windows (Phase 0)', () => {
     });
   });
 });
+
+describe('loadEnv — payment gateway (Phase 1)', () => {
+  it('defaults to razorpay, accepts none, refuses anything else', () => {
+    expect(loadEnv({ NODE_ENV: 'test' }).PAYMENT_PROVIDER).toBe('razorpay');
+    expect(loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'none' }).PAYMENT_PROVIDER).toBe('none');
+    expect(() => loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'stripe' })).toThrow();
+  });
+});

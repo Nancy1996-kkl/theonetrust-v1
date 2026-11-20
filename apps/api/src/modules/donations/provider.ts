@@ -1,3 +1,4 @@
+import type { CheckoutDescriptor } from '@theonetrust/contracts';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 /**
  * Payment provider boundary (spec §8 "Separation rule"). Domain code talks to this interface;
@@ -32,6 +33,14 @@ export interface ProviderPayment {
   method: string | null;
   /** Paise refunded so far. */
   refundedPaise: number;
+}
+
+/**
+ * What the browser needs to open this provider's payment window (Phase 1). Provider words stay
+ * in the adapter layer: routes ask for a descriptor and never build one themselves.
+ */
+export function checkoutDescriptor(provider: PaymentProvider, orderId: string): CheckoutDescriptor {
+  return { provider: 'RAZORPAY', keyId: provider.publicKeyId, orderId };
 }
 
 export interface PaymentProvider {

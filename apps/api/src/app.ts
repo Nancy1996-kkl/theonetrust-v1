@@ -165,7 +165,7 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   // Donations (#23): the server owns intents, amounts and Razorpay orders.
   const paymentProvider =
     options.paymentProvider ??
-    (env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
+    (env.PAYMENT_PROVIDER === 'razorpay' && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
       ? razorpayProvider({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
       : undefined);
   // Monthly giving (#32): only when switched on [CONFIRM] and fully configured.

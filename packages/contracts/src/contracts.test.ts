@@ -6,6 +6,9 @@ import {
   TERMINAL_DONATION_STATUSES,
   formatInr,
   isApiErrorCode,
+  isCashfreeCheckout,
+  isRazorpayCheckout,
+  ONLINE_PAYMENT_PROVIDERS,
   isDonationStatus,
   isLocale,
   rupeesToPaise,
@@ -139,5 +142,42 @@ describe('donation QR contracts (client, Nov 2026)', () => {
     const { DONATION_QR_AMOUNTS_RUPEES } = await import('./index.ts');
     expect(DONATION_QR_AMOUNTS_RUPEES).toEqual([200, 500, 1000, 1500, 2000]);
     expect(Math.max(...DONATION_QR_AMOUNTS_RUPEES)).toBe(2000);
+  });
+});
+
+describe('payment gateway descriptors (Phase 1)', () => {
+  it('lists the online gateways', () => {
+    expect(ONLINE_PAYMENT_PROVIDERS).toEqual(['RAZORPAY', 'CASHFREE']);
+  });
+
+  it('recognises a well-formed Razorpay descriptor only', () => {
+    expect(
+      isRazorpayCheckout({ provider: 'RAZORPAY', keyId: 'rzp_test_x', orderId: 'order_1' }),
+    ).toBe(true);
+    for (const bad of [
+      null,
+      undefined,
+      'RAZORPAY',
+      { provider: 'RAZORPAY', keyId: '', orderId: 'order_1' },
+      { provider: 'RAZORPAY', keyId: 'k' },
+      { provider: 'CASHFREE', keyId: 'k', orderId: 'o' },
+    ]) {
+      expect(isRazorpayCheckout(bad)).toBe(false);
+    }
+  });
+
+  it('recognises a well-formed Cashfree descriptor only (sandbox or production)', () => {
+    const ok = { provider: 'CASHFREE', paymentSessionId: 's', mode: 'sandbox', orderId: 'o' };
+    expect(isCashfreeCheckout(ok)).toBe(true);
+    expect(isCashfreeCheckout({ ...ok, mode: 'production' })).toBe(true);
+    for (const bad of [
+      null,
+      { ...ok, mode: 'live' },
+      { ...ok, paymentSessionId: '' },
+      { ...ok, orderId: '' },
+      { ...ok, provider: 'RAZORPAY' },
+    ]) {
+      expect(isCashfreeCheckout(bad)).toBe(false);
+    }
   });
 });

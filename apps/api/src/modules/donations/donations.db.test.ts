@@ -233,6 +233,47 @@ describe('validation: amount limits, programme, currency, contact, consent', () 
   });
 });
 
+describe('payment gateway selection (Phase 1)', () => {
+  it('the response names the gateway; the attempt records the adapter that created the order', async () => {
+    const res = await post(body());
+    expect(res.statusCode).toBe(201);
+    const checkout = res.json().checkout;
+    expect(checkout).toEqual({
+      provider: 'RAZORPAY',
+      keyId: 'rzp_test_publickey01',
+      orderId: expect.stringMatching(/^order_/),
+    });
+    const attempt = await db.paymentAttempt.findUniqueOrThrow({
+      where: { providerOrderId: checkout.orderId },
+    });
+    expect(attempt.provider).toBe('RAZORPAY');
+  });
+
+  it('PAYMENT_PROVIDER=none switches online donations off: 503 with the generic error body', async () => {
+    const off = buildApp(
+      loadEnv({
+        NODE_ENV: 'test',
+        PAYMENT_PROVIDER: 'none',
+        RAZORPAY_KEY_ID: 'rzp_test_offswitch01',
+        RAZORPAY_KEY_SECRET: 'off-switch-secret-0001',
+      }),
+      { db, now: () => NOW },
+    );
+    const before = await db.donationIntent.count();
+    const res = await off.inject({
+      method: 'POST',
+      url: '/api/v1/donation-intents',
+      remoteAddress: '10.99.0.1',
+      payload: body(),
+    });
+    await off.close();
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toMatchObject({ error: { code: 'SERVICE_UNAVAILABLE' } });
+    expect(res.body).not.toMatch(/razorpay|rzp_/i);
+    expect(await db.donationIntent.count()).toBe(before);
+  });
+});
+
 describe('retries and provider failures', () => {
   it('the same Idempotency-Key returns the same order (no second charge)', async () => {
     const key = unique('idem')
