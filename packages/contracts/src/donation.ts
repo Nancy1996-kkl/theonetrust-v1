@@ -104,6 +104,8 @@ export interface DonationEstimateResponse {
   qrOffered?: boolean;
   /** Largest amount (paise) a QR may be made for. */
   qrMaxPaise?: number;
+  /** The active gateway needs the donor's mobile number to take the payment (Cashfree). */
+  phoneRequired?: boolean;
   /** Present when a gift was given and fee cover is offered for the method. */
   feePaise?: number;
   amountPaise?: number;

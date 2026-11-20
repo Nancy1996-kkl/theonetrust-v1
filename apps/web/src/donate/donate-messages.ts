@@ -30,6 +30,8 @@ const en = {
   fullName: 'Full name',
   mobile: 'Mobile number',
   mobileError: 'Enter a 10-digit mobile number',
+  mobileHint:
+    'Our payment partner needs a mobile number to process the payment. We never show it publicly or use it for marketing.',
   email: 'Email',
   emailError: 'Enter a valid email address',
   contactError: 'Give a mobile number or an email so the trust can reach you about this gift.',
@@ -209,6 +211,8 @@ const ta: Record<DonateMessageKey, string> = {
   fullName: 'முழுப் பெயர்',
   mobile: 'கைபேசி எண்',
   mobileError: '10 இலக்க கைபேசி எண்ணை எழுதுங்கள்',
+  mobileHint:
+    'பணம் செலுத்துதலைச் செயல்படுத்த எங்கள் கட்டணக் கூட்டாளருக்குக் கைபேசி எண் தேவை. இதை நாங்கள் பொதுவில் காட்டுவதோ விளம்பரத்துக்குப் பயன்படுத்துவதோ இல்லை.',
   email: 'மின்னஞ்சல்',
   emailError: 'சரியான மின்னஞ்சல் முகவரியை எழுதுங்கள்',
   contactError:

@@ -16,7 +16,7 @@ export interface RazorpayCheckout {
 
 /**
  * Cashfree's JS SDK opens with a one-time payment session ID (never a secret) and the mode the
- * SDK must load in. Wired up in Phase 5; until then the API never returns it.
+ * SDK must load in. Returned by the API when PAYMENT_PROVIDER=cashfree (Phases 4–5).
  */
 export interface CashfreeCheckout {
   provider: 'CASHFREE';
@@ -41,6 +41,12 @@ export function isRazorpayCheckout(value: unknown): value is RazorpayCheckout {
     v.orderId.length > 0
   );
 }
+
+/**
+ * A donation's public reference (TOT-D- + 12 Crockford base32 characters). Not personal data; used
+ * to recognise Cashfree's return link `?cf_order=<reference>` before anything is asked of the API.
+ */
+export const DONATION_REFERENCE = /^TOT-D-[0-9A-HJKMNP-TV-Z]{12}$/;
 
 /** Narrowing helper for the browser: true only for a well-formed Cashfree descriptor. */
 export function isCashfreeCheckout(value: unknown): value is CashfreeCheckout {

@@ -461,9 +461,11 @@ describe('createApiDonateClient', () => {
     };
     const started = await start(cashfree);
     expect(started).toMatchObject({ ok: true });
-    // Phase 5 adds the Cashfree window; until then the Razorpay loader is never touched.
+    // A Cashfree descriptor opens Cashfree's window only: the Razorpay loader is never touched
+    // (here Cashfree's script fails to load, so the donor sees "failed").
     const load = vi.fn(async () => Promise.reject(new Error('must not load')));
-    const api = createApiDonateClient('', vi.fn(), load);
+    const loadCf = vi.fn(async () => Promise.reject(new Error('blocked')));
+    const api = createApiDonateClient('', vi.fn(), load, loadCf);
     expect(
       await api.checkout({ ...INTENT, checkout: cashfree } as DonationIntentResponse, {
         name: 'A',
@@ -471,6 +473,7 @@ describe('createApiDonateClient', () => {
       }),
     ).toEqual({ kind: 'failed', reason: 'other' });
     expect(load).not.toHaveBeenCalled();
+    expect(loadCf).toHaveBeenCalledOnce();
   });
 
   it('receipt(): the token only for a PAID donation that has one; null otherwise', async () => {

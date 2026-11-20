@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
+  DONATION_REFERENCE,
   DONATION_QR_AMOUNTS_RUPEES,
   formatInr,
   MONTHLY_CONSENT_VERSION,
@@ -24,7 +25,12 @@ import { localizedPath } from '../i18n/lang.ts';
 import { useLang } from '../i18n/use-lang.ts';
 import { PolicyNotice } from '../routes/policy/PolicyNotice.tsx';
 import { useDonationDraft } from '../state/donation-draft.ts';
-import { newIdempotencyKey, useDonateClient, type CheckoutOutcome } from './donate-client.ts';
+import {
+  newIdempotencyKey,
+  pollUntilSettled,
+  useDonateClient,
+  type CheckoutOutcome,
+} from './donate-client.ts';
 import { MonthlyConsent } from './MonthlyConsent.tsx';
 import { QrAmounts, QrPay } from './QrPay.tsx';
 import { TaxOptInFields } from './TaxOptInFields.tsx';
@@ -171,6 +177,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const monthly = draft.frequency === 'monthly' && limits?.monthlyOffered === true;
   /** Tax opt-in (#34): only when the server says the approval is confirmed and switched on. */
   const taxOffered = limits?.taxOptInOffered === true && !monthly;
+  /** The gateway needs the donor's mobile to take the payment (Cashfree): the server says so. */
+  const phoneRequired = limits?.phoneRequired === true;
   /** UPI QR only when the server offers it (one-time gifts, up to its cap) and no tax opt-in. */
   const qrClient = client.startQr ? { startQr: client.startQr, status: client.status } : null;
   const qrOffered =
@@ -194,15 +202,49 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     };
   }, [open, client, gift]);
 
+  // Back from Cashfree's own page (§2.2: in-app browsers): `?cf_order=<reference>`. The link is
+  // removed from the address bar and the pop-up opens on "checking"; a malformed value is dropped
+  // without asking anything. The reference is not personal data.
+  const returnedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cfOrder = params.get('cf_order');
+    if (cfOrder === null) return;
+    params.delete('cf_order');
+    const search = params.toString();
+    const valid = DONATION_REFERENCE.test(cfOrder);
+    if (valid) {
+      session()?.setItem(PENDING_KEY, cfOrder);
+      returnedRef.current = cfOrder;
+    }
+    navigate(
+      {
+        pathname: location.pathname,
+        search: search ? `?${search}` : '',
+        hash: valid ? DONATE_HASH : location.hash,
+      },
+      { replace: true },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reads the address once per change
+  }, [location.search]);
+
   // A payment still being confirmed in this tab (refresh, back) is re-checked, never re-paid.
   useEffect(() => {
     if (!open) return;
     const pendingRef = session()?.getItem(PENDING_KEY);
     if (!pendingRef || screen !== 'form') return;
-    void client.status(pendingRef).then((status) => {
-      setReference(pendingRef);
-      settle(status, pendingRef);
-    });
+    const returned = returnedRef.current === pendingRef;
+    returnedRef.current = null;
+    const check = () => client.status(pendingRef);
+    void Promise.resolve()
+      .then(() => {
+        setReference(pendingRef);
+        if (returned) setScreen('confirming');
+        return check();
+      })
+      // Just back from the gateway: keep checking for a while before saying "pending".
+      .then((status) => (returned ? pollUntilSettled(check, status) : status))
+      .then((status) => settle(status, pendingRef));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the panel opens
   }, [open]);
 
@@ -256,6 +298,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     const found: Partial<Record<DetailError, true>> = {};
     if (!details.name.trim()) found.name = true;
     if (details.mobile.trim() && !normalizeIndianMobile(details.mobile)) found.mobile = true;
+    if (phoneRequired && !details.mobile.trim()) found.mobile = true;
     if (details.email.trim() && !EMAIL.test(details.email.trim())) found.email = true;
     if (!details.mobile.trim() && !details.email.trim()) found.contact = true;
     if (!details.consent) found.consent = true;
@@ -394,7 +437,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       setCancelled(true);
       return;
     }
-    if (outcome.kind === 'failed') {
+    // Monthly giving is Razorpay-only: anything but its own completed callback is a failure.
+    if (outcome.kind !== 'completed') {
       setBusy(false);
       monthlyKey.current = null;
       setScreen('failed');
@@ -440,6 +484,10 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       setIntent(current);
       setReference(current.publicReference);
     }
+    // Kept before the gateway opens: Cashfree may move the page to its own and come back.
+    if (current.checkout.provider === 'CASHFREE') {
+      session()?.setItem(PENDING_KEY, current.publicReference);
+    }
     const outcome: CheckoutOutcome = await client.checkout(current, {
       name: details.name.trim(),
       ...(details.email.trim() && { email: details.email.trim() }),
@@ -456,14 +504,21 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       setBusy(false);
       attemptKey.current = null;
       setIntent(null);
+      if (current.checkout.provider === 'CASHFREE') session()?.removeItem(PENDING_KEY);
       setScreen(outcome.reason === 'upi_limit' ? 'limit' : 'failed');
       return;
     }
     setScreen('confirming');
+    // The page is moving to Cashfree's own; the return link re-opens this pop-up to check.
+    if (outcome.kind === 'redirecting') return;
     session()?.setItem(PENDING_KEY, current.publicReference);
-    const status = await client.verify(current, outcome);
+    const ref = current.publicReference;
+    let status = await client.verify(current, outcome);
+    // Cashfree's window says nothing reliable: keep asking the server for a while.
+    if (outcome.kind === 'returned')
+      status = await pollUntilSettled(() => client.status(ref), status);
     setBusy(false);
-    settle(status, current.publicReference);
+    settle(status, ref);
   }
 
   const heading = (text: string) => (
@@ -857,6 +912,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             type="tel"
             inputMode="tel"
             autoComplete="tel-national"
+            required={phoneRequired}
+            {...(phoneRequired && { hint: t.mobileHint })}
             value={details.mobile}
             onChange={(e) => set('mobile')(e.target.value)}
             error={errors.mobile ? t.mobileError : undefined}

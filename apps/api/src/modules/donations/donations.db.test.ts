@@ -453,6 +453,7 @@ describe('GET /donation-intents/estimate', () => {
       bankTransferOffered: false,
       monthlyOffered: false,
       qrOffered: false,
+      phoneRequired: false,
       taxOptInOffered: false,
       feePaise: 2_418,
       amountPaise: 102_418,
@@ -466,6 +467,7 @@ describe('GET /donation-intents/estimate', () => {
       bankTransferOffered: false,
       monthlyOffered: false,
       qrOffered: false,
+      phoneRequired: false,
       taxOptInOffered: false,
     });
     const bad = await app.inject({

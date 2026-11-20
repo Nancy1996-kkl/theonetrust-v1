@@ -166,6 +166,21 @@ describe('payment gateway descriptors (Phase 1)', () => {
     }
   });
 
+  it('recognises a donation reference only in its exact form', async () => {
+    const { DONATION_REFERENCE } = await import('./index.ts');
+    expect(DONATION_REFERENCE.test('TOT-D-0123456789AB')).toBe(true);
+    for (const bad of [
+      'TOT-D-0123456789A',
+      'TOT-D-0123456789ABC',
+      'tot-d-0123456789ab',
+      'TOT-D-0123456789AU',
+      'HLP-0123456789AB',
+      'TOT-D-0123456789AB/x',
+    ]) {
+      expect(DONATION_REFERENCE.test(bad)).toBe(false);
+    }
+  });
+
   it('recognises a well-formed Cashfree descriptor only (sandbox or production)', () => {
     const ok = { provider: 'CASHFREE', paymentSessionId: 's', mode: 'sandbox', orderId: 'o' };
     expect(isCashfreeCheckout(ok)).toBe(true);
