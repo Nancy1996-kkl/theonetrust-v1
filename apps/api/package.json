@@ -19,7 +19,8 @@
     "db:migrate:status": "prisma migrate status",
     "db:seed": "prisma db seed",
     "owner:set-password": "tsx --env-file-if-exists=../../.env src/cli/set-owner-password.ts",
-    "launch:check": "tsx --env-file-if-exists=../../.env src/cli/run-launch-check.ts"
+    "launch:check": "tsx --env-file-if-exists=../../.env src/cli/run-launch-check.ts",
+    "build:serverless": "esbuild src/serverless.ts --bundle --platform=node --target=node22 --format=esm --external:fastify --external:@fastify/cors --external:@fastify/rate-limit --external:zod --external:@prisma/client --external:@prisma/adapter-pg --external:pg --external:@node-rs/argon2 --external:@fastify/cookie --outfile=dist/serverless.mjs"
   },
   "dependencies": {
     "@fastify/cookie": "11.1.5",

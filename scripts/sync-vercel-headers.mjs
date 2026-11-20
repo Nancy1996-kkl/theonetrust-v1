@@ -18,6 +18,9 @@ import { webSecurityHeaders } from '../apps/web/scripts/security-headers.mjs';
 
 const VERCEL_JSON = fileURLToPath(new URL('../vercel.json', import.meta.url));
 
+/** Every path except the API (the negative lookahead keeps /api/* out). */
+export const SITE_PAGES = '/((?!api/).*)';
+
 /** Private links (acknowledgements, monthly-giving management) are never cached or referred. */
 export const PRIVATE_LINK_SOURCES = [
   '/receipt/(.*)',
@@ -32,7 +35,8 @@ const entries = (headers) => Object.entries(headers).map(([key, value]) => ({ ke
 export function vercelHeaders() {
   const privateLink = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' };
   return [
-    { source: '/(.*)', headers: entries(webSecurityHeaders({ production: true })) },
+    // The API sets its own, stricter headers (apps/api/src/http/security.ts): pages only here.
+    { source: SITE_PAGES, headers: entries(webSecurityHeaders({ production: true })) },
     {
       source: '/assets/(.*)',
       headers: entries({ 'Cache-Control': 'public, max-age=31536000, immutable' }),
