@@ -71,7 +71,13 @@ const EstimateQuery = z.object({
 
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{16,64}$/;
 
+/** How long a request that lost an Idempotency-Key race waits for the winner's order. */
+export const IDEMPOTENT_REPLAY_WAIT_MS = 5_000;
+const IDEMPOTENT_REPLAY_POLL_MS = 100;
+
 export interface DonationRouteOptions {
+  /** Override of IDEMPOTENT_REPLAY_WAIT_MS (tests). */
+  idempotencyWaitMs?: number;
   db?: Db;
   provider?: PaymentProvider;
   perHour: number;
@@ -191,50 +197,73 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       throw new AppError('VALIDATION_ERROR', [{ path: 'giftPaise', issue: 'too_big_for_qr' }]);
     }
 
-    // A retry with the same key returns the same order instead of charging twice.
-    if (idempotencyKey) {
+    /** The answer already given for this Idempotency-Key, or null when it has no order (yet). */
+    async function replay(key: string) {
       const existing = await db.donationIntent.findUnique({
-        where: { idempotencyKey },
+        where: { idempotencyKey: key },
         include: { paymentAttempts: { orderBy: { createdAt: 'asc' }, take: 1 } },
       });
-      if (existing) {
-        if (
-          bank &&
-          account &&
-          existing.channel === 'BANK_TRANSFER' &&
-          existing.giftPaise === body.giftPaise
-        ) {
-          return reply.code(200).send(bankResponse(existing, account));
-        }
-        const attempt = existing.paymentAttempts[0];
-        if (existing.giftPaise !== body.giftPaise || existing.feePaise !== feePaise || !attempt) {
-          throw new AppError('CONFLICT');
-        }
-        if (qr) {
-          if (!attempt.qrExpiresAt) throw new AppError('CONFLICT');
-          return reply.code(200).send(qrResponse(existing, attempt.qrExpiresAt));
-        }
-        return reply
-          .code(200)
-          .send(response(existing, checkoutDescriptor(deps().provider, attempt.providerOrderId)));
+      if (!existing) return null;
+      if (
+        bank &&
+        account &&
+        existing.channel === 'BANK_TRANSFER' &&
+        existing.giftPaise === body.giftPaise
+      ) {
+        return reply.code(200).send(bankResponse(existing, account));
       }
+      const attempt = existing.paymentAttempts[0];
+      if (existing.giftPaise !== body.giftPaise || existing.feePaise !== feePaise) {
+        throw new AppError('CONFLICT');
+      }
+      if (!attempt) return 'no_order' as const;
+      if (qr) {
+        if (!attempt.qrExpiresAt) throw new AppError('CONFLICT');
+        return reply.code(200).send(qrResponse(existing, attempt.qrExpiresAt));
+      }
+      // An existing checkout attempt means a gateway created it; deps() keeps the 503 otherwise.
+      return reply
+        .code(200)
+        .send(response(existing, checkoutDescriptor(deps().provider, attempt.providerOrderId)));
     }
 
-    const intent = await donations.createIntent({
-      giftPaise: toPaise(body.giftPaise),
-      feePaise,
-      programmeId,
-      donorName: body.donorName,
-      donorEmail: body.donorEmail ?? null,
-      donorPhone: phone,
-      hideNamePublicly: body.hideNamePublicly,
-      wantsReceipt: body.wantsReceipt,
-      coverFee: feePaise > 0,
-      locale: body.locale,
-      idempotencyKey: idempotencyKey ?? null,
-      consentAt: opts.now(),
-      channel: bank ? 'BANK_TRANSFER' : 'CHECKOUT',
-    });
+    // A retry with the same key returns the same order instead of charging twice.
+    if (idempotencyKey) {
+      const replayed = await replay(idempotencyKey);
+      if (replayed === 'no_order') throw new AppError('CONFLICT');
+      if (replayed) return replayed;
+    }
+
+    let intent;
+    try {
+      intent = await donations.createIntent({
+        giftPaise: toPaise(body.giftPaise),
+        feePaise,
+        programmeId,
+        donorName: body.donorName,
+        donorEmail: body.donorEmail ?? null,
+        donorPhone: phone,
+        hideNamePublicly: body.hideNamePublicly,
+        wantsReceipt: body.wantsReceipt,
+        coverFee: feePaise > 0,
+        locale: body.locale,
+        idempotencyKey: idempotencyKey ?? null,
+        consentAt: opts.now(),
+        channel: bank ? 'BANK_TRANSFER' : 'CHECKOUT',
+      });
+    } catch (error) {
+      // Two first requests with the same key at the same moment (audit F-7): the database lets
+      // only one create the donation. The other waits briefly for the winner's order and returns
+      // it; if the winner has no order in time (or failed to get one), the donor retries.
+      if (!idempotencyKey || (error as { code?: string }).code !== 'P2002') throw error;
+      const deadline = Date.now() + (opts.idempotencyWaitMs ?? IDEMPOTENT_REPLAY_WAIT_MS);
+      for (;;) {
+        const replayed = await replay(idempotencyKey);
+        if (replayed && replayed !== 'no_order') return replayed;
+        if (!replayed || Date.now() >= deadline) throw new AppError('CONFLICT');
+        await new Promise((resolve) => setTimeout(resolve, IDEMPOTENT_REPLAY_POLL_MS));
+      }
+    }
 
     // Tax opt-in (#34): private identity record, PAN and address encrypted at rest.
     if (body.taxOptIn && pan && opts.encryption) {
