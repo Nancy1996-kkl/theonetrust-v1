@@ -1,37 +1,19 @@
 import { buildApp } from './app.ts';
 import { EnvValidationError, loadEnv } from './config/env.ts';
 import { createDb } from './db/client.ts';
-import { selectEmailProvider } from './modules/notifications/provider.ts';
+import { outboxDeps } from './modules/notifications/deps.ts';
 import { startOutboxWorker } from './modules/notifications/schedule.ts';
-import { selectSheetProvider } from './modules/notifications/sheet.ts';
-import { deriveAuthKeys } from './security/crypto.ts';
 
 async function main(): Promise<void> {
   const env = loadEnv();
   const db = env.DATABASE_URL ? createDb(env.DATABASE_URL, {}, env.DATABASE_SCHEMA) : undefined;
   const app = buildApp(env, db ? { db } : {});
-  // Notification outbox (#30): sends queued emails outside any payment transaction.
-  const provider = selectEmailProvider(env);
-  // Google Sheet of paid donations (client, Nov 2026): rows go through the same queue.
-  const sheet = selectSheetProvider(env);
-  const keys = env.AUTH_SECRET_KEY ? deriveAuthKeys(env.AUTH_SECRET_KEY) : undefined;
-  const stopWorker =
-    db && (provider || sheet)
-      ? startOutboxWorker(
-          {
-            db,
-            provider,
-            sheet,
-            ownerEmail: env.OWNER_NOTIFICATION_EMAIL,
-            siteUrl: env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173',
-            receiptKey: keys?.receipt,
-            manageKey: keys?.manage,
-            now: () => new Date(),
-          },
-          env.EMAIL_WORKER_INTERVAL_MS,
-          app.log,
-        )
-      : undefined;
+  // Notification outbox (#30): sends queued emails (and Google Sheet rows) outside any payment
+  // transaction, on a timer. On Vercel the serverless entry and the daily job do this instead.
+  const outbox = db ? outboxDeps(env, db) : undefined;
+  const stopWorker = outbox
+    ? startOutboxWorker(outbox, env.EMAIL_WORKER_INTERVAL_MS, app.log)
+    : undefined;
   app.addHook('onClose', async () => {
     stopWorker?.();
     await db?.$disconnect();

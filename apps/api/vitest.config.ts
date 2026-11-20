@@ -34,6 +34,8 @@ export default defineConfig({
         'src/modules/payments/reconcile.ts',
         'src/modules/payments/recheck.ts',
         'src/http/rate-limit-store.ts',
+        'src/modules/jobs/daily.ts',
+        'src/modules/jobs/routes.ts',
         'src/modules/payments/verify-routes.ts',
         'src/modules/payments/webhook-routes.ts',
         'src/modules/payments/webhook-admin-routes.ts',

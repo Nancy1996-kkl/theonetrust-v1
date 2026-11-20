@@ -17,6 +17,19 @@ import type { FastifyInstance } from 'fastify';
 import { buildApp, type BuildAppOptions } from './app.ts';
 import { EnvValidationError, loadEnv, type Env } from './config/env.ts';
 import { createDb } from './db/client.ts';
+import { waitUntil } from '@vercel/functions';
+import { outboxDeps } from './modules/notifications/deps.ts';
+import { processDueNotifications } from './modules/notifications/worker.ts';
+
+/**
+ * POSTs after which an email or sheet row is usually queued (a payment confirmed, a webhook, a
+ * help request, monthly giving). After such a response the function keeps running briefly to send
+ * them (Phase 2d) — Vercel's free plan runs cron only daily, so donors would otherwise wait.
+ */
+export const DRAIN_AFTER =
+  /^\/api\/v1\/(payments\/verify|webhooks\/|help-requests|subscriptions\/|admin\/)/;
+/** Rows sent per inline drain; the daily job sends anything left. */
+export const INLINE_DRAIN_BATCH = 10;
 
 /**
  * Vercel's catch-all route adds the matched segments as a `path` query parameter
@@ -46,6 +59,8 @@ export interface ServerlessOptions {
   configure?: (app: FastifyInstance) => void;
   /** Where configuration errors are reported (names only). */
   logError?: (message: string) => void;
+  /** Keeps work alive after the response (Vercel's waitUntil; tests capture it). */
+  defer?: (work: Promise<unknown>) => void;
 }
 
 export function createServerlessHandler(options: ServerlessOptions = {}) {
@@ -71,6 +86,25 @@ export function createServerlessHandler(options: ServerlessOptions = {}) {
         : undefined);
     try {
       const app = buildApp(env, { ...options.appOptions, ...(db && { db }) });
+      const outbox = db ? (options.appOptions?.outbox ?? outboxDeps(env, db)) : undefined;
+      if (outbox) {
+        const defer = options.defer ?? waitUntil;
+        app.addHook('onResponse', (request, reply, done) => {
+          const url = request.url.split('?', 1)[0] ?? '';
+          if (request.method === 'POST' && reply.statusCode < 500 && DRAIN_AFTER.test(url)) {
+            defer(
+              processDueNotifications({ ...outbox, batchSize: INLINE_DRAIN_BATCH }).catch(
+                (error: unknown) =>
+                  request.log.warn(
+                    { reason: error instanceof Error ? error.name : 'unknown' },
+                    'Inline outbox drain failed; the daily job will retry',
+                  ),
+              ),
+            );
+          }
+          done();
+        });
+      }
       options.configure?.(app);
       await app.ready();
       return app;

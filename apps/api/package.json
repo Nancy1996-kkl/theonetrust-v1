@@ -30,6 +30,7 @@
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "@theonetrust/contracts": "workspace:*",
+    "@vercel/functions": "^3.11.3",
     "fastify": "5.12.8",
     "pg": "8.23.1",
     "prisma": "7.10.1",
