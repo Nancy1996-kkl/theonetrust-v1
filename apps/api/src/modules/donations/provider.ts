@@ -1,4 +1,9 @@
 import type { CheckoutDescriptor } from '@theonetrust/contracts';
+import type {
+  NormalisedPayment,
+  PaymentState,
+  ProviderOrderState,
+} from '../payments/order-state.ts';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 /**
  * Payment provider boundary (spec §8 "Separation rule"). Domain code talks to this interface;
@@ -309,4 +314,56 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
       };
     },
   };
+}
+
+/**
+ * Razorpay's payment words → the gateway-neutral states (Phase 1b). The original word travels
+ * with it (providerRawStatus) so an unexpected word stays visible in the owner's audit trail.
+ */
+const RAZORPAY_STATE: Record<string, PaymentState> = {
+  created: 'pending',
+  authorized: 'authorized',
+  captured: 'captured',
+  failed: 'failed',
+  refunded: 'refunded',
+};
+
+export function normaliseRazorpayPayment(payment: ProviderPayment): NormalisedPayment {
+  return {
+    paymentId: payment.paymentId,
+    orderId: payment.orderId,
+    state: RAZORPAY_STATE[payment.status] ?? 'unknown',
+    providerRawStatus: payment.status,
+    amountPaise: payment.amountPaise,
+    currency: payment.currency,
+    method: payment.method,
+    refundedPaise: payment.refundedPaise,
+  };
+}
+
+/** A monthly charge with no order of its own is stored as `subpay_<payment id>` (#33). */
+const SUBSCRIPTION_CHARGE = /^subpay_(?<paymentId>pay_[A-Za-z0-9]{6,40})$/;
+
+/**
+ * Every payment Razorpay knows for one of our attempts, asked with our secret (Phase 1b): by
+ * order; a QR attempt by the QR it was paid on; a monthly charge by its payment. A QR or monthly
+ * payment carries no order of ours, so it is matched to the attempt's reference.
+ */
+export async function razorpayOrderState(
+  provider: PaymentProvider,
+  orderRef: string,
+): Promise<ProviderOrderState> {
+  const asAttempt = (p: ProviderPayment): ProviderPayment => ({ ...p, orderId: orderRef });
+  let payments: ProviderPayment[];
+  if (QR_ID.test(orderRef)) {
+    payments = provider.fetchQrPayments
+      ? (await provider.fetchQrPayments(orderRef)).map(asAttempt)
+      : [];
+  } else {
+    const chargeId = SUBSCRIPTION_CHARGE.exec(orderRef)?.groups?.paymentId;
+    payments = chargeId
+      ? [asAttempt(await provider.fetchPayment(chargeId))]
+      : await provider.fetchOrderPayments(orderRef);
+  }
+  return { orderRef, payments: payments.map(normaliseRazorpayPayment) };
 }

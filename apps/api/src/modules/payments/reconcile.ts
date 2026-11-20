@@ -1,49 +1,88 @@
 import type { DonationStatus } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
-import type { ProviderPayment } from '../donations/provider.ts';
+import { normaliseRazorpayPayment, type ProviderPayment } from '../donations/provider.ts';
 import { enqueueDonationPaid } from '../notifications/outbox.ts';
 import { ensureTaxTracking } from '../tax/tracking.ts';
 import { adjustReceiptForRefund, issueReceiptIfEligible } from '../receipts/issue.ts';
+import {
+  decisivePayments,
+  isRanked,
+  NON_CLAIMING_STATES,
+  rank,
+  type NormalisedPayment,
+  type PaymentState,
+  type ProviderOrderState,
+} from './order-state.ts';
 import { canTransition, transitionDonation } from './transitions.ts';
 
 /**
- * Applies TRUSTED provider data (fetched from Razorpay's API with our secret — or, in #27, a
- * signature-verified webhook) to our ledger. Shared by the checkout callback, the status re-check
+ * Applies TRUSTED gateway data (fetched from the gateway's API with our secret, or a
+ * signature-verified webhook) to our ledger. Gateway words are translated by each adapter into
+ * gateway-neutral states first (order-state.ts, Phase 1b). Shared by the checkout callback, the status re-check
  * and the webhook, so all three follow identical rules (#26, #27):
  *
  * - order ID, amount and currency must match what WE created, else MANUAL_REVIEW + exception;
  * - a second, different SETTLING payment for the same order → MANUAL_REVIEW + exception; a failed
  *   or abandoned try never claims the order, so a later success on it still counts (audit F-1);
- * - captured → PAID, authorized → AUTHORIZED, failed → FAILED, created → PENDING; captured money
+ * - captured → PAID, authorized → AUTHORIZED, failed → FAILED, pending → PENDING; captured money
  *   also heals an earlier FAILED try (gateway-verified only);
  * - nothing ever moves backwards (the transition service refuses it), so out-of-order events
  *   are harmless.
  */
 export type ReconcileOutcome = DonationStatus;
 
-const STATUS_FOR: Record<string, DonationStatus> = {
-  created: 'PENDING',
+/** Gateway-neutral payment state → the donation status it leads to. */
+const STATUS_FOR: Partial<Record<PaymentState, DonationStatus>> = {
+  pending: 'PENDING',
   authorized: 'AUTHORIZED',
   captured: 'PAID',
   failed: 'FAILED',
 };
 
-/** Payment states that never settle an order, so never claim its attempt (audit F-1). */
-const NON_CLAIMING = new Set(['created', 'failed']);
-/** Forward order of a payment's life; a lower state for the same payment is a stale event. */
-const RANK: Record<string, number> = {
-  created: 0,
-  failed: 1,
-  authorized: 2,
-  captured: 3,
-  refunded: 4,
-};
-const rank = (status: string | null): number => RANK[status ?? ''] ?? -1;
-
-export async function applyProviderPayment(
+/** Razorpay entry point: translates Razorpay's words, then applies the shared rules. */
+export function applyProviderPayment(
   db: Db,
   attemptId: string,
   payment: ProviderPayment,
+  now: Date,
+  opts: { signatureVerified?: boolean } = {},
+): Promise<ReconcileOutcome> {
+  return applyPayment(db, attemptId, normaliseRazorpayPayment(payment), now, opts);
+}
+
+/**
+ * Applies everything the gateway knows about one of our orders (the re-check path): every
+ * captured payment, else the authorized one, else the first reported. Returns the donation's
+ * status afterwards and the state that decided it (null when the gateway has no payment).
+ */
+export async function applyOrderState(
+  db: Db,
+  attemptId: string,
+  state: ProviderOrderState,
+  now: Date,
+): Promise<{ status: DonationStatus; found: PaymentState | null; foundRaw: string | null }> {
+  const decisive = decisivePayments(state);
+  let status = await db.paymentAttempt
+    .findUniqueOrThrow({
+      where: { id: attemptId },
+      include: { donationIntent: { select: { status: true } } },
+    })
+    .then((a) => a.donationIntent.status);
+  for (const payment of decisive) {
+    status = await applyPayment(db, attemptId, payment, now);
+  }
+  return {
+    status,
+    found: decisive[0]?.state ?? null,
+    foundRaw: decisive[0]?.providerRawStatus ?? null,
+  };
+}
+
+/** The shared, gateway-neutral rules for one trusted payment (see the module comment). */
+export async function applyPayment(
+  db: Db,
+  attemptId: string,
+  payment: NormalisedPayment,
   now: Date,
   opts: { signatureVerified?: boolean } = {},
 ): Promise<ReconcileOutcome> {
@@ -60,19 +99,21 @@ export async function applyProviderPayment(
       payment.currency !== 'INR';
     // Only a payment that settles (or may settle) the order claims the attempt (audit F-1): a
     // failed or abandoned try never does, so a successful retry on the same order still counts.
-    const claims = !NON_CLAIMING.has(payment.status);
+    const claims = !NON_CLAIMING_STATES.has(payment.state);
     const claimed =
-      attempt.providerPaymentId !== null && !NON_CLAIMING.has(attempt.providerStatus ?? 'failed');
+      attempt.providerPaymentId !== null &&
+      !NON_CLAIMING_STATES.has(attempt.providerStatus ?? 'failed');
     const sameClaim = attempt.providerPaymentId === payment.paymentId;
     // A different payment failing after the order is settled says nothing about this order.
     if (!mismatch && claimed && !sameClaim && !claims) return intent.status;
     // A stale event for the claimed payment (failed/authorized after captured) changes nothing.
+    // An unrecognised word for the claimed payment never overwrites what we already know.
     if (
       !mismatch &&
       claimed &&
       sameClaim &&
-      payment.status in RANK &&
-      rank(payment.status) < rank(attempt.providerStatus)
+      (payment.state === 'unknown' ||
+        (isRanked(payment.state) && rank(payment.state) < rank(attempt.providerStatus)))
     ) {
       return intent.status;
     }
@@ -99,15 +140,15 @@ export async function applyProviderPayment(
           OR: [
             { providerPaymentId: null },
             { providerStatus: null },
-            { providerStatus: { in: [...NON_CLAIMING] } },
+            { providerStatus: { in: [...NON_CLAIMING_STATES] } },
           ],
         }),
       },
       data: {
         ...(claims && { providerPaymentId: payment.paymentId }),
-        providerStatus: payment.status,
+        providerStatus: payment.state,
         method: payment.method,
-        ...(payment.status === 'captured' && { capturedPaise: payment.amountPaise }),
+        ...(payment.state === 'captured' && { capturedPaise: payment.amountPaise }),
         ...(opts.signatureVerified && !attempt.signatureVerifiedAt && { signatureVerifiedAt: now }),
       },
     });
@@ -118,7 +159,7 @@ export async function applyProviderPayment(
       return currentStatus(tx, intent.id); // a failed try lost to a payment that settled the order
     }
 
-    const target = STATUS_FOR[payment.status];
+    const target = STATUS_FOR[payment.state];
     const source = target === 'PAID' ? 'gateway_verified' : 'gateway_status';
     // Unknown or refund states are recorded on the attempt; refunds are handled by #27/#35.
     // Money captured on our own order heals an earlier FAILED try (history keeps FAILED → PAID).
@@ -217,7 +258,7 @@ export async function applyRefund(
     );
     await tx.paymentAttempt.update({
       where: { id: attempt.id },
-      data: { refundedPaise: refunded, providerStatus: payment.status },
+      data: { refundedPaise: refunded, providerStatus: normaliseRazorpayPayment(payment).state },
     });
     const full = refunded > 0 && refunded >= attempt.capturedPaise;
     // A processed refund is recorded on the acknowledgement as a new entry, never a deletion.

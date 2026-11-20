@@ -423,6 +423,54 @@ describe('failed try, then success on the same order (audit F-1)', () => {
   });
 });
 
+describe('gateway-neutral states (Phase 1b)', () => {
+  it('attempts are stored with neutral states; a legacy "created" claim never blocks a capture', async () => {
+    const d = await donation();
+    const started = pays(d.orderId, d.amountPaise, { status: 'created' });
+    await webhook('payment.authorized', started); // Razorpay "created" arrives as pending
+    let [attempt] = await attemptsFor(d.orderId);
+    expect(attempt).toMatchObject({ providerStatus: 'pending', providerPaymentId: null });
+
+    // A row written before Phase 1b: Razorpay's word, with the payment ID recorded.
+    await db.paymentAttempt.update({
+      where: { id: attempt!.id },
+      data: { providerStatus: 'created', providerPaymentId: started.paymentId },
+    });
+    const ok = pays(d.orderId, d.amountPaise);
+    await webhook('payment.captured', ok);
+    expect(await ledger(d.ref)).toBe('PAID');
+    [attempt] = await attemptsFor(d.orderId);
+    expect(attempt).toMatchObject({ providerStatus: 'captured', providerPaymentId: ok.paymentId });
+    const intent = await db.donationIntent.findUniqueOrThrow({ where: { publicReference: d.ref } });
+    expect(await db.paymentException.count({ where: { donationIntentId: intent.id } })).toBe(0);
+  });
+});
+
+describe('gateway words after Phase 1b (review follow-up)', () => {
+  it('an unrecognised word for the claimed payment never overwrites "captured"', async () => {
+    const d = await donation();
+    const p = pays(d.orderId, d.amountPaise);
+    await webhook('payment.captured', p);
+    await webhook('payment.captured', { ...p, status: 'something_new' });
+    expect(await ledger(d.ref)).toBe('PAID');
+    const [attempt] = await attemptsFor(d.orderId);
+    expect(attempt).toMatchObject({ providerStatus: 'captured', capturedPaise: d.amountPaise });
+  });
+
+  it('an unrecognised word that claims first, then a different capture → owner review, never PAID', async () => {
+    const d = await donation();
+    await webhook('payment.captured', pays(d.orderId, d.amountPaise, { status: 'something_new' }));
+    const second = pays(d.orderId, d.amountPaise);
+    await webhook('payment.captured', second);
+    expect(await ledger(d.ref)).toBe('MANUAL_REVIEW');
+    expect(
+      await db.paymentException.count({
+        where: { providerPaymentId: second.paymentId, kind: 'DUPLICATE_PAYMENT' },
+      }),
+    ).toBe(1);
+  });
+});
+
 describe('duplicate, delayed and out-of-order webhooks', () => {
   it('the same event delivered three times is stored and applied once', async () => {
     const d = await donation();
