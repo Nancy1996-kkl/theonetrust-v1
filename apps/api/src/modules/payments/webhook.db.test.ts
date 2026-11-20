@@ -453,7 +453,25 @@ describe('refund events', () => {
     const attempt = await db.paymentAttempt.findUniqueOrThrow({
       where: { providerOrderId: d.orderId },
     });
-    expect(attempt).toMatchObject({ refundedPaise: 100_000, capturedPaise: 100_000 });
+    // Stored in the gateway-neutral words like every other payment state (Phase 1b).
+    expect(attempt).toMatchObject({
+      refundedPaise: 100_000,
+      capturedPaise: 100_000,
+      providerStatus: 'refunded',
+    });
+  });
+
+  it('a refund event whose payment word is unrecognised stores "unknown", never the raw word', async () => {
+    const d = await paid();
+    await deliver('refund.created', {
+      refund: { entity: { status: 'pending' } },
+      payment: { entity: { ...d.p, status: 'SUCCESS', amount_refunded: 10_000 } },
+    });
+    const attempt = await db.paymentAttempt.findUniqueOrThrow({
+      where: { providerOrderId: d.orderId },
+    });
+    expect(attempt.providerStatus).toBe('unknown');
+    expect(await statusOf(d.ref)).toBe('PAID'); // partial refund: still paid
   });
 
   it('processed without a prior created event still ends REFUNDED; partial refund stays PAID', async () => {

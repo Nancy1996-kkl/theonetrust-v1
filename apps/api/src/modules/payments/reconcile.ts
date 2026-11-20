@@ -60,7 +60,7 @@ export async function applyOrderState(
   attemptId: string,
   state: ProviderOrderState,
   now: Date,
-): Promise<{ status: DonationStatus; found: PaymentState | null }> {
+): Promise<{ status: DonationStatus; found: PaymentState | null; foundRaw: string | null }> {
   const decisive = decisivePayments(state);
   let status = await db.paymentAttempt
     .findUniqueOrThrow({
@@ -71,7 +71,11 @@ export async function applyOrderState(
   for (const payment of decisive) {
     status = await applyPayment(db, attemptId, payment, now);
   }
-  return { status, found: decisive[0]?.state ?? null };
+  return {
+    status,
+    found: decisive[0]?.state ?? null,
+    foundRaw: decisive[0]?.providerRawStatus ?? null,
+  };
 }
 
 /** The shared, gateway-neutral rules for one trusted payment (see the module comment). */
@@ -103,12 +107,13 @@ export async function applyPayment(
     // A different payment failing after the order is settled says nothing about this order.
     if (!mismatch && claimed && !sameClaim && !claims) return intent.status;
     // A stale event for the claimed payment (failed/authorized after captured) changes nothing.
+    // An unrecognised word for the claimed payment never overwrites what we already know.
     if (
       !mismatch &&
       claimed &&
       sameClaim &&
-      isRanked(payment.state) &&
-      rank(payment.state) < rank(attempt.providerStatus)
+      (payment.state === 'unknown' ||
+        (isRanked(payment.state) && rank(payment.state) < rank(attempt.providerStatus)))
     ) {
       return intent.status;
     }
@@ -253,7 +258,7 @@ export async function applyRefund(
     );
     await tx.paymentAttempt.update({
       where: { id: attempt.id },
-      data: { refundedPaise: refunded, providerStatus: payment.status },
+      data: { refundedPaise: refunded, providerStatus: normaliseRazorpayPayment(payment).state },
     });
     const full = refunded > 0 && refunded >= attempt.capturedPaise;
     // A processed refund is recorded on the acknowledgement as a new entry, never a deletion.

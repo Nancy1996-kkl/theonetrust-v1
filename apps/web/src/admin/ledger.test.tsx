@@ -316,6 +316,9 @@ describe('donation detail', () => {
     expect(summary).toHaveTextContent('தமிழ்');
     expect(summary).toHaveTextContent('••••••234F');
     expect(sec(l.attempts)).toHaveTextContent('pay_ABC123');
+    // Gateway-neutral label (Phase 1b): the column is not named after one payment gateway.
+    expect(sec(l.attempts)).toHaveTextContent(l.providerStatus);
+    expect(`${l.providerStatus} ${LEDGER_STRINGS.ta.providerStatus}`).not.toMatch(/razorpay/i);
     expect(sec(l.history)).toHaveTextContent(`${l.statuses.CREATED} → ${l.statuses.PAID}`);
     expect(sec(l.webhooks)).toHaveTextContent('payment.captured');
     expect(sec(l.receipts)).toHaveTextContent('TOT-R-2026-27-000001');

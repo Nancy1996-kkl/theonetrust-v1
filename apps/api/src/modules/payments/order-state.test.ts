@@ -12,6 +12,7 @@ const pay = (state: NormalisedPayment['state'], id: string = state): NormalisedP
   paymentId: `pay_${id}`,
   orderId: 'order_X',
   state,
+  providerRawStatus: state,
   amountPaise: 100,
   currency: 'INR',
   method: 'upi',

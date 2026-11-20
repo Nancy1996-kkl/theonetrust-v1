@@ -13,6 +13,8 @@ export interface RecheckResult {
   status: DonationStatus;
   /** The payment state that decided the outcome, or null when the gateway has no payment. */
   found: PaymentState | null;
+  /** The gateway's own word for it (for the owner's audit trail), or null. */
+  foundRaw: string | null;
 }
 
 /**

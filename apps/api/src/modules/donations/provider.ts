@@ -316,7 +316,10 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
   };
 }
 
-/** Razorpay's payment words → the gateway-neutral states (Phase 1b). Unknown words stay visible. */
+/**
+ * Razorpay's payment words → the gateway-neutral states (Phase 1b). The original word travels
+ * with it (providerRawStatus) so an unexpected word stays visible in the owner's audit trail.
+ */
 const RAZORPAY_STATE: Record<string, PaymentState> = {
   created: 'pending',
   authorized: 'authorized',
@@ -330,6 +333,7 @@ export function normaliseRazorpayPayment(payment: ProviderPayment): NormalisedPa
     paymentId: payment.paymentId,
     orderId: payment.orderId,
     state: RAZORPAY_STATE[payment.status] ?? 'unknown',
+    providerRawStatus: payment.status,
     amountPaise: payment.amountPaise,
     currency: payment.currency,
     method: payment.method,

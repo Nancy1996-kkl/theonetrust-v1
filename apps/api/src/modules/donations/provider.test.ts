@@ -339,6 +339,7 @@ describe('Razorpay → gateway-neutral states (Phase 1b)', () => {
       paymentId: 'pay_N0000001',
       orderId: 'order_N0000001',
       state,
+      providerRawStatus: status,
       amountPaise: 50_000,
       currency: 'INR',
       method: 'upi',

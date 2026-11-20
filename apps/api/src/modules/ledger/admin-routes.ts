@@ -272,7 +272,8 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
       // Same helper as the donor re-check: by order, QR and monthly charges included (F-1, F-4).
       const result = await recheckAttempt(db, opts.provider, attempt, opts.now());
       status = result.status;
-      if (result.found) outcome = `provider_${result.found}`;
+      // The gateway's own word, so the owner's audit trail keeps exactly what it said.
+      if (result.foundRaw) outcome = `provider_${result.foundRaw}`;
     } catch (error) {
       outcome =
         error instanceof PaymentProviderError

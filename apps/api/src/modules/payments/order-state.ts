@@ -23,6 +23,8 @@ export interface NormalisedPayment {
   /** The order (or QR / monthly-charge reference) the gateway says it belongs to. */
   orderId: string | null;
   state: PaymentState;
+  /** The gateway's own word for the state, kept for the owner's audit trail (never decides). */
+  providerRawStatus: string;
   /** Integer paise. */
   amountPaise: number;
   currency: string;

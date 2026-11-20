@@ -435,6 +435,20 @@ describe('exceptions queue', () => {
     expect(await db.receipt.count({ where: { donationIntentId: d.id } })).toBeLessThanOrEqual(1);
   });
 
+  it('the re-check audit keeps the gateway’s own word; a started-only payment stays unsettled', async () => {
+    const d = await intent(30_000);
+    pays(d.orderId, 30_000, { status: 'created' });
+    const res = await send('POST', `/api/v1/admin/donations/${d.id}/recheck`, {
+      reason: 'Donor says the app is still waiting',
+    });
+    expect(res.json()).toMatchObject({ status: 'PENDING', outcome: 'provider_created' });
+    const log = await db.auditLog.findFirstOrThrow({
+      where: { action: 'donation.rechecked', entityId: d.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(log.reason).toContain('[provider_created]');
+  });
+
   it('re-check works for QR and monthly-charge attempts (audit F-4)', async () => {
     // QR: the attempt is keyed by the QR it was paid on, not by an order.
     const qr = await intent(40_000);
