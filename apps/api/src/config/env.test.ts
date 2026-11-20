@@ -190,3 +190,18 @@ describe('loadEnv — Razorpay keys', () => {
     );
   });
 });
+
+describe('loadEnv — payment safety windows (Phase 0)', () => {
+  it('defaults the webhook lease and the FAILED re-check window, and bounds both', () => {
+    const env = loadEnv({ NODE_ENV: 'test' });
+    expect(env.WEBHOOK_REPROCESS_AFTER_MS).toBe(120_000);
+    expect(env.FAILED_RECHECK_WINDOW_MS).toBe(86_400_000);
+    expect(() => loadEnv({ NODE_ENV: 'test', FAILED_RECHECK_WINDOW_MS: '1000' })).toThrow();
+    expect(() =>
+      loadEnv({ NODE_ENV: 'test', FAILED_RECHECK_WINDOW_MS: String(8 * 86_400_000) }),
+    ).toThrow();
+    expect(loadEnv({ NODE_ENV: 'test', FAILED_RECHECK_WINDOW_MS: '3600000' })).toMatchObject({
+      FAILED_RECHECK_WINDOW_MS: 3_600_000,
+    });
+  });
+});
