@@ -18,6 +18,10 @@ export interface CreateOrderInput {
   receipt: string;
   /** Non-personal labels only. */
   notes: Record<string, string>;
+  /** +91 mobile, only for gateways that require one (Cashfree). Never logged or tagged. */
+  customerPhone?: string | null;
+  /** The donor comes back to this language's page (Cashfree return URL). */
+  locale?: 'ta' | 'en';
 }
 
 export interface ProviderOrder {
@@ -25,6 +29,8 @@ export interface ProviderOrder {
   amountPaise: number;
   currency: 'INR';
   status: string;
+  /** Cashfree's one-time payment_session_id for the browser pop-up. */
+  sessionId?: string;
 }
 
 /** Trusted payment state, read from the provider's API with our secret (never from the browser). */
@@ -44,7 +50,20 @@ export interface ProviderPayment {
  * What the browser needs to open this provider's payment window (Phase 1). Provider words stay
  * in the adapter layer: routes ask for a descriptor and never build one themselves.
  */
-export function checkoutDescriptor(provider: PaymentProvider, orderId: string): CheckoutDescriptor {
+export function checkoutDescriptor(
+  provider: PaymentProvider,
+  orderId: string,
+  sessionId?: string | null,
+): CheckoutDescriptor {
+  if (provider.name === 'CASHFREE') {
+    if (!sessionId || !provider.checkoutMode) throw new PaymentProviderError('unexpected_response');
+    return {
+      provider: 'CASHFREE',
+      paymentSessionId: sessionId,
+      mode: provider.checkoutMode,
+      orderId,
+    };
+  }
   return { provider: 'RAZORPAY', keyId: provider.publicKeyId, orderId };
 }
 
@@ -52,9 +71,20 @@ export function checkoutDescriptor(provider: PaymentProvider, orderId: string): 
 export const RAZORPAY_TIMEOUT_MS = 10_000;
 
 export interface PaymentProvider {
-  readonly name: 'RAZORPAY';
-  /** The key ID the browser needs to open Checkout. Never the secret. */
+  readonly name: 'RAZORPAY' | 'CASHFREE';
+  /** The key ID the browser needs to open Checkout. Never the secret. Empty for Cashfree. */
   readonly publicKeyId: string;
+  /** Cashfree: which SDK mode the browser loads (sandbox | production). */
+  readonly checkoutMode?: 'sandbox' | 'production';
+  /** The gateway refuses orders without the donor's mobile number (Cashfree). */
+  readonly requiresCustomerPhone?: boolean;
+  /** Gateway-neutral order state (Cashfree); Razorpay uses razorpayOrderState instead. */
+  fetchOrderState?(orderRef: string): Promise<ProviderOrderState>;
+  /** Refunds of one order (Cashfree): total refunded and the overall refund state. */
+  fetchRefunds?(orderRef: string): Promise<{
+    refundedPaise: number;
+    status: 'created' | 'processed' | 'failed' | null;
+  }>;
   createOrder(input: CreateOrderInput): Promise<ProviderOrder>;
   /** HMAC-SHA256(order_id|payment_id, key secret), compared in constant time. */
   verifyCheckoutSignature(orderId: string, paymentId: string, signature: string): boolean;

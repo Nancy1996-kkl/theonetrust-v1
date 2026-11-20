@@ -32,6 +32,16 @@ describe('no live payment keys', () => {
     }
   });
 
+  it('flags a filled-in Cashfree client secret', () => {
+    for (const text of [
+      'CASHFREE_CLIENT_SECRET=abcdEFGH1234',
+      'CASHFREE_CLIENT_SECRET: "cf-0123456789"',
+    ]) {
+      assert.equal(scan([{ path: 'deploy/x.yml', text }])[0]?.rule, 'Cashfree secret value');
+    }
+    assert.deepEqual(scan([{ path: '.env.example', text: 'CASHFREE_CLIENT_SECRET=\n' }]), []);
+  });
+
   it('allows made-up secrets in test files, but never a live key ID there', () => {
     const text = `RAZORPAY_KEY_SECRET: 'secret-secret-123'\nconst k = '${LIVE}';`;
     for (const path of ['apps/api/src/config/env.test.ts', 'apps/web/e2e/a.spec.ts']) {

@@ -91,3 +91,35 @@ describe('error envelope', () => {
     expect(res.json().error.code).toBe('BAD_REQUEST');
   });
 });
+
+describe('Cashfree wiring (Phase 4)', () => {
+  const cashfreeEnv = {
+    NODE_ENV: 'test',
+    PAYMENT_PROVIDER: 'cashfree',
+    CASHFREE_CLIENT_ID: 'TEST0123456789',
+    CASHFREE_CLIENT_SECRET: 'cf-secret-0123456789',
+    PUBLIC_SITE_URL: 'https://theonetrust.example',
+  };
+
+  it('registers the Cashfree webhook; without a database it answers 503, never 404', async () => {
+    app = buildApp(loadEnv(cashfreeEnv));
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/webhooks/cashfree',
+      headers: { 'content-type': 'application/json' },
+      payload: '{}',
+    });
+    expect(res.statusCode).toBe(503);
+  });
+
+  it('with Razorpay selected, the Cashfree webhook stays unavailable', async () => {
+    app = buildApp(loadEnv({ ...cashfreeEnv, PAYMENT_PROVIDER: 'razorpay' }));
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/webhooks/cashfree',
+      headers: { 'content-type': 'application/json' },
+      payload: '{}',
+    });
+    expect(res.statusCode).toBe(503);
+  });
+});

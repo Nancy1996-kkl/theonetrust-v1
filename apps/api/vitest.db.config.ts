@@ -37,6 +37,7 @@ export default defineConfig({
         'src/modules/jobs/routes.ts',
         'src/modules/payments/verify-routes.ts',
         'src/modules/payments/webhook-routes.ts',
+        'src/modules/payments/cashfree-webhook-routes.ts',
         'src/modules/payments/webhook-admin-routes.ts',
         'src/modules/ledger/**',
         'src/modules/notifications/admin-routes.ts',

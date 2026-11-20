@@ -1,12 +1,18 @@
 import type { DonationStatus } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
-import { razorpayOrderState, type PaymentProvider } from '../donations/provider.ts';
+import {
+  PaymentProviderError,
+  razorpayOrderState,
+  type PaymentProvider,
+} from '../donations/provider.ts';
 import type { PaymentState } from './order-state.ts';
 import { applyOrderState } from './reconcile.ts';
 
 export interface RecheckAttempt {
   id: string;
   providerOrderId: string;
+  /** The gateway the attempt was made with; another gateway is never asked about it. */
+  provider?: string;
 }
 
 export interface RecheckResult {
@@ -36,6 +42,12 @@ export async function recheckAttempt(
   attempt: RecheckAttempt,
   now: Date,
 ): Promise<RecheckResult> {
-  const state = await razorpayOrderState(provider, attempt.providerOrderId);
+  // After a gateway switch, an older attempt is never sent to the new gateway (it would not know it).
+  if (attempt.provider !== undefined && attempt.provider !== provider.name) {
+    throw new PaymentProviderError('rejected');
+  }
+  const state = provider.fetchOrderState
+    ? await provider.fetchOrderState(attempt.providerOrderId)
+    : await razorpayOrderState(provider, attempt.providerOrderId);
   return applyOrderState(db, attempt.id, state, now);
 }

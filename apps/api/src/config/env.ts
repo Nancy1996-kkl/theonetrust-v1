@@ -80,9 +80,34 @@ const EnvSchema = z
     LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
     /**
      * Which gateway takes online donations (Phase 1 of the Cashfree plan). `none` switches online
-     * donations off cleanly (503), e.g. while moving gateways. `cashfree` arrives in Phase 4.
+     * donations off cleanly (503), e.g. while moving gateways. `cashfree` (Phase 4) needs the
+     * CASHFREE_* keys; Razorpay stays the default so nothing changes until it is switched.
      */
-    PAYMENT_PROVIDER: z.enum(['razorpay', 'none']).default('razorpay'),
+    PAYMENT_PROVIDER: z.enum(['razorpay', 'cashfree', 'none']).default('razorpay'),
+    /**
+     * Cashfree PG keys (Developers → API Keys) — backend only, never VITE_*. The client secret
+     * also verifies Cashfree's webhooks (there is no separate webhook secret).
+     */
+    CASHFREE_CLIENT_ID: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z
+        .string()
+        .regex(/^[A-Za-z0-9_-]{8,128}$/)
+        .optional(),
+    ),
+    CASHFREE_CLIENT_SECRET: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.string().min(16).max(256).optional(),
+    ),
+    /** `sandbox` until the trust's account is activated and the domain whitelisted. */
+    CASHFREE_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
+    /** Pinned Cashfree API version (docs/research/2026-11-20-cashfree-research.md). */
+    CASHFREE_API_VERSION: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .default('2026-01-01'),
+    /** How long a Cashfree order accepts payment. */
+    CASHFREE_ORDER_EXPIRY_MINUTES: z.coerce.number().int().min(15).max(1440).default(30),
     /**
      * Razorpay API keys — backend only, never VITE_*. Test keys (rzp_test_) until launch (#39):
      * outside production a live key is refused. Without keys, donations answer 503.
@@ -283,6 +308,39 @@ const EnvSchema = z
         path: ['RAZORPAY_KEY_ID'],
         message: 'live key outside production',
       });
+    }
+    if (Boolean(env.CASHFREE_CLIENT_ID) !== Boolean(env.CASHFREE_CLIENT_SECRET)) {
+      const missing = env.CASHFREE_CLIENT_ID ? 'CASHFREE_CLIENT_SECRET' : 'CASHFREE_CLIENT_ID';
+      ctx.addIssue({
+        code: 'custom',
+        path: [missing],
+        message: 'set both Cashfree keys or neither',
+      });
+    }
+    // Production keys only in production; sandbox keys never in production.
+    if (env.NODE_ENV !== 'production' && env.CASHFREE_ENV === 'production') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['CASHFREE_ENV'],
+        message: 'production Cashfree outside production',
+      });
+    }
+    if (env.PAYMENT_PROVIDER === 'cashfree' && env.CASHFREE_CLIENT_ID) {
+      const site = env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0];
+      if (!site) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['PUBLIC_SITE_URL'],
+          message: 'required for Cashfree',
+        });
+      } else if (site.replace(/\/+$/, '').length + '/ta/?cf_order='.length + 45 > 250) {
+        // Cashfree's return_url and notify_url are limited to 250 characters.
+        ctx.addIssue({
+          code: 'custom',
+          path: ['PUBLIC_SITE_URL'],
+          message: 'too long for Cashfree',
+        });
+      }
     }
     if (env.EMAIL_PROVIDER !== 'none') {
       for (const key of ['EMAIL_API_KEY', 'EMAIL_FROM'] as const) {
