@@ -91,9 +91,16 @@ GRANT USAGE ON SCHEMA theonetrust TO theonetrust_app;
 REVOKE ALL ON ALL TABLES IN SCHEMA theonetrust FROM theonetrust_app;
 GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA theonetrust TO theonetrust_app;
 -- The only tables the app deletes rows from (owner removes a draft/unused item; recovery codes are
--- replaced). Payment, receipt, audit and history tables: no DELETE at all.
+-- replaced; expired rate-limit counters are cleared). Payment, receipt, audit and history
+-- tables: no DELETE at all. rate_limit_buckets exists from migration 20261120090000 on.
 GRANT DELETE ON theonetrust.admin_recovery_codes, theonetrust.programmes,
   theonetrust.impact_metrics, theonetrust.transparency_documents TO theonetrust_app;
+DO $$
+BEGIN
+  IF to_regclass('theonetrust.rate_limit_buckets') IS NOT NULL THEN
+    GRANT DELETE ON theonetrust.rate_limit_buckets TO theonetrust_app;
+  END IF;
+END $$;
 -- The migration history is the owner's alone; the app may read it (launch check).
 REVOKE INSERT, UPDATE, DELETE ON theonetrust._prisma_migrations FROM theonetrust_app;
 -- Acknowledgement numbers (nextval).
