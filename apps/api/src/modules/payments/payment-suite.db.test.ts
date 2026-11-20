@@ -238,6 +238,125 @@ describe('cancel and failure', () => {
   });
 });
 
+/**
+ * Audit F-1: a donor's first try fails and a retry on the SAME order succeeds (Cashfree allows
+ * several attempts per order; Razorpay Checkout retries too). The captured money is the truth:
+ * the donation ends PAID with exactly one acknowledgement and one set of notifications.
+ */
+describe('failed try, then success on the same order (audit F-1)', () => {
+  async function withReceipt() {
+    const res = await createIntent(100_000, undefined, { wantsReceipt: true });
+    expect(res.statusCode).toBe(201);
+    const body = res.json() as { publicReference: string; checkout: { orderId: string } };
+    return { ref: body.publicReference, orderId: body.checkout.orderId };
+  }
+  async function expectPaidOnce(ref: string) {
+    const intent = await db.donationIntent.findUniqueOrThrow({ where: { publicReference: ref } });
+    expect(intent.status).toBe('PAID');
+    expect(await db.receipt.count({ where: { donationIntentId: intent.id } })).toBe(1);
+    expect(
+      await db.notificationOutbox.count({
+        where: { entityRef: `donation_intent:${intent.id}`, template: 'owner_donation_paid' },
+      }),
+    ).toBe(1);
+    const history = await db.donationStatusEvent.findMany({
+      where: { donationIntentId: intent.id, toStatus: 'PAID' },
+    });
+    expect(history).toHaveLength(1);
+    expect(history[0]?.source).toBe('gateway_verified');
+    return { intent, history };
+  }
+
+  it('(a) callback reports the failure, then the retry callback succeeds → PAID once', async () => {
+    const d = await withReceipt();
+    const failed = pays(d.orderId, 100_000, { status: 'failed' });
+    expect((await callback(d.ref, d.orderId, failed.paymentId)).json().status).toBe('FAILED');
+    const ok = pays(d.orderId, 100_000);
+    expect((await callback(d.ref, d.orderId, ok.paymentId)).json().status).toBe('PAID');
+    const { history } = await expectPaidOnce(d.ref);
+    expect(history[0]?.fromStatus).toBe('FAILED'); // the owner sees "paid after a failed try"
+    const [attempt] = await attemptsFor(d.orderId);
+    expect(attempt).toMatchObject({ providerPaymentId: ok.paymentId, capturedPaise: 100_000 });
+    expect(await donorStatus(d.ref)).toBe('PAID');
+  });
+
+  it('(b) failed webhook first, then the captured webhook → PAID once; the callback later is absorbed', async () => {
+    const d = await withReceipt();
+    await webhook('payment.failed', pays(d.orderId, 100_000, { status: 'failed' }));
+    expect(await ledger(d.ref)).toBe('FAILED');
+    const ok = pays(d.orderId, 100_000);
+    await webhook('payment.captured', ok);
+    expect((await callback(d.ref, d.orderId, ok.paymentId)).json().status).toBe('PAID');
+    await expectPaidOnce(d.ref);
+  });
+
+  it('(c) the failed webhook arrives AFTER the success → stays PAID, no exception', async () => {
+    const d = await withReceipt();
+    const failed = pays(d.orderId, 100_000, { status: 'failed' });
+    const ok = pays(d.orderId, 100_000);
+    expect((await callback(d.ref, d.orderId, ok.paymentId)).json().status).toBe('PAID');
+    await webhook('payment.failed', failed);
+    const { intent } = await expectPaidOnce(d.ref);
+    expect(await db.paymentException.count({ where: { donationIntentId: intent.id } })).toBe(0);
+    const [attempt] = await attemptsFor(d.orderId);
+    expect(attempt).toMatchObject({ providerPaymentId: ok.paymentId, providerStatus: 'captured' });
+  });
+
+  it('(d) two captured payments on one order → stays PAID once + DUPLICATE_PAYMENT for the owner', async () => {
+    const d = await withReceipt();
+    const first = pays(d.orderId, 100_000);
+    const second = pays(d.orderId, 100_000);
+    await webhook('payment.captured', first);
+    await webhook('payment.captured', second);
+    const { intent } = await expectPaidOnce(d.ref);
+    expect(
+      await db.paymentException.count({
+        where: { donationIntentId: intent.id, kind: 'DUPLICATE_PAYMENT' },
+      }),
+    ).toBe(1);
+  });
+
+  it('(d2) a second captured payment while only authorized → MANUAL_REVIEW, never PAID', async () => {
+    const d = await withReceipt();
+    await webhook('payment.authorized', pays(d.orderId, 100_000, { status: 'authorized' }));
+    await webhook('payment.captured', pays(d.orderId, 100_000));
+    expect(await ledger(d.ref)).toBe('MANUAL_REVIEW');
+  });
+
+  it('(e) the donor status re-check heals a FAILED donation whose retry was captured', async () => {
+    const d = await withReceipt();
+    await webhook('payment.failed', pays(d.orderId, 100_000, { status: 'failed' }));
+    expect(await donorStatus(d.ref)).toBe('FAILED'); // nothing captured yet: still FAILED
+    pays(d.orderId, 100_000); // the retry succeeded but no callback/webhook reached us
+    expect(await donorStatus(d.ref)).toBe('PAID');
+    await expectPaidOnce(d.ref);
+  });
+
+  it('a stale authorized or a forged-signature success never revives a FAILED donation', async () => {
+    const d = await withReceipt();
+    const failed = pays(d.orderId, 100_000, { status: 'failed' });
+    await webhook('payment.failed', failed);
+    await webhook('payment.authorized', { ...failed, status: 'authorized' });
+    expect(await ledger(d.ref)).toBe('FAILED');
+    const ok = pays(d.orderId, 100_000);
+    expect((await callback(d.ref, d.orderId, ok.paymentId, 'f'.repeat(64))).statusCode).toBe(400);
+    expect(await ledger(d.ref)).toBe('FAILED');
+  });
+
+  it('a captured retry with the wrong amount after a failure is an exception, never PAID', async () => {
+    const d = await withReceipt();
+    await webhook('payment.failed', pays(d.orderId, 100_000, { status: 'failed' }));
+    const wrong = pays(d.orderId, 1_000);
+    await webhook('payment.captured', wrong);
+    expect(await ledger(d.ref)).toBe('FAILED');
+    expect(
+      await db.paymentException.count({
+        where: { providerPaymentId: wrong.paymentId, kind: 'PAYMENT_MISMATCH' },
+      }),
+    ).toBe(1);
+  });
+});
+
 describe('duplicate, delayed and out-of-order webhooks', () => {
   it('the same event delivered three times is stored and applied once', async () => {
     const d = await donation();

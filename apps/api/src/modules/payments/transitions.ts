@@ -21,7 +21,19 @@ const ALLOWED: Record<DonationStatus, readonly DonationStatus[]> = {
   REFUNDED: [],
 };
 
-export function canTransition(from: DonationStatus, to: DonationStatus): boolean {
+export type TransitionSource = PaidSource | 'donor_report' | 'gateway_status' | 'owner_review';
+
+/**
+ * FAILED is terminal with ONE exception (audit F-1): money the gateway confirms as captured on our
+ * own order. A donor may fail a first try and succeed on a retry of the same order; the captured
+ * payment is the truth, so FAILED → PAID is allowed for `gateway_verified` and nothing else.
+ */
+export function canTransition(
+  from: DonationStatus,
+  to: DonationStatus,
+  source?: TransitionSource,
+): boolean {
+  if (from === 'FAILED' && to === 'PAID') return source === 'gateway_verified';
   return from === to || ALLOWED[from].includes(to);
 }
 
@@ -29,7 +41,7 @@ export async function transitionDonation(
   tx: Prisma.TransactionClient,
   intentId: string,
   to: DonationStatus,
-  source: PaidSource | 'donor_report' | 'gateway_status' | 'owner_review',
+  source: TransitionSource,
 ): Promise<{ from: DonationStatus; to: DonationStatus }> {
   // A donor's own report (UTR, screenshot, "I paid") can never make anything PAID.
   if (to === 'PAID' && source !== 'gateway_verified' && source !== 'owner_bank_evidence') {
@@ -37,7 +49,7 @@ export async function transitionDonation(
   }
   const intent = await tx.donationIntent.findUnique({ where: { id: intentId } });
   if (!intent) throw new AppError('NOT_FOUND');
-  if (!canTransition(intent.status, to)) throw new AppError('CONFLICT');
+  if (!canTransition(intent.status, to, source)) throw new AppError('CONFLICT');
   if (intent.status !== to) {
     // Conditional update: a concurrent change makes this a no-op, detected below.
     const result = await tx.donationIntent.updateMany({

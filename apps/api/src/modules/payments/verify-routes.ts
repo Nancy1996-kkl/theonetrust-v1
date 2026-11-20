@@ -4,14 +4,10 @@ import type { DonationStatusResponse } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
-import {
-  PaymentProviderError,
-  QR_ID,
-  type PaymentProvider,
-  type ProviderPayment,
-} from '../donations/provider.ts';
+import { PaymentProviderError, type PaymentProvider } from '../donations/provider.ts';
 import { currentReceiptToken } from '../receipts/issue.ts';
 import { applyProviderPayment, donorStatus } from './reconcile.ts';
+import { recheckAttempt } from './recheck.ts';
 
 const reference = z.string().regex(/^TOT-D-[0-9A-HJKMNP-TV-Z]{12}$/);
 const VerifyBody = z.object({
@@ -114,30 +110,16 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
       const { db, provider } = deps();
       const { reference: publicReference } = parseInput(StatusParams, request.params);
       const intent = await intentWithAttempt(db, publicReference);
-      const unsettled = ['CREATED', 'PENDING', 'AUTHORIZED'].includes(intent.status);
+      // FAILED is re-checked too: a retry on the same order may have succeeded (audit F-1).
+      const unsettled = ['CREATED', 'PENDING', 'AUTHORIZED', 'FAILED'].includes(intent.status);
       const attempt = intent.paymentAttempts[0];
       if (!unsettled || intent.channel !== 'CHECKOUT' || !attempt) {
         return reply(db, intent, intent.status);
       }
-      // Ask Razorpay (with our secret) — covers a lost browser callback or a closed tab.
+      // Ask the gateway (with our secret), by order — covers a lost callback, a closed tab and a
+      // successful retry after a failed first try.
       try {
-        const qr = QR_ID.test(attempt.providerOrderId);
-        // A QR payment carries no order of ours: it is matched to the QR it was made on.
-        const asQr = (p: ProviderPayment): ProviderPayment =>
-          qr ? { ...p, orderId: attempt.providerOrderId } : p;
-        const payments = attempt.providerPaymentId
-          ? [asQr(await provider.fetchPayment(attempt.providerPaymentId))]
-          : qr
-            ? provider.fetchQrPayments
-              ? (await provider.fetchQrPayments(attempt.providerOrderId)).map(asQr)
-              : []
-            : await provider.fetchOrderPayments(attempt.providerOrderId);
-        const best =
-          payments.find((p) => p.status === 'captured') ??
-          payments.find((p) => p.status === 'authorized') ??
-          payments[0];
-        if (!best) return reply(db, intent, intent.status);
-        const status = await applyProviderPayment(db, attempt.id, best, opts.now());
+        const { status } = await recheckAttempt(db, provider, attempt, opts.now());
         return reply(db, intent, status);
       } catch {
         return reply(db, intent, intent.status);

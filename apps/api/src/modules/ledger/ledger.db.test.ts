@@ -56,6 +56,8 @@ const provider: PaymentProvider = {
     if (providerDown) throw new PaymentProviderError('network');
     return [...remote.values()].filter((p) => p.orderId === orderId);
   },
+  // A QR payment is reported by the QR it was made on (no order of ours), like Razorpay's API.
+  fetchQrPayments: async (qrId) => [...remote.values()].filter((p) => p.orderId === qrId),
 };
 let providerDown = false;
 
@@ -403,6 +405,52 @@ describe('exceptions queue', () => {
         .json()
         .items.some((i: { exceptionId: string }) => i.exceptionId === exception.exceptionId),
     ).toBe(false);
+  });
+
+  it('re-check heals a FAILED donation whose retry on the same order was captured (audit F-1)', async () => {
+    const d = await intent(100_000);
+    await webhook('payment.failed', pays(d.orderId, 100_000, { status: 'failed' }));
+    expect((await db.donationIntent.findUniqueOrThrow({ where: { id: d.id } })).status).toBe(
+      'FAILED',
+    );
+    pays(d.orderId, 100_000); // the retry succeeded; no callback or webhook reached us
+    const res = await send('POST', `/api/v1/admin/donations/${d.id}/recheck`, {
+      reason: 'Donor says the second try worked',
+    });
+    expect(res.json()).toMatchObject({ status: 'PAID', outcome: 'provider_captured' });
+  });
+
+  it('re-check works for QR and monthly-charge attempts (audit F-4)', async () => {
+    // QR: the attempt is keyed by the QR it was paid on, not by an order.
+    const qr = await intent(40_000);
+    const qrId = `qr_L${String(++seq).padStart(10, '0')}`;
+    await db.paymentAttempt.updateMany({
+      where: { providerOrderId: qr.orderId },
+      data: { providerOrderId: qrId },
+    });
+    pays(qrId, 40_000);
+    expect(
+      (
+        await send('POST', `/api/v1/admin/donations/${qr.id}/recheck`, {
+          reason: 'Donor scanned the QR',
+        })
+      ).json(),
+    ).toMatchObject({ status: 'PAID', outcome: 'provider_captured' });
+
+    // Monthly charge with no order: stored as subpay_<payment id>, matched by that payment.
+    const monthly = await intent(50_000);
+    const charge = pays('order_unused000001', 50_000, { orderId: null });
+    await db.paymentAttempt.updateMany({
+      where: { providerOrderId: monthly.orderId },
+      data: { providerOrderId: `subpay_${charge.paymentId}` },
+    });
+    expect(
+      (
+        await send('POST', `/api/v1/admin/donations/${monthly.id}/recheck`, {
+          reason: 'Monthly charge check',
+        })
+      ).json(),
+    ).toMatchObject({ status: 'PAID', outcome: 'provider_captured' });
   });
 
   it('re-check: unknown or bank-transfer donation → 404; Razorpay down → recorded, nothing changes', async () => {

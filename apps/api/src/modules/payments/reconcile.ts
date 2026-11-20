@@ -12,8 +12,10 @@ import { canTransition, transitionDonation } from './transitions.ts';
  * and the webhook, so all three follow identical rules (#26, #27):
  *
  * - order ID, amount and currency must match what WE created, else MANUAL_REVIEW + exception;
- * - a second, different payment for the same order → MANUAL_REVIEW + exception;
- * - captured → PAID, authorized → AUTHORIZED, failed → FAILED, created → PENDING;
+ * - a second, different SETTLING payment for the same order → MANUAL_REVIEW + exception; a failed
+ *   or abandoned try never claims the order, so a later success on it still counts (audit F-1);
+ * - captured → PAID, authorized → AUTHORIZED, failed → FAILED, created → PENDING; captured money
+ *   also heals an earlier FAILED try (gateway-verified only);
  * - nothing ever moves backwards (the transition service refuses it), so out-of-order events
  *   are harmless.
  */
@@ -25,6 +27,12 @@ const STATUS_FOR: Record<string, DonationStatus> = {
   captured: 'PAID',
   failed: 'FAILED',
 };
+
+/** Payment states that never settle an order, so never claim its attempt (audit F-1). */
+const NON_CLAIMING = new Set(['created', 'failed']);
+/** Forward order of a payment's life; a lower state for the same payment is a stale event. */
+const RANK: Record<string, number> = { created: 0, failed: 1, authorized: 2, captured: 3 };
+const rank = (status: string | null): number => RANK[status ?? ''] ?? -1;
 
 export async function applyProviderPayment(
   db: Db,
@@ -44,8 +52,26 @@ export async function applyProviderPayment(
       payment.orderId !== attempt.providerOrderId ||
       payment.amountPaise !== attempt.amountPaise ||
       payment.currency !== 'INR';
-    const duplicate =
-      attempt.providerPaymentId !== null && attempt.providerPaymentId !== payment.paymentId;
+    // Only a payment that settles (or may settle) the order claims the attempt (audit F-1): a
+    // failed or abandoned try never does, so a successful retry on the same order still counts.
+    const claims = !NON_CLAIMING.has(payment.status);
+    const claimed =
+      attempt.providerPaymentId !== null && !NON_CLAIMING.has(attempt.providerStatus ?? 'failed');
+    const sameClaim = attempt.providerPaymentId === payment.paymentId;
+    // A different payment failing after the order is settled says nothing about this order.
+    if (!mismatch && claimed && !sameClaim && !claims) return intent.status;
+    // A stale event for the claimed payment (failed/authorized after captured) changes nothing.
+    if (
+      !mismatch &&
+      claimed &&
+      sameClaim &&
+      payment.status in RANK &&
+      rank(payment.status) < rank(attempt.providerStatus)
+    ) {
+      return intent.status;
+    }
+    // "Duplicate" means a SECOND settling payment with a different ID.
+    const duplicate = claimed && !sameClaim && claims;
 
     if (mismatch || duplicate) {
       await tx.paymentException.create({
@@ -65,7 +91,7 @@ export async function applyProviderPayment(
     await tx.paymentAttempt.update({
       where: { id: attempt.id },
       data: {
-        providerPaymentId: payment.paymentId,
+        ...(claims && { providerPaymentId: payment.paymentId }),
         providerStatus: payment.status,
         method: payment.method,
         ...(payment.status === 'captured' && { capturedPaise: payment.amountPaise }),
@@ -74,16 +100,13 @@ export async function applyProviderPayment(
     });
 
     const target = STATUS_FOR[payment.status];
+    const source = target === 'PAID' ? 'gateway_verified' : 'gateway_status';
     // Unknown or refund states are recorded on the attempt; refunds are handled by #27/#35.
-    if (!target || target === intent.status || !canTransition(intent.status, target)) {
+    // Money captured on our own order heals an earlier FAILED try (history keeps FAILED → PAID).
+    if (!target || target === intent.status || !canTransition(intent.status, target, source)) {
       return intent.status;
     }
-    await transitionDonation(
-      tx,
-      intent.id,
-      target,
-      target === 'PAID' ? 'gateway_verified' : 'gateway_status',
-    );
+    await transitionDonation(tx, intent.id, target, source);
     // The acknowledgement is created in the same transaction as PAID, never before (#29).
     if (target === 'PAID') {
       await issueReceiptIfEligible(
