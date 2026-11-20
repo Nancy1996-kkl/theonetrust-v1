@@ -17,6 +17,8 @@
 --   * No passwords here. Set them separately (README step 3) — never in Git, chat or logs.
 --
 -- RUN AS: postgres, in the Supabase SQL editor of the project that holds `theonetrust`.
+-- PASSWORDS: never in this file and never as plain text in the SQL editor — this project logs
+--   DDL statements. Use ops/supabase/scram-verifier.mjs (README step 3).
 -- THEN RUN: 02-verify-isolation.sql (read-only) and check every row says ok = true.
 -- UNDO:   03-rollback.sql.
 
@@ -32,14 +34,27 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'theonetrust_app') THEN
     RAISE EXCEPTION 'role theonetrust_app not found: wrong project? Nothing was changed.';
   END IF;
+  -- Every object theonetrust_app owns, of every kind (tables, types, functions, schemas, shared
+  -- objects), must belong to the trust schema; REASSIGN OWNED below moves exactly these.
   IF EXISTS (
-    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE c.relowner = 'theonetrust_app'::regrole AND n.nspname NOT IN ('theonetrust', 'pg_toast')
-  ) OR EXISTS (
-    SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE p.proowner = 'theonetrust_app'::regrole AND n.nspname <> 'theonetrust'
+    SELECT 1 FROM pg_shdepend d
+    WHERE d.refobjid = 'theonetrust_app'::regrole AND d.deptype = 'o'
+      AND d.dbid IN (0, (SELECT oid FROM pg_database WHERE datname = current_database()))
+      AND NOT (
+        (d.classid = 'pg_class'::regclass AND EXISTS (
+          SELECT 1 FROM pg_class c WHERE c.oid = d.objid AND (
+            c.relnamespace = 'theonetrust'::regnamespace
+            OR (c.relnamespace = 'pg_toast'::regnamespace AND EXISTS (
+              SELECT 1 FROM pg_class t WHERE t.reltoastrelid = c.oid
+                AND t.relnamespace = 'theonetrust'::regnamespace)))))
+        OR (d.classid = 'pg_type'::regclass AND EXISTS (
+          SELECT 1 FROM pg_type t WHERE t.oid = d.objid AND t.typnamespace = 'theonetrust'::regnamespace))
+        OR (d.classid = 'pg_proc'::regclass AND EXISTS (
+          SELECT 1 FROM pg_proc p WHERE p.oid = d.objid AND p.pronamespace = 'theonetrust'::regnamespace))
+        OR (d.classid = 'pg_namespace'::regclass AND d.objid = 'theonetrust'::regnamespace)
+      )
   ) THEN
-    RAISE EXCEPTION 'theonetrust_app owns objects outside the theonetrust schema: stopping. Nothing was changed.';
+    RAISE EXCEPTION 'theonetrust_app owns something outside the theonetrust schema: stopping. Nothing was changed.';
   END IF;
 END $$;
 
@@ -47,8 +62,9 @@ END $$;
 DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'theonetrust_owner') THEN
-    CREATE ROLE theonetrust_owner LOGIN NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS
-      CONNECTION LIMIT 2;
+    -- Defaults already mean no superuser, no role/database creation, no replication, no RLS bypass
+    -- (02 check 4 verifies the app role; listing them here could fail on a managed Postgres).
+    CREATE ROLE theonetrust_owner LOGIN NOINHERIT CONNECTION LIMIT 2;
   END IF;
 END $$;
 ALTER ROLE theonetrust_owner SET search_path = theonetrust;
@@ -59,8 +75,7 @@ GRANT theonetrust_owner TO postgres;
 REASSIGN OWNED BY theonetrust_app TO theonetrust_owner;
 
 -- 3. The website's user: rows only.
-ALTER ROLE theonetrust_app WITH LOGIN NOINHERIT NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS
-  CONNECTION LIMIT 20;
+ALTER ROLE theonetrust_app WITH LOGIN NOINHERIT CONNECTION LIMIT 20;
 ALTER ROLE theonetrust_app SET search_path = theonetrust;
 ALTER ROLE theonetrust_app SET statement_timeout = '15s';
 ALTER ROLE theonetrust_app SET idle_in_transaction_session_timeout = '30s';

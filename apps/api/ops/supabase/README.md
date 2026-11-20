@@ -12,7 +12,10 @@ The scripts were rehearsed on a local copy built the same way as the Supabase pr
 roles, ownership and row-level security, plus stand-in "cafe" tables). The rehearsal covers:
 run, verify, run again, a migration as the owner, rollback, and re-apply. The real app ran as
 `theonetrust_app` and made, verified and acknowledged a donation; every forbidden action was
-refused. To repeat it: `ops/supabase/rehearse-local.sh` (local Postgres only).
+refused. To repeat it: `PGHOST=localhost PGUSER=postgres PGPASSWORD=… ops/supabase/rehearse-local.sh`, run
+from `apps/api` against a **local** Postgres only (it refuses any other host). The rehearsal also
+proves each check fails when it should: a stray object stops `01`, and a disabled trigger, a
+column grant or a callable owner-rights function each show up in `02`.
 
 ## Before you start
 
@@ -28,15 +31,30 @@ refused. To repeat it: `ops/supabase/rehearse-local.sh` (local Postgres only).
 2. In Supabase → the project holding the `theonetrust` schema → **SQL Editor**, paste and run
    **`01-roles-and-ownership.sql`**. It checks that it is in the right project, then runs as
    one transaction: either everything completes, or nothing changes.
-3. **Passwords.** Generate two strong passwords, one for each role. In a **new** SQL Editor tab,
-   run:
-   ```sql
-   ALTER ROLE theonetrust_app   PASSWORD '<app password>';
-   ALTER ROLE theonetrust_owner PASSWORD '<owner password>';
-   ```
-   Do **not** save this tab as a snippet. Delete it from the editor's history afterwards.
-4. Run **`02-verify-isolation.sql`** (read-only). **All 13 rows must say `ok = true`.** A
-   screenshot of this result is safe to share; it contains no secrets.
+3. **Passwords. Never type a password into the SQL editor.** This Supabase project logs DDL
+   statements, so a plain `ALTER ROLE … PASSWORD '…'` would land in the database logs and the
+   editor history. Instead:
+   - Generate two strong passwords (20+ characters) in your password manager.
+   - On **your computer**, in this repository, run
+     `node apps/api/ops/supabase/scram-verifier.mjs theonetrust_app`. Paste the password when
+     asked; the typing is hidden. It prints one line,
+     `ALTER ROLE theonetrust_app PASSWORD 'SCRAM-SHA-256$4096:…';`. That line holds only a one-way
+     verifier, never the password.
+   - Paste that line into the SQL editor and run it.
+   - Repeat for `theonetrust_owner`.
+4. Run **`02-verify-isolation.sql`** (read-only). A screenshot of the result is safe to share; it
+   contains no secrets.
+   - **Rows 1–14 must say `ok = true`.** Any `false`: stop, and ask for a review.
+   - **Row 15 is about the cafe, not the trust.** It lists cafe functions in `public` that run
+     with their owner's rights and that any database user, the trust's included, is allowed to
+     call. On 20 Nov 2026 it showed `public.has_manager_access`, `public.has_shop_access` and
+     `public.shop_staff_limit_check`. Supabase's own advisor warns about the same functions. The
+     trust app never calls them, and these scripts deliberately do not change cafe functions,
+     because that could break the cafe. Decide this as a **separate cafe task** before the website
+     goes live: revoke `EXECUTE` from `PUBLIC` on those functions and grant it only to the cafe's
+     roles, after checking the cafe still works.
+   - Run before step 2, rows 1, 2, 3, 6, 7, 8 and 11 say `false`. That is expected, because those
+     rows are exactly what `01` changes.
 5. **Connection strings** (keep them in your password manager for now):
    - **Website, later** (Vercel, after 2c/2d): Supabase → **Connect** → **Transaction pooler**
      (port 6543). The user is `theonetrust_app.<project-ref>` **[CONFIRM: copy the exact user from
@@ -45,7 +63,8 @@ refused. To repeat it: `ops/supabase/rehearse-local.sh` (local Postgres only).
    - **Migrations**, only on your own computer: **Session pooler** (port 5432) or the direct
      connection, user `theonetrust_owner`, with `?schema=theonetrust` at the end. Use it only as
      `DIRECT_URL` when running `pnpm --filter @theonetrust/api db:migrate:deploy`. **Never put it in
-     Vercel.**
+     Vercel.** If `?schema=theonetrust` were ever forgotten, the migration fails rather than
+     touching the cafe: neither trust role may create anything outside `theonetrust` (row 14).
 6. **After every future migration that adds a table**, run `01` again, then `02`. It is safe to
    repeat.
 

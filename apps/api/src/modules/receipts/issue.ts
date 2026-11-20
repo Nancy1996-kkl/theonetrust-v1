@@ -1,4 +1,4 @@
-import type { Db } from '../../db/client.ts';
+import { qualified, type Db } from '../../db/client.ts';
 import type { Prisma, Receipt } from '../../generated/prisma/client.ts';
 import {
   RECEIPT_TEMPLATE_VERSION,
@@ -14,7 +14,9 @@ export type ReceiptSource = { paymentAttemptId: string } | { bankTransferRecordI
 const DEFAULT_RECEIPT_MIN_PAISE = 50_000;
 
 async function nextNumber(tx: Tx, now: Date): Promise<string> {
-  const [row] = await tx.$queryRaw<{ n: bigint }[]>`SELECT nextval('receipt_number_seq') AS n`;
+  // Schema-qualified: never depends on the database role's search_path (Phase 2b review).
+  const sequence = qualified('receipt_number_seq');
+  const [row] = await tx.$queryRaw<{ n: bigint }[]>`SELECT nextval(${sequence}::regclass) AS n`;
   if (!row) throw new Error('receipt_number_seq returned nothing');
   return formatReceiptNumber(now, row.n);
 }
