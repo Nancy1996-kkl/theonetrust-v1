@@ -13,7 +13,7 @@ import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { PaymentProviderError, type PaymentProvider } from '../donations/provider.ts';
 import { csvRow, maskPhone, maskText } from '../help/masking.ts';
-import { applyProviderPayment } from '../payments/reconcile.ts';
+import { recheckAttempt } from '../payments/recheck.ts';
 import { shareTokenFor } from '../receipts/issue.ts';
 import { maskPan } from '../tax/identity.ts';
 import {
@@ -269,20 +269,19 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
     let status = intent.status;
     let outcome = 'no_payment_found';
     try {
-      const payments = attempt.providerPaymentId
-        ? [await opts.provider.fetchPayment(attempt.providerPaymentId)]
-        : await opts.provider.fetchOrderPayments(attempt.providerOrderId);
-      const best =
-        payments.find((p) => p.status === 'captured') ??
-        payments.find((p) => p.status === 'authorized') ??
-        payments[0];
-      if (best) {
-        status = await applyProviderPayment(db, attempt.id, best, opts.now());
-        outcome = `provider_${best.status}`;
-      }
+      // Same helper as the donor re-check: by order, QR and monthly charges included (F-1, F-4).
+      const result = await recheckAttempt(db, opts.provider, attempt, opts.now());
+      status = result.status;
+      if (result.found) outcome = `provider_${result.found}`;
     } catch (error) {
       outcome =
-        error instanceof PaymentProviderError ? `provider_${error.reason}` : 'provider_error';
+        error instanceof PaymentProviderError
+          ? `provider_${error.reason}`
+          : error instanceof AppError
+            ? 'concurrent_update' // e.g. a webhook settled it at the same moment
+            : 'provider_error';
+      // Part of the work may already be applied: report the ledger as it is now.
+      status = (await db.donationIntent.findUniqueOrThrow({ where: { id } })).status;
     }
     await audit(request).mutate(
       {

@@ -49,21 +49,22 @@ live key ID (`rzp_live_…`), a filled-in Razorpay secret outside test files, or
 the API also refuses a live key outside production. API tests stub the Razorpay HTTP API but use
 the production signature code; they run in the CI `database` job against PostgreSQL 16.
 
-| Case                                             | API (`apps/api/src/modules/…`)                                                    | Browser (`apps/web/e2e/donate.spec.ts`)               |
-| ------------------------------------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Success (callback, webhook first, re-check only) | `payments/payment-suite.db.test.ts` › success; `verify.db.test.ts`                | success only after verification (en/ta)               |
-| Cancel                                           | payment-suite › cancel and failure                                                | cancelled checkout keeps need and amount              |
-| Failure, retry as a new order                    | payment-suite › cancel and failure; `webhook.db.test.ts`                          | failed payment offers try again; UPI limit            |
-| Duplicate webhook                                | payment-suite › duplicate…; `webhook.db.test.ts`                                  | —                                                     |
-| Delayed webhook (after callback / after failure) | payment-suite › success, duplicate…                                               | pending verification never shows success              |
-| Out-of-order events                              | payment-suite › duplicate…; `webhook.db.test.ts`; `transitions.test.ts`           | —                                                     |
-| Amount / currency / order mismatch               | payment-suite › mismatches; `verify.db.test.ts`                                   | —                                                     |
-| Bad signatures (callback and webhook)            | payment-suite › bad signatures; `webhook.db.test.ts`                              | —                                                     |
-| Refresh / back button                            | payment-suite › refresh and back button; `donations.db.test.ts` (Idempotency-Key) | refresh while confirming; back button after a payment |
-| ₹1 donation, limit errors                        | payment-suite › amounts; `donations.db.test.ts`                                   | ₹1 donation; amount limits                            |
-| Unmatched bank-transfer credit                   | payment-suite › unmatched…; `bank.db.test.ts` (owner-recorded credit)             | bank transfer "not confirmed yet"                     |
-| Refunds                                          | `webhook.db.test.ts` › refunds                                                    | —                                                     |
-| Monthly giving                                   | later (subscriptions issue)                                                       | later                                                 |
+| Case                                             | API (`apps/api/src/modules/…`)                                                                         | Browser (`apps/web/e2e/donate.spec.ts`)               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Success (callback, webhook first, re-check only) | `payments/payment-suite.db.test.ts` › success; `verify.db.test.ts`                                     | success only after verification (en/ta)               |
+| Cancel                                           | payment-suite › cancel and failure                                                                     | cancelled checkout keeps need and amount              |
+| Failure, retry as a new order                    | payment-suite › cancel and failure; `webhook.db.test.ts`                                               | failed payment offers try again; UPI limit            |
+| Failed try, then success on the same order (F-1) | payment-suite › failed try…; `ledger.db.test.ts` (owner re-check, QR, monthly) ; `transitions.test.ts` | —                                                     |
+| Duplicate webhook                                | payment-suite › duplicate…; `webhook.db.test.ts`                                                       | —                                                     |
+| Delayed webhook (after callback / after failure) | payment-suite › success, duplicate…                                                                    | pending verification never shows success              |
+| Out-of-order events                              | payment-suite › duplicate…; `webhook.db.test.ts`; `transitions.test.ts`                                | —                                                     |
+| Amount / currency / order mismatch               | payment-suite › mismatches; `verify.db.test.ts`                                                        | —                                                     |
+| Bad signatures (callback and webhook)            | payment-suite › bad signatures; `webhook.db.test.ts`                                                   | —                                                     |
+| Refresh / back button                            | payment-suite › refresh and back button; `donations.db.test.ts` (Idempotency-Key)                      | refresh while confirming; back button after a payment |
+| ₹1 donation, limit errors                        | payment-suite › amounts; `donations.db.test.ts`                                                        | ₹1 donation; amount limits                            |
+| Unmatched bank-transfer credit                   | payment-suite › unmatched…; `bank.db.test.ts` (owner-recorded credit)                                  | bank transfer "not confirmed yet"                     |
+| Refunds                                          | `webhook.db.test.ts` › refunds                                                                         | —                                                     |
+| Monthly giving                                   | later (subscriptions issue)                                                                            | later                                                 |
 
 ## How an engineer (or Claude) works an issue
 

@@ -26,6 +26,37 @@ describe('donation state transitions', () => {
     expect(canTransition('PAID', 'PAID')).toBe(true);
   });
 
+  it('FAILED → PAID only for gateway-verified money; → MANUAL_REVIEW only for gateway data (F-1)', async () => {
+    expect(canTransition('FAILED', 'PAID', 'gateway_verified')).toBe(true);
+    for (const source of [
+      undefined,
+      'owner_bank_evidence',
+      'donor_report',
+      'gateway_status',
+      'owner_review',
+    ] as const) {
+      expect(canTransition('FAILED', 'PAID', source)).toBe(false);
+    }
+    // FAILED → MANUAL_REVIEW only for gateway data (money moved on a failed order).
+    expect(canTransition('FAILED', 'MANUAL_REVIEW', 'gateway_status')).toBe(true);
+    for (const source of [undefined, 'gateway_verified', 'donor_report', 'owner_review'] as const) {
+      expect(canTransition('FAILED', 'MANUAL_REVIEW', source)).toBe(false);
+    }
+    // No other way out of FAILED, whatever the source.
+    for (const to of DONATION_STATUSES) {
+      if (to !== 'FAILED' && to !== 'PAID' && to !== 'MANUAL_REVIEW') {
+        expect(canTransition('FAILED', to, 'gateway_verified')).toBe(false);
+      }
+    }
+    expect(await transitionDonation(tx('FAILED'), 'i', 'PAID', 'gateway_verified')).toEqual({
+      from: 'FAILED',
+      to: 'PAID',
+    });
+    await expect(
+      transitionDonation(tx('FAILED'), 'i', 'PAID', 'owner_bank_evidence'),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+  });
+
   it('refuses PAID from a donor report or a status poll', async () => {
     for (const source of ['donor_report', 'gateway_status', 'owner_review'] as const) {
       await expect(transitionDonation(tx('PENDING'), 'i', 'PAID', source)).rejects.toMatchObject({

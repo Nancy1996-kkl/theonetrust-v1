@@ -32,6 +32,7 @@ export default defineConfig({
         'src/modules/donations/routes.ts',
         'src/modules/payments/bank-admin-routes.ts',
         'src/modules/payments/reconcile.ts',
+        'src/modules/payments/recheck.ts',
         'src/modules/payments/verify-routes.ts',
         'src/modules/payments/webhook-routes.ts',
         'src/modules/payments/webhook-admin-routes.ts',
