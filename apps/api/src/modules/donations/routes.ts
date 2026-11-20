@@ -18,7 +18,12 @@ import { trustSettingsRepository } from '../../db/repositories/trust-settings.ts
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { feeCoverFor, parseFeeTable, type FeeMethod } from './fees.ts';
-import { checkoutDescriptor, PaymentProviderError, type PaymentProvider } from './provider.ts';
+import {
+  checkoutDescriptor,
+  PaymentProviderError,
+  RAZORPAY_TIMEOUT_MS,
+  type PaymentProvider,
+} from './provider.ts';
 import { transitionDonation } from '../payments/transitions.ts';
 import { normalizePan, sealAddress, sealPan, taxOptInOffered } from '../tax/identity.ts';
 
@@ -71,8 +76,11 @@ const EstimateQuery = z.object({
 
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{16,64}$/;
 
-/** How long a request that lost an Idempotency-Key race waits for the winner's order. */
-export const IDEMPOTENT_REPLAY_WAIT_MS = 5_000;
+/**
+ * How long a request that lost an Idempotency-Key race waits for the winner's order: longer than
+ * the gateway may take to create it, so the waiting donor gets the order, not a needless 409.
+ */
+export const IDEMPOTENT_REPLAY_WAIT_MS = RAZORPAY_TIMEOUT_MS + 2_000;
 const IDEMPOTENT_REPLAY_POLL_MS = 100;
 
 export interface DonationRouteOptions {
@@ -213,7 +221,13 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
         return reply.code(200).send(bankResponse(existing, account));
       }
       const attempt = existing.paymentAttempts[0];
-      if (existing.giftPaise !== body.giftPaise || existing.feePaise !== feePaise) {
+      // The same key for another amount or another way of paying is a different donation.
+      if (
+        existing.giftPaise !== body.giftPaise ||
+        existing.feePaise !== feePaise ||
+        existing.channel !== (bank ? 'BANK_TRANSFER' : 'CHECKOUT') ||
+        (attempt && !qr && attempt.qrExpiresAt)
+      ) {
         throw new AppError('CONFLICT');
       }
       if (!attempt) return 'no_order' as const;

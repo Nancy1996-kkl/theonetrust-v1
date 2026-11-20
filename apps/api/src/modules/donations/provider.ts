@@ -43,6 +43,9 @@ export function checkoutDescriptor(provider: PaymentProvider, orderId: string): 
   return { provider: 'RAZORPAY', keyId: provider.publicKeyId, orderId };
 }
 
+/** Longest a single call to Razorpay may take before it counts as a network failure. */
+export const RAZORPAY_TIMEOUT_MS = 10_000;
+
 export interface PaymentProvider {
   readonly name: 'RAZORPAY';
   /** The key ID the browser needs to open Checkout. Never the secret. */
@@ -150,7 +153,7 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
     try {
       res = await doFetch(`${base}${path}`, {
         headers: { authorization: auth },
-        signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+        signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
       });
     } catch {
       throw new PaymentProviderError('network');
@@ -203,7 +206,7 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
             close_by: Math.floor(input.closeBy.getTime() / 1000),
             notes: input.notes,
           }),
-          signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
         });
       } catch {
         throw new PaymentProviderError('network');
@@ -249,7 +252,7 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
       try {
         res = await doFetch(imageUrl, {
           redirect: 'follow',
-          signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
         });
       } catch {
         throw new PaymentProviderError('network');
@@ -277,7 +280,7 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
             notes: input.notes,
             partial_payment: false,
           }),
-          signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
         });
       } catch {
         throw new PaymentProviderError('network');

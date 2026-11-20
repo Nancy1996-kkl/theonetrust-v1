@@ -63,6 +63,8 @@ export const REDACT_PATHS = [
 ];
 
 export interface BuildAppOptions {
+  /** Tests: shorten the Idempotency-Key race wait (IDEMPOTENT_REPLAY_WAIT_MS). */
+  idempotencyWaitMs?: number;
   /** Tests capture log lines here to assert on redaction. Defaults to stdout. */
   logStream?: Writable;
   /** Database client (from src/db/client.ts). Without it, sign-in answers 503. */
@@ -171,11 +173,13 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   // Monthly giving (#32): only when switched on [CONFIRM] and fully configured.
   const subscriptionProvider =
     options.subscriptionProvider ??
-    (env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
+    (env.PAYMENT_PROVIDER === 'razorpay' && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
       ? razorpaySubscriptions({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
       : undefined);
   const subscriptionKeyId = paymentProvider?.publicKeyId ?? env.RAZORPAY_KEY_ID;
+  // PAYMENT_PROVIDER=none switches monthly giving off too (new mandates are online payments).
   const monthlyOffered = Boolean(
+    env.PAYMENT_PROVIDER === 'razorpay' &&
     env.RAZORPAY_SUBSCRIPTIONS_ENABLED &&
     options.db &&
     keys &&
@@ -195,6 +199,9 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
 
   app.register(donationRoutes, {
     monthlyOffered,
+    ...(options.idempotencyWaitMs !== undefined && {
+      idempotencyWaitMs: options.idempotencyWaitMs,
+    }),
     ...(keys && { encryption: { key: keys.encryption, version: keys.version } }),
     prefix: `${API_V1_PREFIX}/donation-intents`,
     perHour: env.DONATION_RATE_LIMIT_PER_HOUR,
