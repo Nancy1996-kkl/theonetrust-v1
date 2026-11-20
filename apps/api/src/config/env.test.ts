@@ -245,3 +245,93 @@ describe('loadEnv — database schema (Phase 2b)', () => {
     }
   });
 });
+
+describe('loadEnv — Cashfree (Phase 4)', () => {
+  const keys = {
+    CASHFREE_ENV: 'sandbox',
+    CASHFREE_CLIENT_ID: 'TEST0123456789',
+    CASHFREE_CLIENT_SECRET: 'cf-secret-0123456789',
+  };
+
+  it('keeps Razorpay the default, no Cashfree mode until chosen, a pinned API version', () => {
+    const env = loadEnv({});
+    expect(env.PAYMENT_PROVIDER).toBe('razorpay');
+    expect(env.CASHFREE_ENV).toBeUndefined();
+    expect(env.CASHFREE_API_VERSION).toBe('2026-01-01');
+    expect(env.CASHFREE_ORDER_EXPIRY_MINUTES).toBe(30);
+    expect(loadEnv({ PAYMENT_PROVIDER: 'cashfree', ...keys }).PAYMENT_PROVIDER).toBe('cashfree');
+  });
+
+  it('needs both keys or neither, and treats empty values as unset', () => {
+    expect(() => loadEnv({ CASHFREE_CLIENT_ID: keys.CASHFREE_CLIENT_ID })).toThrow(
+      expect.objectContaining({ invalidKeys: ['CASHFREE_CLIENT_SECRET'] }),
+    );
+    expect(() => loadEnv({ CASHFREE_CLIENT_SECRET: keys.CASHFREE_CLIENT_SECRET })).toThrow(
+      expect.objectContaining({ invalidKeys: ['CASHFREE_CLIENT_ID'] }),
+    );
+    expect(loadEnv({ CASHFREE_CLIENT_ID: '', CASHFREE_CLIENT_SECRET: '' }).CASHFREE_CLIENT_ID).toBe(
+      undefined,
+    );
+  });
+
+  it('Cashfree must name its mode: sandbox or production, chosen explicitly (plan §2.4)', () => {
+    const { CASHFREE_ENV: _mode, ...noMode } = keys;
+    void _mode;
+    expect(() => loadEnv({ PAYMENT_PROVIDER: 'cashfree', ...noMode })).toThrow(
+      expect.objectContaining({ invalidKeys: ['CASHFREE_ENV'] }),
+    );
+  });
+
+  it('live Cashfree only on the production deployment; the sandbox never there', () => {
+    const prod = {
+      NODE_ENV: 'production',
+      DATABASE_URL: 'postgresql://u:p@h/d',
+      DATABASE_SCHEMA: 'theonetrust',
+      AUTH_SECRET_KEY: Buffer.alloc(32, 7).toString('base64'),
+      PAYMENT_PROVIDER: 'cashfree',
+      ...keys,
+    };
+    const invalid = (extra: Record<string, string>) =>
+      expect(() => loadEnv({ ...prod, ...extra })).toThrow(
+        expect.objectContaining({ invalidKeys: ['CASHFREE_ENV'] }),
+      );
+    // sandbox on the production deployment: refused
+    invalid({ VERCEL_ENV: 'production', CASHFREE_ENV: 'sandbox' });
+    // live keys on a preview, or outside production: refused
+    invalid({ VERCEL_ENV: 'preview', CASHFREE_ENV: 'production' });
+    expect(() => loadEnv({ CASHFREE_ENV: 'production' })).toThrow(
+      expect.objectContaining({ invalidKeys: ['CASHFREE_ENV'] }),
+    );
+    // allowed: sandbox on a preview, live on production
+    expect(loadEnv({ ...prod, VERCEL_ENV: 'preview' }).CASHFREE_ENV).toBe('sandbox');
+    expect(
+      loadEnv({ ...prod, VERCEL_ENV: 'production', CASHFREE_ENV: 'production' }).CASHFREE_ENV,
+    ).toBe('production');
+    expect(() => loadEnv({ VERCEL_ENV: 'staging' })).toThrow();
+  });
+
+  it('refuses odd versions and expiries', () => {
+    expect(() => loadEnv({ CASHFREE_API_VERSION: 'latest' })).toThrow();
+    expect(() => loadEnv({ CASHFREE_ORDER_EXPIRY_MINUTES: '5' })).toThrow();
+  });
+
+  it('needs a public site URL that fits Cashfree’s 250-character return URL', () => {
+    expect(() =>
+      loadEnv({
+        PAYMENT_PROVIDER: 'cashfree',
+        ...keys,
+        PUBLIC_SITE_URL: `https://${'a'.repeat(200)}.example`,
+      }),
+    ).toThrow(expect.objectContaining({ invalidKeys: ['PUBLIC_SITE_URL'] }));
+    expect(() => loadEnv({ PAYMENT_PROVIDER: 'cashfree', ...keys, CORS_ORIGINS: '' })).toThrow();
+  });
+
+  it('never echoes the client secret in the error', () => {
+    try {
+      loadEnv({ CASHFREE_CLIENT_SECRET: 'short' });
+    } catch (error) {
+      expect(String(error)).not.toContain('short');
+    }
+    expect.assertions(1);
+  });
+});

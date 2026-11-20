@@ -40,6 +40,7 @@ enum DonationStatus {
 enum PaymentProvider {
   RAZORPAY
   BANK_TRANSFER
+  CASHFREE
 }
 
 enum WebhookProcessingStatus {
@@ -302,6 +303,8 @@ model PaymentAttempt {
   /// One-time UPI QR (client, Nov 2026): providerOrderId holds the Razorpay QR ID (qr_…).
   qrImageUrl          String?         @map("qr_image_url")
   qrExpiresAt         DateTime?       @map("qr_expires_at") @db.Timestamptz(3)
+  /// Cashfree's one-time payment_session_id for the browser pop-up (Phase 4). Never logged.
+  checkoutSessionId   String?         @map("checkout_session_id")
   createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt           DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 

@@ -28,6 +28,8 @@ import { helpPublicRoutes } from './modules/help/public-routes.ts';
 import { donationRoutes } from './modules/donations/routes.ts';
 import { paymentVerifyRoutes } from './modules/payments/verify-routes.ts';
 import { razorpayWebhookRoutes } from './modules/payments/webhook-routes.ts';
+import { cashfreeWebhookRoutes } from './modules/payments/cashfree-webhook-routes.ts';
+import { cashfreeProvider } from './modules/donations/cashfree.ts';
 import { razorpayProvider, type PaymentProvider } from './modules/donations/provider.ts';
 import { receiptRoutes } from './modules/receipts/routes.ts';
 import {
@@ -62,6 +64,7 @@ export const REDACT_PATHS = [
   'req.headers.authorization',
   'req.headers.cookie',
   'req.headers["x-razorpay-signature"]',
+  'req.headers["x-webhook-signature"]',
   'res.headers["set-cookie"]',
   ...PII_KEYS.flatMap((key) => [key, `*.${key}`, `*.*.${key}`]),
 ];
@@ -188,12 +191,29 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   // Purpose-specific keys from AUTH_SECRET_KEY (owner sign-in, CSRF, receipt links).
   const keys = env.AUTH_SECRET_KEY ? deriveAuthKeys(env.AUTH_SECRET_KEY) : undefined;
 
-  // Donations (#23): the server owns intents, amounts and Razorpay orders.
+  // Donations (#23): the server owns intents, amounts and gateway orders.
+  const siteUrl = env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173';
   const paymentProvider =
     options.paymentProvider ??
     (env.PAYMENT_PROVIDER === 'razorpay' && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
       ? razorpayProvider({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
-      : undefined);
+      : env.PAYMENT_PROVIDER === 'cashfree' &&
+          env.CASHFREE_CLIENT_ID &&
+          env.CASHFREE_CLIENT_SECRET &&
+          env.CASHFREE_ENV
+        ? cashfreeProvider({
+            clientId: env.CASHFREE_CLIENT_ID,
+            clientSecret: env.CASHFREE_CLIENT_SECRET,
+            mode: env.CASHFREE_ENV,
+            apiVersion: env.CASHFREE_API_VERSION,
+            siteUrl,
+            ...(siteUrl.startsWith('https://') && {
+              notifyUrl: `${siteUrl.replace(/\/+$/, '')}${API_V1_PREFIX}/webhooks/cashfree`,
+            }),
+            orderExpiryMinutes: env.CASHFREE_ORDER_EXPIRY_MINUTES,
+            now: options.now ?? (() => new Date()),
+          })
+        : undefined);
   // Monthly giving (#32): only when switched on [CONFIRM] and fully configured.
   const subscriptionProvider =
     options.subscriptionProvider ??
@@ -272,10 +292,20 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     ...(env.RAZORPAY_WEBHOOK_SECRET && { secret: env.RAZORPAY_WEBHOOK_SECRET }),
   });
 
+  // Cashfree webhook (Phase 4c): signed with the client secret; the order is always re-fetched.
+  app.register(cashfreeWebhookRoutes, {
+    prefix: `${API_V1_PREFIX}/webhooks`,
+    now: options.now ?? (() => new Date()),
+    reprocessAfterMs: env.WEBHOOK_REPROCESS_AFTER_MS,
+    ...(options.db && { db: options.db }),
+    ...(paymentProvider?.name === 'CASHFREE' && { provider: paymentProvider }),
+    ...(env.CASHFREE_CLIENT_SECRET && { secret: env.CASHFREE_CLIENT_SECRET }),
+  });
+
   // Donation acknowledgements (#29): private share link + PDF on demand.
   app.register(receiptRoutes, {
     prefix: `${API_V1_PREFIX}/receipts`,
-    siteUrl: env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173',
+    siteUrl,
     perHour: env.RECEIPT_RATE_LIMIT_PER_HOUR,
     ...(options.db && { db: options.db }),
     ...(keys && { key: keys.receipt }),

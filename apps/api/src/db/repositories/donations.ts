@@ -28,6 +28,8 @@ export interface NewPaymentAttempt {
   provider: PaymentProvider;
   providerOrderId: string;
   amountPaise: Paise;
+  /** Cashfree's one-time checkout session (Phase 4); never logged. */
+  checkoutSessionId?: string;
 }
 
 /**

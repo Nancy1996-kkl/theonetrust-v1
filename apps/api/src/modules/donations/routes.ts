@@ -170,6 +170,9 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
     if (body.donorPhone && !phone) problems.push({ path: 'donorPhone', issue: 'invalid' });
     if (!body.donorEmail && !body.donorPhone)
       problems.push({ path: 'donorEmail', issue: 'contact_required' });
+    // Cashfree refuses an order without the donor's mobile (its API requires customer_phone).
+    if (provider?.requiresCustomerPhone && !body.donorPhone)
+      problems.push({ path: 'donorPhone', issue: 'required' });
 
     const { settings, table, fee } = await feeFor(db, body.giftPaise, body.feeMethod);
     if (body.giftPaise > settings.maxDonationPaise)
@@ -236,9 +239,16 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
         return reply.code(200).send(qrResponse(existing, attempt.qrExpiresAt));
       }
       // An existing checkout attempt means a gateway created it; deps() keeps the 503 otherwise.
+      // An order made with another gateway (before a switch) cannot be reopened with this one.
+      if (attempt.provider !== deps().provider.name) throw new AppError('CONFLICT');
       return reply
         .code(200)
-        .send(response(existing, checkoutDescriptor(deps().provider, attempt.providerOrderId)));
+        .send(
+          response(
+            existing,
+            checkoutDescriptor(deps().provider, attempt.providerOrderId, attempt.checkoutSessionId),
+          ),
+        );
     }
 
     // A retry with the same key returns the same order instead of charging twice.
@@ -345,6 +355,8 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
           donation_reference: intent.publicReference,
           programme: body.programme ?? 'general',
         },
+        // Data minimisation: only a gateway that requires the phone (Cashfree) receives it.
+        ...(provider.requiresCustomerPhone && { customerPhone: phone, locale: body.locale }),
       });
     } catch (error) {
       // The intent stays CREATED with no order; the donor can try again.
@@ -362,8 +374,11 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       provider: provider.name,
       providerOrderId: order.orderId,
       amountPaise: toPaise(order.amountPaise),
+      ...(order.sessionId && { checkoutSessionId: order.sessionId }),
     });
-    return reply.code(201).send(response(intent, checkoutDescriptor(provider, order.orderId)));
+    return reply
+      .code(201)
+      .send(response(intent, checkoutDescriptor(provider, order.orderId, order.sessionId)));
   });
 
   /**

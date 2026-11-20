@@ -12,6 +12,7 @@ test('flags server-only names, secret shapes and server code in the bundle', () 
     { path: 'assets/d.js', text: 'u="postgresql://user:pw@db.example/tot"' },
     { path: 'assets/e.js', text: 'import "@prisma/client"' },
     { path: 'assets/f.js', text: 'AKIAABCDEFGHIJKLMNOP' },
+    { path: 'assets/g.js', text: 'const s = env.CASHFREE_CLIENT_SECRET;' },
   ];
   assert.deepEqual(
     scan(files).map((f) => f.rule),
@@ -22,6 +23,7 @@ test('flags server-only names, secret shapes and server code in the bundle', () 
       'database URL',
       'server-only package',
       'AWS access key',
+      'server-only setting name',
     ],
   );
 });

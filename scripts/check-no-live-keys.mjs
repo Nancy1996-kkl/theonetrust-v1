@@ -16,6 +16,11 @@ const RULES = [
     // Test files pass made-up secrets to the env parser on purpose; a live key ID is never allowed.
     skip: (path) => TEST_FILE.test(path),
   },
+  {
+    name: 'Cashfree secret value',
+    pattern: /\bCASHFREE_CLIENT_SECRET\s*[=:]\s*['"]?[A-Za-z0-9+/_-]{8,}/,
+    skip: (path) => TEST_FILE.test(path),
+  },
 ];
 const TEST_FILE = /\.(test|spec)\.[cm]?[jt]sx?$|(^|\/)src\/test\//;
 const ENV_FILE = /(^|\/)\.env(\.[\w-]+)?$/;
