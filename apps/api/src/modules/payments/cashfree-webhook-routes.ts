@@ -129,6 +129,10 @@ export async function cashfreeWebhookRoutes(
       }
       // Only money we recorded as captured can be refunded against the donation.
       if (!attempt.providerPaymentId || attempt.capturedPaise <= 0) {
+        // A merchant refund before we recorded the capture (e.g. the payment webhook is still
+        // being retried): answer 500 so Cashfree retries once the payment is recorded — never
+        // drop it. Auto-refunds of failed tries never had a capture: acknowledged and ignored.
+        if (type === 'REFUND_STATUS_WEBHOOK') throw new Error('refund_before_capture');
         return {
           status: 'IGNORED',
           note: 'refund_not_captured',

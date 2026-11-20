@@ -647,9 +647,9 @@ describe('Cashfree webhook', () => {
     expect(await intentStatus(d.publicReference)).toBe('PAID');
   });
 
-  it('a refund event for an order with nothing captured changes nothing', async () => {
+  it('a merchant refund before the capture is recorded → 500 (retried), applied once PAID', async () => {
     const d = await newDonation();
-    const res = await webhook({
+    const refundEvent = {
       type: 'REFUND_STATUS_WEBHOOK',
       data: {
         refund: {
@@ -659,13 +659,42 @@ describe('Cashfree webhook', () => {
           refund_status: 'SUCCESS',
         },
       },
-    });
-    expect(res.statusCode).toBe(200);
+    };
+    expect((await webhook(refundEvent)).statusCode).toBe(500);
     const attempt = await db.paymentAttempt.findUniqueOrThrow({
       where: { providerOrderId: d.publicReference },
     });
     expect(attempt).toMatchObject({ refundedPaise: 0, providerStatus: null });
     expect(await intentStatus(d.publicReference)).toBe('CREATED');
+    // The payment is recorded, then Cashfree's retry of the refund applies it.
+    pay(d.publicReference, '6901', 'SUCCESS');
+    remote
+      .get(d.publicReference)
+      ?.refunds.push({ refund_status: 'SUCCESS', refund_amount: 1500.5, cf_payment_id: '6901' });
+    await verify({ publicReference: d.publicReference });
+    expect((await webhook(refundEvent)).statusCode).toBe(200);
+    expect(await intentStatus(d.publicReference)).toBe('REFUNDED');
+  });
+
+  it('an auto-refund of a try that never captured is acknowledged and ignored', async () => {
+    const d = await newDonation();
+    pay(d.publicReference, '6951', 'FAILED');
+    await verify({ publicReference: d.publicReference });
+    const attempt = await db.paymentAttempt.findUniqueOrThrow({
+      where: { providerOrderId: d.publicReference },
+    });
+    await db.paymentAttempt.update({
+      where: { id: attempt.id },
+      data: { providerPaymentId: '6951' },
+    });
+    const res = await webhook({
+      type: 'AUTO_REFUND_STATUS_WEBHOOK',
+      data: {
+        auto_refund: { cf_refund_id: 6995, cf_payment_id: '6951', refund_status: 'SUCCESS' },
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(await intentStatus(d.publicReference)).toBe('FAILED');
   });
 
   it('a refund for an order we do not know is ignored', async () => {
