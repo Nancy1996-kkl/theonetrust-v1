@@ -6,6 +6,7 @@ const READY = {
   NODE_ENV: 'production',
   DATABASE_URL: 'postgresql://u:p@db.example/app?sslmode=require',
   DIRECT_URL: 'postgresql://u:p@db-direct.example/app?sslmode=require',
+  DATABASE_SCHEMA: 'theonetrust',
   AUTH_SECRET_KEY: Buffer.alloc(32, 7).toString('base64'),
   RAZORPAY_KEY_ID: ['rzp', 'live', 'Abcdefgh12345'].join('_'),
   RAZORPAY_KEY_SECRET: 'synthetic-secret-value',

@@ -63,11 +63,11 @@ export function createServerlessHandler(options: ServerlessOptions = {}) {
     const db =
       options.appOptions?.db ??
       (env.DATABASE_URL
-        ? createDb(env.DATABASE_URL, {
-            max: env.DB_POOL_MAX,
-            idleTimeoutMillis: 5_000,
-            connectionTimeoutMillis: 5_000,
-          })
+        ? createDb(
+            env.DATABASE_URL,
+            { max: env.DB_POOL_MAX, idleTimeoutMillis: 5_000, connectionTimeoutMillis: 5_000 },
+            env.DATABASE_SCHEMA,
+          )
         : undefined);
     try {
       const app = buildApp(env, { ...options.appOptions, ...(db && { db }) });

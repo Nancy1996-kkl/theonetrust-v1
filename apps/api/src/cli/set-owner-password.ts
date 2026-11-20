@@ -18,7 +18,7 @@ const password = await rl.question('');
 rl.close();
 stdout.write('\n');
 
-const db = createDb(env.DATABASE_URL);
+const db = createDb(env.DATABASE_URL, {}, env.DATABASE_SCHEMA);
 try {
   const owner = await setOwnerPassword(db, email, password);
   stdout.write(

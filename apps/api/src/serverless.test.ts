@@ -111,6 +111,7 @@ describe('serverless handler (Phase 2a)', () => {
           loadEnv({
             NODE_ENV: 'production',
             DATABASE_URL: 'postgresql://app@127.0.0.1:1/never-connected',
+            DATABASE_SCHEMA: 'theonetrust',
             AUTH_SECRET_KEY: randomBytes(32).toString('base64'),
           }),
         configure: addProbes,
