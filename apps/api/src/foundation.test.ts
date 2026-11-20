@@ -323,6 +323,7 @@ describe('security headers', () => {
       NODE_ENV: 'production',
       LOG_LEVEL: 'silent',
       DATABASE_URL: 'postgresql://u:p@db.example/app',
+      DATABASE_SCHEMA: 'theonetrust',
       AUTH_SECRET_KEY: Buffer.alloc(32, 1).toString('base64'),
     });
     const res = await t.app.inject({ method: 'GET', url: '/api/v1/health' });
@@ -335,6 +336,7 @@ describe('client IP behind a proxy (#38)', () => {
     NODE_ENV: 'production',
     LOG_LEVEL: 'silent',
     DATABASE_URL: 'postgresql://u:p@db.example/app',
+    DATABASE_SCHEMA: 'theonetrust',
     AUTH_SECRET_KEY: Buffer.alloc(32, 1).toString('base64'),
   };
   const ipRoute = (app: FastifyInstance) => {

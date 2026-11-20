@@ -8,7 +8,7 @@ import { deriveAuthKeys } from './security/crypto.ts';
 
 async function main(): Promise<void> {
   const env = loadEnv();
-  const db = env.DATABASE_URL ? createDb(env.DATABASE_URL) : undefined;
+  const db = env.DATABASE_URL ? createDb(env.DATABASE_URL, {}, env.DATABASE_SCHEMA) : undefined;
   const app = buildApp(env, db ? { db } : {});
   // Notification outbox (#30): sends queued emails outside any payment transaction.
   const provider = selectEmailProvider(env);

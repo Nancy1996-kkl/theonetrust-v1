@@ -17,8 +17,14 @@ export interface PoolOptions {
   connectionTimeoutMillis?: number;
 }
 
-export function createDb(databaseUrl: string, pool: PoolOptions = {}): Db {
+/**
+ * `schema` is the Postgres schema every query is qualified with. Prisma writes it into each
+ * statement ("schema"."table"); the database role's own search_path does NOT change that, and a
+ * `?schema=` in the URL is ignored by the driver (rehearsal, Phase 2b). On the shared Supabase
+ * project the trust lives in `theonetrust`, next to the cafe's `public` — so production must say so.
+ */
+export function createDb(databaseUrl: string, pool: PoolOptions = {}, schema = 'public'): Db {
   return new PrismaClient({
-    adapter: new PrismaPg({ connectionString: databaseUrl, ...pool }),
+    adapter: new PrismaPg({ connectionString: databaseUrl, ...pool }, { schema }),
   });
 }

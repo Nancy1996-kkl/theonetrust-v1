@@ -77,7 +77,11 @@ describe('loadEnv — database URLs', () => {
     ['DIRECT_URL', { DIRECT_URL: 'not a url' }],
     [
       'DATABASE_URL',
-      { NODE_ENV: 'production', AUTH_SECRET_KEY: Buffer.alloc(32, 7).toString('base64') },
+      {
+        NODE_ENV: 'production',
+        DATABASE_SCHEMA: 'theonetrust',
+        AUTH_SECRET_KEY: Buffer.alloc(32, 7).toString('base64'),
+      },
     ],
   ])('rejects invalid or missing %s', (key, source) => {
     expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
@@ -116,9 +120,13 @@ describe('loadEnv — sign-in settings', () => {
   });
 
   it('requires AUTH_SECRET_KEY in production', () => {
-    expect(() => loadEnv({ NODE_ENV: 'production', DATABASE_URL: 'postgresql://u:p@h/d' })).toThrow(
-      expect.objectContaining({ invalidKeys: ['AUTH_SECRET_KEY'] }),
-    );
+    expect(() =>
+      loadEnv({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://u:p@h/d',
+        DATABASE_SCHEMA: 'theonetrust',
+      }),
+    ).toThrow(expect.objectContaining({ invalidKeys: ['AUTH_SECRET_KEY'] }));
   });
 });
 
@@ -211,5 +219,29 @@ describe('loadEnv — payment gateway (Phase 1)', () => {
     expect(loadEnv({ NODE_ENV: 'test' }).PAYMENT_PROVIDER).toBe('razorpay');
     expect(loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'none' }).PAYMENT_PROVIDER).toBe('none');
     expect(() => loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'stripe' })).toThrow();
+  });
+});
+
+describe('loadEnv — database schema (Phase 2b)', () => {
+  const prod = {
+    NODE_ENV: 'production',
+    DATABASE_URL: 'postgresql://app@db.example.org:6543/postgres',
+    AUTH_SECRET_KEY: Buffer.alloc(32, 3).toString('base64'),
+  };
+
+  it('is optional outside production and required in production (never a silent `public`)', () => {
+    expect(loadEnv({ NODE_ENV: 'test' }).DATABASE_SCHEMA).toBeUndefined();
+    expect(() => loadEnv(prod)).toThrow(
+      expect.objectContaining({ invalidKeys: ['DATABASE_SCHEMA'] }),
+    );
+    expect(loadEnv({ ...prod, DATABASE_SCHEMA: 'theonetrust' }).DATABASE_SCHEMA).toBe(
+      'theonetrust',
+    );
+  });
+
+  it('accepts only a plain lowercase schema name', () => {
+    for (const bad of ['Theonetrust', 'theonetrust;drop', 'trust-schema', '"x"', '1abc', '']) {
+      expect(() => loadEnv({ NODE_ENV: 'test', DATABASE_SCHEMA: bad })).toThrow();
+    }
   });
 });

@@ -49,6 +49,15 @@ const EnvSchema = z
     BODY_LIMIT_BYTES: z.coerce.number().int().min(1024).max(1_048_576).default(65_536),
     /** Runtime connection (Neon: pooled). Required in production; optional while no route needs it. */
     DATABASE_URL: optionalPostgresUrl,
+    /**
+     * Postgres schema the app's queries use (Phase 2b). Local and CI: `public`. On the shared
+     * Supabase project: `theonetrust` — required in production so the app can never fall back to
+     * `public`, where the cafe's tables live.
+     */
+    DATABASE_SCHEMA: z
+      .string()
+      .regex(/^[a-z_][a-z0-9_]{0,62}$/)
+      .optional(),
     /** Migrations/admin tools only (Neon: direct/unpooled). Read by prisma.config.ts, not the app. */
     DIRECT_URL: optionalPostgresUrl,
     /**
@@ -289,7 +298,7 @@ const EnvSchema = z
       }
     }
     if (env.NODE_ENV !== 'production') return;
-    for (const key of ['DATABASE_URL', 'AUTH_SECRET_KEY'] as const) {
+    for (const key of ['DATABASE_URL', 'DATABASE_SCHEMA', 'AUTH_SECRET_KEY'] as const) {
       if (!env[key])
         ctx.addIssue({ code: 'custom', path: [key], message: 'required in production' });
     }

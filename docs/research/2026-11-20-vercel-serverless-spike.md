@@ -54,6 +54,20 @@ Until then `/api` answers 503, which is safe: the live site does not call it.
 - The site's security headers in `vercel.json` now skip `/api/*`. The API sets its own, stricter
   headers in `apps/api/src/http/security.ts`.
 
+## Phase 2b rehearsal finding: Prisma ignores the role's schema (fixed)
+
+Rehearsed on a local mirror of the Supabase project (same roles, ownership and RLS, plus
+stand-in "cafe" tables in `public`). Prisma writes the schema into every statement
+(`"public"."programmes"`). The database role's `search_path` does **not** change that, and the
+driver ignores a `?schema=` in the URL. On the shared project, the app's queries would have been
+aimed at the **cafe's `public` schema**. They were refused only because the role has no rights
+there.
+
+**Fix:** `DATABASE_SCHEMA` → `PrismaPg(..., { schema })`. Queries then read
+`"theonetrust"."programmes"`. The setting is required in production. `nextval('receipt_number_seq')`
+is unqualified and resolves through the role's `search_path`; this was rehearsed. Through the
+Supabase transaction pooler it is still to be confirmed after 2b.
+
 ## Still open
 
 - Result 4: Supavisor transaction pooler, role-level `search_path`, an interactive transaction,
