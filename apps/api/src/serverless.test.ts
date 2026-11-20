@@ -39,6 +39,7 @@ describe('stripCatchAllParam (Vercel adds ?path=… to catch-all routes)', () =>
     ['/api/v1/x?path', '/api/v1/x'],
     ['/api/v1/x?pathway=1', '/api/v1/x?pathway=1'],
     ['/api/v1/x?', '/api/v1/x'],
+    ['/api/v1/x?path=a&path=b&c=1', '/api/v1/x?c=1'],
   ])('%s → %s', (input, expected) => {
     expect(stripCatchAllParam(input)).toBe(expected);
   });
@@ -119,6 +120,62 @@ describe('serverless handler (Phase 2a)', () => {
       headers: { 'x-forwarded-for': '203.0.113.9' },
     });
     expect(((await res.json()) as { ip: string }).ip).toBe('203.0.113.9');
+  });
+
+  it('a failure while building the app answers 503 and is retried on the next request', async () => {
+    const logError = vi.fn();
+    let attempts = 0;
+    const base = await serve(
+      createServerlessHandler({
+        readEnv: devEnv,
+        logError,
+        configure: (app) => {
+          attempts += 1;
+          if (attempts === 1) throw new TypeError('boom: secret-ish detail');
+          addProbes(app);
+        },
+      }),
+    );
+    const first = await fetch(`${base}/api/v1/health`);
+    expect(first.status).toBe(503);
+    expect(await first.json()).toMatchObject({ error: { code: 'SERVICE_UNAVAILABLE' } });
+    expect(logError).toHaveBeenCalledWith('API failed to start: TypeError');
+    expect(JSON.stringify(logError.mock.calls)).not.toContain('secret-ish');
+    expect((await fetch(`${base}/api/v1/health`)).status).toBe(200); // fresh build, now healthy
+    expect(attempts).toBe(2);
+  });
+
+  it('HEAD, a CORS preflight and an over-limit body go through the normal app rules', async () => {
+    const base = await serve(
+      createServerlessHandler({
+        readEnv: () =>
+          loadEnv({
+            NODE_ENV: 'test',
+            CORS_ORIGINS: 'https://theonetrust.example',
+            BODY_LIMIT_BYTES: '2048',
+          }),
+        configure: addProbes,
+      }),
+    );
+    expect((await fetch(`${base}/api/v1/health`, { method: 'HEAD' })).status).toBe(200);
+    const preflight = await fetch(`${base}/api/v1/__probe`, {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://theonetrust.example',
+        'access-control-request-method': 'POST',
+      },
+    });
+    expect(preflight.status).toBeLessThan(300);
+    expect(preflight.headers.get('access-control-allow-origin')).toBe(
+      'https://theonetrust.example',
+    );
+    const big = await fetch(`${base}/api/v1/__probe`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ x: 'y'.repeat(4096) }),
+    });
+    expect(big.status).toBe(413);
+    expect(await big.text()).not.toMatch(/at \w+ \(|node_modules|\.ts:\d/); // no stack trace
   });
 
   it('exports a ready-to-use default handler for Vercel', () => {

@@ -34,6 +34,26 @@ database: a fixed development environment, plus a temporary diagnostic route.
 - **Region.** Functions are pinned to `bom1` (Mumbai), next to the Supabase project
   (`ap-south-1`).
 
+## Production gate (from the 2a security review)
+
+Do **not** give the production Vercel project a `DATABASE_URL`, `AUTH_SECRET_KEY` or gateway keys
+until both of these are merged:
+
+- **Phase 2c (shared rate limits).** Today each serverless instance keeps its own in-memory
+  counters, which reset on every cold start. Sign-in, donation and receipt limits would then be per
+  instance, not global.
+- **Phase 2d (jobs/cron).** The outbox timer of `server.ts` does not run on serverless, so emails
+  and Google Sheet rows would stay queued.
+
+Until then `/api` answers 503, which is safe: the live site does not call it.
+
+## Also from the review (fixed in 2a)
+
+- A failure while building the app (for example an unusable `TRUST_PROXY` value) answers 503 and
+  is retried on the next request, instead of failing the instance for its whole life.
+- The site's security headers in `vercel.json` now skip `/api/*`. The API sets its own, stricter
+  headers in `apps/api/src/http/security.ts`.
+
 ## Still open
 
 - Result 4: Supavisor transaction pooler, role-level `search_path`, an interactive transaction,

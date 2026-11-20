@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import {
   inSync,
   PRIVATE_LINK_SOURCES,
+  SITE_PAGES,
   vercelHeaders,
   withHeaders,
 } from './sync-vercel-headers.mjs';
@@ -18,7 +19,7 @@ describe('vercel.json security headers (audit F-2)', () => {
   });
 
   it('every page gets the CSP, Permissions-Policy, COOP and HSTS', () => {
-    const all = rule('/(.*)');
+    const all = rule(SITE_PAGES);
     for (const key of [
       'Content-Security-Policy',
       'Permissions-Policy',
@@ -33,7 +34,7 @@ describe('vercel.json security headers (audit F-2)', () => {
   });
 
   it('the CSP never allows inline or eval scripts, and keeps framing and objects off', () => {
-    const csp = value(rule('/(.*)'), 'Content-Security-Policy');
+    const csp = value(rule(SITE_PAGES), 'Content-Security-Policy');
     const script = csp.split(';').find((d) => d.trim().startsWith('script-src'));
     assert.ok(script);
     assert.doesNotMatch(script, /unsafe-inline|unsafe-eval|\*|data:/);
@@ -54,8 +55,16 @@ describe('vercel.json security headers (audit F-2)', () => {
 
   it('specific rules come after the catch-all, so they override it', () => {
     const order = vercelHeaders().map((r) => r.source);
-    assert.equal(order[0], '/(.*)');
+    assert.equal(order[0], SITE_PAGES);
     assert.ok(order.indexOf('/receipt/(.*)') > 0);
+  });
+
+  it('site headers skip /api (the API sends its own); every page still matches', () => {
+    const re = new RegExp(`^${SITE_PAGES}$`);
+    for (const page of ['/', '/privacy', '/ta/privacy', '/assets/app.js', '/receipt/x', '/apix'])
+      assert.ok(re.test(page), page);
+    for (const api of ['/api/v1/health', '/api/v1/webhooks/razorpay'])
+      assert.ok(!re.test(api), api);
   });
 
   it('a changed header is detected as drift; regenerating keeps every other setting', () => {

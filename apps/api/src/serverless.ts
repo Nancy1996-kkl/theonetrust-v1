@@ -9,7 +9,8 @@
  * - the app and its database pool are built once per instance and reused across requests;
  * - a few database connections per instance (DB_POOL_MAX), short idle timeouts;
  * - a broken configuration answers 503 with the generic error body and logs only the names of
- *   the missing variables, never their values.
+ *   the missing variables, never their values; a failure while building the app is retried on
+ *   the next request.
  */
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { FastifyInstance } from 'fastify';
@@ -48,9 +49,9 @@ export interface ServerlessOptions {
 }
 
 export function createServerlessHandler(options: ServerlessOptions = {}) {
-  let ready: Promise<FastifyInstance | null> | undefined;
+  let ready: Promise<FastifyInstance | null | 'retry'> | undefined;
 
-  async function init(): Promise<FastifyInstance | null> {
+  async function init(): Promise<FastifyInstance | null | 'retry'> {
     let env: Env;
     try {
       env = (options.readEnv ?? (() => loadEnv()))();
@@ -68,16 +69,27 @@ export function createServerlessHandler(options: ServerlessOptions = {}) {
             connectionTimeoutMillis: 5_000,
           })
         : undefined);
-    const app = buildApp(env, { ...options.appOptions, ...(db && { db }) });
-    options.configure?.(app);
-    await app.ready();
-    return app;
+    try {
+      const app = buildApp(env, { ...options.appOptions, ...(db && { db }) });
+      options.configure?.(app);
+      await app.ready();
+      return app;
+    } catch (error) {
+      // e.g. an unusable TRUST_PROXY value: log the error's name only (never values) and let the
+      // next request try again, instead of failing every request on this instance for its life.
+      (options.logError ?? ((m) => console.error(m)))(
+        `API failed to start: ${error instanceof Error ? error.name : 'unknown error'}`,
+      );
+      if (!options.appOptions?.db) await db?.$disconnect().catch(() => undefined);
+      return 'retry';
+    }
   }
 
   return async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
     ready ??= init();
     const app = await ready;
-    if (!app) {
+    if (app === 'retry') ready = undefined;
+    if (!app || app === 'retry') {
       res.statusCode = 503;
       res.setHeader('content-type', 'application/json; charset=utf-8');
       res.setHeader('cache-control', 'no-store');
