@@ -12,6 +12,8 @@ let orders: CreateOrderInput[] = [];
 let failNext: PaymentProviderError | null = null;
 let ip = 0;
 
+/** Slows the provider down so a concurrent request has to wait for the winner's order. */
+let orderDelayMs = 0;
 const provider: PaymentProvider = {
   name: 'RAZORPAY',
   publicKeyId: 'rzp_test_publickey01',
@@ -19,6 +21,7 @@ const provider: PaymentProvider = {
   fetchPayment: async () => Promise.reject(new PaymentProviderError('rejected')),
   fetchOrderPayments: async () => [],
   createOrder: vi.fn(async (input: CreateOrderInput) => {
+    if (orderDelayMs) await new Promise((r) => setTimeout(r, orderDelayMs));
     if (failNext) {
       const error = failNext;
       failNext = null;
@@ -247,6 +250,53 @@ describe('retries and provider failures', () => {
     const changed = await post(body({ giftPaise: 200_000 }), { 'idempotency-key': key });
     expect(changed.statusCode).toBe(409);
     expect((await post(body(), { 'idempotency-key': 'short' })).statusCode).toBe(400);
+  });
+
+  describe('two first requests with the same key AT THE SAME TIME (audit F-7)', () => {
+    const raceKey = (tag: string) =>
+      unique(tag)
+        .replace(/[^A-Za-z0-9_-]/g, '')
+        .padEnd(20, 'z');
+    /** Both requests miss the "already exists?" lookup, as in a real race. */
+    function bothMissTheLookup() {
+      return vi
+        .spyOn(db.donationIntent, 'findUnique')
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+    }
+
+    it('both get the SAME order, one donation and one provider order — never a 500', async () => {
+      const key = raceKey('race1');
+      const ordersBefore = orders.length;
+      const intentsBefore = await db.donationIntent.count();
+      orderDelayMs = 150;
+      const spy = bothMissTheLookup();
+      const [a, b] = await Promise.all([
+        post(body(), { 'idempotency-key': key }),
+        post(body(), { 'idempotency-key': key }),
+      ]);
+      spy.mockRestore();
+      orderDelayMs = 0;
+      expect([a.statusCode, b.statusCode].sort()).toEqual([200, 201]);
+      expect(a.json().publicReference).toBe(b.json().publicReference);
+      expect(a.json().checkout.orderId).toBe(b.json().checkout.orderId);
+      expect(orders.length - ordersBefore).toBe(1);
+      expect(await db.donationIntent.count()).toBe(intentsBefore + 1);
+    });
+
+    it('if the winner cannot create the order, the waiting request answers 409 (retry), not 500', async () => {
+      const key = raceKey('race2');
+      orderDelayMs = 100;
+      failNext = new PaymentProviderError('network');
+      const spy = bothMissTheLookup();
+      const results = await Promise.all([
+        post(body(), { 'idempotency-key': key }),
+        post(body(), { 'idempotency-key': key }),
+      ]);
+      spy.mockRestore();
+      orderDelayMs = 0;
+      expect(results.map((r) => r.statusCode).sort()).toEqual([409, 503]);
+    }, 15_000); // the waiting request gives up only after IDEMPOTENT_REPLAY_WAIT_MS
   });
 
   it('a provider failure answers 503 and leaves the intent without an order', async () => {
