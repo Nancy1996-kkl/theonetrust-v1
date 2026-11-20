@@ -30,6 +30,16 @@ const en = {
   fullName: 'Full name',
   mobile: 'Mobile number',
   mobileError: 'Enter a 10-digit mobile number',
+  mobileHint:
+    'Our payment partner needs your mobile number to take the payment. We never sell it or show it publicly.',
+  payAgainSameOrder: 'Open the payment window again',
+  payAgainHint:
+    'Closed the payment window before paying? Open it again: it is the same payment, so you can never be charged twice.',
+  noDoubleCharge: "You won't be charged twice for this donation. This can take a few minutes.",
+  confirmedTitle: 'This donation is confirmed',
+  confirmedText: 'The trust has received this payment.',
+  confirmedHelp:
+    'If this was your donation, the acknowledgement reaches you by email if you gave one. Otherwise, contact the trust with this reference.',
   email: 'Email',
   emailError: 'Enter a valid email address',
   contactError: 'Give a mobile number or an email so the trust can reach you about this gift.',
@@ -209,6 +219,17 @@ const ta: Record<DonateMessageKey, string> = {
   fullName: 'முழுப் பெயர்',
   mobile: 'கைபேசி எண்',
   mobileError: '10 இலக்க கைபேசி எண்ணை எழுதுங்கள்',
+  mobileHint:
+    'பணம் செலுத்த, எங்கள் கட்டண நிறுவனத்துக்கு உங்கள் கைபேசி எண் தேவை. இதை நாங்கள் யாருக்கும் விற்பதும் இல்லை, வெளியே காட்டுவதும் இல்லை.',
+  payAgainSameOrder: 'கட்டணச் சாளரத்தை மீண்டும் திறக்கவும்',
+  payAgainHint:
+    'பணம் செலுத்தும் முன் சாளரத்தை மூடிவிட்டீர்களா? மீண்டும் திறக்கலாம்: இது அதே பணம் செலுத்துதல்தான், அதனால் இரண்டு முறை பணம் எடுக்கப்படாது.',
+  noDoubleCharge:
+    'இந்த நன்கொடைக்கு இரண்டு முறை பணம் எடுக்கப்படாது. இதற்குச் சில நிமிடங்கள் ஆகலாம்.',
+  confirmedTitle: 'இந்த நன்கொடை உறுதியாகிவிட்டது',
+  confirmedText: 'இந்தப் பணம் அறக்கட்டளைக்கு வந்து சேர்ந்துவிட்டது.',
+  confirmedHelp:
+    'இது உங்கள் நன்கொடை என்றால், நீங்கள் மின்னஞ்சல் கொடுத்திருந்தால் ஒப்புகை அதில் வரும். இல்லையென்றால், இந்தக் குறிப்பு எண்ணுடன் அறக்கட்டளையைத் தொடர்பு கொள்ளுங்கள்.',
   email: 'மின்னஞ்சல்',
   emailError: 'சரியான மின்னஞ்சல் முகவரியை எழுதுங்கள்',
   contactError:

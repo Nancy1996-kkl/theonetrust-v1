@@ -7,14 +7,14 @@ import {
   webSecurityHeaders,
 } from './security-headers.mjs';
 
-test('the CSP allows only our origin, the API origin and Razorpay; never inline script', () => {
+test('the CSP allows only our origin, the API origin, Razorpay and Cashfree; never inline script', () => {
   const csp = contentSecurityPolicy({
     apiBaseUrl: 'https://api.theonetrust.in/api/v1',
     production: true,
   });
   assert.match(
     csp,
-    /script-src 'self' https:\/\/checkout\.razorpay\.com https:\/\/cdn\.razorpay\.com;/,
+    /script-src 'self' https:\/\/checkout\.razorpay\.com https:\/\/cdn\.razorpay\.com https:\/\/sdk\.cashfree\.com;/,
   );
   // The Payment Button's form is an iframe on razorpay.com (pay inside the Donate pop-up).
   assert.match(csp, /frame-src [^;]*https:\/\/razorpay\.com(;| )/);
@@ -26,7 +26,22 @@ test('the CSP allows only our origin, the API origin and Razorpay; never inline 
   // The UPI QR image comes from the API, never straight from Razorpay's link.
   assert.match(
     csp,
-    /img-src 'self' data: https:\/\/api\.theonetrust\.in https:\/\/\*\.razorpay\.com;/,
+    /img-src 'self' data: https:\/\/api\.theonetrust\.in https:\/\/\*\.razorpay\.com https:\/\/\*\.cashfree\.com;/,
+  );
+  // Cashfree's pop-up (Phase 5): its script host, and the sandbox and live API hosts.
+  assert.match(
+    csp,
+    /connect-src [^;]*https:\/\/sdk\.cashfree\.com https:\/\/sandbox\.cashfree\.com https:\/\/api\.cashfree\.com;/,
+  );
+  assert.match(
+    csp,
+    /frame-src [^;]*https:\/\/sdk\.cashfree\.com https:\/\/sandbox\.cashfree\.com https:\/\/api\.cashfree\.com;/,
+  );
+  // Nothing wider than the plan's narrow list: no wildcard script, frame or connect host.
+  assert.doesNotMatch(csp, /(script|frame|connect)-src[^;]*\*\.cashfree/);
+  assert.match(
+    webSecurityHeaders({ apiBaseUrl: undefined, production: true })['Permissions-Policy'],
+    /payment=\(self "https:\/\/api\.razorpay\.com" "https:\/\/sdk\.cashfree\.com"\)/,
   );
   assert.match(csp, /style-src 'self' 'unsafe-inline' https:\/\/fonts\.googleapis\.com;/);
   assert.match(csp, /font-src 'self' https:\/\/fonts\.gstatic\.com;/);
@@ -40,7 +55,10 @@ test('a relative or missing API URL adds nothing; development has no HSTS or upg
   assert.equal(apiOrigin(undefined), null);
   const csp = contentSecurityPolicy({ apiBaseUrl: '/api/v1', production: false });
   assert.match(csp, /connect-src 'self' https:\/\/api\.razorpay\.com/);
-  assert.match(csp, /img-src 'self' data: https:\/\/\*\.razorpay\.com;/);
+  assert.match(
+    csp,
+    /img-src 'self' data: https:\/\/\*\.razorpay\.com https:\/\/\*\.cashfree\.com;/,
+  );
   assert.doesNotMatch(csp, /upgrade-insecure-requests/);
   const dev = webSecurityHeaders({ apiBaseUrl: undefined, production: false });
   assert.equal(dev['Strict-Transport-Security'], undefined);

@@ -146,6 +146,8 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       monthlyOffered: opts.monthlyOffered === true,
       taxOptInOffered: opts.encryption !== undefined && taxOptInOffered(settings, opts.now()),
       qrOffered: qrReady() !== null,
+      // The pop-up asks for the mobile number up front when the gateway requires it (Cashfree).
+      phoneRequired: opts.provider?.requiresCustomerPhone === true,
       ...(qrReady() && {
         qrMaxPaise: Math.min(qrReady()?.maxPaise ?? 0, settings.maxDonationPaise),
       }),

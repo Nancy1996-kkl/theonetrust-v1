@@ -27,6 +27,13 @@ export type StartResult =
 
 export type CheckoutOutcome =
   | { kind: 'completed'; paymentId: string; signature: string }
+  /**
+   * Cashfree's window closed (paid, failed or simply closed — its result is never proof): the
+   * server is asked by reference and decides.
+   */
+  | { kind: 'returned' }
+  /** Cashfree could not open its pop-up (e.g. in-app browsers) and moved the page to its own. */
+  | { kind: 'redirecting' }
   | { kind: 'dismissed' }
   | { kind: 'failed'; reason: 'upi_limit' | 'other' };
 
@@ -44,10 +51,13 @@ export interface DonateClient {
   estimate(giftPaise?: number): Promise<DonationEstimateResponse | null>;
   start(request: DonationIntentRequest, idempotencyKey: string): Promise<StartResult>;
   checkout(intent: DonationIntentResponse, prefill: CheckoutPrefill): Promise<CheckoutOutcome>;
-  /** Asks the server; anything other than a verified answer is UNKNOWN (shown as pending). */
+  /**
+   * Asks the server; anything other than a verified answer is UNKNOWN (shown as pending).
+   * Razorpay sends its callback values; Cashfree only the reference (the server re-fetches).
+   */
   verify(
     intent: DonationIntentResponse,
-    outcome: { paymentId: string; signature: string },
+    outcome: { paymentId: string; signature: string } | { kind: 'returned' },
   ): Promise<VerifiedStatus>;
   status(publicReference: string): Promise<VerifiedStatus>;
   /** Acknowledgement link token for a PAID donation, when one was issued (#29). */
@@ -136,6 +146,82 @@ export function loadCheckout(doc: Document = document): Promise<RazorpayConstruc
   });
 }
 
+export const CASHFREE_SDK = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+/** How long the donor waits for Cashfree's script before "could not open" is shown. */
+export const CASHFREE_SDK_TIMEOUT_MS = 15_000;
+
+/** The part of cashfree.js v3 this site uses. Its result is never proof of payment. */
+interface CashfreeResult {
+  error?: unknown;
+  redirect?: unknown;
+  paymentDetails?: unknown;
+}
+interface CashfreeInstance {
+  checkout(options: {
+    paymentSessionId: string;
+    redirectTarget: '_modal';
+  }): Promise<CashfreeResult | undefined>;
+}
+export type CashfreeFactory = (options: { mode: 'sandbox' | 'production' }) => CashfreeInstance;
+
+/** Loads Cashfree's script once, only when the donor is about to pay, with a timeout. */
+export function loadCashfree(
+  doc: Document = document,
+  timeoutMs = CASHFREE_SDK_TIMEOUT_MS,
+): Promise<CashfreeFactory> {
+  const w = doc.defaultView as (Window & { Cashfree?: CashfreeFactory }) | null;
+  if (w?.Cashfree) return Promise.resolve(w.Cashfree);
+  return new Promise((resolve, reject) => {
+    const existing = doc.querySelector<HTMLScriptElement>(`script[src="${CASHFREE_SDK}"]`);
+    const script = existing ?? doc.createElement('script');
+    const timer = setTimeout(() => reject(new Error('Cashfree timed out')), timeoutMs);
+    script.addEventListener('load', () => {
+      clearTimeout(timer);
+      if (w?.Cashfree) resolve(w.Cashfree);
+      else reject(new Error('Cashfree missing'));
+    });
+    script.addEventListener('error', () => {
+      clearTimeout(timer);
+      // A failed script is removed so a retry can load it again.
+      script.remove();
+      reject(new Error('Cashfree failed to load'));
+    });
+    if (!existing) {
+      script.src = CASHFREE_SDK;
+      script.async = true;
+      doc.head.append(script);
+    }
+  });
+}
+
+/** Gaps between status checks after Cashfree's window closes: about 90 seconds in all. */
+export const POLL_DELAYS_MS = [2_000, 3_000, 5_000, 8_000, 12_000, 15_000, 20_000, 25_000];
+
+/**
+ * Asks the server again until it says PAID or FAILED, or the delays run out (then the last answer,
+ * usually PENDING, is returned). While the tab is hidden no request is made.
+ */
+export async function pollUntilSettled(
+  check: () => Promise<VerifiedStatus>,
+  first: VerifiedStatus,
+  opts: {
+    delays?: readonly number[];
+    sleep?: (ms: number) => Promise<void>;
+    hidden?: () => boolean;
+  } = {},
+): Promise<VerifiedStatus> {
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const hidden = opts.hidden ?? (() => typeof document !== 'undefined' && document.hidden);
+  let status = first;
+  for (const delay of opts.delays ?? POLL_DELAYS_MS) {
+    if (status === 'PAID' || status === 'FAILED') return status;
+    await sleep(delay);
+    if (hidden()) continue;
+    status = await check();
+  }
+  return status;
+}
+
 /** A failure reason that points at a bank or UPI limit, so the panel can suggest card/netbanking. */
 export function isLimitFailure(reason: string | undefined): boolean {
   return /limit|exceed|amount/i.test(reason ?? '');
@@ -145,6 +231,7 @@ export function createApiDonateClient(
   baseUrl: string | undefined,
   fetchImpl: typeof fetch = (...args) => fetch(...args),
   load: () => Promise<RazorpayConstructor> = () => loadCheckout(),
+  loadCf: () => Promise<CashfreeFactory> = () => loadCashfree(),
 ): DonateClient {
   const json = { 'content-type': 'application/json', accept: 'application/json' };
   return {
@@ -247,8 +334,28 @@ export function createApiDonateClient(
       }
     },
     async checkout(intent, prefill) {
-      // This window is Razorpay's; another gateway's descriptor is never opened with it.
       const gateway = intent.checkout;
+      if (isCashfreeCheckout(gateway)) {
+        // Only the one-time session goes to Cashfree's window; the donor's details were sent to
+        // our server, never through the browser to Cashfree.
+        let factory: CashfreeFactory;
+        try {
+          factory = await loadCf();
+        } catch {
+          return { kind: 'failed', reason: 'other' };
+        }
+        try {
+          const result = await factory({ mode: gateway.mode }).checkout({
+            paymentSessionId: gateway.paymentSessionId,
+            redirectTarget: '_modal',
+          });
+          return result?.redirect ? { kind: 'redirecting' } : { kind: 'returned' };
+        } catch {
+          // The window may have taken the payment before failing: the server decides.
+          return { kind: 'returned' };
+        }
+      }
+      // This window is Razorpay's; another gateway's descriptor is never opened with it.
       if (!isRazorpayCheckout(gateway)) return { kind: 'failed', reason: 'other' };
       let Razorpay: RazorpayConstructor;
       try {
@@ -299,17 +406,21 @@ export function createApiDonateClient(
       });
     },
     async verify(intent, outcome) {
+      const body =
+        'paymentId' in outcome
+          ? {
+              publicReference: intent.publicReference,
+              orderId: intent.checkout.orderId,
+              paymentId: outcome.paymentId,
+              signature: outcome.signature,
+            }
+          : { publicReference: intent.publicReference };
       try {
         const res = await fetchImpl(apiUrl(baseUrl, '/payments/verify'), {
           method: 'POST',
           credentials: 'omit',
           headers: json,
-          body: JSON.stringify({
-            publicReference: intent.publicReference,
-            orderId: intent.checkout.orderId,
-            paymentId: outcome.paymentId,
-            signature: outcome.signature,
-          }),
+          body: JSON.stringify(body),
         });
         return res.ok ? readStatus(await res.json().catch(() => null)) : 'UNKNOWN';
       } catch {
@@ -355,10 +466,13 @@ export const MOCK_QR_IMAGE = `data:image/svg+xml,${encodeURIComponent(
 /**
  * Dev/e2e simulation. Tests choose the outcome with `window.__donateMock`
  * ('success' | 'cancel' | 'fail' | 'limit' | 'pending' | 'stuck' | 'start-fail' | 'no-receipt'); default success.
+ * Cashfree (Phase 5): 'cashfree' (paid), 'cashfree-pending' (confirmed by the re-check),
+ * 'cashfree-fail' (the server says FAILED), 'cashfree-redirect' (pop-up could not open).
  */
 export function createMockDonateClient(delayMs = 200): DonateClient {
   const scenario = () => (globalThis as { __donateMock?: string }).__donateMock ?? 'success';
   const wait = <T>(value: T) => new Promise<T>((r) => setTimeout(() => r(value), delayMs));
+  const cashfree = () => scenario().startsWith('cashfree');
   return {
     acceptsDonations: true,
     estimate: () =>
@@ -369,8 +483,9 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
         feeCoverOffered: false,
         bankTransferOffered: true,
         monthlyOffered: true,
-        qrOffered: true,
+        qrOffered: !cashfree(),
         qrMaxPaise: 200_000,
+        phoneRequired: cashfree(),
       }),
     startBankTransfer: (request) =>
       wait({
@@ -420,24 +535,47 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
               feePaise: 0,
               amountPaise: request.giftPaise,
               currency: 'INR' as const,
-              checkout: {
-                provider: 'RAZORPAY' as const,
-                keyId: 'rzp_test_mock',
-                orderId: 'order_MOCK000000',
-              },
+              checkout: cashfree()
+                ? {
+                    provider: 'CASHFREE' as const,
+                    paymentSessionId: 'session_MOCK',
+                    mode: 'sandbox' as const,
+                    orderId: 'TOT-D-MOCK00000000',
+                  }
+                : {
+                    provider: 'RAZORPAY' as const,
+                    keyId: 'rzp_test_mock',
+                    orderId: 'order_MOCK000000',
+                  },
             },
           }),
     checkout: () => {
       const s = scenario();
+      if (s === 'cashfree-redirect') return wait({ kind: 'redirecting' as const });
+      if (s.startsWith('cashfree')) return wait({ kind: 'returned' as const });
       if (s === 'cancel') return wait({ kind: 'dismissed' as const });
       if (s === 'fail') return wait({ kind: 'failed' as const, reason: 'other' as const });
       if (s === 'limit') return wait({ kind: 'failed' as const, reason: 'upi_limit' as const });
       return wait({ kind: 'completed' as const, paymentId: 'pay_MOCK', signature: 'sig' });
     },
-    verify: () =>
-      wait(['pending', 'stuck'].includes(scenario()) ? ('PENDING' as const) : ('PAID' as const)),
+    verify: () => {
+      const s = scenario();
+      if (s === 'cashfree-fail') return wait('FAILED' as const);
+      return wait(
+        ['pending', 'stuck', 'cashfree-pending'].includes(s)
+          ? ('PENDING' as const)
+          : ('PAID' as const),
+      );
+    },
     // "pending": verify answers PENDING and the re-check finds it PAID; "stuck" stays pending.
-    status: () => wait(scenario() === 'stuck' ? ('PENDING' as const) : ('PAID' as const)),
+    status: () =>
+      wait(
+        scenario() === 'stuck'
+          ? ('PENDING' as const)
+          : scenario() === 'cashfree-fail'
+            ? ('FAILED' as const)
+            : ('PAID' as const),
+      ),
     // "no-receipt": paid, but the donor declined or the amount is below the threshold.
     receipt: () => wait(scenario() === 'no-receipt' ? null : MOCK_RECEIPT_TOKEN),
   };
