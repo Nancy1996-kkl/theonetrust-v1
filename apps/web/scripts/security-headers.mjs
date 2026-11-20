@@ -1,6 +1,7 @@
 /**
  * Security headers for the public web app (#38), written to dist/_headers at build time (the
- * format Cloudflare Pages and Netlify read) and applied by `vite preview`, so every e2e test runs
+ * format Cloudflare Pages and Netlify read), to vercel.json by scripts/sync-vercel-headers.mjs
+ * (Vercel reads only that file; CI fails on drift) and applied by `vite preview`, so every e2e test runs
  * under the same Content-Security-Policy as production — a violation fails the test.
  *
  * Only our own origin, the API origin and Razorpay Checkout may load or be contacted. Scripts are
