@@ -17,7 +17,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:coverage": "pnpm -r test:coverage",
-    "test:scripts": "node --test \"scripts/**/*.test.mjs\" \"apps/web/scripts/**/*.test.mjs\" \".claude/**/*.test.mjs\"",
+    "test:scripts": "node --test \"scripts/**/*.test.mjs\" \"apps/web/scripts/**/*.test.mjs\" \"apps/api/ops/**/*.test.mjs\" \".claude/**/*.test.mjs\"",
     "test:e2e": "pnpm --filter @theonetrust/web test:e2e",
     "test:visual": "pnpm --filter @theonetrust/web test:visual",
     "check:tests-required": "node scripts/check-tests-required.mjs",

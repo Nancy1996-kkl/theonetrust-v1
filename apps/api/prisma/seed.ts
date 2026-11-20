@@ -7,7 +7,8 @@ if (!url) {
   console.error('Set DATABASE_URL or DIRECT_URL to seed a development database.');
   process.exit(1);
 }
-const db = createDb(url);
+// Same schema rule as the app (public locally; DATABASE_SCHEMA when set).
+const db = createDb(url, {}, process.env.DATABASE_SCHEMA || 'public');
 try {
   await seedSyntheticData(db, process.env.NODE_ENV);
   process.stdout.write('Seeded synthetic development data.\n');

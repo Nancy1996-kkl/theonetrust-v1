@@ -1,5 +1,8 @@
 -- 02-verify-isolation.sql — Phase 2b. READ-ONLY: changes nothing, safe to run any time.
--- Every row must say ok = true. Any false → do not connect the website; ask for a review.
+-- Rows 1–14 must say ok = true. Any false → do not connect the website; ask for a review.
+-- Row 15 lists functions OUTSIDE the trust schema (the cafe's) that any database user can call and
+-- that run with their owner's rights. It is a decision for the cafe, not something these scripts
+-- change: see the README.
 
 WITH
 trust_tables AS (
@@ -11,30 +14,63 @@ delete_ok AS (
   SELECT unnest(ARRAY['admin_recovery_codes', 'programmes', 'impact_metrics',
                       'transparency_documents']) AS relname
 ),
+allowed AS (
+  -- Supabase lets every role read the pg_stat_statements views. Postgres shows another role's
+  -- query text there only to roles with pg_read_all_stats, which theonetrust_app does not have,
+  -- so no cafe query text is visible. Nothing else outside the trust schema is allowed.
+  SELECT unnest(ARRAY['extensions.pg_stat_statements', 'extensions.pg_stat_statements_info']) AS obj
+),
+outside_cols AS (
+  -- Column-level grants count too (a grant on one column is still access to the table).
+  SELECT DISTINCT table_schema || '.' || table_name || ' (columns)' AS obj
+  FROM information_schema.column_privileges
+  WHERE grantee IN ('theonetrust_app', 'PUBLIC') AND table_schema NOT IN
+    ('theonetrust', 'pg_catalog', 'information_schema')
+    AND (table_schema || '.' || table_name) NOT IN (SELECT obj FROM allowed)
+    AND has_column_privilege('theonetrust_app',
+          format('%I.%I', table_schema, table_name)::regclass, column_name,
+          'SELECT,INSERT,UPDATE,REFERENCES')
+),
+secdef AS (
+  -- Functions outside the trust schema that run with their OWNER's rights and that the app could
+  -- call (Postgres lets every role call functions by default). Listed for a decision; the trust
+  -- app never calls any of them.
+  SELECT n.nspname || '.' || p.proname AS obj
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE p.prosecdef AND n.nspname NOT IN ('theonetrust', 'pg_catalog', 'information_schema')
+    AND has_schema_privilege('theonetrust_app', n.oid, 'USAGE')
+    AND has_function_privilege('theonetrust_app', p.oid, 'EXECUTE')
+),
 outside AS (
+  SELECT obj FROM outside_cols
+  UNION
   -- Any table, view or sequence OUTSIDE the trust schema the app could touch (cafe included).
   SELECT n.nspname || '.' || c.relname AS obj
   FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
   WHERE c.relkind IN ('r', 'p', 'v', 'm', 'f', 'S')
     AND n.nspname NOT IN ('theonetrust', 'pg_catalog', 'information_schema', 'pg_toast')
+    AND (n.nspname || '.' || c.relname) NOT IN (SELECT obj FROM allowed)
     AND (
       (c.relkind = 'S' AND has_sequence_privilege('theonetrust_app', c.oid, 'USAGE,SELECT,UPDATE'))
       OR (c.relkind <> 'S' AND has_table_privilege('theonetrust_app', c.oid,
             'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER'))
     )
 )
-SELECT * FROM (
+SELECT n, "check", COALESCE(ok, false) AS ok, detail FROM (
   SELECT 1 AS n, 'trust schema exists and is owned by theonetrust_owner' AS check,
-    (SELECT nspowner = 'theonetrust_owner'::regrole FROM pg_namespace WHERE nspname = 'theonetrust') AS ok,
+    (SELECT nspowner = to_regrole('theonetrust_owner') FROM pg_namespace WHERE nspname = 'theonetrust') AS ok,
     '' AS detail
   UNION ALL
-  SELECT 2, 'every trust table, sequence and function is owned by theonetrust_owner',
-    NOT EXISTS (
+  SELECT 2, 'every trust table, sequence, type and function is owned by theonetrust_owner',
+    to_regrole('theonetrust_owner') IS NOT NULL AND NOT EXISTS (
       SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-      WHERE n.nspname = 'theonetrust' AND c.relowner <> 'theonetrust_owner'::regrole
+      WHERE n.nspname = 'theonetrust' AND c.relowner <> to_regrole('theonetrust_owner')
       UNION ALL
       SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-      WHERE n.nspname = 'theonetrust' AND p.proowner <> 'theonetrust_owner'::regrole),
+      WHERE n.nspname = 'theonetrust' AND p.proowner <> to_regrole('theonetrust_owner')
+      UNION ALL
+      SELECT 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace
+      WHERE n.nspname = 'theonetrust' AND t.typowner <> to_regrole('theonetrust_owner')),
     ''
   UNION ALL
   SELECT 3, 'theonetrust_app owns nothing (cannot alter tables or switch off triggers)',
@@ -43,12 +79,14 @@ SELECT * FROM (
       AND NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspowner = 'theonetrust_app'::regrole),
     ''
   UNION ALL
-  SELECT 4, 'theonetrust_app is not a superuser, cannot bypass RLS, create roles or databases',
+  SELECT 4, 'theonetrust_app: no superuser, RLS bypass, role/database creation, other roles or statistics rights',
     (SELECT NOT rolsuper AND NOT rolbypassrls AND NOT rolcreaterole AND NOT rolcreatedb
-            AND NOT rolreplication FROM pg_roles WHERE rolname = 'theonetrust_app'),
+            AND NOT rolreplication FROM pg_roles WHERE rolname = 'theonetrust_app')
+      AND NOT EXISTS (SELECT 1 FROM pg_auth_members WHERE member = 'theonetrust_app'::regrole)
+      AND NOT pg_has_role('theonetrust_app', 'pg_read_all_stats', 'USAGE'),
     ''
   UNION ALL
-  SELECT 5, 'theonetrust_app can touch NOTHING outside the trust schema (cafe included)',
+  SELECT 5, 'theonetrust_app has no table, view, sequence or column right outside the trust schema',
     NOT EXISTS (SELECT 1 FROM outside),
     COALESCE((SELECT string_agg(obj, ', ' ORDER BY obj) FROM (SELECT obj FROM outside LIMIT 20) x), '')
   UNION ALL
@@ -100,9 +138,29 @@ SELECT * FROM (
               AND EXISTS (SELECT 1 FROM unnest(s.setconfig) c WHERE c LIKE 'statement_timeout=%')),
     ''
   UNION ALL
-  SELECT 13, 'the append-only triggers are present and enabled',
-    (SELECT count(*) FROM pg_trigger tg
-       JOIN pg_class c ON c.oid = tg.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
-     WHERE n.nspname = 'theonetrust' AND NOT tg.tgisinternal AND tg.tgenabled = 'O') = 4,
+  SELECT 13, 'each append-only trigger exists on its table and is enabled',
+    (SELECT count(*) FROM (VALUES
+        ('receipts', 'receipts_no_delete'),
+        ('audit_logs', 'audit_logs_no_update_delete'),
+        ('donation_status_events', 'donation_status_events_append_only'),
+        ('subscription_status_events', 'subscription_status_events_append_only')) AS want(tbl, trg)
+      WHERE EXISTS (
+        SELECT 1 FROM pg_trigger tg
+          JOIN pg_class c ON c.oid = tg.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'theonetrust' AND c.relname = want.tbl AND tg.tgname = want.trg
+          AND tg.tgenabled IN ('O', 'A'))) = 4,
     ''
+  UNION ALL
+  SELECT 14, 'neither trust role can create objects in any other schema (a migration can never land in public)',
+    NOT EXISTS (
+      SELECT 1 FROM pg_namespace n, (VALUES ('theonetrust_app'), ('theonetrust_owner')) AS r(role)
+      WHERE to_regrole(r.role) IS NOT NULL
+        AND n.nspname NOT IN ('theonetrust', 'pg_toast') AND n.nspname NOT LIKE 'pg_temp%'
+        AND n.nspname NOT LIKE 'pg_toast_temp%'
+        AND has_schema_privilege(r.role, n.oid, 'CREATE')),
+    ''
+  UNION ALL
+  SELECT 15, 'functions elsewhere that run with their owner''s rights and the app could call (see README)',
+    NOT EXISTS (SELECT 1 FROM secdef),
+    COALESCE((SELECT string_agg(obj, ', ' ORDER BY obj) FROM secdef), '')
 ) checks ORDER BY n;

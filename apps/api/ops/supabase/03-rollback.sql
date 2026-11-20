@@ -26,6 +26,8 @@ BEGIN
   END LOOP;
 END $$;
 
+ALTER ROLE theonetrust_app RESET idle_in_transaction_session_timeout;
+
 -- The default privileges and grants were made by theonetrust_owner; DROP OWNED clears them.
 DROP OWNED BY theonetrust_owner;
 DROP ROLE theonetrust_owner;
