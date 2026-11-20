@@ -517,6 +517,30 @@ CASHFREE_ORDER_EXPIRY_MINUTES` (default 30); `order_tags` only non-personal (`pu
 - QR route: disabled for Cashfree (`capabilities.qr = false`; the Cashfree modal itself shows a UPI QR
   on desktop). Monthly routes: off.
 
+#### 4e. Implementation notes (21 Nov 2026, as built)
+
+Cashfree API facts were re-checked against the official API reference on 20 Nov 2026 before coding
+(create/get order, get payments, get refunds, webhook headers and signature).
+
+- **Where the code lives:** `apps/api/src/modules/donations/cashfree.ts` (adapter, money helpers,
+  signature) and `apps/api/src/modules/payments/cashfree-webhook-routes.ts`. The Razorpay adapter
+  was not moved (no drive-by refactor); the 1c file split stays optional.
+- **Durable webhook record** (`deliverWebhook`) is now shared by the Razorpay and Cashfree routes,
+  so both follow the same RECEIVED/FAILED/claim rules.
+- **Deviation 1 — order PAID with no captured payment:** the adapter throws
+  `unexpected_response`, so the donation keeps its status and the owner's re-check shows
+  `provider_unexpected_response`; the daily job keeps re-checking. Nothing is guessed.
+- **Deviation 2 — SUCCESS payment on an order that is not PAID** is held as `authorized`, never
+  `captured`.
+- **Added:** nullable `payment_attempts.checkout_session_id` (reversible migration) so an
+  Idempotency-Key retry returns the same Cashfree session instead of a second order.
+- **Not done here:** dropping the `'RAZORPAY'` column defaults (not needed: code always sets the
+  provider); `cli/launch-check.ts` Cashfree checks and the `VERCEL_ENV`/`CASHFREE_ENV` match
+  (Phase 8 launch gate); Cashfree secret-key prefix patterns in the scanners **[CONFIRM prefix from
+  the dashboard]** — the scanners already catch a filled-in `CASHFREE_CLIENT_SECRET` assignment and
+  the setting name in the web bundle.
+- **Razorpay never receives the donor's phone:** only a gateway that requires it gets it.
+
 #### Tests for Phase 4
 
 - Unit: money conversions (₹1.00, ₹0.01 fee, 1 999 999.99, `"10.5"`, `10.005` refused, `1e21`
