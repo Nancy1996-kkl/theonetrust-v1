@@ -224,6 +224,10 @@ const EnvSchema = z
         .optional(),
     ),
     /**
+     * A webhook row still RECEIVED after this long was cut off mid-processing (crash, function
+     * timeout); a provider retry then re-processes it (audit F-3). Fresher rows answer "duplicate".
+     */
+    WEBHOOK_REPROCESS_AFTER_MS: z.coerce.number().int().min(60_000).max(3_600_000).default(120_000),
      * How long after creation the public status route still re-checks a FAILED donation with the
      * gateway (a retry on the same order may succeed). Older ones: owner re-check only.
      */

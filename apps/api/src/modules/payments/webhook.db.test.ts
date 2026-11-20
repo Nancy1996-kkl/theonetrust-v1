@@ -277,6 +277,149 @@ describe('payment events', () => {
     expect(await statusOf(d.ref)).toBe('PAID');
   });
 
+  describe('a row left RECEIVED (process died mid-way, audit F-3)', () => {
+    const LEASE_MS = loadEnv({ NODE_ENV: 'test' }).WEBHOOK_REPROCESS_AFTER_MS;
+    /** The event was stored, then the process died before recording any outcome. */
+    async function stuck(id: string, ageMs: number) {
+      await db.webhookEvent.create({
+        data: {
+          provider: 'RAZORPAY',
+          providerEventId: id,
+          eventType: 'payment.captured',
+          signatureValid: true,
+          receivedAt: new Date(Date.now() - ageMs),
+        },
+      });
+    }
+
+    it('defaults to a two-minute lease', () => {
+      expect(LEASE_MS).toBe(120_000);
+    });
+
+    it('a stale RECEIVED row is re-processed by the retry, exactly once', async () => {
+      const d = await donation();
+      await stuck('evt_stale_00001', LEASE_MS + 60_000);
+      const payload = { payment: { entity: paymentEntity(d.orderId) } };
+      const res = await deliver('payment.captured', payload, { id: 'evt_stale_00001' });
+      expect(res.json()).toEqual({ received: true });
+      expect(await statusOf(d.ref)).toBe('PAID');
+      const row = await db.webhookEvent.findFirstOrThrow({
+        where: { providerEventId: 'evt_stale_00001' },
+      });
+      // One claim + one completion; the arrival time is kept for the owner's view.
+      expect(row).toMatchObject({ processingStatus: 'PROCESSED', attempts: 2 });
+      expect(row.receivedAt.getTime()).toBeLessThan(Date.now() - LEASE_MS);
+      // Now settled: a further retry is a plain duplicate and applies nothing again.
+      const again = await deliver('payment.captured', payload, { id: 'evt_stale_00001' });
+      expect(again.json()).toEqual({ received: true, duplicate: true });
+      expect(await db.webhookEvent.count({ where: { providerEventId: 'evt_stale_00001' } })).toBe(
+        1,
+      );
+    });
+
+    it('a fresh RECEIVED row is a delivery still in flight → acknowledged as duplicate, untouched', async () => {
+      const d = await donation();
+      await stuck('evt_fresh_00001', 5_000);
+      const res = await deliver(
+        'payment.captured',
+        { payment: { entity: paymentEntity(d.orderId) } },
+        { id: 'evt_fresh_00001' },
+      );
+      expect(res.json()).toEqual({ received: true, duplicate: true });
+      expect(await statusOf(d.ref)).not.toBe('PAID');
+      expect(
+        (await db.webhookEvent.findFirstOrThrow({ where: { providerEventId: 'evt_fresh_00001' } }))
+          .processingStatus,
+      ).toBe('RECEIVED');
+    });
+
+    it('two concurrent retries of a stale row: exactly one processes it', async () => {
+      const d = await donation();
+      await stuck('evt_stale_race1', LEASE_MS + 60_000);
+      const payload = { payment: { entity: paymentEntity(d.orderId) } };
+      const results = await Promise.all([
+        deliver('payment.captured', payload, { id: 'evt_stale_race1' }),
+        deliver('payment.captured', payload, { id: 'evt_stale_race1' }),
+      ]);
+      const bodies = results.map((r) => r.json() as { duplicate?: boolean });
+      expect(bodies.filter((b) => b.duplicate)).toHaveLength(1);
+      const row = await db.webhookEvent.findFirstOrThrow({
+        where: { providerEventId: 'evt_stale_race1' },
+      });
+      expect(row).toMatchObject({ processingStatus: 'PROCESSED', attempts: 2 }); // one claim won
+      expect(await statusOf(d.ref)).toBe('PAID');
+      const intent = await db.donationIntent.findUniqueOrThrow({
+        where: { publicReference: d.ref },
+      });
+      expect(
+        await db.donationStatusEvent.count({
+          where: { donationIntentId: intent.id, toStatus: 'PAID' },
+        }),
+      ).toBe(1);
+    });
+
+    it('a claim holds its lease: a second retry right after a claim is a duplicate', async () => {
+      await stuck('evt_lease_00001', LEASE_MS + 60_000);
+      await db.webhookEvent.updateMany({
+        where: { providerEventId: 'evt_lease_00001' },
+        data: { processedAt: new Date() }, // another run claimed it moments ago
+      });
+      const res = await deliver('payment.captured', {}, { id: 'evt_lease_00001' });
+      expect(res.json()).toEqual({ received: true, duplicate: true });
+      const row = await db.webhookEvent.findFirstOrThrow({
+        where: { providerEventId: 'evt_lease_00001' },
+      });
+      expect(row).toMatchObject({ processingStatus: 'RECEIVED', attempts: 0 });
+    });
+
+    it('a stale row whose re-processing fails ends FAILED (500), so the gateway retries again', async () => {
+      await stuck('evt_stale_bad01', LEASE_MS + 60_000);
+      const res = await deliver(
+        'payment.captured',
+        { payment: { entity: { id: 'x' } } },
+        { id: 'evt_stale_bad01' },
+      );
+      expect(res.statusCode).toBe(500);
+      expect(
+        (await db.webhookEvent.findFirstOrThrow({ where: { providerEventId: 'evt_stale_bad01' } }))
+          .processingStatus,
+      ).toBe('FAILED');
+    });
+
+    it('the lease setting is bounded (1 minute to 1 hour)', () => {
+      expect(() => loadEnv({ NODE_ENV: 'test', WEBHOOK_REPROCESS_AFTER_MS: '10000' })).toThrow();
+      expect(() => loadEnv({ NODE_ENV: 'test', WEBHOOK_REPROCESS_AFTER_MS: '7200000' })).toThrow();
+      expect(
+        loadEnv({ NODE_ENV: 'test', WEBHOOK_REPROCESS_AFTER_MS: '300000' })
+          .WEBHOOK_REPROCESS_AFTER_MS,
+      ).toBe(300_000);
+    });
+
+    it('old PROCESSED and IGNORED rows stay duplicates however old they are', async () => {
+      for (const [id, processingStatus] of [
+        ['evt_old_proc001', 'PROCESSED'],
+        ['evt_old_ign0001', 'IGNORED'],
+      ] as const) {
+        await db.webhookEvent.create({
+          data: {
+            provider: 'RAZORPAY',
+            providerEventId: id,
+            eventType: 'payment.captured',
+            signatureValid: true,
+            processingStatus,
+            receivedAt: new Date(Date.now() - 10 * LEASE_MS),
+          },
+        });
+        const res = await deliver('payment.captured', {}, { id });
+        expect(res.json()).toEqual({ received: true, duplicate: true });
+        expect(
+          (await db.webhookEvent.findFirstOrThrow({ where: { providerEventId: id } }))
+            .processingStatus,
+        ).toBe(processingStatus);
+      }
+    });
+  });
+
   it('a concurrent duplicate insert is acknowledged as a duplicate', async () => {
     const spy = vi.spyOn(db.webhookEvent, 'findUnique').mockResolvedValueOnce(null);
     await deliver('subscription.charged', {}, { id: 'evt_race_000001' });

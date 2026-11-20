@@ -222,6 +222,7 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   app.register(razorpayWebhookRoutes, {
     prefix: `${API_V1_PREFIX}/webhooks`,
     now: options.now ?? (() => new Date()),
+    reprocessAfterMs: env.WEBHOOK_REPROCESS_AFTER_MS,
     ...(options.db && { db: options.db }),
     ...(env.RAZORPAY_WEBHOOK_SECRET && { secret: env.RAZORPAY_WEBHOOK_SECRET }),
   });
