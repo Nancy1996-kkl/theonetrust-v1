@@ -1,3 +1,4 @@
+import type { CheckoutDescriptor } from './provider.ts';
 /**
  * Donation intent contract (#23). The browser sends the GIFT it chose; the server computes the
  * optional fee cover and the amount to charge, creates the provider order, and returns only what
@@ -62,12 +63,8 @@ export interface DonationIntentResponse {
   /** What Checkout will charge: giftPaise + feePaise. */
   amountPaise: number;
   currency: 'INR';
-  checkout: {
-    provider: 'RAZORPAY';
-    /** Public key ID only. */
-    keyId: string;
-    orderId: string;
-  };
+  /** Which gateway's window to open, and what it needs (see provider.ts). */
+  checkout: CheckoutDescriptor;
 }
 
 /**

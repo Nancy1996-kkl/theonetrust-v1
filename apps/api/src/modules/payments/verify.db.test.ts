@@ -417,13 +417,30 @@ describe('GET /donations/status/:reference', () => {
     expect(last).toBe(429);
   });
 
-  it('without a provider answers 503', async () => {
-    const bare = buildApp(loadEnv({ NODE_ENV: 'test' }), { db });
-    expect(
-      (await bare.inject({ method: 'GET', url: '/api/v1/donations/status/TOT-D-000000000000' }))
-        .statusCode,
-    ).toBe(503);
+  it('with no gateway (PAYMENT_PROVIDER=none) the ledger still answers; without a database, 503', async () => {
+    const d = await newDonation();
+    const p = remotePayment(d.orderId);
+    await verify({
+      publicReference: d.ref,
+      orderId: d.orderId,
+      paymentId: p.paymentId,
+      signature: sign(d.orderId, p.paymentId),
+    });
+    const pending = await newDonation();
+    remotePayment(pending.orderId); // captured at the gateway, but no gateway to ask now
+    const bare = buildApp(loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'none' }), { db });
+    const get = (ref: string) =>
+      bare.inject({ method: 'GET', url: `/api/v1/donations/status/${ref}` });
+    expect((await get(d.ref)).json()).toMatchObject({ status: 'PAID' });
+    expect((await get(pending.ref)).json()).toMatchObject({ status: 'PENDING' });
+    expect(await intentStatus(pending.ref)).toBe('CREATED'); // nothing changed, no guess
+    expect((await get('TOT-D-000000000000')).statusCode).toBe(404);
     await bare.close();
+    const noDb = buildApp(loadEnv({ NODE_ENV: 'test' }));
+    expect(
+      (await noDb.inject({ method: 'GET', url: `/api/v1/donations/status/${d.ref}` })).statusCode,
+    ).toBe(503);
+    await noDb.close();
   });
 });
 

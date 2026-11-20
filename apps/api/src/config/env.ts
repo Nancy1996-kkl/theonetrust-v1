@@ -70,6 +70,11 @@ const EnvSchema = z
     LOGIN_MAX_FAILURES: z.coerce.number().int().min(3).max(20).default(5),
     LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
     /**
+     * Which gateway takes online donations (Phase 1 of the Cashfree plan). `none` switches online
+     * donations off cleanly (503), e.g. while moving gateways. `cashfree` arrives in Phase 4.
+     */
+    PAYMENT_PROVIDER: z.enum(['razorpay', 'none']).default('razorpay'),
+    /**
      * Razorpay API keys — backend only, never VITE_*. Test keys (rzp_test_) until launch (#39):
      * outside production a live key is refused. Without keys, donations answer 503.
      */

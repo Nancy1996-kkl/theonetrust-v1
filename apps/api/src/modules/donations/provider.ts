@@ -1,3 +1,4 @@
+import type { CheckoutDescriptor } from '@theonetrust/contracts';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 /**
  * Payment provider boundary (spec §8 "Separation rule"). Domain code talks to this interface;
@@ -33,6 +34,17 @@ export interface ProviderPayment {
   /** Paise refunded so far. */
   refundedPaise: number;
 }
+
+/**
+ * What the browser needs to open this provider's payment window (Phase 1). Provider words stay
+ * in the adapter layer: routes ask for a descriptor and never build one themselves.
+ */
+export function checkoutDescriptor(provider: PaymentProvider, orderId: string): CheckoutDescriptor {
+  return { provider: 'RAZORPAY', keyId: provider.publicKeyId, orderId };
+}
+
+/** Longest a single call to Razorpay may take before it counts as a network failure. */
+export const RAZORPAY_TIMEOUT_MS = 10_000;
 
 export interface PaymentProvider {
   readonly name: 'RAZORPAY';
@@ -141,7 +153,7 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
     try {
       res = await doFetch(`${base}${path}`, {
         headers: { authorization: auth },
-        signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+        signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
       });
     } catch {
       throw new PaymentProviderError('network');
@@ -194,7 +206,7 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
             close_by: Math.floor(input.closeBy.getTime() / 1000),
             notes: input.notes,
           }),
-          signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
         });
       } catch {
         throw new PaymentProviderError('network');
@@ -240,7 +252,7 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
       try {
         res = await doFetch(imageUrl, {
           redirect: 'follow',
-          signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
         });
       } catch {
         throw new PaymentProviderError('network');
@@ -268,7 +280,7 @@ export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
             notes: input.notes,
             partial_payment: false,
           }),
-          signal: AbortSignal.timeout(config.timeoutMs ?? 10_000),
+          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
         });
       } catch {
         throw new PaymentProviderError('network');

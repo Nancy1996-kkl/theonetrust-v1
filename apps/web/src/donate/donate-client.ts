@@ -7,6 +7,7 @@ import type {
   DonationQrResponse,
   DonationStatusResponse,
 } from '@theonetrust/contracts';
+import { isCashfreeCheckout, isRazorpayCheckout } from '@theonetrust/contracts';
 import { apiUrl } from '../lib/api-url.ts';
 import { MOCK_RECEIPT_TOKEN } from '../receipt/receipt-client.ts';
 
@@ -174,7 +175,7 @@ export function createApiDonateClient(
       if (res.status === 201 || res.status === 200) {
         const intent = (await res.json().catch(() => null)) as DonationIntentResponse | null;
         if (
-          intent?.checkout?.orderId &&
+          (isRazorpayCheckout(intent?.checkout) || isCashfreeCheckout(intent?.checkout)) &&
           intent.amountPaise === request.giftPaise + intent.feePaise
         ) {
           return { ok: true, intent };
@@ -246,6 +247,9 @@ export function createApiDonateClient(
       }
     },
     async checkout(intent, prefill) {
+      // This window is Razorpay's; another gateway's descriptor is never opened with it.
+      const gateway = intent.checkout;
+      if (!isRazorpayCheckout(gateway)) return { kind: 'failed', reason: 'other' };
       let Razorpay: RazorpayConstructor;
       try {
         Razorpay = await load();
@@ -261,8 +265,8 @@ export function createApiDonateClient(
           }
         };
         const instance = new Razorpay({
-          key: intent.checkout.keyId,
-          order_id: intent.checkout.orderId,
+          key: gateway.keyId,
+          order_id: gateway.orderId,
           amount: intent.amountPaise,
           currency: 'INR',
           name: 'Theonetrust.in',

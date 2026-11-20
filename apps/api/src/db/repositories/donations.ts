@@ -1,6 +1,6 @@
 import type { Paise } from '@theonetrust/contracts';
 import type { Db } from '../client.ts';
-import type { Locale } from '../../generated/prisma/enums.ts';
+import type { Locale, PaymentProvider } from '../../generated/prisma/enums.ts';
 import { newDonationReference } from '../references.ts';
 
 export interface NewDonationIntent {
@@ -24,6 +24,8 @@ export interface NewDonationIntent {
 
 export interface NewPaymentAttempt {
   donationIntentId: string;
+  /** The gateway that created the order (from the selected adapter, never a literal). */
+  provider: PaymentProvider;
   providerOrderId: string;
   amountPaise: Paise;
 }
@@ -53,7 +55,7 @@ export function donationRepository(db: Db) {
     },
 
     addPaymentAttempt(input: NewPaymentAttempt) {
-      return db.paymentAttempt.create({ data: { ...input, provider: 'RAZORPAY' } });
+      return db.paymentAttempt.create({ data: input });
     },
 
     findAttemptByProviderOrderId(providerOrderId: string) {

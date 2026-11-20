@@ -175,6 +175,7 @@ describe('uniqueness of provider and receipt identifiers', () => {
     const intent = await newIntent();
     for (let i = 0; i < 2; i += 1) {
       await donations.addPaymentAttempt({
+        provider: 'RAZORPAY',
         donationIntentId: intent.id,
         providerOrderId: unique('order'),
         amountPaise: rupeesToPaise(500),
@@ -193,11 +194,13 @@ describe('uniqueness of provider and receipt identifiers', () => {
   it('allows one receipt per payment and unique receipt numbers', async () => {
     const intent = await newIntent();
     const attempt = await donations.addPaymentAttempt({
+      provider: 'RAZORPAY',
       donationIntentId: intent.id,
       providerOrderId: unique('order'),
       amountPaise: rupeesToPaise(500),
     });
     const other = await donations.addPaymentAttempt({
+      provider: 'RAZORPAY',
       donationIntentId: intent.id,
       providerOrderId: unique('order'),
       amountPaise: rupeesToPaise(500),
@@ -249,6 +252,7 @@ describe('referential integrity', () => {
   it('refuses to delete a donation that has payment records', async () => {
     const intent = await newIntent();
     await donations.addPaymentAttempt({
+      provider: 'RAZORPAY',
       donationIntentId: intent.id,
       providerOrderId: unique('order'),
       amountPaise: rupeesToPaise(500),

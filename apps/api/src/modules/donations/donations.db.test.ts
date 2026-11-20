@@ -1,9 +1,16 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { randomBytes } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.ts';
 import { loadEnv } from '../../config/env.ts';
 import { unique, useTestDb } from '../../test/db.ts';
-import { PaymentProviderError, type CreateOrderInput, type PaymentProvider } from './provider.ts';
+import {
+  PaymentProviderError,
+  RAZORPAY_TIMEOUT_MS,
+  type CreateOrderInput,
+  type PaymentProvider,
+} from './provider.ts';
+import { IDEMPOTENT_REPLAY_WAIT_MS } from './routes.ts';
 
 const db = useTestDb();
 const NOW = new Date('2026-11-03T06:00:00Z');
@@ -236,6 +243,82 @@ describe('validation: amount limits, programme, currency, contact, consent', () 
   });
 });
 
+describe('payment gateway selection (Phase 1)', () => {
+  it('the response names the gateway; the attempt records the adapter that created the order', async () => {
+    const res = await post(body());
+    expect(res.statusCode).toBe(201);
+    const checkout = res.json().checkout;
+    expect(checkout).toEqual({
+      provider: 'RAZORPAY',
+      keyId: 'rzp_test_publickey01',
+      orderId: expect.stringMatching(/^order_/),
+    });
+    const attempt = await db.paymentAttempt.findUniqueOrThrow({
+      where: { providerOrderId: checkout.orderId },
+    });
+    expect(attempt.provider).toBe('RAZORPAY');
+  });
+
+  it('the same key reused for another way of paying (QR attempt vs checkout) is a conflict', async () => {
+    const key = unique('chan')
+      .replace(/[^A-Za-z0-9_-]/g, '')
+      .padEnd(20, 'c');
+    const first = await post(body(), { 'idempotency-key': key });
+    expect(first.statusCode).toBe(201);
+    await db.paymentAttempt.update({
+      where: { providerOrderId: first.json().checkout.orderId },
+      data: {
+        // as if it were a QR attempt
+        qrExpiresAt: new Date(NOW.getTime() + 600_000),
+        qrImageUrl: 'https://example.org/qr.png',
+      },
+    });
+    expect((await post(body(), { 'idempotency-key': key })).statusCode).toBe(409);
+  });
+
+  it('PAYMENT_PROVIDER=none also switches monthly giving off (it is an online payment)', async () => {
+    const config = {
+      NODE_ENV: 'test',
+      AUTH_SECRET_KEY: randomBytes(32).toString('base64'),
+      RAZORPAY_KEY_ID: 'rzp_test_monthlyoff01',
+      RAZORPAY_KEY_SECRET: 'monthly-off-secret-001',
+      RAZORPAY_SUBSCRIPTIONS_ENABLED: 'true',
+    };
+    const offered = async (extra: Record<string, string>) => {
+      const a = buildApp(loadEnv({ ...config, ...extra }), { db, now: () => NOW });
+      const res = await a.inject({ method: 'GET', url: '/api/v1/donation-intents/estimate' });
+      await a.close();
+      return res.json().monthlyOffered as boolean;
+    };
+    expect(await offered({})).toBe(true); // the same setup with Razorpay offers it
+    expect(await offered({ PAYMENT_PROVIDER: 'none' })).toBe(false);
+  });
+
+  it('PAYMENT_PROVIDER=none switches online donations off: 503 with the generic error body', async () => {
+    const off = buildApp(
+      loadEnv({
+        NODE_ENV: 'test',
+        PAYMENT_PROVIDER: 'none',
+        RAZORPAY_KEY_ID: 'rzp_test_offswitch01',
+        RAZORPAY_KEY_SECRET: 'off-switch-secret-0001',
+      }),
+      { db, now: () => NOW },
+    );
+    const before = await db.donationIntent.count();
+    const res = await off.inject({
+      method: 'POST',
+      url: '/api/v1/donation-intents',
+      remoteAddress: '10.99.0.1',
+      payload: body(),
+    });
+    await off.close();
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toMatchObject({ error: { code: 'SERVICE_UNAVAILABLE' } });
+    expect(res.body).not.toMatch(/razorpay|rzp_/i);
+    expect(await db.donationIntent.count()).toBe(before);
+  });
+});
+
 describe('retries and provider failures', () => {
   it('the same Idempotency-Key returns the same order (no second charge)', async () => {
     const key = unique('idem')
@@ -285,18 +368,51 @@ describe('retries and provider failures', () => {
     });
 
     it('if the winner cannot create the order, the waiting request answers 409 (retry), not 500', async () => {
+      // A short wait (injected) so the test does not sit through the production wait.
+      const quick = buildApp(loadEnv({ NODE_ENV: 'test' }), {
+        db,
+        now: () => NOW,
+        paymentProvider: provider,
+        idempotencyWaitMs: 300,
+      });
+      const send = (key: string) =>
+        quick.inject({
+          method: 'POST',
+          url: '/api/v1/donation-intents',
+          remoteAddress: '10.98.0.1',
+          headers: { 'idempotency-key': key },
+          payload: body(),
+        });
       const key = raceKey('race2');
+      const calls = vi.mocked(provider.createOrder).mock.calls.length;
       orderDelayMs = 100;
       failNext = new PaymentProviderError('network');
       const spy = bothMissTheLookup();
-      const results = await Promise.all([
-        post(body(), { 'idempotency-key': key }),
-        post(body(), { 'idempotency-key': key }),
-      ]);
+      const results = await Promise.all([send(key), send(key)]);
       spy.mockRestore();
       orderDelayMs = 0;
       expect(results.map((r) => r.statusCode).sort()).toEqual([409, 503]);
-    }, 15_000); // the waiting request gives up only after IDEMPOTENT_REPLAY_WAIT_MS
+      expect(vi.mocked(provider.createOrder).mock.calls.length - calls).toBe(1); // never a 2nd order
+      expect((await send(key)).statusCode).toBe(409); // the key stays spent: a fresh try is new
+      await quick.close();
+    });
+
+    it('a racer with a different gift is refused at once (409), never handed the other order', async () => {
+      const key = raceKey('race3');
+      orderDelayMs = 100;
+      const spy = bothMissTheLookup();
+      const [a, b] = await Promise.all([
+        post(body(), { 'idempotency-key': key }),
+        post(body({ giftPaise: 200_000 }), { 'idempotency-key': key }),
+      ]);
+      spy.mockRestore();
+      orderDelayMs = 0;
+      expect([a.statusCode, b.statusCode].sort()).toEqual([201, 409]);
+    });
+
+    it('the wait covers the gateway timeout, so a slow winner still answers the waiting donor', () => {
+      expect(IDEMPOTENT_REPLAY_WAIT_MS).toBeGreaterThan(RAZORPAY_TIMEOUT_MS);
+    });
   });
 
   it('a provider failure answers 503 and leaves the intent without an order', async () => {

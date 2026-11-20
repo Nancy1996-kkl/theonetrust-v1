@@ -109,7 +109,11 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
     '/donations/status/:reference',
     { config: { rateLimit: { max: opts.statusPerHour, timeWindow: 3_600_000 } } },
     async (request) => {
-      const { db, provider } = deps();
+      // The ledger answers even with no gateway configured (PAYMENT_PROVIDER=none): only the
+      // gateway re-check needs one.
+      if (!opts.db) throw new AppError('SERVICE_UNAVAILABLE');
+      const db = opts.db;
+      const provider = opts.provider;
       const { reference: publicReference } = parseInput(StatusParams, request.params);
       const intent = await intentWithAttempt(db, publicReference);
       // A young FAILED donation is re-checked too: a retry on the same order may have succeeded
@@ -120,7 +124,7 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
       const unsettled =
         ['CREATED', 'PENDING', 'AUTHORIZED'].includes(intent.status) || youngFailure;
       const attempt = intent.paymentAttempts[0];
-      if (!unsettled || intent.channel !== 'CHECKOUT' || !attempt) {
+      if (!unsettled || intent.channel !== 'CHECKOUT' || !attempt || !provider) {
         return reply(db, intent, intent.status);
       }
       // Ask the gateway (with our secret), by order — covers a lost callback, a closed tab and a

@@ -10,6 +10,7 @@ import {
   type DonationIntentResponse,
   type DonationQrResponse,
   type TrustBankAccount,
+  type CheckoutDescriptor,
 } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
 import { donationRepository } from '../../db/repositories/donations.ts';
@@ -17,7 +18,12 @@ import { trustSettingsRepository } from '../../db/repositories/trust-settings.ts
 import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { feeCoverFor, parseFeeTable, type FeeMethod } from './fees.ts';
-import { PaymentProviderError, type PaymentProvider } from './provider.ts';
+import {
+  checkoutDescriptor,
+  PaymentProviderError,
+  RAZORPAY_TIMEOUT_MS,
+  type PaymentProvider,
+} from './provider.ts';
 import { transitionDonation } from '../payments/transitions.ts';
 import { normalizePan, sealAddress, sealPan, taxOptInOffered } from '../tax/identity.ts';
 
@@ -70,8 +76,11 @@ const EstimateQuery = z.object({
 
 const IDEMPOTENCY_KEY = /^[A-Za-z0-9_-]{16,64}$/;
 
-/** How long a request that lost an Idempotency-Key race waits for the winner's order. */
-export const IDEMPOTENT_REPLAY_WAIT_MS = 5_000;
+/**
+ * How long a request that lost an Idempotency-Key race waits for the winner's order: longer than
+ * the gateway may take to create it, so the waiting donor gets the order, not a needless 409.
+ */
+export const IDEMPOTENT_REPLAY_WAIT_MS = RAZORPAY_TIMEOUT_MS + 2_000;
 const IDEMPOTENT_REPLAY_POLL_MS = 100;
 
 export interface DonationRouteOptions {
@@ -212,7 +221,13 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
         return reply.code(200).send(bankResponse(existing, account));
       }
       const attempt = existing.paymentAttempts[0];
-      if (existing.giftPaise !== body.giftPaise || existing.feePaise !== feePaise) {
+      // The same key for another amount or another way of paying is a different donation.
+      if (
+        existing.giftPaise !== body.giftPaise ||
+        existing.feePaise !== feePaise ||
+        existing.channel !== (bank ? 'BANK_TRANSFER' : 'CHECKOUT') ||
+        (attempt && !qr && attempt.qrExpiresAt)
+      ) {
         throw new AppError('CONFLICT');
       }
       if (!attempt) return 'no_order' as const;
@@ -220,9 +235,10 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
         if (!attempt.qrExpiresAt) throw new AppError('CONFLICT');
         return reply.code(200).send(qrResponse(existing, attempt.qrExpiresAt));
       }
+      // An existing checkout attempt means a gateway created it; deps() keeps the 503 otherwise.
       return reply
         .code(200)
-        .send(response(existing, attempt.providerOrderId, provider?.publicKeyId ?? ''));
+        .send(response(existing, checkoutDescriptor(deps().provider, attempt.providerOrderId)));
     }
 
     // A retry with the same key returns the same order instead of charging twice.
@@ -309,7 +325,7 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
       await db.paymentAttempt.create({
         data: {
           donationIntentId: intent.id,
-          provider: 'RAZORPAY',
+          provider: provider.name,
           providerOrderId: made.qrId,
           amountPaise: toPaise(made.amountPaise),
           qrImageUrl: made.imageUrl,
@@ -343,10 +359,11 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
     }
     await donations.addPaymentAttempt({
       donationIntentId: intent.id,
+      provider: provider.name,
       providerOrderId: order.orderId,
       amountPaise: toPaise(order.amountPaise),
     });
-    return reply.code(201).send(response(intent, order.orderId, provider.publicKeyId));
+    return reply.code(201).send(response(intent, checkoutDescriptor(provider, order.orderId)));
   });
 
   /**
@@ -453,8 +470,7 @@ function qrResponse(
 
 function response(
   intent: { publicReference: string; giftPaise: number; feePaise: number; amountPaise: number },
-  orderId: string,
-  keyId: string,
+  checkout: CheckoutDescriptor,
 ): DonationIntentResponse {
   return {
     publicReference: intent.publicReference,
@@ -462,6 +478,6 @@ function response(
     feePaise: intent.feePaise,
     amountPaise: intent.amountPaise,
     currency: 'INR',
-    checkout: { provider: 'RAZORPAY', keyId, orderId },
+    checkout,
   };
 }

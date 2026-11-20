@@ -439,6 +439,40 @@ describe('createApiDonateClient', () => {
     });
   });
 
+  it('accepts only a well-formed gateway descriptor, and never opens Razorpay for another gateway', async () => {
+    const start = (checkout: unknown) =>
+      createApiDonateClient(
+        '',
+        vi.fn(async () => ok({ ...INTENT, checkout }, 201)),
+      ).start(REQ, 'k'.repeat(32));
+    expect(await start({ provider: 'RAZORPAY', keyId: '', orderId: 'order_1' })).toEqual({
+      ok: false,
+      reason: 'network',
+    });
+    expect(await start({ provider: 'STRIPE', orderId: 'order_1' })).toEqual({
+      ok: false,
+      reason: 'network',
+    });
+    const cashfree = {
+      provider: 'CASHFREE',
+      paymentSessionId: 'session_abc',
+      mode: 'sandbox',
+      orderId: 'TOT-D-ABCDEFGHJKMN',
+    };
+    const started = await start(cashfree);
+    expect(started).toMatchObject({ ok: true });
+    // Phase 5 adds the Cashfree window; until then the Razorpay loader is never touched.
+    const load = vi.fn(async () => Promise.reject(new Error('must not load')));
+    const api = createApiDonateClient('', vi.fn(), load);
+    expect(
+      await api.checkout({ ...INTENT, checkout: cashfree } as DonationIntentResponse, {
+        name: 'A',
+        lang: 'en',
+      }),
+    ).toEqual({ kind: 'failed', reason: 'other' });
+    expect(load).not.toHaveBeenCalled();
+  });
+
   it('receipt(): the token only for a PAID donation that has one; null otherwise', async () => {
     const token = 'T'.repeat(43);
     const reply = (body: unknown, status = 200) =>
