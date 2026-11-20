@@ -31,7 +31,13 @@ const STATUS_FOR: Record<string, DonationStatus> = {
 /** Payment states that never settle an order, so never claim its attempt (audit F-1). */
 const NON_CLAIMING = new Set(['created', 'failed']);
 /** Forward order of a payment's life; a lower state for the same payment is a stale event. */
-const RANK: Record<string, number> = { created: 0, failed: 1, authorized: 2, captured: 3 };
+const RANK: Record<string, number> = {
+  created: 0,
+  failed: 1,
+  authorized: 2,
+  captured: 3,
+  refunded: 4,
+};
 const rank = (status: string | null): number => RANK[status ?? ''] ?? -1;
 
 export async function applyProviderPayment(
@@ -74,22 +80,29 @@ export async function applyProviderPayment(
     const duplicate = claimed && !sameClaim && claims;
 
     if (mismatch || duplicate) {
-      await tx.paymentException.create({
-        data: {
-          kind: duplicate ? 'DUPLICATE_PAYMENT' : 'PAYMENT_MISMATCH',
-          donationIntentId: intent.id,
-          providerPaymentId: payment.paymentId,
-        },
-      });
-      if (canTransition(intent.status, 'MANUAL_REVIEW') && intent.status !== 'PAID') {
-        await transitionDonation(tx, intent.id, 'MANUAL_REVIEW', 'gateway_status');
-        return 'MANUAL_REVIEW';
-      }
-      return intent.status;
+      return flagForReview(
+        tx,
+        intent.id,
+        duplicate ? 'DUPLICATE_PAYMENT' : 'PAYMENT_MISMATCH',
+        payment.paymentId,
+        claims,
+      );
     }
 
-    await tx.paymentAttempt.update({
-      where: { id: attempt.id },
+    // Write conditionally: another transaction may have claimed this attempt since we read it.
+    // The row lock makes this writer wait and re-check the condition, so two captured payments
+    // arriving together can never both "win" silently.
+    const written = await tx.paymentAttempt.updateMany({
+      where: {
+        id: attempt.id,
+        ...(!sameClaim && {
+          OR: [
+            { providerPaymentId: null },
+            { providerStatus: null },
+            { providerStatus: { in: [...NON_CLAIMING] } },
+          ],
+        }),
+      },
       data: {
         ...(claims && { providerPaymentId: payment.paymentId }),
         providerStatus: payment.status,
@@ -98,6 +111,12 @@ export async function applyProviderPayment(
         ...(opts.signatureVerified && !attempt.signatureVerifiedAt && { signatureVerifiedAt: now }),
       },
     });
+    if (written.count === 0) {
+      if (claims) {
+        return flagForReview(tx, intent.id, 'DUPLICATE_PAYMENT', payment.paymentId, true);
+      }
+      return currentStatus(tx, intent.id); // a failed try lost to a payment that settled the order
+    }
 
     const target = STATUS_FOR[payment.status];
     const source = target === 'PAID' ? 'gateway_verified' : 'gateway_status';
@@ -106,6 +125,8 @@ export async function applyProviderPayment(
     if (!target || target === intent.status || !canTransition(intent.status, target, source)) {
       return intent.status;
     }
+    // Only the refund flow may return a refund in progress to PAID.
+    if (target === 'PAID' && intent.status === 'REFUND_PENDING') return intent.status;
     await transitionDonation(tx, intent.id, target, source);
     // The acknowledgement is created in the same transaction as PAID, never before (#29).
     if (target === 'PAID') {
@@ -123,6 +144,46 @@ export async function applyProviderPayment(
     }
     return target;
   });
+}
+
+type Tx = Parameters<Parameters<Db['$transaction']>[0]>[0];
+
+async function currentStatus(tx: Tx, intentId: string): Promise<DonationStatus> {
+  const intent = await tx.donationIntent.findUniqueOrThrow({
+    where: { id: intentId },
+    select: { status: true },
+  });
+  return intent.status;
+}
+
+/**
+ * Records a mismatch or duplicate for the owner — once per (kind, donation, payment), so repeated
+ * re-checks never pile up rows — and moves the donation to review unless it is already PAID. A
+ * FAILED donation goes to review only when money may have moved (an authorized/captured payment).
+ */
+async function flagForReview(
+  tx: Tx,
+  intentId: string,
+  kind: 'DUPLICATE_PAYMENT' | 'PAYMENT_MISMATCH',
+  providerPaymentId: string,
+  moneyMoved: boolean,
+): Promise<DonationStatus> {
+  const known = await tx.paymentException.findFirst({
+    where: { kind, donationIntentId: intentId, providerPaymentId },
+    select: { id: true },
+  });
+  if (!known) {
+    await tx.paymentException.create({
+      data: { kind, donationIntentId: intentId, providerPaymentId },
+    });
+  }
+  const status = await currentStatus(tx, intentId);
+  const source = moneyMoved ? 'gateway_status' : undefined;
+  if (status !== 'PAID' && canTransition(status, 'MANUAL_REVIEW', source)) {
+    await transitionDonation(tx, intentId, 'MANUAL_REVIEW', 'gateway_status');
+    return 'MANUAL_REVIEW';
+  }
+  return status;
 }
 
 /** What a donor may see: PAID only when verified; everything unsettled is PENDING. */

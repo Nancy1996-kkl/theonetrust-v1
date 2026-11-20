@@ -23,6 +23,8 @@ export interface VerifyRouteOptions {
   provider?: PaymentProvider;
   verifyPerHour: number;
   statusPerHour: number;
+  /** A FAILED donation is re-checked on the public route only while this young (audit F-1). */
+  failedRecheckWindowMs: number;
   now: () => Date;
   /** Derives acknowledgement share tokens (#29); without it no receipt link is returned. */
   receiptKey?: Buffer;
@@ -110,8 +112,13 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
       const { db, provider } = deps();
       const { reference: publicReference } = parseInput(StatusParams, request.params);
       const intent = await intentWithAttempt(db, publicReference);
-      // FAILED is re-checked too: a retry on the same order may have succeeded (audit F-1).
-      const unsettled = ['CREATED', 'PENDING', 'AUTHORIZED', 'FAILED'].includes(intent.status);
+      // A young FAILED donation is re-checked too: a retry on the same order may have succeeded
+      // (audit F-1). Older ones are answered from the ledger; the owner re-check still heals them.
+      const youngFailure =
+        intent.status === 'FAILED' &&
+        opts.now().getTime() - intent.createdAt.getTime() < opts.failedRecheckWindowMs;
+      const unsettled =
+        ['CREATED', 'PENDING', 'AUTHORIZED'].includes(intent.status) || youngFailure;
       const attempt = intent.paymentAttempts[0];
       if (!unsettled || intent.channel !== 'CHECKOUT' || !attempt) {
         return reply(db, intent, intent.status);

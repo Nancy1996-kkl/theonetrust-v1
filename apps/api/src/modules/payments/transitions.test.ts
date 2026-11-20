@@ -26,7 +26,7 @@ describe('donation state transitions', () => {
     expect(canTransition('PAID', 'PAID')).toBe(true);
   });
 
-  it('FAILED → PAID only for gateway-verified captured money (audit F-1)', async () => {
+  it('FAILED → PAID only for gateway-verified money; → MANUAL_REVIEW only for gateway data (F-1)', async () => {
     expect(canTransition('FAILED', 'PAID', 'gateway_verified')).toBe(true);
     for (const source of [
       undefined,
@@ -37,9 +37,14 @@ describe('donation state transitions', () => {
     ] as const) {
       expect(canTransition('FAILED', 'PAID', source)).toBe(false);
     }
+    // FAILED → MANUAL_REVIEW only for gateway data (money moved on a failed order).
+    expect(canTransition('FAILED', 'MANUAL_REVIEW', 'gateway_status')).toBe(true);
+    for (const source of [undefined, 'gateway_verified', 'donor_report', 'owner_review'] as const) {
+      expect(canTransition('FAILED', 'MANUAL_REVIEW', source)).toBe(false);
+    }
     // No other way out of FAILED, whatever the source.
     for (const to of DONATION_STATUSES) {
-      if (to !== 'FAILED' && to !== 'PAID') {
+      if (to !== 'FAILED' && to !== 'PAID' && to !== 'MANUAL_REVIEW') {
         expect(canTransition('FAILED', to, 'gateway_verified')).toBe(false);
       }
     }

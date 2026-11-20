@@ -24,8 +24,8 @@ const ALLOWED: Record<DonationStatus, readonly DonationStatus[]> = {
 export type TransitionSource = PaidSource | 'donor_report' | 'gateway_status' | 'owner_review';
 
 /**
- * FAILED is terminal with ONE exception (audit F-1): money the gateway confirms as captured on our
- * own order. A donor may fail a first try and succeed on a retry of the same order; the captured
+ * FAILED is terminal with two gateway-only exits (audit F-1): money the gateway confirms as
+ * captured on our own order (→ PAID), and gateway data that needs the owner (→ MANUAL_REVIEW). A donor may fail a first try and succeed on a retry of the same order; the captured
  * payment is the truth, so FAILED → PAID is allowed for `gateway_verified` and nothing else.
  */
 export function canTransition(
@@ -34,6 +34,9 @@ export function canTransition(
   source?: TransitionSource,
 ): boolean {
   if (from === 'FAILED' && to === 'PAID') return source === 'gateway_verified';
+  // Gateway data saying money moved on a FAILED order (a mismatch or a second payment) needs
+  // the owner: FAILED → MANUAL_REVIEW, for gateway data only.
+  if (from === 'FAILED' && to === 'MANUAL_REVIEW') return source === 'gateway_status';
   return from === to || ALLOWED[from].includes(to);
 }
 

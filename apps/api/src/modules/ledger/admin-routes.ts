@@ -275,7 +275,13 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
       if (result.found) outcome = `provider_${result.found}`;
     } catch (error) {
       outcome =
-        error instanceof PaymentProviderError ? `provider_${error.reason}` : 'provider_error';
+        error instanceof PaymentProviderError
+          ? `provider_${error.reason}`
+          : error instanceof AppError
+            ? 'concurrent_update' // e.g. a webhook settled it at the same moment
+            : 'provider_error';
+      // Part of the work may already be applied: report the ledger as it is now.
+      status = (await db.donationIntent.findUniqueOrThrow({ where: { id } })).status;
     }
     await audit(request).mutate(
       {

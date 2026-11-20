@@ -418,6 +418,21 @@ describe('exceptions queue', () => {
       reason: 'Donor says the second try worked',
     });
     expect(res.json()).toMatchObject({ status: 'PAID', outcome: 'provider_captured' });
+
+    // The donor also paid a second time on the same order: repeated re-checks flag it ONCE.
+    pays(d.orderId, 100_000);
+    for (let i = 0; i < 3; i++) {
+      const again = await send('POST', `/api/v1/admin/donations/${d.id}/recheck`, {
+        reason: 'Checking the second payment',
+      });
+      expect(again.json()).toMatchObject({ status: 'PAID' });
+    }
+    expect(
+      await db.paymentException.count({
+        where: { donationIntentId: d.id, kind: 'DUPLICATE_PAYMENT' },
+      }),
+    ).toBe(1);
+    expect(await db.receipt.count({ where: { donationIntentId: d.id } })).toBeLessThanOrEqual(1);
   });
 
   it('re-check works for QR and monthly-charge attempts (audit F-4)', async () => {
