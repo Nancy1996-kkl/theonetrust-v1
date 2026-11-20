@@ -2,10 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter @theonetrust/web... build",
+  "buildCommand": "pnpm --filter @theonetrust/web... build && pnpm --filter @theonetrust/api build:serverless",
   "outputDirectory": "apps/web/dist",
   "cleanUrls": true,
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/[...path]"
+    },
     {
       "source": "/admin",
       "destination": "/index.html"
@@ -139,5 +143,6 @@
         }
       ]
     }
-  ]
+  ],
+  "regions": ["bom1"]
 }

@@ -10,6 +10,15 @@ import { PrismaClient } from '../generated/prisma/client.ts';
  */
 export type Db = PrismaClient;
 
-export function createDb(databaseUrl: string): Db {
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl }) });
+/** Pool settings for short-lived serverless instances (Phase 2a); the long-running server keeps pg's defaults. */
+export interface PoolOptions {
+  max?: number;
+  idleTimeoutMillis?: number;
+  connectionTimeoutMillis?: number;
+}
+
+export function createDb(databaseUrl: string, pool: PoolOptions = {}): Db {
+  return new PrismaClient({
+    adapter: new PrismaPg({ connectionString: databaseUrl, ...pool }),
+  });
 }
