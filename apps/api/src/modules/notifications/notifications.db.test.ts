@@ -240,7 +240,8 @@ describe('queued with the payment', () => {
     expect(await sheetRowFor(d.intent.id)).toMatchObject({ status: 'PENDING' });
     // References only: no name, email or phone in the queue.
     expect(JSON.stringify([...rows, await sheetRowFor(d.intent.id)])).not.toMatch(
-      /Synthetic|donor\.notify|9876/,
+      // The full test number: random UUIDs and references can contain any four digits.
+      /Synthetic|donor\.notify|9876543210/,
     );
   });
 
@@ -546,7 +547,8 @@ describe('delivery status for the owner', () => {
       'owner',
       'owner',
     ]);
-    expect(res.body).not.toMatch(/donor\.notify|owner\.notify|9876/);
+    // The full test number: random UUIDs and references can contain any four digits.
+    expect(res.body).not.toMatch(/donor\.notify|owner\.notify|9876543210/);
     const failed = await send('GET', '/api/v1/admin/notifications?status=FAILED');
     expect(failed.json().items.every((i: { status: string }) => i.status === 'FAILED')).toBe(true);
     expect((await send('GET', '/api/v1/admin/notifications?status=NOPE')).statusCode).toBe(400);
