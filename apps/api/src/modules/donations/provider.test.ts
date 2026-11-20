@@ -1,6 +1,14 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
-import { isRazorpayImageUrl, PaymentProviderError, razorpayProvider } from './provider.ts';
+import {
+  isRazorpayImageUrl,
+  normaliseRazorpayPayment,
+  PaymentProviderError,
+  razorpayOrderState,
+  razorpayProvider,
+  type PaymentProvider,
+  type ProviderPayment,
+} from './provider.ts';
 
 const INPUT = {
   amountPaise: 51_200,
@@ -304,5 +312,72 @@ describe('razorpayProvider — one-time UPI QR', () => {
     expect(isRazorpayImageUrl('https://razorpay.com.evil.example/x')).toBe(false);
     expect(isRazorpayImageUrl('https://evilrzp.io/x')).toBe(false);
     expect(isRazorpayImageUrl('not a url')).toBe(false);
+  });
+});
+
+describe('Razorpay → gateway-neutral states (Phase 1b)', () => {
+  const p = (status: string, patch: Partial<ProviderPayment> = {}): ProviderPayment => ({
+    paymentId: 'pay_N0000001',
+    orderId: 'order_N0000001',
+    amountPaise: 50_000,
+    currency: 'INR',
+    status,
+    method: 'upi',
+    refundedPaise: 0,
+    ...patch,
+  });
+
+  it.each([
+    ['created', 'pending'],
+    ['authorized', 'authorized'],
+    ['captured', 'captured'],
+    ['failed', 'failed'],
+    ['refunded', 'refunded'],
+    ['something_new', 'unknown'],
+  ])('maps %s → %s and keeps every other field', (status, state) => {
+    expect(normaliseRazorpayPayment(p(status))).toEqual({
+      paymentId: 'pay_N0000001',
+      orderId: 'order_N0000001',
+      state,
+      amountPaise: 50_000,
+      currency: 'INR',
+      method: 'upi',
+      refundedPaise: 0,
+    });
+  });
+
+  it('order state: by order, by QR (matched to the QR), by monthly charge (matched to the attempt)', async () => {
+    const calls: string[] = [];
+    const provider = {
+      fetchOrderPayments: async (id: string) => {
+        calls.push(`order:${id}`);
+        return [p('failed'), p('captured', { paymentId: 'pay_N0000002' })];
+      },
+      fetchQrPayments: async (id: string) => {
+        calls.push(`qr:${id}`);
+        return [p('captured', { orderId: null })];
+      },
+      fetchPayment: async (id: string) => {
+        calls.push(`pay:${id}`);
+        return p('captured', { paymentId: id, orderId: null });
+      },
+    } as unknown as PaymentProvider;
+
+    const byOrder = await razorpayOrderState(provider, 'order_N0000001');
+    expect(byOrder.payments.map((x) => x.state)).toEqual(['failed', 'captured']);
+
+    const byQr = await razorpayOrderState(provider, 'qr_N00000001');
+    expect(byQr.payments[0]).toMatchObject({ orderId: 'qr_N00000001', state: 'captured' });
+
+    const charge = await razorpayOrderState(provider, 'subpay_pay_N0000009');
+    expect(charge.payments[0]).toMatchObject({
+      paymentId: 'pay_N0000009',
+      orderId: 'subpay_pay_N0000009',
+    });
+    expect(calls).toEqual(['order:order_N0000001', 'qr:qr_N00000001', 'pay:pay_N0000009']);
+
+    // A gateway without QR reads reports no payments for a QR, never a guess.
+    const noQr = { ...provider, fetchQrPayments: undefined } as unknown as PaymentProvider;
+    expect((await razorpayOrderState(noQr, 'qr_N00000001')).payments).toEqual([]);
   });
 });
