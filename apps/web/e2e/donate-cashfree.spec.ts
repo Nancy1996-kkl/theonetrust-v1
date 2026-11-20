@@ -163,3 +163,21 @@ test('a malformed cf_order is dropped without opening anything', async ({ page }
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 });
+
+test('storage blocked (in-app browser): the return link still checks and can be closed', async ({
+  page,
+}) => {
+  await setScenario(page, 'cashfree');
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'sessionStorage', {
+      get() {
+        throw new Error('blocked');
+      },
+    });
+  });
+  await page.goto('/?cf_order=TOT-D-ABCDEFGHJKMN');
+  const panel = page.getByRole('dialog');
+  await expect(panel.getByRole('heading', { name: T.en.confirmed })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+});

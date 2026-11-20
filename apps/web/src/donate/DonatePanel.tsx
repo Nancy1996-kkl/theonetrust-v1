@@ -99,6 +99,34 @@ function session(): Storage | undefined {
   }
 }
 
+/**
+ * The in-flight donation reference (not personal data), kept in this tab only. Storage can be
+ * missing or throw (private modes, some in-app browsers): that only means "nothing kept".
+ */
+const pending = {
+  get(): string | null {
+    try {
+      return session()?.getItem(PENDING_KEY) ?? null;
+    } catch {
+      return null;
+    }
+  },
+  set(ref: string): void {
+    try {
+      session()?.setItem(PENDING_KEY, ref);
+    } catch {
+      // nothing kept: the server still has the donation
+    }
+  },
+  clear(): void {
+    try {
+      session()?.removeItem(PENDING_KEY);
+    } catch {
+      // nothing to clear
+    }
+  },
+};
+
 function fill(text: string, values: Record<string, string>): string {
   return text.replace(/\{(\w+)\}/g, (_, key: string) => values[key] ?? '');
 }
@@ -229,8 +257,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     const valid = returnReference(location.search) !== null;
     if (valid) {
       // A link this tab did not start (shared, or opened elsewhere) is only a status check.
-      foreignRef.current = session()?.getItem(PENDING_KEY) !== cfOrder;
-      session()?.setItem(PENDING_KEY, cfOrder);
+      foreignRef.current = pending.get() !== cfOrder;
+      pending.set(cfOrder);
       returnedRef.current = cfOrder;
     }
     navigate(
@@ -247,7 +275,9 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   // A payment still being confirmed in this tab (refresh, back) is re-checked, never re-paid.
   useEffect(() => {
     if (!open) return;
-    const pendingRef = session()?.getItem(PENDING_KEY);
+    // Storage may be blocked (some in-app browsers): the return link's own reference still works,
+    // so a donor coming back is never left on a locked "checking" screen.
+    const pendingRef = pending.get() ?? returnedRef.current;
     const returned = pendingRef !== null && returnedRef.current === pendingRef;
     if (!pendingRef || (screen !== 'form' && !returned)) return;
     returnedRef.current = null;
@@ -293,7 +323,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     opts: { receipt?: boolean } = {},
   ) {
     if (status === 'PAID') {
-      session()?.removeItem(PENDING_KEY);
+      pending.clear();
       attemptKey.current = null;
       setIntent(null);
       setScreen('paid');
@@ -302,12 +332,12 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       setReceiptToken(null);
       if (opts.receipt !== false) void client.receipt(ref).then(setReceiptToken);
     } else if (status === 'FAILED') {
-      session()?.removeItem(PENDING_KEY);
+      pending.clear();
       attemptKey.current = null;
       setIntent(null);
       setScreen('failed');
     } else {
-      session()?.setItem(PENDING_KEY, ref);
+      pending.set(ref);
       setScreen('pending');
     }
   }
@@ -531,7 +561,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     }
     // Kept before the gateway opens: Cashfree may move the page to its own and come back.
     if (current.checkout.provider === 'CASHFREE') {
-      session()?.setItem(PENDING_KEY, current.publicReference);
+      pending.set(current.publicReference);
     }
     const outcome: CheckoutOutcome = await client.checkout(current, {
       name: details.name.trim(),
@@ -549,7 +579,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       setBusy(false);
       attemptKey.current = null;
       setIntent(null);
-      if (current.checkout.provider === 'CASHFREE') session()?.removeItem(PENDING_KEY);
+      if (current.checkout.provider === 'CASHFREE') pending.clear();
       setScreen(outcome.reason === 'upi_limit' ? 'limit' : 'failed');
       return;
     }
@@ -561,7 +591,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       return;
     }
     setScreen('confirming');
-    session()?.setItem(PENDING_KEY, current.publicReference);
+    pending.set(current.publicReference);
     const ref = current.publicReference;
     const status = await client.verify(current, outcome);
     setBusy(false);
@@ -646,7 +676,9 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
               ? `${t.sumAmount}: ${money(total)}`
               : t.confirmedText
             : screen === 'pending'
-              ? t.dontPayAgain
+              ? intent?.checkout.provider === 'CASHFREE'
+                ? t.noDoubleCharge
+                : t.dontPayAgain
               : t.failedText}
         </Callout>
         {reference && (
@@ -667,8 +699,12 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             </Link>
           </p>
         )}
+        {isPaid && foreignReturn && <p className="donate__muted">{t.confirmedHelp}</p>}
         {!isPaid && (
           <p className="donate__muted">{screen === 'pending' ? t.pendingHelp : t.failedHelp}</p>
+        )}
+        {screen === 'pending' && intent?.checkout.provider === 'CASHFREE' && (
+          <p className="donate__muted">{t.payAgainHint}</p>
         )}
       </>
     );

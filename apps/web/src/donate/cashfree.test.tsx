@@ -351,6 +351,10 @@ describe('donate pop-up with Cashfree', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.pending })).toBeVisible();
     expect(within(dialog).getByRole('button', { name: t.payAgainSameOrder })).toBeVisible();
+    // No contradiction: "never charged twice" instead of "don't pay again" next to the button.
+    expect(dialog).toHaveTextContent(t.noDoubleCharge);
+    expect(dialog).not.toHaveTextContent(t.dontPayAgain);
+    expect(dialog).toHaveTextContent(t.payAgainHint);
     answer = 'PAID';
     expect(
       await within(dialog).findByRole('heading', { name: t.thanks }, { timeout: 4_000 }),
@@ -439,6 +443,26 @@ describe('return from Cashfree’s page (?cf_order=)', () => {
     expect(within(dialog).queryByRole('heading', { name: t.thanks })).toBeNull();
     expect(within(dialog).queryByRole('link', { name: t.viewReceipt })).toBeNull();
     expect(donate.receipt).not.toHaveBeenCalled();
+  });
+
+  it('storage blocked (in-app browser): the return link still checks — never a locked screen', async () => {
+    const getItem = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    try {
+      const donate = cashfreeClient();
+      renderAt(`/?cf_order=${REF}`, donate);
+      const dialog = await screen.findByRole('dialog');
+      expect(await within(dialog).findByRole('heading', { name: t.confirmedTitle })).toBeVisible();
+      expect(dialog).toHaveTextContent(t.confirmedHelp);
+      expect(donate.status).toHaveBeenCalledWith(REF);
+    } finally {
+      getItem.mockRestore();
+      setItem.mockRestore();
+    }
   });
 
   it('never shows the first step while checking a return (starts on "confirming")', async () => {
