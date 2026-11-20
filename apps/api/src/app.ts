@@ -197,7 +197,10 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     options.paymentProvider ??
     (env.PAYMENT_PROVIDER === 'razorpay' && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
       ? razorpayProvider({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
-      : env.PAYMENT_PROVIDER === 'cashfree' && env.CASHFREE_CLIENT_ID && env.CASHFREE_CLIENT_SECRET
+      : env.PAYMENT_PROVIDER === 'cashfree' &&
+          env.CASHFREE_CLIENT_ID &&
+          env.CASHFREE_CLIENT_SECRET &&
+          env.CASHFREE_ENV
         ? cashfreeProvider({
             clientId: env.CASHFREE_CLIENT_ID,
             clientSecret: env.CASHFREE_CLIENT_SECRET,

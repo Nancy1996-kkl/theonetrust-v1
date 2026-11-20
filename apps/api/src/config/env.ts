@@ -99,8 +99,20 @@ const EnvSchema = z
       (value) => (value === '' ? undefined : value),
       z.string().min(16).max(256).optional(),
     ),
-    /** `sandbox` until the trust's account is activated and the domain whitelisted. */
-    CASHFREE_ENV: z.enum(['sandbox', 'production']).default('sandbox'),
+    /**
+     * `sandbox` until the trust's account is activated and the domain whitelisted. No default:
+     * with PAYMENT_PROVIDER=cashfree it must be chosen explicitly (plan §2.4), so a production
+     * site can never run against the sandbox by accident.
+     */
+    CASHFREE_ENV: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.enum(['sandbox', 'production']).optional(),
+    ),
+    /** Set by Vercel on every deployment (production | preview | development). */
+    VERCEL_ENV: z.preprocess(
+      (value) => (value === '' ? undefined : value),
+      z.enum(['production', 'preview', 'development']).optional(),
+    ),
     /** Pinned Cashfree API version (docs/research/2026-11-20-cashfree-research.md). */
     CASHFREE_API_VERSION: z
       .string()
@@ -317,13 +329,28 @@ const EnvSchema = z
         message: 'set both Cashfree keys or neither',
       });
     }
-    // Production keys only in production; sandbox keys never in production.
-    if (env.NODE_ENV !== 'production' && env.CASHFREE_ENV === 'production') {
+    // Plan §2.4: live Cashfree only on the production deployment; the sandbox never there.
+    const liveOutsideProduction =
+      env.CASHFREE_ENV === 'production' &&
+      (env.NODE_ENV !== 'production' ||
+        (env.VERCEL_ENV !== undefined && env.VERCEL_ENV !== 'production'));
+    if (liveOutsideProduction) {
       ctx.addIssue({
         code: 'custom',
         path: ['CASHFREE_ENV'],
-        message: 'production Cashfree outside production',
+        message: 'production Cashfree outside the production deployment',
       });
+    }
+    if (env.PAYMENT_PROVIDER === 'cashfree') {
+      if (!env.CASHFREE_ENV) {
+        ctx.addIssue({ code: 'custom', path: ['CASHFREE_ENV'], message: 'required for Cashfree' });
+      } else if (env.CASHFREE_ENV === 'sandbox' && env.VERCEL_ENV === 'production') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['CASHFREE_ENV'],
+          message: 'sandbox Cashfree on the production deployment',
+        });
+      }
     }
     if (env.PAYMENT_PROVIDER === 'cashfree' && env.CASHFREE_CLIENT_ID) {
       const site = env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0];

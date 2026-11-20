@@ -155,22 +155,39 @@ export function parseCashfreePayment(
   };
 }
 
-/** Refunds of one order: what has been refunded and the overall state of the refunds. */
+/**
+ * Refunds of ONE payment (the one that settled our attempt): what has been refunded and the
+ * overall state of its refunds. Refunds of any other payment on the same order (e.g. the owner
+ * refunding a duplicate payment) are never counted against the donation — they are only flagged.
+ */
 export interface CashfreeRefunds {
   refundedPaise: number;
   /** processed: some refund succeeded; created: one is in progress; failed: all ended unpaid. */
   status: 'created' | 'processed' | 'failed' | null;
+  /** A refund exists on another payment of the same order (the owner should look). */
+  otherPaymentRefunds: boolean;
 }
 
 const REFUND_IN_PROGRESS = new Set(['PENDING', 'PENDING_APPROVAL', 'ONHOLD']);
 
-export function summariseRefunds(raw: unknown): CashfreeRefunds {
+export function summariseRefunds(raw: unknown, paymentId: string): CashfreeRefunds {
   if (!Array.isArray(raw)) throw new PaymentProviderError('unexpected_response');
   let refundedPaise = 0;
   let succeeded = false;
   let inProgress = false;
-  for (const entry of raw as Array<{ refund_status?: unknown; refund_amount?: unknown }>) {
-    if (entry?.refund_status === 'SUCCESS') {
+  let mine = 0;
+  let otherPaymentRefunds = false;
+  for (const entry of raw as Array<{
+    refund_status?: unknown;
+    refund_amount?: unknown;
+    cf_payment_id?: unknown;
+  }>) {
+    if (cashfreeId(entry?.cf_payment_id) !== paymentId) {
+      otherPaymentRefunds = true;
+      continue;
+    }
+    mine += 1;
+    if (entry.refund_status === 'SUCCESS') {
       try {
         refundedPaise += rupeesToPaiseExact(entry.refund_amount);
       } catch {
@@ -178,15 +195,14 @@ export function summariseRefunds(raw: unknown): CashfreeRefunds {
       }
       succeeded = true;
     } else if (
-      typeof entry?.refund_status === 'string' &&
+      typeof entry.refund_status === 'string' &&
       REFUND_IN_PROGRESS.has(entry.refund_status)
     ) {
       inProgress = true;
     }
   }
-  const status =
-    raw.length === 0 ? null : succeeded ? 'processed' : inProgress ? 'created' : 'failed';
-  return { refundedPaise, status };
+  const status = mine === 0 ? null : succeeded ? 'processed' : inProgress ? 'created' : 'failed';
+  return { refundedPaise, status, otherPaymentRefunds };
 }
 
 /**
@@ -232,8 +248,6 @@ export interface CashfreeConfig {
   timeoutMs?: number;
 }
 
-const NO_REFUNDS: CashfreeRefunds = { refundedPaise: 0, status: null };
-
 export function cashfreeProvider(config: CashfreeConfig): PaymentProvider {
   const base = config.baseUrl ?? CASHFREE_BASE_URL[config.mode];
   const doFetch = config.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
@@ -272,7 +286,12 @@ export function cashfreeProvider(config: CashfreeConfig): PaymentProvider {
 
   async function fetchOrderState(orderRef: string): Promise<ProviderOrderState> {
     const path = orderPath(orderRef);
-    const order = (await call(path)) as { order_id?: unknown; order_status?: unknown } | null;
+    const order = (await call(path)) as {
+      order_id?: unknown;
+      order_status?: unknown;
+      order_amount?: unknown;
+      order_currency?: unknown;
+    } | null;
     if (order?.order_id !== orderRef || typeof order.order_status !== 'string') {
       throw new PaymentProviderError('unexpected_response');
     }
@@ -284,6 +303,28 @@ export function cashfreeProvider(config: CashfreeConfig): PaymentProvider {
     // current status, and the owner's re-check shows `provider_unexpected_response`.
     if (orderPaid && !payments.some((p) => p.state === 'captured')) {
       throw new PaymentProviderError('unexpected_response');
+    }
+    // An order that can no longer be paid (expired or terminated) with no successful payment has
+    // failed. Recorded as an order-level failure (raw word ORDER_EXPIRED / ORDER_TERMINATED), put
+    // first so it decides; a failure never claims the attempt, so nothing else is overwritten.
+    const terminal = ['EXPIRED', 'TERMINATED'].includes(order.order_status);
+    if (terminal && !payments.some((p) => p.providerRawStatus === 'SUCCESS')) {
+      let amountPaise = -1;
+      try {
+        amountPaise = rupeesToPaiseExact(order.order_amount);
+      } catch {
+        // stays -1: an unreadable amount goes to the owner, never to a status change
+      }
+      payments.unshift({
+        paymentId: `order:${orderRef}`,
+        orderId: orderRef,
+        state: 'failed',
+        providerRawStatus: `ORDER_${order.order_status}`,
+        amountPaise,
+        currency: typeof order.order_currency === 'string' ? order.order_currency : '',
+        method: null,
+        refundedPaise: 0,
+      });
     }
     return { orderRef, payments };
   }
@@ -312,9 +353,8 @@ export function cashfreeProvider(config: CashfreeConfig): PaymentProvider {
         refundedPaise: 0,
       })),
     fetchOrderState,
-    async fetchRefunds(orderRef) {
-      const raw = await call(`${orderPath(orderRef)}/refunds`);
-      return Array.isArray(raw) && raw.length === 0 ? NO_REFUNDS : summariseRefunds(raw);
+    async fetchRefunds(orderRef, paymentId) {
+      return summariseRefunds(await call(`${orderPath(orderRef)}/refunds`), paymentId);
     },
     async createOrder(input) {
       const orderId = input.receipt;

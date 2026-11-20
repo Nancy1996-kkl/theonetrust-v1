@@ -104,7 +104,12 @@ export async function cashfreeWebhookRoutes(
         });
         return { status: 'PROCESSED', note: 'unknown_order_to_review' };
       }
-      await recheckAttempt(db, provider, attempt, opts.now());
+      const result = await recheckAttempt(db, provider, attempt, opts.now());
+      // Cashfree said SUCCESS but its order does not show the payment as settled yet: answer 500
+      // (recorded as FAILED) so Cashfree retries later instead of the event being marked done.
+      if (type === 'PAYMENT_SUCCESS_WEBHOOK' && result.found !== 'captured') {
+        throw new Error('payment_not_settled_yet');
+      }
       return { status: 'PROCESSED', donationIntentId: attempt.donationIntentId };
     }
 
@@ -122,14 +127,33 @@ export async function cashfreeWebhookRoutes(
       if (!attempt || attempt.provider !== 'CASHFREE' || !provider.fetchRefunds) {
         return { status: 'IGNORED', note: 'refund_unmatched' };
       }
-      const refunds = await provider.fetchRefunds(attempt.providerOrderId);
-      if (!refunds.status) return { status: 'IGNORED', note: 'no_refunds' };
-      const full = refunds.refundedPaise > 0 && refunds.refundedPaise >= attempt.capturedPaise;
+      // Only money we recorded as captured can be refunded against the donation.
+      if (!attempt.providerPaymentId || attempt.capturedPaise <= 0) {
+        return {
+          status: 'IGNORED',
+          note: 'refund_not_captured',
+          donationIntentId: attempt.donationIntentId,
+        };
+      }
+      // Counted per payment: a refund of a duplicate payment never touches the kept donation
+      // (its DUPLICATE_PAYMENT exception is already open for the owner).
+      const refunds = await provider.fetchRefunds(
+        attempt.providerOrderId,
+        attempt.providerPaymentId,
+      );
+      if (!refunds.status) {
+        return {
+          status: 'IGNORED',
+          note: refunds.otherPaymentRefunds ? 'refund_other_payment' : 'no_refunds',
+          donationIntentId: attempt.donationIntentId,
+        };
+      }
+      const full = refunds.refundedPaise >= attempt.capturedPaise;
       await applyRefund(
         db,
         attempt.id,
         {
-          paymentId: attempt.providerPaymentId ?? '',
+          paymentId: attempt.providerPaymentId,
           orderId: attempt.providerOrderId,
           amountPaise: attempt.amountPaise,
           currency: 'INR',

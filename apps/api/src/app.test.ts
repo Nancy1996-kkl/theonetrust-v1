@@ -96,6 +96,7 @@ describe('Cashfree wiring (Phase 4)', () => {
   const cashfreeEnv = {
     NODE_ENV: 'test',
     PAYMENT_PROVIDER: 'cashfree',
+    CASHFREE_ENV: 'sandbox',
     CASHFREE_CLIENT_ID: 'TEST0123456789',
     CASHFREE_CLIENT_SECRET: 'cf-secret-0123456789',
     PUBLIC_SITE_URL: 'https://theonetrust.example',

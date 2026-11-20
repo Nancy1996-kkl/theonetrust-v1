@@ -80,10 +80,17 @@ export interface PaymentProvider {
   readonly requiresCustomerPhone?: boolean;
   /** Gateway-neutral order state (Cashfree); Razorpay uses razorpayOrderState instead. */
   fetchOrderState?(orderRef: string): Promise<ProviderOrderState>;
-  /** Refunds of one order (Cashfree): total refunded and the overall refund state. */
-  fetchRefunds?(orderRef: string): Promise<{
+  /**
+   * Refunds of one payment on one order (Cashfree): total refunded, the overall refund state, and
+   * whether another payment of the order was refunded (never counted against the donation).
+   */
+  fetchRefunds?(
+    orderRef: string,
+    paymentId: string,
+  ): Promise<{
     refundedPaise: number;
     status: 'created' | 'processed' | 'failed' | null;
+    otherPaymentRefunds: boolean;
   }>;
   createOrder(input: CreateOrderInput): Promise<ProviderOrder>;
   /** HMAC-SHA256(order_id|payment_id, key secret), compared in constant time. */

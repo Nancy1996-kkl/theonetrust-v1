@@ -239,6 +239,8 @@ export async function donationRoutes(app: FastifyInstance, opts: DonationRouteOp
         return reply.code(200).send(qrResponse(existing, attempt.qrExpiresAt));
       }
       // An existing checkout attempt means a gateway created it; deps() keeps the 503 otherwise.
+      // An order made with another gateway (before a switch) cannot be reopened with this one.
+      if (attempt.provider !== deps().provider.name) throw new AppError('CONFLICT');
       return reply
         .code(200)
         .send(

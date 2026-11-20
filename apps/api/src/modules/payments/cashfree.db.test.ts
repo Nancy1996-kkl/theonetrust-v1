@@ -36,7 +36,7 @@ interface RemoteOrder {
   order_status: string;
   amount: number;
   payments: RemotePayment[];
-  refunds: Array<{ refund_status: string; refund_amount: number }>;
+  refunds: Array<{ refund_status: string; refund_amount: number; cf_payment_id: string }>;
 }
 /** What "Cashfree" knows. */
 const remote = new Map<string, RemoteOrder>();
@@ -79,6 +79,7 @@ const fakeFetch = (async (url: string | URL, init?: RequestInit) => {
     order_id: order.order_id,
     order_status: order.order_status,
     order_amount: order.amount,
+    order_currency: 'INR',
   });
 }) as typeof fetch;
 
@@ -99,6 +100,7 @@ beforeAll(() => {
       NODE_ENV: 'test',
       LOG_LEVEL: 'info',
       PAYMENT_PROVIDER: 'cashfree',
+      CASHFREE_ENV: 'sandbox',
       CASHFREE_CLIENT_ID: 'TEST0123456789',
       CASHFREE_CLIENT_SECRET: SECRET,
       PUBLIC_SITE_URL: 'https://theonetrust.example',
@@ -276,6 +278,18 @@ describe('donation intent with Cashfree', () => {
     expect(second.statusCode).toBe(200);
     expect(second.json()).toEqual(first.json());
     expect(created).toHaveLength(1);
+  });
+
+  it('a retry with the key of an order made with another gateway → 409, never a broken checkout', async () => {
+    const key = `cf-switch-${Date.now()}-abcdef`;
+    const first = await donate({ key });
+    expect(first.statusCode).toBe(201);
+    const ref = (first.json() as { publicReference: string }).publicReference;
+    await db.paymentAttempt.update({
+      where: { providerOrderId: ref },
+      data: { provider: 'RAZORPAY' },
+    });
+    expect((await donate({ key })).statusCode).toBe(409);
   });
 
   it('Cashfree down: 503 and the intent keeps no order', async () => {
@@ -467,11 +481,29 @@ describe('Cashfree webhook', () => {
     });
   });
 
-  it('a SUCCESS webhook whose order Cashfree has not paid does not make PAID', async () => {
+  it('a SUCCESS webhook before Cashfree settles the order → 500 (retry), never PAID; the retry applies', async () => {
     const d = await newDonation();
     const event = paymentEvent('PAYMENT_SUCCESS_WEBHOOK', d.publicReference, '6201', 'SUCCESS');
-    expect((await webhook(event)).statusCode).toBe(200);
+    expect((await webhook(event)).statusCode).toBe(500);
     expect(await intentStatus(d.publicReference)).toBe('CREATED');
+    const row = await db.webhookEvent.findFirstOrThrow({
+      where: { provider: 'CASHFREE', providerEventId: 'pay:PAYMENT_SUCCESS_WEBHOOK:6201:SUCCESS' },
+    });
+    expect(row.processingStatus).toBe('FAILED');
+    pay(d.publicReference, '6201', 'SUCCESS');
+    expect((await webhook(event)).statusCode).toBe(200);
+    expect(await intentStatus(d.publicReference)).toBe('PAID');
+  });
+
+  it('an expired order with no successful payment → FAILED for the donor', async () => {
+    const d = await newDonation();
+    const order = remote.get(d.publicReference);
+    if (order) order.order_status = 'EXPIRED';
+    expect((await status(d.publicReference)).json()).toMatchObject({ status: 'FAILED' });
+    const attempt = await db.paymentAttempt.findUniqueOrThrow({
+      where: { providerOrderId: d.publicReference },
+    });
+    expect(attempt).toMatchObject({ providerPaymentId: null, providerStatus: 'failed' });
   });
 
   it('out of order: success then a late failure of another try → stays PAID', async () => {
@@ -521,7 +553,7 @@ describe('Cashfree webhook', () => {
     pay(d.publicReference, '6601', 'SUCCESS');
     await webhook(paymentEvent('PAYMENT_SUCCESS_WEBHOOK', d.publicReference, '6601', 'SUCCESS'));
     const order = remote.get(d.publicReference);
-    order?.refunds.push({ refund_status: 'SUCCESS', refund_amount: 500 });
+    order?.refunds.push({ refund_status: 'SUCCESS', refund_amount: 500, cf_payment_id: '6601' });
     const refundEvent = (id: number) => ({
       type: 'REFUND_STATUS_WEBHOOK',
       data: {
@@ -540,9 +572,100 @@ describe('Cashfree webhook', () => {
       where: { providerOrderId: d.publicReference },
     });
     expect(attempt.refundedPaise).toBe(50_000);
-    order?.refunds.push({ refund_status: 'SUCCESS', refund_amount: 1000.5 });
+    order?.refunds.push({ refund_status: 'SUCCESS', refund_amount: 1000.5, cf_payment_id: '6601' });
     expect((await webhook(refundEvent(2))).statusCode).toBe(200);
     expect(await intentStatus(d.publicReference)).toBe('REFUNDED');
+  });
+
+  it('refunding the DUPLICATE payment leaves the kept donation PAID and its acknowledgement intact', async () => {
+    const d = await newDonation();
+    pay(d.publicReference, '6701', 'SUCCESS');
+    pay(d.publicReference, '6702', 'SUCCESS');
+    await verify({ publicReference: d.publicReference });
+    const attempt = await db.paymentAttempt.findUniqueOrThrow({
+      where: { providerOrderId: d.publicReference },
+    });
+    const kept = attempt.providerPaymentId;
+    const duplicate = kept === '6701' ? '6702' : '6701';
+    remote.get(d.publicReference)?.refunds.push({
+      refund_status: 'SUCCESS',
+      refund_amount: 1500.5,
+      cf_payment_id: duplicate,
+    });
+    const res = await webhook({
+      type: 'REFUND_STATUS_WEBHOOK',
+      data: {
+        refund: {
+          cf_refund_id: 6790,
+          cf_payment_id: Number(duplicate),
+          order_id: d.publicReference,
+          refund_status: 'SUCCESS',
+        },
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(await intentStatus(d.publicReference)).toBe('PAID');
+    const after = await db.paymentAttempt.findUniqueOrThrow({ where: { id: attempt.id } });
+    expect(after).toMatchObject({ refundedPaise: 0, providerStatus: 'captured' });
+    const row = await db.webhookEvent.findFirstOrThrow({
+      where: { provider: 'CASHFREE', providerEventId: 'ref:REFUND_STATUS_WEBHOOK:6790:SUCCESS' },
+    });
+    expect(row).toMatchObject({
+      processingStatus: 'IGNORED',
+      processingError: 'refund_other_payment',
+    });
+  });
+
+  it('a refund that fails returns REFUND_PENDING to PAID', async () => {
+    const d = await newDonation();
+    pay(d.publicReference, '6801', 'SUCCESS');
+    await verify({ publicReference: d.publicReference });
+    const intent = await db.donationIntent.findUniqueOrThrow({
+      where: { publicReference: d.publicReference },
+    });
+    await db.donationIntent.update({
+      where: { id: intent.id },
+      data: { status: 'REFUND_PENDING' },
+    });
+    remote.get(d.publicReference)?.refunds.push({
+      refund_status: 'CANCELLED',
+      refund_amount: 1500.5,
+      cf_payment_id: '6801',
+    });
+    const res = await webhook({
+      type: 'REFUND_STATUS_WEBHOOK',
+      data: {
+        refund: {
+          cf_refund_id: 6890,
+          cf_payment_id: 6801,
+          order_id: d.publicReference,
+          refund_status: 'CANCELLED',
+        },
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(await intentStatus(d.publicReference)).toBe('PAID');
+  });
+
+  it('a refund event for an order with nothing captured changes nothing', async () => {
+    const d = await newDonation();
+    const res = await webhook({
+      type: 'REFUND_STATUS_WEBHOOK',
+      data: {
+        refund: {
+          cf_refund_id: 6990,
+          cf_payment_id: 6901,
+          order_id: d.publicReference,
+          refund_status: 'SUCCESS',
+        },
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    const attempt = await db.paymentAttempt.findUniqueOrThrow({
+      where: { providerOrderId: d.publicReference },
+    });
+    expect(attempt).toMatchObject({ refundedPaise: 0, providerStatus: null });
+    expect(await intentStatus(d.publicReference)).toBe('CREATED');
   });
 
   it('a refund for an order we do not know is ignored', async () => {

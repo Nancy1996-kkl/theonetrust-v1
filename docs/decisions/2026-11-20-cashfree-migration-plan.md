@@ -540,6 +540,20 @@ Cashfree API facts were re-checked against the official API reference on 20 Nov 
   the dashboard]** — the scanners already catch a filled-in `CASHFREE_CLIENT_SECRET` assignment and
   the setting name in the web bundle.
 - **Razorpay never receives the donor's phone:** only a gateway that requires it gets it.
+- **Security review fixes (payment-security-reviewer, 21 Nov):**
+  - refunds are counted per payment (`cf_payment_id` = the attempt's captured payment) and only
+    when money was captured — refunding a duplicate payment never marks the kept donation REFUNDED;
+  - `CASHFREE_ENV` has no default and must be chosen; `VERCEL_ENV=production` + `sandbox` and live
+    keys outside the production deployment are refused at boot (§2.4);
+  - an Idempotency-Key retry for an order made with the other gateway answers 409;
+  - an EXPIRED/TERMINATED order with no SUCCESS payment becomes FAILED (raw word `ORDER_EXPIRED`);
+  - a `PAYMENT_SUCCESS_WEBHOOK` whose re-fetched order is not settled yet answers 500, so Cashfree
+    retries instead of the event being marked done.
+- **Switching gateways (runbook, until reconciliation by `attempt.provider` is built):** only one
+  gateway is configured at a time, and a gateway is never asked about the other's orders. Before
+  switching, wait until the admin "stale pending" list shows no unsettled online donation of the
+  old gateway (or settle them with the owner re-check), then switch. Do not remove the old
+  gateway's keys from the dashboard settings until that list is empty.
 
 #### Tests for Phase 4
 

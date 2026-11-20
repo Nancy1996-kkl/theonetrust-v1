@@ -12,7 +12,7 @@ export interface RecheckAttempt {
   id: string;
   providerOrderId: string;
   /** The gateway the attempt was made with; another gateway is never asked about it. */
-  provider?: string;
+  provider: string;
 }
 
 export interface RecheckResult {
@@ -43,7 +43,7 @@ export async function recheckAttempt(
   now: Date,
 ): Promise<RecheckResult> {
   // After a gateway switch, an older attempt is never sent to the new gateway (it would not know it).
-  if (attempt.provider !== undefined && attempt.provider !== provider.name) {
+  if (attempt.provider !== provider.name) {
     throw new PaymentProviderError('rejected');
   }
   const state = provider.fetchOrderState

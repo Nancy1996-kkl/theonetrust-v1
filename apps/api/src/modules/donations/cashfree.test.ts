@@ -117,31 +117,51 @@ describe('payment state mapping (PAID rule)', () => {
   });
 });
 
-describe('refund summary', () => {
-  it('sums SUCCESS refunds and reports the overall state', () => {
-    expect(summariseRefunds([])).toEqual({ refundedPaise: 0, status: null });
-    expect(
-      summariseRefunds([
-        { refund_status: 'SUCCESS', refund_amount: 2 },
-        { refund_status: 'SUCCESS', refund_amount: '3.50' },
-        { refund_status: 'CANCELLED', refund_amount: 9 },
-      ]),
-    ).toEqual({ refundedPaise: 550, status: 'processed' });
-    expect(summariseRefunds([{ refund_status: 'PENDING', refund_amount: 2 }])).toEqual({
+describe('refund summary (per payment)', () => {
+  const r = (status: string, amount: unknown, payment: unknown = '77') => ({
+    refund_status: status,
+    refund_amount: amount,
+    cf_payment_id: payment,
+  });
+
+  it('sums SUCCESS refunds of THIS payment and reports the overall state', () => {
+    expect(summariseRefunds([], '77')).toEqual({
       refundedPaise: 0,
-      status: 'created',
+      status: null,
+      otherPaymentRefunds: false,
     });
-    expect(summariseRefunds([{ refund_status: 'REJECTED', refund_amount: 2 }])).toEqual({
+    expect(
+      summariseRefunds([r('SUCCESS', 2), r('SUCCESS', '3.50', 77), r('CANCELLED', 9)], '77'),
+    ).toEqual({ refundedPaise: 550, status: 'processed', otherPaymentRefunds: false });
+    expect(summariseRefunds([r('PENDING', 2)], '77')).toMatchObject({ status: 'created' });
+    expect(summariseRefunds([r('ONHOLD', 2)], '77')).toMatchObject({ status: 'created' });
+    expect(summariseRefunds([r('REJECTED', 2)], '77')).toMatchObject({
       refundedPaise: 0,
       status: 'failed',
     });
   });
 
+  it('a refund of ANOTHER payment of the order (e.g. a duplicate) is never counted', () => {
+    expect(summariseRefunds([r('SUCCESS', 1500.5, '88')], '77')).toEqual({
+      refundedPaise: 0,
+      status: null,
+      otherPaymentRefunds: true,
+    });
+    expect(summariseRefunds([r('SUCCESS', 1, '88'), r('SUCCESS', 2, '77')], '77')).toEqual({
+      refundedPaise: 200,
+      status: 'processed',
+      otherPaymentRefunds: true,
+    });
+    // A refund without a payment ID belongs to no payment of ours.
+    expect(summariseRefunds([{ refund_status: 'SUCCESS', refund_amount: 5 }], '77')).toMatchObject({
+      refundedPaise: 0,
+      status: null,
+    });
+  });
+
   it('refuses a non-array or an inexact refunded amount', () => {
-    expect(() => summariseRefunds({})).toThrow(PaymentProviderError);
-    expect(() => summariseRefunds([{ refund_status: 'SUCCESS', refund_amount: 1.001 }])).toThrow(
-      PaymentProviderError,
-    );
+    expect(() => summariseRefunds({}, '77')).toThrow(PaymentProviderError);
+    expect(() => summariseRefunds([r('SUCCESS', 1.001)], '77')).toThrow(PaymentProviderError);
   });
 });
 
@@ -434,6 +454,38 @@ describe('cashfreeProvider order state and refunds', () => {
     });
   });
 
+  it.each(['EXPIRED', 'TERMINATED'])(
+    'a %s order with no successful payment has failed (order-level, decides first)',
+    async (orderStatus) => {
+      const { fetchFn } = remote(
+        { order_id: ORDER, order_status: orderStatus, order_amount: 1500.5, order_currency: 'INR' },
+        [{ cf_payment_id: '1', payment_status: 'USER_DROPPED', payment_amount: 1500.5 }],
+      );
+      const state = await adapter(fetchFn).fetchOrderState?.(ORDER);
+      expect(state?.payments[0]).toEqual({
+        paymentId: `order:${ORDER}`,
+        orderId: ORDER,
+        state: 'failed',
+        providerRawStatus: `ORDER_${orderStatus}`,
+        amountPaise: 150_050,
+        currency: 'INR',
+        method: null,
+        refundedPaise: 0,
+      });
+      expect(state?.payments).toHaveLength(2);
+    },
+  );
+
+  it('an expired order with an unreadable amount stays reviewable (-1), and ACTIVE adds nothing', async () => {
+    const odd = remote({ order_id: ORDER, order_status: 'EXPIRED', order_amount: 'x' }, []);
+    expect((await adapter(odd.fetchFn).fetchOrderState?.(ORDER))?.payments[0]).toMatchObject({
+      amountPaise: -1,
+      currency: '',
+    });
+    const active = remote({ order_id: ORDER, order_status: 'ACTIVE' }, []);
+    expect((await adapter(active.fetchFn).fetchOrderState?.(ORDER))?.payments).toEqual([]);
+  });
+
   it('never asks Cashfree about a malformed order ID or a Razorpay payment', async () => {
     const { calls, fetchFn } = remote({}, []);
     const provider = adapter(fetchFn);
@@ -446,15 +498,21 @@ describe('cashfreeProvider order state and refunds', () => {
   });
 
   it('reads refunds', async () => {
-    const { fetchFn } = remote({}, [], [{ refund_status: 'SUCCESS', refund_amount: 100 }]);
-    expect(await adapter(fetchFn).fetchRefunds?.(ORDER)).toEqual({
+    const { fetchFn } = remote(
+      {},
+      [],
+      [{ refund_status: 'SUCCESS', refund_amount: 100, cf_payment_id: '2' }],
+    );
+    expect(await adapter(fetchFn).fetchRefunds?.(ORDER, '2')).toEqual({
       refundedPaise: 10_000,
       status: 'processed',
+      otherPaymentRefunds: false,
     });
     const none = remote({}, [], []);
-    expect(await adapter(none.fetchFn).fetchRefunds?.(ORDER)).toEqual({
+    expect(await adapter(none.fetchFn).fetchRefunds?.(ORDER, '2')).toEqual({
       refundedPaise: 0,
       status: null,
+      otherPaymentRefunds: false,
     });
   });
 
@@ -477,7 +535,7 @@ describe('default transport', () => {
         orderExpiryMinutes: 30,
         now: () => NOW,
       });
-      expect(await provider.fetchRefunds?.(ORDER)).toEqual({ refundedPaise: 0, status: null });
+      expect(await provider.fetchRefunds?.(ORDER, '2')).toMatchObject({ status: null });
       expect(spy).toHaveBeenCalledOnce();
     } finally {
       vi.unstubAllGlobals();
