@@ -65,17 +65,12 @@ async function recordCharge(
   payment: ProviderPayment,
   now: Date,
 ): Promise<LifecycleOutcome> {
-  const existing = await db.paymentAttempt.findUnique({
-    where: { providerPaymentId: payment.paymentId },
-  });
-  if (existing) {
-    return {
-      status: 'PROCESSED',
-      note: 'duplicate_charge',
-      donationIntentId: existing.donationIntentId,
-    };
-  }
   const orderId = payment.orderId ?? `subpay_${payment.paymentId}`;
+  // Found by payment, or by order when an earlier run died before the payment was recorded.
+  const existing =
+    (await db.paymentAttempt.findUnique({ where: { providerPaymentId: payment.paymentId } })) ??
+    (await db.paymentAttempt.findUnique({ where: { providerOrderId: orderId } }));
+  if (existing) return finishCharge(db, existing, payment, now);
   let attemptId: string;
   let intentId: string;
   try {
@@ -114,14 +109,30 @@ async function recordCharge(
     const winner = await db.paymentAttempt.findUnique({
       where: { providerOrderId: orderId },
     });
-    return {
-      status: 'PROCESSED',
-      note: 'duplicate_charge',
-      ...(winner && { donationIntentId: winner.donationIntentId }),
-    };
+    if (winner) return finishCharge(db, winner, payment, now);
+    return { status: 'PROCESSED', note: 'duplicate_charge' };
   }
   await applyProviderPayment(db, attemptId, { ...payment, orderId }, now);
   return { status: 'PROCESSED', donationIntentId: intentId };
+}
+
+/**
+ * A charge already has its donation (a repeated event, a concurrent delivery, or an earlier run
+ * that died after creating it — audit F-3 review). Reconcile again: idempotent, so a repeat
+ * changes nothing, and a donation left unpaid by a crash is completed.
+ */
+async function finishCharge(
+  db: Db,
+  attempt: { id: string; providerOrderId: string; donationIntentId: string },
+  payment: ProviderPayment,
+  now: Date,
+): Promise<LifecycleOutcome> {
+  await applyProviderPayment(db, attempt.id, { ...payment, orderId: attempt.providerOrderId }, now);
+  return {
+    status: 'PROCESSED',
+    note: 'duplicate_charge',
+    donationIntentId: attempt.donationIntentId,
+  };
 }
 
 /** A failed (retrying) or halted mandate: an exception for the owner and an email for the donor. */

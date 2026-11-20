@@ -179,13 +179,18 @@ export async function razorpayWebhookRoutes(
     });
     if (row && row.processingStatus === 'RECEIVED') {
       // Claim a stale row with a conditional update: of concurrent retries, only one gets count 1.
+      // receivedAt stays the arrival time; processedAt holds the claim's lease while RECEIVED
+      // (it is overwritten with the real completion time), and attempts counts each claim so the
+      // owner's webhook view shows an event that keeps dying.
+      const cutoff = new Date(opts.now().getTime() - opts.reprocessAfterMs);
       const claimed = await db.webhookEvent.updateMany({
         where: {
           id: row.id,
           processingStatus: 'RECEIVED',
-          receivedAt: { lt: new Date(opts.now().getTime() - opts.reprocessAfterMs) },
+          receivedAt: { lt: cutoff },
+          OR: [{ processedAt: null }, { processedAt: { lt: cutoff } }],
         },
-        data: { receivedAt: opts.now() },
+        data: { processedAt: opts.now(), attempts: { increment: 1 } },
       });
       if (claimed.count !== 1) return reply.code(200).send({ received: true, duplicate: true });
       request.log.warn({ eventType }, 'Re-processing a webhook left unfinished');
