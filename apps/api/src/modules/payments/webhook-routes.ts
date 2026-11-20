@@ -34,11 +34,14 @@ const EVENT_ID = /^[A-Za-z0-9_-]{6,64}$/;
  *    without being applied again;
  * 3. apply it through the same reconcile path as the Checkout callback (#26);
  * 4. a processing failure is recorded and answered 500, so Razorpay retries; the retry
- *    re-processes that same event row.
+ *    re-processes that same event row;
+ * 5. a row left RECEIVED (the process died mid-way, so no failure was recorded) is re-processed by
+ *    a retry once it is older than `reprocessAfterMs`; exactly one retry wins the claim, and a
+ *    fresher row is a delivery still in flight → "duplicate" (audit F-3).
  */
 export async function razorpayWebhookRoutes(
   app: FastifyInstance,
-  opts: { db?: Db; secret?: string; now: () => Date },
+  opts: { db?: Db; secret?: string; now: () => Date; reprocessAfterMs: number },
 ) {
   async function process(db: Db, event: RazorpayEvent, eventId: string): Promise<Outcome> {
     const type = typeof event.event === 'string' ? event.event : '';
@@ -174,7 +177,19 @@ export async function razorpayWebhookRoutes(
     let row = await db.webhookEvent.findUnique({
       where: { provider_providerEventId: { provider: 'RAZORPAY', providerEventId: eventId } },
     });
-    if (row && row.processingStatus !== 'FAILED') {
+    if (row && row.processingStatus === 'RECEIVED') {
+      // Claim a stale row with a conditional update: of concurrent retries, only one gets count 1.
+      const claimed = await db.webhookEvent.updateMany({
+        where: {
+          id: row.id,
+          processingStatus: 'RECEIVED',
+          receivedAt: { lt: new Date(opts.now().getTime() - opts.reprocessAfterMs) },
+        },
+        data: { receivedAt: opts.now() },
+      });
+      if (claimed.count !== 1) return reply.code(200).send({ received: true, duplicate: true });
+      request.log.warn({ eventType }, 'Re-processing a webhook left unfinished');
+    } else if (row && row.processingStatus !== 'FAILED') {
       return reply.code(200).send({ received: true, duplicate: true });
     }
     if (!row) {
