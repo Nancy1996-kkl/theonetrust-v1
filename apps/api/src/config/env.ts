@@ -257,6 +257,14 @@ const EnvSchema = z
      * once, so each keeps few; the Supabase pooler multiplexes them.
      */
     DB_POOL_MAX: z.coerce.number().int().min(1).max(20).default(3),
+    /**
+     * Shared secret Vercel Cron sends as `Authorization: Bearer <CRON_SECRET>` to the daily job
+     * (Phase 2d). Without it the job route stays hidden (404).
+     */
+    CRON_SECRET: z.preprocess(
+      (v) => (v === '' ? undefined : v),
+      z.string().min(32).max(256).optional(),
+    ),
     /** How often the outbox worker looks for due emails. */
     EMAIL_WORKER_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(30_000),
   })

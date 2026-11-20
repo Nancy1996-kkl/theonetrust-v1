@@ -144,5 +144,11 @@
       ]
     }
   ],
-  "regions": ["bom1"]
+  "regions": ["bom1"],
+  "crons": [
+    {
+      "path": "/api/v1/internal/jobs/daily",
+      "schedule": "30 0 * * *"
+    }
+  ]
 }

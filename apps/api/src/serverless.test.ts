@@ -4,7 +4,12 @@ import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { loadEnv } from './config/env.ts';
-import defaultHandler, { createServerlessHandler, stripCatchAllParam } from './serverless.ts';
+import defaultHandler, {
+  createServerlessHandler,
+  DRAIN_AFTER,
+  stripCatchAllParam,
+} from './serverless.ts';
+import type { Db } from './db/client.ts';
 
 const servers: Server[] = [];
 afterEach(async () => {
@@ -177,6 +182,60 @@ describe('serverless handler (Phase 2a)', () => {
     });
     expect(big.status).toBe(413);
     expect(await big.text()).not.toMatch(/at \w+ \(|node_modules|\.ts:\d/); // no stack trace
+  });
+
+  it('after a successful POST that may queue emails, sends them in the background (waitUntil)', async () => {
+    const findMany = vi.fn(async () => []);
+    const fakeDb = { notificationOutbox: { findMany } } as unknown as Db;
+    const deferred: Array<Promise<unknown>> = [];
+    const base = await serve(
+      createServerlessHandler({
+        readEnv: devEnv,
+        defer: (work) => deferred.push(work),
+        appOptions: {
+          db: fakeDb,
+          outbox: {
+            db: fakeDb,
+            provider: { name: 'resend', send: vi.fn() },
+            siteUrl: 'x',
+            now: () => new Date(),
+          },
+        },
+        configure: (app) => {
+          app.post('/api/v1/payments/verify-probe', async () => ({ ok: true }));
+          app.post('/api/v1/webhooks/probe', async () => ({ ok: true }));
+          app.post('/api/v1/webhooks/broken', async () => {
+            throw new Error('x');
+          });
+          app.post('/api/v1/elsewhere', async () => ({ ok: true }));
+          app.get('/api/v1/webhooks/probe', async () => ({ ok: true }));
+        },
+      }),
+    );
+    await fetch(`${base}/api/v1/webhooks/probe`, { method: 'POST' });
+    await fetch(`${base}/api/v1/webhooks/probe`); // GET: nothing to send
+    await fetch(`${base}/api/v1/webhooks/broken`, { method: 'POST' }); // 500: nothing changed
+    await fetch(`${base}/api/v1/elsewhere`, { method: 'POST' }); // no email after this route
+    await new Promise((r) => setTimeout(r, 50));
+    expect(deferred).toHaveLength(1);
+    await Promise.all(deferred);
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 10 }));
+  });
+
+  it('drains only after the routes that queue emails', () => {
+    for (const url of [
+      '/api/v1/payments/verify',
+      '/api/v1/webhooks/razorpay',
+      '/api/v1/help-requests',
+      '/api/v1/help-requests/callback',
+      '/api/v1/subscriptions/x/verify',
+      '/api/v1/admin/receipts/x/resend',
+    ]) {
+      expect(DRAIN_AFTER.test(url), url).toBe(true);
+    }
+    for (const url of ['/api/v1/health', '/api/v1/donation-intents', '/api/v1/auth/sign-in']) {
+      expect(DRAIN_AFTER.test(url), url).toBe(false);
+    }
   });
 
   it('exports a ready-to-use default handler for Vercel', () => {

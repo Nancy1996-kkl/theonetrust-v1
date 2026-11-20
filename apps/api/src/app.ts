@@ -4,6 +4,9 @@ import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { sharedRateLimitStore } from './http/rate-limit-store.ts';
+import { jobRoutes } from './modules/jobs/routes.ts';
+import { outboxDeps } from './modules/notifications/deps.ts';
+import type { WorkerDeps } from './modules/notifications/worker.ts';
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { API_V1_PREFIX, CSRF_HEADER } from '@theonetrust/contracts';
 import type { Env } from './config/env.ts';
@@ -64,6 +67,8 @@ export const REDACT_PATHS = [
 ];
 
 export interface BuildAppOptions {
+  /** Tests: outbox settings for the daily job (defaults to the configured email/sheet). */
+  outbox?: WorkerDeps;
   /** Tests: the shared rate-limit key; apps given the same key share counters (Phase 2c). */
   rateLimitKey?: Buffer;
   /** Tests: shorten the Idempotency-Key race wait (IDEMPOTENT_REPLAY_WAIT_MS). */
@@ -233,6 +238,20 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   });
 
   // Payment verification and donor status re-check (#26).
+  // Daily safety-net job for Vercel Cron (Phase 2d): outbox, unsettled payments, housekeeping.
+  app.register(jobRoutes, {
+    prefix: `${API_V1_PREFIX}/internal`,
+    cronSecret: env.CRON_SECRET,
+    ...(options.db && {
+      deps: {
+        db: options.db,
+        outbox: options.outbox ?? outboxDeps(env, options.db),
+        provider: paymentProvider,
+        now: options.now ?? (() => new Date()),
+      },
+    }),
+  });
+
   app.register(paymentVerifyRoutes, {
     prefix: API_V1_PREFIX,
     verifyPerHour: env.DONATION_RATE_LIMIT_PER_HOUR * 3,
