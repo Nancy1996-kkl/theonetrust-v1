@@ -3,6 +3,7 @@ import type { Writable } from 'node:stream';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
+import { sharedRateLimitStore } from './http/rate-limit-store.ts';
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { API_V1_PREFIX, CSRF_HEADER } from '@theonetrust/contracts';
 import type { Env } from './config/env.ts';
@@ -63,6 +64,8 @@ export const REDACT_PATHS = [
 ];
 
 export interface BuildAppOptions {
+  /** Tests: the shared rate-limit key; apps given the same key share counters (Phase 2c). */
+  rateLimitKey?: Buffer;
   /** Tests: shorten the Idempotency-Key race wait (IDEMPOTENT_REPLAY_WAIT_MS). */
   idempotencyWaitMs?: number;
   /** Tests capture log lines here to assert on redaction. Defaults to stdout. */
@@ -134,11 +137,27 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     maxAge: 600,
   });
 
-  // Per-IP limit on every route; routes can set a stricter `config.rateLimit`.
+  // Per-IP limit on every route; routes can set a stricter `config.rateLimit`. With a database,
+  // those stricter route limits are shared by every serverless instance (Phase 2c).
   app.register(rateLimit, {
     max: env.RATE_LIMIT_MAX,
     timeWindow: env.RATE_LIMIT_WINDOW_MS,
     errorResponseBuilder: () => new AppError('RATE_LIMITED'),
+    ...(options.db && {
+      store: sharedRateLimitStore({
+        db: options.db,
+        // Tests: each app is its own "instance" unless a test passes one key to share counters.
+        ...(options.rateLimitKey
+          ? { hashKey: options.rateLimitKey }
+          : env.NODE_ENV !== 'test' &&
+            env.AUTH_SECRET_KEY && { hashKey: deriveAuthKeys(env.AUTH_SECRET_KEY).rateLimit }),
+        onError: (error, route) =>
+          app.log.warn(
+            { route, reason: error instanceof Error ? error.name : 'unknown' },
+            'Shared rate limit unavailable',
+          ),
+      }),
+    }),
   });
 
   app.setNotFoundHandler((request, reply) => {

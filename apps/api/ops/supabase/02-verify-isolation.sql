@@ -12,7 +12,7 @@ trust_tables AS (
 ),
 delete_ok AS (
   SELECT unnest(ARRAY['admin_recovery_codes', 'programmes', 'impact_metrics',
-                      'transparency_documents']) AS relname
+                      'transparency_documents', 'rate_limit_buckets']) AS relname
 ),
 allowed AS (
   -- Supabase lets every role read the pg_stat_statements views. Postgres shows another role's
@@ -90,7 +90,7 @@ SELECT n, "check", COALESCE(ok, false) AS ok, detail FROM (
     NOT EXISTS (SELECT 1 FROM outside),
     COALESCE((SELECT string_agg(obj, ', ' ORDER BY obj) FROM (SELECT obj FROM outside LIMIT 20) x), '')
   UNION ALL
-  SELECT 6, 'theonetrust_app may DELETE only in the 4 expected tables',
+  SELECT 6, 'theonetrust_app may DELETE only in the expected tables (4, plus rate-limit counters)',
     NOT EXISTS (
       SELECT 1 FROM trust_tables t
       WHERE has_table_privilege('theonetrust_app', t.oid, 'DELETE')

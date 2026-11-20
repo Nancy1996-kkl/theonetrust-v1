@@ -18,6 +18,8 @@ export interface AuthKeys {
   receipt: Buffer;
   /** HMAC key that turns a subscription's random salt into its manage-link token (#32). */
   manage: Buffer;
+  /** HMAC key for shared rate-limit keys, so no raw IP is ever stored (Phase 2c). */
+  rateLimit: Buffer;
   /** Version stored next to every ciphertext, for key rotation. */
   version: number;
 }
@@ -34,6 +36,7 @@ export function deriveAuthKeys(base64Secret: string): AuthKeys {
     csrf: derive('csrf:v1'),
     receipt: derive('receipt-link:v1'),
     manage: derive('manage-link:v1'),
+    rateLimit: derive('rate-limit-key:v1'),
     version: CURRENT_KEY_VERSION,
   };
 }

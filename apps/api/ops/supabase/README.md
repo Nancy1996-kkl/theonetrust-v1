@@ -3,10 +3,10 @@
 The trust's tables live in the **`theonetrust` schema** of the shared Supabase project, next to
 the cafe's tables in `public`. These scripts split the trust's database user in two:
 
-| Role                | Used by                                                 | Can                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `theonetrust_owner` | migrations only, from a trusted computer (never Vercel) | owns every trust table                                                                                                                                      |
-| `theonetrust_app`   | the website (Vercel), later                             | read and write rows in `theonetrust` only; delete rows only in 4 tables; **cannot** touch the cafe, change tables or switch off the append-only protections |
+| Role                | Used by                                                 | Can                                                                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `theonetrust_owner` | migrations only, from a trusted computer (never Vercel) | owns every trust table                                                                                                                                                                                    |
+| `theonetrust_app`   | the website (Vercel), later                             | read and write rows in `theonetrust` only; delete rows only in 4 tables (5 once the rate-limit counters table exists); **cannot** touch the cafe, change tables or switch off the append-only protections |
 
 The scripts were rehearsed on a local copy built the same way as the Supabase project (same
 roles, ownership and row-level security, plus stand-in "cafe" tables). The rehearsal covers:
