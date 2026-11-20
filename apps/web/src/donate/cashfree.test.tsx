@@ -312,7 +312,7 @@ describe('donate pop-up with Cashfree', () => {
     expect(within(dialog).queryByRole('heading', { name: t.thanks })).toBeNull();
   });
 
-  it('pop-up could not open → keeps the reference for the return link and shows "confirming"', async () => {
+  it('pop-up could not open → keeps the reference; never stuck: closable "pending" with Check again', async () => {
     const user = userEvent.setup();
     const donate = cashfreeClient({
       checkout: vi.fn(async () => ({ kind: 'redirecting' as const })),
@@ -325,9 +325,70 @@ describe('donate pop-up with Cashfree', () => {
     );
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
-    expect(await within(dialog).findByRole('heading', { name: t.confirming })).toBeVisible();
+    expect(await within(dialog).findByRole('heading', { name: t.pending })).toBeVisible();
     expect(sessionStorage.getItem(PENDING_KEY)).toBe(REF);
     expect(donate.verify).not.toHaveBeenCalled();
+    expect(within(dialog).getByRole('button', { name: t.checkAgain })).toBeEnabled();
+    // Closable: Escape closes the pop-up (it is locked only while "confirming").
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('not confirmed yet → closable "pending" at once, then thanks when the background check says PAID', async () => {
+    const user = userEvent.setup();
+    let answer: 'PENDING' | 'PAID' = 'PENDING';
+    const donate = cashfreeClient({
+      verify: vi.fn(async () => 'PENDING' as const),
+      status: vi.fn(async () => answer),
+    });
+    renderAt('/#donate', donate);
+    const dialog = await toDetails(user);
+    await user.type(
+      within(dialog).getByRole('textbox', { name: new RegExp(t.mobile) }),
+      '9876543210',
+    );
+    await user.click(within(dialog).getByRole('button', { name: t.continue }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    expect(await within(dialog).findByRole('heading', { name: t.pending })).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: t.payAgainSameOrder })).toBeVisible();
+    answer = 'PAID';
+    expect(
+      await within(dialog).findByRole('heading', { name: t.thanks }, { timeout: 4_000 }),
+    ).toBeVisible();
+  });
+
+  it('"Open it again" reopens the SAME order: one intent, never a second payment order', async () => {
+    const user = userEvent.setup();
+    const donate = cashfreeClient({
+      verify: vi.fn(async () => 'PENDING' as const),
+      status: vi.fn(async () => 'PENDING' as const),
+    });
+    renderAt('/#donate', donate);
+    const dialog = await toDetails(user);
+    await user.type(
+      within(dialog).getByRole('textbox', { name: new RegExp(t.mobile) }),
+      '9876543210',
+    );
+    await user.click(within(dialog).getByRole('button', { name: t.continue }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    await user.click(await within(dialog).findByRole('button', { name: t.payAgainSameOrder }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    await within(dialog).findByRole('heading', { name: t.pending });
+    expect(donate.start).toHaveBeenCalledTimes(1);
+    expect(donate.checkout).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(donate.checkout).mock.calls.map((c) => c[0])).toEqual([
+      CASHFREE_INTENT,
+      CASHFREE_INTENT,
+    ]);
+  });
+
+  it('no "mobile or email" message when the mobile is required (no contradiction)', async () => {
+    const user = userEvent.setup();
+    renderAt('/#donate', cashfreeClient());
+    const dialog = await toDetails(user);
+    await user.click(within(dialog).getByRole('button', { name: t.continue }));
+    expect(dialog).not.toHaveTextContent(t.contactError);
+    expect(dialog).toHaveTextContent(t.mobileError);
   });
 
   it('Cashfree’s script blocked → failed and the reference is not kept', async () => {
@@ -350,8 +411,9 @@ describe('donate pop-up with Cashfree', () => {
 
 describe('return from Cashfree’s page (?cf_order=)', () => {
   it.each(['/', '/ta/'])(
-    '%s?cf_order=<ref> opens the pop-up, checks, and removes the parameter',
+    '%s?cf_order=<ref> started in this tab: opens the pop-up, checks, thanks; parameter removed',
     async (path) => {
+      sessionStorage.setItem(PENDING_KEY, REF);
       const donate = cashfreeClient();
       const router = renderAt(`${path}?cf_order=${REF}&utm=x`, donate);
       const dialog = await screen.findByRole('dialog');
@@ -366,6 +428,31 @@ describe('return from Cashfree’s page (?cf_order=)', () => {
       expect(router.state.location.pathname).toBe(path);
     },
   );
+
+  it('a return link this tab did not start: neutral "confirmed", no amount, no receipt link', async () => {
+    const donate = cashfreeClient({ receipt: vi.fn(async () => 'x'.repeat(43)) });
+    renderAt(`/?cf_order=${REF}`, donate);
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByRole('heading', { name: t.confirmedTitle })).toBeVisible();
+    expect(dialog).toHaveTextContent(t.confirmedText);
+    expect(dialog).not.toHaveTextContent('₹0');
+    expect(within(dialog).queryByRole('heading', { name: t.thanks })).toBeNull();
+    expect(within(dialog).queryByRole('link', { name: t.viewReceipt })).toBeNull();
+    expect(donate.receipt).not.toHaveBeenCalled();
+  });
+
+  it('never shows the first step while checking a return (starts on "confirming")', async () => {
+    let release: (v: 'PAID') => void = () => undefined;
+    const donate = cashfreeClient({
+      status: vi.fn(() => new Promise<'PAID'>((r) => (release = r))),
+    });
+    renderAt(`/?cf_order=${REF}`, donate);
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: t.confirming })).toBeVisible();
+    expect(within(dialog).queryByRole('button', { name: t.continue })).toBeNull();
+    release('PAID');
+    expect(await within(dialog).findByRole('heading', { name: t.confirmedTitle })).toBeVisible();
+  });
 
   it('a malformed or foreign value is dropped without asking anything', async () => {
     for (const value of ['TOT-D-123', 'HLP-ABCDEFGHJKMN', `${REF}x`, '<script>']) {

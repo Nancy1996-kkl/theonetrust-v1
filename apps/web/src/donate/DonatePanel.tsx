@@ -45,6 +45,12 @@ export const DONATE_HASH = '#donate';
 /** While a payment is being confirmed, its public reference is kept in this tab only. */
 export const PENDING_KEY = 'theonetrust:donation-pending';
 
+/** The donation reference in Cashfree's return link `?cf_order=…`, or null if absent/malformed. */
+function returnReference(search: string): string | null {
+  const value = new URLSearchParams(search).get('cf_order');
+  return value !== null && DONATION_REFERENCE.test(value) ? value : null;
+}
+
 type Step = 'need' | 'amount' | 'details' | 'review';
 type Screen =
   | 'form'
@@ -132,7 +138,14 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const money = (paise: number) => formatInr(paise as Paise, locale);
 
   const [step, setStep] = useState<Step>('need');
-  const [screen, setScreen] = useState<Screen>('form');
+  // Back from Cashfree's page: start on "checking", never flash the first step (no form first).
+  const [screen, setScreen] = useState<Screen>(() =>
+    returnReference(location.search) ? 'confirming' : 'form',
+  );
+  /** Opened from a return link this tab did not start: no thanks wording, no receipt link. */
+  const [foreignReturn, setForeignReturn] = useState(false);
+  /** Each new check-in-the-background run; an older run's late answer is ignored. */
+  const pollToken = useRef(0);
   const [cancelled, setCancelled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [details, setDetails] = useState<Details>({
@@ -206,14 +219,17 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   // removed from the address bar and the pop-up opens on "checking"; a malformed value is dropped
   // without asking anything. The reference is not personal data.
   const returnedRef = useRef<string | null>(null);
+  const foreignRef = useRef(false);
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const cfOrder = params.get('cf_order');
     if (cfOrder === null) return;
     params.delete('cf_order');
     const search = params.toString();
-    const valid = DONATION_REFERENCE.test(cfOrder);
+    const valid = returnReference(location.search) !== null;
     if (valid) {
+      // A link this tab did not start (shared, or opened elsewhere) is only a status check.
+      foreignRef.current = session()?.getItem(PENDING_KEY) !== cfOrder;
       session()?.setItem(PENDING_KEY, cfOrder);
       returnedRef.current = cfOrder;
     }
@@ -232,19 +248,23 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   useEffect(() => {
     if (!open) return;
     const pendingRef = session()?.getItem(PENDING_KEY);
-    if (!pendingRef || screen !== 'form') return;
-    const returned = returnedRef.current === pendingRef;
+    const returned = pendingRef !== null && returnedRef.current === pendingRef;
+    if (!pendingRef || (screen !== 'form' && !returned)) return;
     returnedRef.current = null;
-    const check = () => client.status(pendingRef);
+    const foreign = returned && foreignRef.current;
+    foreignRef.current = false;
     void Promise.resolve()
       .then(() => {
         setReference(pendingRef);
+        setForeignReturn(foreign);
         if (returned) setScreen('confirming');
-        return check();
+        return client.status(pendingRef);
       })
-      // Just back from the gateway: keep checking for a while before saying "pending".
-      .then((status) => (returned ? pollUntilSettled(check, status) : status))
-      .then((status) => settle(status, pendingRef));
+      .then((status) => {
+        settle(status, pendingRef, { receipt: !foreign });
+        // Just back from the gateway and not settled yet: keep checking in the background.
+        if (returned) keepChecking(status, pendingRef, { receipt: !foreign });
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs when the panel opens
   }, [open]);
 
@@ -267,15 +287,20 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     if (screen === 'qr') setScreen('form');
   }
 
-  function settle(status: 'PAID' | 'PENDING' | 'FAILED' | 'UNKNOWN', ref: string) {
+  function settle(
+    status: 'PAID' | 'PENDING' | 'FAILED' | 'UNKNOWN',
+    ref: string,
+    opts: { receipt?: boolean } = {},
+  ) {
     if (status === 'PAID') {
       session()?.removeItem(PENDING_KEY);
       attemptKey.current = null;
       setIntent(null);
       setScreen('paid');
-      // The acknowledgement link (#29) is offered only after the server said PAID.
+      // The acknowledgement link (#29) is offered only after the server said PAID, and never
+      // to someone who only opened a shared return link.
       setReceiptToken(null);
-      void client.receipt(ref).then(setReceiptToken);
+      if (opts.receipt !== false) void client.receipt(ref).then(setReceiptToken);
     } else if (status === 'FAILED') {
       session()?.removeItem(PENDING_KEY);
       attemptKey.current = null;
@@ -285,6 +310,24 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       session()?.setItem(PENDING_KEY, ref);
       setScreen('pending');
     }
+  }
+
+  /**
+   * After Cashfree's window closes the server may not know yet: the donor sees the (closable)
+   * "pending" screen while the server is asked again in the background (~90 s). Only a PAID or
+   * FAILED answer changes the screen, and only if nothing newer has started since.
+   */
+  function keepChecking(
+    first: 'PAID' | 'PENDING' | 'FAILED' | 'UNKNOWN',
+    ref: string,
+    opts: { receipt?: boolean } = {},
+  ) {
+    if (first === 'PAID' || first === 'FAILED') return;
+    const token = ++pollToken.current;
+    void pollUntilSettled(() => client.status(ref), first).then((status) => {
+      if (pollToken.current !== token) return;
+      if (status === 'PAID' || status === 'FAILED') settle(status, ref, opts);
+    });
   }
 
   async function recheck(ref = reference) {
@@ -300,7 +343,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     if (details.mobile.trim() && !normalizeIndianMobile(details.mobile)) found.mobile = true;
     if (phoneRequired && !details.mobile.trim()) found.mobile = true;
     if (details.email.trim() && !EMAIL.test(details.email.trim())) found.email = true;
-    if (!details.mobile.trim() && !details.email.trim()) found.contact = true;
+    // When the mobile is required its own error says so; "mobile or email" would contradict it.
+    if (!phoneRequired && !details.mobile.trim() && !details.email.trim()) found.contact = true;
     if (!details.consent) found.consent = true;
     if (taxOffered && details.taxOptIn) {
       if (!PAN.test(details.pan.replace(/\s/g, '').toUpperCase())) found.pan = true;
@@ -461,6 +505,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     if (busy || !gift || !programme) return;
     setBusy(true);
     setCancelled(false);
+    pollToken.current += 1; // a new attempt: an older background check no longer applies
     if (attemptFor.current !== paySignature) {
       attemptFor.current = paySignature;
       attemptKey.current = null;
@@ -508,17 +553,21 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       setScreen(outcome.reason === 'upi_limit' ? 'limit' : 'failed');
       return;
     }
+    // The page is moving to Cashfree's own; the return link re-opens this pop-up to check. If it
+    // does not move, the donor is never stuck: the closable "pending" screen offers "Check again".
+    if (outcome.kind === 'redirecting') {
+      setBusy(false);
+      setScreen('pending');
+      return;
+    }
     setScreen('confirming');
-    // The page is moving to Cashfree's own; the return link re-opens this pop-up to check.
-    if (outcome.kind === 'redirecting') return;
     session()?.setItem(PENDING_KEY, current.publicReference);
     const ref = current.publicReference;
-    let status = await client.verify(current, outcome);
-    // Cashfree's window says nothing reliable: keep asking the server for a while.
-    if (outcome.kind === 'returned')
-      status = await pollUntilSettled(() => client.status(ref), status);
+    const status = await client.verify(current, outcome);
     setBusy(false);
     settle(status, ref);
+    // Cashfree's window says nothing reliable: keep asking the server in the background.
+    if (outcome.kind === 'returned') keepChecking(status, ref);
   }
 
   const heading = (text: string) => (
@@ -581,10 +630,21 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     const isPaid = screen === 'paid';
     body = (
       <>
-        {heading(isPaid ? t.thanks : screen === 'pending' ? t.pending : t.failed)}
+        {heading(
+          isPaid
+            ? foreignReturn
+              ? t.confirmedTitle
+              : t.thanks
+            : screen === 'pending'
+              ? t.pending
+              : t.failed,
+        )}
         <Callout tone={isPaid ? 'success' : screen === 'pending' ? 'warning' : 'error'}>
           {isPaid
-            ? `${t.sumAmount}: ${money(total)}`
+            ? // Back from Cashfree in a new tab the amount is not known here: never show ₹0.
+              total > 0
+              ? `${t.sumAmount}: ${money(total)}`
+              : t.confirmedText
             : screen === 'pending'
               ? t.dontPayAgain
               : t.failedText}
@@ -597,7 +657,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             </div>
           </dl>
         )}
-        {isPaid && receiptToken && (
+        {isPaid && receiptToken && !foreignReturn && (
           <p>
             <Link
               className="donate__receipt-link"
@@ -617,9 +677,26 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         {t.backToPage}
       </Button>
     ) : screen === 'pending' ? (
-      <Button fullWidth loading={busy} onClick={() => void recheck()}>
-        {t.checkAgain}
-      </Button>
+      <>
+        <Button fullWidth loading={busy} onClick={() => void recheck()}>
+          {t.checkAgain}
+        </Button>
+        {/* Cashfree: the same order is reopened (one successful payment per order), so a donor
+            who closed the window without paying can finish — and can never pay twice. */}
+        {intent?.checkout.provider === 'CASHFREE' && (
+          <Button
+            fullWidth
+            variant="secondary"
+            onClick={() => {
+              pollToken.current += 1;
+              setScreen('form');
+              setStep('review');
+            }}
+          >
+            {t.payAgainSameOrder}
+          </Button>
+        )}
+      </>
     ) : (
       <Button
         fullWidth

@@ -31,7 +31,10 @@ const en = {
   mobile: 'Mobile number',
   mobileError: 'Enter a 10-digit mobile number',
   mobileHint:
-    'Our payment partner needs a mobile number to process the payment. We never show it publicly or use it for marketing.',
+    'Our payment partner needs your mobile number to take the payment. We never sell it or show it publicly.',
+  payAgainSameOrder: 'Closed the payment window before paying? Open it again',
+  confirmedTitle: 'This donation is confirmed',
+  confirmedText: 'The trust has received this payment.',
   email: 'Email',
   emailError: 'Enter a valid email address',
   contactError: 'Give a mobile number or an email so the trust can reach you about this gift.',
@@ -212,7 +215,10 @@ const ta: Record<DonateMessageKey, string> = {
   mobile: 'கைபேசி எண்',
   mobileError: '10 இலக்க கைபேசி எண்ணை எழுதுங்கள்',
   mobileHint:
-    'பணம் செலுத்துதலைச் செயல்படுத்த எங்கள் கட்டணக் கூட்டாளருக்குக் கைபேசி எண் தேவை. இதை நாங்கள் பொதுவில் காட்டுவதோ விளம்பரத்துக்குப் பயன்படுத்துவதோ இல்லை.',
+    'பணம் செலுத்த, எங்கள் கட்டண நிறுவனத்துக்கு உங்கள் கைபேசி எண் தேவை. இதை நாங்கள் யாருக்கும் விற்பதும் இல்லை, வெளியே காட்டுவதும் இல்லை.',
+  payAgainSameOrder: 'பணம் செலுத்தும் முன் சாளரத்தை மூடிவிட்டீர்களா? மீண்டும் திறக்கவும்',
+  confirmedTitle: 'இந்த நன்கொடை உறுதியாகிவிட்டது',
+  confirmedText: 'இந்தப் பணம் அறக்கட்டளைக்கு வந்து சேர்ந்துவிட்டது.',
   email: 'மின்னஞ்சல்',
   emailError: 'சரியான மின்னஞ்சல் முகவரியை எழுதுங்கள்',
   contactError:
