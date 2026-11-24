@@ -538,8 +538,9 @@
   translate: 0 14%;
 }
 
-/* Inside dark green bands the pressed language uses the accent action pair (dark green on dark green otherwise). */
+/* Inside dark green bands the pressed language is white with darkest-green text, so the only gold
+   pill in the header stays the Donate button (brief §2). */
 .surface-inverse .ui-lang__option[aria-pressed='true'] {
-  background: var(--color-action-donate-bg);
-  color: var(--color-action-donate-text);
+  background: var(--color-lang-selected-bg-on-inverse);
+  color: var(--color-lang-selected-text-on-inverse);
 }

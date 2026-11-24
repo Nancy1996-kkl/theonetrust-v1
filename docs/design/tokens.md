@@ -138,6 +138,15 @@ so every text pair passes WCAG 2.2 AA.
 | Donate label on gradient end | `--color-action-donate-text` #024414 | `--palette-gold` #E09D12 | text | 4.89:1 | 4.5:1 | ✔ AA |
 | Light-gold Donate edge on green band | `--color-action-donate-border-on-inverse` #FDD947 | `--color-surface-inverse` #0B6619 | ui | 5.18:1 | 3:1 | ✔ AA |
 | Disabled label | `--color-text-disabled` #4B5C4E | `--color-surface-disabled` #DCE5DA | text | 5.53:1 | 4.5:1 | ✔ AA |
+| Hero headline | `--color-text-inverse` #FFFFFF | `--color-hero-band` #024414 | text | 11.41:1 | 4.5:1 | ✔ AA |
+| Hero lead and accent words | `--color-text-inverse-muted` #EAF3E7 | `--color-hero-band` #024414 | text | 10.04:1 | 4.5:1 | ✔ AA |
+| Hero eyebrow and help link | `--color-text-accent-on-inverse` #FDD947 | `--color-hero-band` #024414 | text | 8.25:1 | 4.5:1 | ✔ AA |
+| Focus on hero | `--color-focus-on-inverse` #FDD947 | `--color-hero-band` #024414 | ui | 8.25:1 | 3:1 | ✔ AA |
+| Donate edge on hero | `--color-action-donate-border-on-inverse` #FDD947 | `--color-hero-band` #024414 | ui | 8.25:1 | 3:1 | ✔ AA |
+| Selected language on green band | `--color-lang-selected-text-on-inverse` #024414 | `--color-lang-selected-bg-on-inverse` #FFFFFF | text | 11.41:1 | 4.5:1 | ✔ AA |
+| Selected-language pill on green band | `--color-lang-selected-bg-on-inverse` #FFFFFF | `--color-surface-inverse` #0B6619 | ui | 7.17:1 | 3:1 | ✔ AA |
+| Donate hover edge on page | `--color-action-donate-border-hover` #845400 | `--color-bg` #F7F7F7 | ui | 6.03:1 | 3:1 | ✔ AA |
+| Donate hover edge on cream band | `--color-action-donate-border-hover` #845400 | `--color-home-warm` #FCF4D6 | ui | 5.86:1 | 3:1 | ✔ AA |
 <!-- contrast-table:end -->
 <!-- prettier-ignore-end -->
 

@@ -326,6 +326,51 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     use: 'text',
     where: 'Disabled label',
   },
+  // Green & gold review (24 Nov 2026): hero band, language switch, Donate hover edge
+  { fg: '--color-text-inverse', bg: '--color-hero-band', use: 'text', where: 'Hero headline' },
+  {
+    fg: '--color-text-inverse-muted',
+    bg: '--color-hero-band',
+    use: 'text',
+    where: 'Hero lead and accent words',
+  },
+  {
+    fg: '--color-text-accent-on-inverse',
+    bg: '--color-hero-band',
+    use: 'text',
+    where: 'Hero eyebrow and help link',
+  },
+  { fg: '--color-focus-on-inverse', bg: '--color-hero-band', use: 'ui', where: 'Focus on hero' },
+  {
+    fg: '--color-action-donate-border-on-inverse',
+    bg: '--color-hero-band',
+    use: 'ui',
+    where: 'Donate edge on hero',
+  },
+  {
+    fg: '--color-lang-selected-text-on-inverse',
+    bg: '--color-lang-selected-bg-on-inverse',
+    use: 'text',
+    where: 'Selected language on green band',
+  },
+  {
+    fg: '--color-lang-selected-bg-on-inverse',
+    bg: '--color-surface-inverse',
+    use: 'ui',
+    where: 'Selected-language pill on green band',
+  },
+  {
+    fg: '--color-action-donate-border-hover',
+    bg: '--color-bg',
+    use: 'ui',
+    where: 'Donate hover edge on page',
+  },
+  {
+    fg: '--color-action-donate-border-hover',
+    bg: '--color-home-warm',
+    use: 'ui',
+    where: 'Donate hover edge on cream band',
+  },
 ];
 
 /**

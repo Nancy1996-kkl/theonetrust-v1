@@ -78,11 +78,17 @@
   border-block-end: var(--border-width) solid var(--color-rule-accent);
 }
 
+/* The hero band is darkest green (the same colour the photo fade starts from); this beats the
+   shared .surface-inverse fill, which is declared later. */
+.landing-hero.surface-inverse {
+  background: var(--color-hero-band);
+}
+
 .landing-hero__media {
   position: relative;
   /* Short enough that headline + Donate stay above the fold on a 360 × 800 phone in Tamil. */
   aspect-ratio: 3 / 2;
-  background: var(--color-surface-inverse);
+  background: var(--color-hero-band);
 }
 
 @media (min-width: 48em) {
@@ -203,6 +209,8 @@
 }
 
 .hero-carousel__dot[aria-current='true'] .hero-carousel__track {
+  /* The current clip is shown by height as well as colour (gold on soft green is a quiet pair). */
+  block-size: var(--space-1);
   background: var(--color-text-inverse-muted);
 }
 

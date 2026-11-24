@@ -118,22 +118,30 @@
   --color-focus-on-inverse: var(--palette-gold-light);
   --color-border-input-on-inverse: var(--palette-border);
   --color-action-secondary-bg-hover-on-inverse: var(--palette-green-deep);
+  /* Selected language on green bands: white with darkest-green text — gold stays for Donate
+     only (brief §2); the selection is also bold and underlined, never colour alone. */
+  --color-lang-selected-bg-on-inverse: var(--palette-white);
+  --color-lang-selected-text-on-inverse: var(--palette-green-deep);
+  /* Donate keeps a visible edge on light surfaces when it brightens on hover */
+  --color-action-donate-border-hover: var(--palette-gold-ink);
 
-  /* Hero scrim: fades from the hero band's own green (so band and photo join without a seam)
-     to transparent; the text always sits on ≥ 92% green — white stays ≥ 6.2:1 even over a
-     white video frame. */
+  /* Hero: its own darkest-green band, and the photo fade starts from the same colour, so band
+     and photo join without a seam and the small hero text keeps its margin over a bright frame
+     (review 24 Nov 2026). The text sits on ≥ 92% darkest green: white 10.2:1, soft green 9.0:1
+     even over a pure-white frame (tokens.test.ts checks it). */
+  --color-hero-band: var(--palette-green-deep);
   --gradient-hero-scrim: linear-gradient(
     90deg,
-    var(--palette-green) 0%,
-    color-mix(in srgb, var(--palette-green) 92%, transparent) 35%,
-    color-mix(in srgb, var(--palette-green) 50%, transparent) 47%,
+    var(--palette-green-deep) 0%,
+    color-mix(in srgb, var(--palette-green-deep) 92%, transparent) 35%,
+    color-mix(in srgb, var(--palette-green-deep) 50%, transparent) 47%,
     transparent 62%
   );
   --gradient-hero-scrim-stacked: linear-gradient(
     180deg,
     transparent 40%,
-    color-mix(in srgb, var(--palette-green) 70%, transparent) 75%,
-    var(--palette-green) 100%
+    color-mix(in srgb, var(--palette-green-deep) 70%, transparent) 75%,
+    var(--palette-green-deep) 100%
   );
 
   /* Elevation (green-tinted, subtle) — derived from the palette so they never drift */

@@ -4,6 +4,7 @@ import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   FORBIDDEN_PAIRS,
+  contrastRatio,
   contrastTableMarkdown,
   evaluateContrast,
   parseRootTokens,
@@ -67,6 +68,28 @@ describe('colour contrast (WCAG 2.2 AA)', () => {
       (r) => bright.includes(r.fgHex) && (r.use === 'text' || r.use === 'large-text'),
     );
     expect(brightText).toEqual([]);
+  });
+
+  it('hero text stays AA over a pure-white video frame where the fade is ≥ 92% (review 24 Nov 2026)', () => {
+    const scrim = /color-mix\(in srgb, var\((--[\w-]+)\) 92%, transparent\) 35%/.exec(
+      tokens.get('--gradient-hero-scrim') ?? '',
+    )?.[1];
+    expect(scrim, 'the 92% stop must stay at 35% of the banner').toBeDefined();
+    expect(resolveToken(tokens, '--color-hero-band'), 'fade starts from the band colour').toBe(
+      resolveToken(tokens, scrim!),
+    );
+    const [r, g, b] = [1, 3, 5].map((i) =>
+      parseInt(resolveToken(tokens, scrim!).slice(i, i + 2), 16),
+    );
+    const mix = (c: number) => Math.round(c * 0.92 + 255 * 0.08);
+    const frame = `#${[r, g, b].map((c) => mix(c!).toString(16).padStart(2, '0')).join('')}`;
+    for (const text of [
+      '--color-text-inverse',
+      '--color-text-inverse-muted',
+      '--color-text-accent-on-inverse',
+    ]) {
+      expect(contrastRatio(resolveToken(tokens, text), frame), text).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it('keeps the documented contrast table in sync with the tokens', () => {

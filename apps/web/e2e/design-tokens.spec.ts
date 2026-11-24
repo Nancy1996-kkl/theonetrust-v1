@@ -257,7 +257,10 @@ test.describe('Tamil specimen at this viewport', () => {
         /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
       );
     }
-    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Plus Jakarta Sans Variable/);
+    // Headings: Poppins (logo lettering) for Latin, Noto Sans Tamil for Tamil letters.
+    expect((await computed(page, 'h1')).fontFamily).toMatch(
+      /^"?Poppins"?, "?Noto Sans Tamil Variable/,
+    );
     const body = await computed(page, 'body');
     expect(body.lineHeight / body.fontSize).toBeGreaterThanOrEqual(1.75);
   });
@@ -268,9 +271,7 @@ test.describe('Tamil specimen at this viewport', () => {
     await page.goto('/');
     await injectSpecimen(page);
     const styled = await computed(page, '#class-styled');
-    expect(styled.fontFamily).toMatch(
-      /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
-    );
+    expect(styled.fontFamily).toMatch(/^"?Poppins"?, "?Noto Sans Tamil Variable/);
     expect(styled.lineHeight / styled.fontSize).toBeGreaterThanOrEqual(1.45);
   });
 
