@@ -304,6 +304,15 @@ describe('footer', () => {
     expect(wordmark).toHaveTextContent(/^Theonetrust$/);
   });
 
+  it('brand wordmark (client, Nov 2026): header and footer name use the serif wordmark style', () => {
+    renderRoute('/');
+    expect(banner().querySelector('.site-header__name')).toHaveClass('brand-wordmark');
+    expect(banner().querySelector('.site-header__name')).toHaveTextContent(/^Theonetrust\.in$/);
+    expect(footer().querySelector('.site-footer__brand .brand-wordmark')).toHaveTextContent(
+      /^Theonetrust\.in$/,
+    );
+  });
+
   it('social icons (client, Nov 2026): only confirmed links, each named by its network', () => {
     renderRoute('/');
     const social = within(footer()).getByRole('list', { name: 'Find us online' });

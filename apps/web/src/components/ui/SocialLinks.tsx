@@ -37,21 +37,23 @@ export function SocialLinks({ facts, label }: { facts: TrustFacts; label: string
   }
   if (links.length === 0) return null;
   return (
-    <ul className="ui-social" aria-label={label}>
-      {links.map(([key, url]) => (
-        <li key={key}>
-          <a
-            className="ui-social__link"
-            href={url}
-            rel="noopener noreferrer"
-            aria-label={NAMES[key]}
-          >
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
-              <path d={ICONS[key]} fill="currentColor" />
-            </svg>
-          </a>
-        </li>
-      ))}
-    </ul>
+    <div className="ui-social">
+      <ul className="ui-social__list" aria-label={label}>
+        {links.map(([key, url]) => (
+          <li key={key}>
+            <a
+              className="ui-social__link"
+              href={url}
+              rel="noopener noreferrer"
+              aria-label={NAMES[key]}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+                <path d={ICONS[key]} fill="currentColor" />
+              </svg>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

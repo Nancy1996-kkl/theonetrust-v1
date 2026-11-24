@@ -79,11 +79,9 @@
   }
 }
 
-/* Over the teal hero the emblem sits on a white tile so its teal heart keeps its shape. */
+/* Over the dark hero the emblem stands on its own (no tile), lifted by a soft light halo. */
 .site-header--overlay .site-header__logo {
-  padding: var(--space-1);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  filter: var(--shadow-emblem-halo);
 }
 
 /* Small phones in Tamil: a tighter Donate button keeps the header on one line, so it never
@@ -144,7 +142,7 @@
 .site-header__logo {
   flex: none;
   width: auto;
-  height: var(--control-height-sm);
+  height: 3rem;
 }
 
 .site-footer__brand {
@@ -153,14 +151,31 @@
   gap: var(--space-3);
 }
 
-/* The emblem sits on a white disc in the teal footer so the teal heart keeps its shape. */
+/* The new green-and-gold emblem reads on teal by itself; a soft halo keeps its edge clean. */
 .site-footer__logo {
   flex: none;
   width: auto;
-  height: var(--control-height);
-  padding: var(--space-1);
-  border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  height: 3.5rem;
+  filter: var(--shadow-emblem-halo-lg);
+}
+
+/* Brand wordmark (client, Nov 2026): classic serif capitals with wide spacing, in the style of
+   the reference site's logo. Overrides the site-wide heading font only for the name. */
+.site-header .brand-wordmark,
+.site-footer .brand-wordmark {
+  font-family: var(--font-wordmark) !important;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.site-header__name.brand-wordmark {
+  font-size: var(--text-wordmark-header);
+}
+
+.site-footer__brand .brand-wordmark {
+  font-size: var(--text-wordmark-footer);
 }
 
 .site-header__name {
@@ -520,8 +535,16 @@
   font-size: var(--text-small);
 }
 
-/* Social icons (client, Nov 2026): round outline buttons; only confirmed links are shown. */
+/* Social icons (client, Nov 2026): solid round icons only, in the footer bar.
+   Only confirmed links are shown. */
 .ui-social {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ui-social__list {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
@@ -530,23 +553,40 @@
   list-style: none;
 }
 
+/* Beats the footer's text-link rule so the glyph stays centred and never underlined. */
+.site-footer .ui-social__link,
 .ui-social__link {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   inline-size: var(--control-height-sm);
   block-size: var(--control-height-sm);
-  border: var(--border-width) solid currentcolor;
+  min-height: 0;
   border-radius: 50%;
-  color: inherit;
+  background: var(--color-surface);
   text-decoration: none;
   transition:
     background-color var(--duration-fast) ease,
-    color var(--duration-fast) ease;
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
 }
 
+.site-footer .ui-social__link:hover,
 .ui-social__link:hover {
-  background: var(--color-surface);
-  color: var(--color-text-heading);
+  background: var(--color-text-accent-on-inverse);
+  transform: translateY(-2px);
+}
+
+.ui-social__link svg {
+  display: block;
+  /* The footer's teal on a white disc (inverse bands remap text tokens to white). */
+  color: var(--color-surface-inverse);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-social__link:hover {
+    transform: none;
+  }
 }
 
 /* Big faded name that sits on the bottom edge, cut off like a watermark. */
