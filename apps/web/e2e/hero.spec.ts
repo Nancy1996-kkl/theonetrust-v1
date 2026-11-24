@@ -9,7 +9,7 @@ const HEADLINE = {
   en: 'Together, we can make a difference.',
   ta: 'ஒன்றாகச் சேர்ந்தால், மாற்றம் கொண்டுவர முடியும்.',
 };
-const DONATE = { en: 'Donate now', ta: 'இப்போதே நன்கொடை கொடுங்கள்' };
+const DONATE = { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' };
 
 for (const lang of ['en', 'ta'] as const) {
   const home = lang === 'ta' ? '/ta/' : '/';
