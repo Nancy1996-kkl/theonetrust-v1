@@ -3,9 +3,11 @@
 @import '@fontsource-variable/noto-sans-tamil';
 /* Body text: Plus Jakarta Sans. */
 @import '@fontsource-variable/plus-jakarta-sans/wght.css';
-@import '@fontsource-variable/plus-jakarta-sans/wght-italic.css'; /* hero accent words */
-/* Headings and the brand name: Poppins, the closest free match to the logo's lettering
-   (owner, 24 Nov 2026). Only the weights headings use; files split by unicode-range. */
+@import '@fontsource-variable/plus-jakarta-sans/wght-italic.css'; /* italic in body text */
+/* Brand wordmark only: Cinzel serif capitals (client, #141). */
+@import '@fontsource/cinzel/600.css';
+/* Headings: Poppins, the closest free match to the logo's lettering (owner, 24 Nov 2026).
+   Only the weights headings use; files split by unicode-range. */
 @import '@fontsource/poppins/500.css';
 @import '@fontsource/poppins/600.css';
 @import '@fontsource/poppins/700.css';
@@ -234,8 +236,8 @@ button {
   }
 }
 
-/* Every heading, title and the brand name in the heading family (Poppins, matching the logo),
-   whatever a component sets. Poppins has no Tamil letters, so those come from Noto Sans Tamil
+/* Every heading and title in the heading family (Poppins, matching the logo), whatever a
+   component sets; the brand wordmark keeps its own Cinzel rule (shell.css, #141). Poppins has no Tamil letters, so those come from Noto Sans Tamil
    (the --font-heading stack lists it). */
 :is(h1, h2, h3, h4, h5, h6, [class*='__title'], [class*='__brand']),
 :is(h1, h2, h3, h4, h5, h6, [class*='__title'], [class*='__brand']) * {

@@ -263,7 +263,7 @@ function CheckoutFlow({
           <div className="donate-thanks__mark" aria-hidden="true">
             <span className="donate-thanks__wave" />
             <span className="donate-thanks__wave donate-thanks__wave--late" />
-            <img src={emblemUrl} alt="" width={131} height={117} />
+            <img src={emblemUrl} alt="" width={131} height={112} />
             <span className="donate-thanks__heart donate-thanks__heart--a">♥</span>
             <span className="donate-thanks__heart donate-thanks__heart--b">♥</span>
             <span className="donate-thanks__heart donate-thanks__heart--c">♥</span>

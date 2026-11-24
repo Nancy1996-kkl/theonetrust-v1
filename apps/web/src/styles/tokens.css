@@ -159,8 +159,8 @@
     0 0 0 4px var(--color-action-donate-glow), 0 8px 24px var(--color-action-donate-glow);
 
   /* ── Typography ───────────────────────────────────────────────────── */
-  /* Headings and the brand name: Poppins, the closest free match to the logo's lettering (owner,
-     24 Nov 2026). Poppins has no Tamil letters, so the browser takes those from Noto Sans Tamil,
+  /* Headings: Poppins, the closest free match to the logo's lettering (owner, 24 Nov 2026); the
+     brand wordmark uses --font-wordmark (Cinzel, #141). Poppins has no Tamil letters, so the browser takes those from Noto Sans Tamil,
      while English words and numbers in Tamil headings stay in Poppins. */
   --font-heading:
     'Poppins', 'Plus Jakarta Sans Variable', 'Noto Sans Tamil Variable', system-ui, -apple-system,
@@ -243,6 +243,13 @@
 
   /* ── Motion (150–250 ms for ordinary interactions) ───────────────── */
   --duration-fast: 150ms;
+
+  /* Brand wordmark and emblem halo (client, Nov 2026) */
+  --font-wordmark: 'Cinzel', 'Times New Roman', serif;
+  --text-wordmark-header: 1.0625rem;
+  --text-wordmark-footer: 1.125rem;
+  --shadow-emblem-halo: drop-shadow(0 0 6px rgb(255 255 255 / 0.35));
+  --shadow-emblem-halo-lg: drop-shadow(0 0 8px rgb(255 255 255 / 0.3));
   --duration-base: 200ms;
   --duration-slow: 250ms;
   --duration-entrance: 700ms; /* one-off page-load reveals and the banner fade-in only */

@@ -34,8 +34,9 @@ derived ink tones and the generated contrast table: `docs/design/tokens.md`.
 | Soft Green | #EAF3E7 | Muted bands, lead text on green |
 | Body | #1F2D22 | Body text |
 
-**Typography:** headings and the brand name in **Poppins** (closest free match to the logo's
-lettering); body text in **Plus Jakarta Sans**; Tamil letters in **Noto Sans Tamil**.
+**Typography:** headings in **Poppins** (closest free match to the logo's lettering); the brand
+wordmark in **Cinzel** serif capitals (#141); body text in **Plus Jakarta Sans**; Tamil letters in
+**Noto Sans Tamil**.
 
 Additional semantic colours:
 - Success: #287A55

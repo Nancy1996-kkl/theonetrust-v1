@@ -153,8 +153,9 @@ so every text pair passes WCAG 2.2 AA.
 
 ## Typography
 
-Headings, titles and the brand name use **Poppins** — the closest free match to the logo's
-lettering (owner, 24 Nov 2026). Body text, menus, buttons and forms use **Plus Jakarta Sans**,
+Headings and titles use **Poppins** — the closest free match to the logo's lettering (owner,
+24 Nov 2026). The brand wordmark in the header and footer uses **Cinzel** serif capitals
+(`--font-wordmark`, #141). Body text, menus, buttons and forms use **Plus Jakarta Sans**,
 which reads better in paragraphs.
 
 | Token               | Mobile (360px) | Desktop (1440px) | Font              |
