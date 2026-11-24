@@ -639,3 +639,14 @@ eMandate, கார்டு, நெட்பேங்கிங் (the words pe
 | அங்கீகரிப்புச் செயலி (authenticator app) | அங்கீகரிப்புச் செயலி                      |
 | டெவலப்பர்                                | தொழில்நுட்பக் குழு                        |
 | உண்மையான பணம் (Live) / சோதனை (Test)      | உண்மையான பணம் / சோதனை                     |
+
+## Donate buttons — gentler wording (owner, 24 Nov 2026)
+
+The owner found the Donate buttons too pushy in Tamil (“இப்போதே” = “right now”, plus a direct
+order to give). Every Donate button on the home page now uses the owner's choice. The English
+stays “Donate now”; the header button stays “நன்கொடை”.
+
+| #   | Before                             | After              |
+| --- | ---------------------------------- | ------------------ |
+| 1   | இப்போதே நன்கொடை கொடுங்கள்          | அன்புடன் உதவுங்கள் |
+| 2   | இப்போதே நன்கொடை அளியுங்கள் (proof) | அன்புடன் உதவுங்கள் |

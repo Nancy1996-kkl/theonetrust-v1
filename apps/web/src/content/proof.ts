@@ -141,7 +141,7 @@ export const PROOF_CONTENT: ProofContent = {
     periodLabel: { en: 'Period', ta: 'காலம்' },
     updatedLabel: { en: 'Updated', ta: 'புதுப்பிக்கப்பட்டது' },
     seeDocuments: { en: 'See our documents', ta: 'எங்கள் ஆவணங்களைப் பாருங்கள்' },
-    donateCta: { en: 'Donate now', ta: 'இப்போதே நன்கொடை அளியுங்கள்' },
+    donateCta: { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' },
     verifiedNote: {
       en: 'You receive an acknowledgement only after your payment is verified.',
       ta: 'உங்கள் கட்டணம் சரிபார்க்கப்பட்ட பிறகே ஒப்புகை அனுப்பப்படும்.',
@@ -375,7 +375,7 @@ export const PROOF_CONTENT: ProofContent = {
     fallbackTitle: { en: 'Make a donation', ta: 'நன்கொடை கொடுங்கள்' },
     amountLegend: { en: 'Choose an amount', ta: 'தொகையைத் தேர்ந்தெடுங்கள்' },
     presetsRupees: [500, 1000, 2000, 5000],
-    donateCta: { en: 'Donate now', ta: 'இப்போதே நன்கொடை கொடுங்கள்' },
+    donateCta: { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' },
   },
   states: {
     loadingTitle: { en: 'Loading…', ta: 'கொஞ்சம் பொறுங்கள்…' },

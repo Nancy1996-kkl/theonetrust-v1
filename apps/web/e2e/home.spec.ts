@@ -6,7 +6,7 @@ import { expect, test } from './fixtures/guard.ts';
  */
 for (const [path, h1, donate] of [
   ['/', 'Together, we can make a difference.', 'Donate now'],
-  ['/ta/', 'ஒன்றாகச் சேர்ந்தால், மாற்றம் கொண்டுவர முடியும்.', 'இப்போதே நன்கொடை கொடுங்கள்'],
+  ['/ta/', 'ஒன்றாகச் சேர்ந்தால், மாற்றம் கொண்டுவர முடியும்.', 'அன்புடன் உதவுங்கள்'],
 ] as const) {
   test(`all sections render (${path})`, async ({ page }) => {
     await page.goto(path);

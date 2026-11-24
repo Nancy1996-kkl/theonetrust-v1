@@ -84,7 +84,7 @@ export const HOME_TEXT = {
     ta: 'ஒரு தொகையைத் தேர்வு செய்யுங்கள், அல்லது நீங்களே எழுதுங்கள் (₹1 முதல்). UPI, கார்டு, நெட்பேங்கிங் — எதில் வேண்டுமானாலும் இதே பக்கத்தில் பாதுகாப்பாகச் செலுத்தலாம்.',
   },
   donateOther: { en: 'Other amount', ta: 'வேறு தொகை' },
-  donateNow: { en: 'Donate now', ta: 'இப்போதே நன்கொடை கொடுங்கள்' },
+  donateNow: { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' },
   monthlyNote: {
     en: 'Want to give every month? Choose “Monthly” in the next step — you can stop any time.',
     ta: 'மாதந்தோறும் கொடுக்க விரும்புகிறீர்களா? அடுத்த படியில் “மாதந்தோறும்” என்பதைத் தேர்வு செய்யுங்கள் — எப்போது வேண்டுமானாலும் நிறுத்தலாம்.',
