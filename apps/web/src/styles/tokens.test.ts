@@ -4,6 +4,7 @@ import { join, relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   FORBIDDEN_PAIRS,
+  contrastRatio,
   contrastTableMarkdown,
   evaluateContrast,
   parseRootTokens,
@@ -59,14 +60,36 @@ describe('colour contrast (WCAG 2.2 AA)', () => {
     }
   });
 
-  it('never uses the bright logo colours (orange, turquoise, green) as a text colour', () => {
-    const bright = ['--palette-orange', '--palette-turquoise', '--palette-green'].map((n) =>
+  it('never uses the bright logo colours (gold, fresh green, leaf green) as a text colour', () => {
+    const bright = ['--palette-gold', '--palette-green-bright', '--palette-leaf-green'].map((n) =>
       tokens.get(n),
     );
     const brightText = results.filter(
       (r) => bright.includes(r.fgHex) && (r.use === 'text' || r.use === 'large-text'),
     );
     expect(brightText).toEqual([]);
+  });
+
+  it('hero text stays AA over a pure-white video frame where the fade is ≥ 92% (review 24 Nov 2026)', () => {
+    const scrim = /color-mix\(in srgb, var\((--[\w-]+)\) 92%, transparent\) 35%/.exec(
+      tokens.get('--gradient-hero-scrim') ?? '',
+    )?.[1];
+    expect(scrim, 'the 92% stop must stay at 35% of the banner').toBeDefined();
+    expect(resolveToken(tokens, '--color-hero-band'), 'fade starts from the band colour').toBe(
+      resolveToken(tokens, scrim!),
+    );
+    const [r, g, b] = [1, 3, 5].map((i) =>
+      parseInt(resolveToken(tokens, scrim!).slice(i, i + 2), 16),
+    );
+    const mix = (c: number) => Math.round(c * 0.92 + 255 * 0.08);
+    const frame = `#${[r, g, b].map((c) => mix(c!).toString(16).padStart(2, '0')).join('')}`;
+    for (const text of [
+      '--color-text-inverse',
+      '--color-text-inverse-muted',
+      '--color-text-accent-on-inverse',
+    ]) {
+      expect(contrastRatio(resolveToken(tokens, text), frame), text).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it('keeps the documented contrast table in sync with the tokens', () => {
@@ -189,17 +212,19 @@ describe('type scale (UX brief §4: mobile @360 → desktop @1440)', () => {
     expect(Math.min(...weights)).toBeGreaterThanOrEqual(400);
   });
 
-  it('one family site-wide: Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (client, Nov 2026)', () => {
+  it('headings in Poppins (logo lettering), body in Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (owner, 24 Nov 2026)', () => {
     // Legacy non-Unicode fonts such as Bamini break SEO, screen readers and typing (#46).
     expect(tokens.get('--font-heading')).toMatch(
-      /^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans'/,
+      /^'Poppins', 'Plus Jakarta Sans Variable', 'Noto Sans Tamil Variable'/,
     );
-    expect(tokens.get('--font-body')).toBe('var(--font-heading)');
+    expect(tokens.get('--font-body')).toMatch(/^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans'/);
     expect(tokens.get('--font-tamil')).toMatch(
       /^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable'/,
     );
-    expect(tokens.get('--font-heading-ta')).toBe('var(--font-tamil)');
-    expect(tokens.get('--font-heading-ta')).not.toMatch(/bamini/i);
+    expect(tokens.get('--font-heading-ta')).toMatch(/^'Poppins', 'Noto Sans Tamil Variable'/);
+    for (const name of ['--font-heading', '--font-body', '--font-tamil', '--font-heading-ta']) {
+      expect(tokens.get(name), name).not.toMatch(/bamini/i);
+    }
   });
 
   it('gives Tamil more line height than English', () => {

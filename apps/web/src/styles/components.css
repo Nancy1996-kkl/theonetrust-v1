@@ -138,8 +138,14 @@
 
 .ui-button--donate:hover {
   background: var(--color-action-donate-bg-hover);
-  /* Soft orange glow (brand brief): the only element on the page that glows. */
+  /* Light gold is close to light pages: a gold-ink edge keeps the button's shape visible. */
+  border-color: var(--color-action-donate-border-hover);
+  /* Soft gold glow (brand brief): the only element on the page that glows. */
   box-shadow: var(--shadow-glow-gold);
+}
+
+.surface-inverse .ui-button--donate:hover {
+  border-color: var(--color-action-donate-border-on-inverse);
 }
 
 .ui-button--donate:active {

@@ -14,11 +14,11 @@ You are strictly read-only. Never edit source files, tests, screenshots or basel
   `docs/design/components.md`, and relevant wireframes.
 - Compare the branch diff against `origin/main`.
 - Confirm the current approved brand palette is used through semantic role tokens:
-  Deep Teal `#025D62`, Bright Turquoise `#00AEB4`, Warm Orange `#F07800`,
-  Natural Green `#4A9200`, Cloud White `#F7FAF8`, Soft Mint `#EAF3EF`,
-  Peach `#FFF2E5`, Leaf Tint `#F0F6E8`, Charcoal `#263B3B`,
-  Border `#DFE9E5`.
-- Treat old Forest & Gold screenshots as historical baselines that may intentionally
+  the logo green & gold palette (owner, 24 Nov 2026) — Deep Green `#0B6619`, Darkest Green
+  `#024414`, Fresh Green `#60B710`, Leaf Green `#338615`, Gold `#E09D12`, Soft Gold `#F2B636`,
+  Light Gold `#FDD947`, Light Grey `#F7F7F7`, Soft Green `#EAF3E7`, Warm Cream `#FCF4D6`,
+  Leaf Tint `#F2F7EA`, Charcoal `#1F2D22`, Border `#DCE5DA` — with Poppins headings.
+- Treat old Teal & Orange and Forest & Gold screenshots as historical baselines that may intentionally
   differ only when the owner-approved task changes them.
 
 ## Inspect

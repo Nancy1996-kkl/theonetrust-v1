@@ -1,35 +1,35 @@
 /*
  * Design tokens — the ONLY place raw colours, font sizes and timing values may appear.
- * Source: docs/ux-design-brief.md §2–4 (logo palette, revamp G1 16 Nov 2026). Documentation and the
+ * Source: docs/ux-design-brief.md §2–4 (logo green & gold palette, owner 24 Nov 2026). Documentation and the
  * contrast table: docs/design/tokens.md (kept in sync by src/styles/tokens.test.ts).
  *
  * Layers: 1) palette (raw brand values)  2) roles (what components use).
  * Components must use ROLE tokens, never palette tokens directly.
  */
 :root {
-  /* ── 1. Palette (approved logo palette — "Vibrant Humanitarian", owner G1 16 Nov 2026) ── */
-  --palette-teal: #025d62; /* Deep Teal — primary brand, links, dark bands */
-  --palette-turquoise: #00aeb4; /* Bright Turquoise — fills and icons only (2.7:1 on white) */
-  --palette-orange: #f07800; /* Warm Orange — glow, rules and fills only, never text */
-  --palette-green: #4a9200; /* Natural Green — icons and fills only, never text */
-  --palette-cloud: #f7faf8; /* Cloud White — page background */
-  --palette-mint: #eaf3ef; /* Soft Mint — muted bands, tablist */
-  --palette-charcoal: #263b3b; /* Charcoal — body text (11.9:1 on white) */
-  --palette-peach: #fff2e5; /* Peach — warm bands; accent text and focus on teal (6.95:1) */
-  --palette-leaf: #f0f6e8; /* Leaf Tint — story and growth tiles */
+  /* ── 1. Palette (logo colours — green & gold heart, owner 24 Nov 2026) ──────────────
+     Measured from the trust's logo file; ink tones are derived so every text pair passes AA. */
+  --palette-green: #0b6619; /* Deep Green — primary brand, links, buttons, green bands */
+  --palette-green-deep: #024414; /* Darkest Green — headings, footer end, scrim (11.4:1 on white) */
+  --palette-green-bright: #60b710; /* Fresh Green — fills and icons only (2.5:1 on white) */
+  --palette-leaf-green: #338615; /* Leaf Green — leaf icons and fills only, never text */
+  --palette-gold: #e09d12; /* Gold — Donate fill, glow and rules; never text on light */
+  --palette-gold-soft: #f2b636; /* Donate gradient start (green-deep text 6.26:1) */
+  --palette-gold-light: #fdd947; /* Light Gold — accent text, focus and edges on green (5.18:1) */
+  --palette-cloud: #f7f7f7; /* Light Grey — page background (logo background) */
+  --palette-mint: #eaf3e7; /* Soft Green — muted bands, tablist, lead text on green */
+  --palette-cream: #fcf4d6; /* Warm Cream — warm bands (the glow inside the logo heart) */
+  --palette-leaf-tint: #f2f7ea; /* Leaf Tint — story and growth tiles */
+  --palette-charcoal: #1f2d22; /* Charcoal — body text (14.4:1 on white) */
   --palette-white: #ffffff;
-  --palette-border: #dfe9e5; /* decorative dividers and disabled surfaces only */
+  --palette-border: #dce5da; /* decorative dividers and disabled surfaces only */
 
   /* Ink tones derived for text and UI (each checked in CONTRAST_PAIRS) */
-  --palette-teal-deep: #014246; /* headings, scrim, dark footer (11.2:1 on white) */
-  --palette-turquoise-ink: #00777b; /* focus ring and info labels on light (≥ 4.3:1) */
-  --palette-orange-ink: #b04f00; /* Donate fill (white 5.3:1) and orange labels */
-  --palette-orange-ink-light: #bc5400; /* Donate gradient start (white 4.77:1) */
-  --palette-orange-ink-hover: #9c4600; /* Donate hover / gradient end (white 6.38:1) */
-  --palette-orange-ink-pressed: #863c00; /* Donate pressed (white 7.89:1) */
-  --palette-green-ink: #3a7300; /* growth labels (5.8:1 on white) */
-  --palette-muted: #4f6262; /* secondary, placeholder and disabled text (6.4:1 on white) */
-  --palette-field-border: #6a8282; /* input borders (≥ 3.3:1 on every light surface) */
+  --palette-focus-ink: #2e7a14; /* focus ring on light surfaces (≥ 4.7:1) */
+  --palette-gold-ink: #845400; /* gold labels as text on light (≥ 5.6:1) */
+  --palette-green-ink: #2b6e11; /* growth labels (≥ 5.5:1 on light) */
+  --palette-muted: #4b5c4e; /* secondary, placeholder and disabled text (≥ 6.2:1 on light) */
+  --palette-field-border: #687b6a; /* input borders (≥ 3.9:1 on every light surface) */
 
   --palette-success: #287a55;
   --palette-warning: #b7791f; /* 3.6:1 on white: icons/borders only, never body text */
@@ -38,17 +38,17 @@
   --palette-info: #3568a8;
 
   /* ── 2. Roles ─────────────────────────────────────────────────────── */
-  /* Surfaces: cloud → mint → peach → teal band rhythm (revamp plan, G1 16 Nov 2026) */
+  /* Surfaces: light grey → soft green → cream → green band rhythm */
   --color-bg: var(--palette-cloud);
   --color-surface: var(--palette-white);
   --color-surface-muted: var(--palette-mint);
-  --color-surface-accent: var(--palette-leaf);
-  --color-surface-inverse: var(--palette-teal);
-  /* Footer (client, Nov 2026): teal → deep-teal gradient, a soft turquoise glow, a fine dot grid
-     and a faded wordmark. Text on it stays white (≥7.3:1 on teal, 11.2:1 on deep teal). */
-  --color-footer-from: var(--palette-teal);
-  --color-footer-to: var(--palette-teal-deep);
-  --color-footer-glow: color-mix(in srgb, var(--palette-turquoise) 35%, transparent);
+  --color-surface-accent: var(--palette-leaf-tint);
+  --color-surface-inverse: var(--palette-green);
+  /* Footer: green → darkest-green gradient, a soft gold glow, a fine dot grid and a faded
+     wordmark. Text on it stays white (7.17:1 on green, 11.4:1 on darkest green). */
+  --color-footer-from: var(--palette-green);
+  --color-footer-to: var(--palette-green-deep);
+  --color-footer-glow: color-mix(in srgb, var(--palette-gold) 30%, transparent);
   --color-footer-dot: color-mix(in srgb, var(--palette-white) 9%, transparent);
   --color-footer-rule: color-mix(in srgb, var(--palette-white) 22%, transparent);
   --color-footer-wordmark: color-mix(in srgb, var(--palette-white) 16%, transparent);
@@ -56,45 +56,47 @@
   /* Text */
   --color-text: var(--palette-charcoal);
   --color-text-muted: var(--palette-muted);
-  --color-text-heading: var(--palette-teal-deep);
+  --color-text-heading: var(--palette-green-deep);
   --color-text-inverse: var(--palette-white);
   --color-text-inverse-muted: var(--palette-mint);
-  --color-text-accent: var(--palette-orange-ink);
-  --color-text-accent-on-inverse: var(--palette-peach);
-  --color-link: var(--palette-teal);
+  --color-text-accent: var(--palette-gold-ink);
+  --color-text-accent-on-inverse: var(--palette-gold-light);
+  --color-link: var(--palette-green);
 
   /* Actions */
-  --color-action-primary-bg: var(--palette-teal);
+  --color-action-primary-bg: var(--palette-green);
   --color-action-primary-text: var(--palette-white);
-  --color-action-donate-bg: var(--palette-orange-ink);
-  --color-action-donate-text: var(--palette-white);
-  --color-action-donate-glow: color-mix(in srgb, var(--palette-orange) 45%, transparent);
-  /* 2px Donate edge on teal bands (G1 S3) */
-  --color-action-donate-border-on-inverse: var(--palette-peach);
-  /* Donate fill: subtle burnt-orange gradient; white text stays ≥ 4.77:1 at both stops (G1) */
+  /* Donate is the logo's gold with darkest-green text (white on gold would fail AA) */
+  --color-action-donate-bg: var(--palette-gold);
+  --color-action-donate-text: var(--palette-green-deep);
+  --color-action-donate-glow: color-mix(in srgb, var(--palette-gold) 45%, transparent);
+  /* 2px Donate edge on green bands */
+  --color-action-donate-border-on-inverse: var(--palette-gold-light);
+  /* Donate fill: soft-gold → gold gradient; darkest-green text stays ≥ 4.89:1 at both stops */
   --gradient-action-donate: linear-gradient(
     135deg,
-    var(--palette-orange-ink-light) 0%,
-    var(--palette-orange-ink-hover) 100%
+    var(--palette-gold-soft) 0%,
+    var(--palette-gold) 100%
   );
-  --color-action-secondary-text: var(--palette-teal);
-  --color-action-secondary-border: var(--palette-teal);
+  --color-action-secondary-text: var(--palette-green);
+  --color-action-secondary-border: var(--palette-green);
 
-  /* Home page roles (client, Nov 2026), on the approved logo palette */
+  /* Home page roles, on the logo palette */
   --color-home-bg: var(--palette-cloud);
-  --color-home-warm: var(--palette-peach);
-  --color-home-sage: var(--palette-turquoise);
+  --color-home-warm: var(--palette-cream);
+  --color-home-sage: var(--palette-green-bright);
   --color-home-sage-tint: var(--palette-mint);
-  --color-home-dark: var(--palette-teal);
-  --color-home-heading: var(--palette-teal-deep);
+  --color-home-dark: var(--palette-green);
+  --color-home-heading: var(--palette-green-deep);
   --color-home-on-dark: var(--palette-white);
   --color-home-line-on-dark: color-mix(in srgb, var(--palette-white) 35%, transparent);
 
   /* Interaction states */
-  --color-action-primary-bg-hover: var(--palette-teal-deep);
+  --color-action-primary-bg-hover: var(--palette-green-deep);
   --color-action-primary-bg-active: var(--palette-charcoal);
-  --color-action-donate-bg-hover: var(--palette-orange-ink-hover);
-  --color-action-donate-bg-active: var(--palette-orange-ink-pressed);
+  /* Donate brightens on hover (light gold, 8.25:1) — a darker gold would drop below AA */
+  --color-action-donate-bg-hover: var(--palette-gold-light);
+  --color-action-donate-bg-active: var(--palette-gold);
   --color-action-secondary-bg-hover: var(--palette-mint);
   --color-text-placeholder: var(--palette-muted);
   --color-text-disabled: var(--palette-muted);
@@ -110,52 +112,69 @@
 
   /* Lines and focus */
   --color-border-subtle: var(--palette-border);
-  --color-rule-accent: var(--palette-orange);
+  --color-rule-accent: var(--palette-gold);
   --color-border-input: var(--palette-field-border);
-  --color-focus: var(--palette-turquoise-ink);
-  --color-focus-on-inverse: var(--palette-peach);
+  --color-focus: var(--palette-focus-ink);
+  --color-focus-on-inverse: var(--palette-gold-light);
   --color-border-input-on-inverse: var(--palette-border);
-  --color-action-secondary-bg-hover-on-inverse: var(--palette-teal-deep);
+  --color-action-secondary-bg-hover-on-inverse: var(--palette-green-deep);
+  /* Selected language on green bands: white with darkest-green text — gold stays for Donate
+     only (brief §2); the selection is also bold and underlined, never colour alone. */
+  /* Small numbered badges (policy cards): darkest green, so light-gold digits keep a wide margin
+     (8.26:1) even while the badge pops in blurred over a light page. */
+  --color-badge-inverse-bg: var(--palette-green-deep);
+  --color-lang-selected-bg-on-inverse: var(--palette-white);
+  --color-lang-selected-text-on-inverse: var(--palette-green-deep);
+  /* Donate keeps a visible edge on light surfaces when it brightens on hover */
+  --color-action-donate-border-hover: var(--palette-gold-ink);
 
-  /* Hero scrim: teal-deep gradient over hero video so text always sits on ≥ 92% teal-deep */
+  /* Hero: its own darkest-green band, and the photo fade starts from the same colour, so band
+     and photo join without a seam and the small hero text keeps its margin over a bright frame
+     (review 24 Nov 2026). The text sits on ≥ 92% darkest green: white 10.2:1, soft green 9.0:1
+     even over a pure-white frame (tokens.test.ts checks it). */
+  --color-hero-band: var(--palette-green-deep);
   --gradient-hero-scrim: linear-gradient(
     90deg,
-    var(--palette-teal-deep) 0%,
-    color-mix(in srgb, var(--palette-teal-deep) 92%, transparent) 35%,
-    color-mix(in srgb, var(--palette-teal-deep) 50%, transparent) 47%,
+    var(--palette-green-deep) 0%,
+    color-mix(in srgb, var(--palette-green-deep) 92%, transparent) 35%,
+    color-mix(in srgb, var(--palette-green-deep) 50%, transparent) 47%,
     transparent 62%
   );
   --gradient-hero-scrim-stacked: linear-gradient(
     180deg,
     transparent 40%,
-    color-mix(in srgb, var(--palette-teal-deep) 70%, transparent) 75%,
-    var(--palette-teal-deep) 100%
+    color-mix(in srgb, var(--palette-green-deep) 70%, transparent) 75%,
+    var(--palette-green-deep) 100%
   );
 
-  /* Elevation (teal-tinted, subtle) — derived from the palette so they never drift */
+  /* Elevation (green-tinted, subtle) — derived from the palette so they never drift */
   --shadow-sm:
-    0 1px 2px color-mix(in srgb, var(--palette-teal-deep) 6%, transparent),
-    0 1px 3px color-mix(in srgb, var(--palette-teal-deep) 8%, transparent);
+    0 1px 2px color-mix(in srgb, var(--palette-green-deep) 6%, transparent),
+    0 1px 3px color-mix(in srgb, var(--palette-green-deep) 8%, transparent);
   --shadow-md:
-    0 4px 12px color-mix(in srgb, var(--palette-teal-deep) 8%, transparent),
-    0 2px 4px color-mix(in srgb, var(--palette-teal-deep) 6%, transparent);
-  --shadow-lg: 0 12px 32px color-mix(in srgb, var(--palette-teal-deep) 12%, transparent);
+    0 4px 12px color-mix(in srgb, var(--palette-green-deep) 8%, transparent),
+    0 2px 4px color-mix(in srgb, var(--palette-green-deep) 6%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, var(--palette-green-deep) 12%, transparent);
   --shadow-glow-gold:
     0 0 0 4px var(--color-action-donate-glow), 0 8px 24px var(--color-action-donate-glow);
 
   /* ── Typography ───────────────────────────────────────────────────── */
-  /* One family across the whole site (client, Nov 2026): Plus Jakarta Sans for headings, menus,
-     buttons and text. It has no Tamil letters, so the browser takes those from Noto Sans Tamil,
-     while English words and numbers on Tamil pages stay in Plus Jakarta Sans. */
+  /* Headings: Poppins, the closest free match to the logo's lettering (owner, 24 Nov 2026); the
+     brand wordmark uses --font-wordmark (Cinzel, #141). Poppins has no Tamil letters, so the browser takes those from Noto Sans Tamil,
+     while English words and numbers in Tamil headings stay in Poppins. */
   --font-heading:
+    'Poppins', 'Plus Jakarta Sans Variable', 'Noto Sans Tamil Variable', system-ui, -apple-system,
+    'Segoe UI', Roboto, sans-serif;
+  /* Body, menus, buttons and forms: Plus Jakarta Sans (easier to read in long text); Tamil
+     letters come from Noto Sans Tamil (#46). */
+  --font-body:
     'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto,
     sans-serif;
-  /* One family site-wide (client, Nov 2026); Tamil letters come from Noto Sans Tamil (#46). */
-  --font-body: var(--font-heading);
   --font-tamil:
     'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable',
     'Noto Sans Tamil', Latha, sans-serif;
-  --font-heading-ta: var(--font-tamil);
+  /* Tamil headings: Poppins for Latin words and numbers, Noto Sans Tamil for Tamil letters */
+  --font-heading-ta: 'Poppins', 'Noto Sans Tamil Variable', 'Noto Sans Tamil', Latha, sans-serif;
 
   /* Fluid scale: exact mobile value at 360px, exact desktop value at 1440px, rem-based so
      browser zoom and user font settings still work (WCAG 1.4.4). */
@@ -229,6 +248,8 @@
   --font-wordmark: 'Cinzel', 'Times New Roman', serif;
   --text-wordmark-header: 1.0625rem;
   --text-wordmark-footer: 1.125rem;
+  /* Tamil desktop header: one step smaller so the longer Tamil menu stays on one row */
+  --text-wordmark-header-ta: 0.875rem;
   --shadow-emblem-halo: drop-shadow(0 0 6px rgb(255 255 255 / 0.35));
   --shadow-emblem-halo-lg: drop-shadow(0 0 8px rgb(255 255 255 / 0.3));
   --duration-base: 200ms;

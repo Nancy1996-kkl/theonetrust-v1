@@ -61,7 +61,7 @@ test.describe('type scale', () => {
 });
 
 test.describe('fonts', () => {
-  test('Plus Jakarta Sans and Noto Sans Tamil load from our own origin', async ({
+  test('Poppins, Plus Jakarta Sans and Noto Sans Tamil load from our own origin', async ({
     page,
     baseURL,
   }) => {
@@ -76,6 +76,7 @@ test.describe('fonts', () => {
       const probes = {
         body: ['16px "Plus Jakarta Sans Variable"', 'Donate'],
         jakarta: ['600 34px "Plus Jakarta Sans Variable"', 'Theonetrust'],
+        poppins: ['700 34px "Poppins"', 'THE ONE'],
         tamil: ['16px "Noto Sans Tamil Variable"', 'தமிழ் நன்கொடை'],
         tamilHeading: ['600 28px "Noto Sans Tamil Variable"', 'தமிழ் தலைப்பு'],
       } as const;
@@ -87,21 +88,27 @@ test.describe('fonts', () => {
       }
       return out;
     });
-    expect(loaded).toEqual({ body: true, jakarta: true, tamil: true, tamilHeading: true });
+    expect(loaded).toEqual({
+      body: true,
+      jakarta: true,
+      poppins: true,
+      tamil: true,
+      tamilHeading: true,
+    });
 
     expect(fontRequests.length).toBeGreaterThan(0);
     const origin = new URL(baseURL!).origin;
     for (const url of fontRequests) expect(new URL(url).origin).toBe(origin);
   });
 
-  test('Tamil headings, body and buttons: Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (client, Nov 2026)', async ({
+  test('Tamil: headings in Poppins, body and buttons in Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (owner, 24 Nov 2026)', async ({
     page,
   }) => {
     await page.goto('/');
     await injectSpecimen(page);
     for (const selector of ['#tamil-specimen h2', '#tamil-specimen h3', '#inverse-band h3']) {
       expect((await computed(page, selector)).fontFamily, selector).toMatch(
-        /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
+        /^"?Poppins"?, "?Noto Sans Tamil Variable/,
       );
     }
     for (const selector of [
@@ -113,8 +120,8 @@ test.describe('fonts', () => {
         /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
       );
     }
-    // Every heading and title: Plus Jakarta Sans (client, Nov 2026).
-    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Plus Jakarta Sans Variable/);
+    // Every heading and title: Poppins, the logo's lettering (owner, 24 Nov 2026).
+    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Poppins/);
   });
 });
 
@@ -185,10 +192,10 @@ test.describe('Tamil specimen at this viewport', () => {
     const light = await ringOf('[data-check="card"] button');
     expect(light.style).toBe('solid');
     expect(light.width).toBeGreaterThanOrEqual(2);
-    expect(light.color).toBe('rgb(0, 119, 123)'); // --palette-turquoise-ink
+    expect(light.color).toBe('rgb(46, 122, 20)'); // --palette-focus-ink
 
     const dark = await ringOf('#inverse-button');
-    expect(dark.color).toBe('rgb(255, 242, 229)'); // --palette-peach on teal
+    expect(dark.color).toBe('rgb(253, 217, 71)'); // --palette-gold-light on green
   });
 
   test('forest band turns headings, body text and links white (never forest on forest)', async ({
@@ -204,7 +211,7 @@ test.describe('Tamil specimen at this viewport', () => {
       link: getComputedStyle(el.querySelector('a')!).color,
     }));
     expect(colours).toEqual({
-      background: 'rgb(2, 93, 98)', // --palette-teal
+      background: 'rgb(11, 102, 25)', // --palette-green
       heading: 'rgb(255, 255, 255)',
       text: 'rgb(255, 255, 255)',
       link: 'rgb(255, 255, 255)',
@@ -230,10 +237,10 @@ test.describe('Tamil specimen at this viewport', () => {
     expect(result).toEqual({
       outlineText: 'rgb(255, 255, 255)',
       outlineBorder: 'rgb(255, 255, 255)',
-      inputBorder: 'rgb(223, 233, 229)', // --palette-border, 6.2:1 on teal
+      inputBorder: 'rgb(220, 229, 218)', // --palette-border, 5.5:1 on green
       cardBackground: 'rgb(255, 255, 255)',
-      cardHeading: 'rgb(1, 66, 70)', // teal-deep on the light card
-      cardLink: 'rgb(2, 93, 98)', // --palette-teal
+      cardHeading: 'rgb(2, 68, 20)', // green-deep on the light card
+      cardLink: 'rgb(11, 102, 25)', // --palette-green
     });
   });
 
@@ -250,7 +257,10 @@ test.describe('Tamil specimen at this viewport', () => {
         /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
       );
     }
-    expect((await computed(page, 'h1')).fontFamily).toMatch(/^"?Plus Jakarta Sans Variable/);
+    // Headings: Poppins (logo lettering) for Latin, Noto Sans Tamil for Tamil letters.
+    expect((await computed(page, 'h1')).fontFamily).toMatch(
+      /^"?Poppins"?, "?Noto Sans Tamil Variable/,
+    );
     const body = await computed(page, 'body');
     expect(body.lineHeight / body.fontSize).toBeGreaterThanOrEqual(1.75);
   });
@@ -261,9 +271,7 @@ test.describe('Tamil specimen at this viewport', () => {
     await page.goto('/');
     await injectSpecimen(page);
     const styled = await computed(page, '#class-styled');
-    expect(styled.fontFamily).toMatch(
-      /^"?Plus Jakarta Sans Variable"?, "?Plus Jakarta Sans"?, "?Noto Sans Tamil Variable/,
-    );
+    expect(styled.fontFamily).toMatch(/^"?Poppins"?, "?Noto Sans Tamil Variable/);
     expect(styled.lineHeight / styled.fontSize).toBeGreaterThanOrEqual(1.45);
   });
 
