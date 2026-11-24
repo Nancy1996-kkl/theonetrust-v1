@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { AreaLink } from '../components/ui/AreaLink.tsx';
 import { LanguageSwitch } from '../components/ui/LanguageSwitch.tsx';
+import { SocialLinks } from '../components/ui/SocialLinks.tsx';
 import type { UiLang } from '../components/ui/ui-strings.ts';
 import { TRUST_FACTS, type TrustFacts } from '../config/trust-facts.ts';
 import { homePath, localizedPath } from '../i18n/lang.ts';
@@ -157,6 +158,7 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
               © {shownYear} {name}
             </p>
           </div>
+          <SocialLinks facts={facts} label={t.socialLinks} />
           <LanguageSwitch current={lang} onChange={onLanguageChange} />
         </div>
       </div>
