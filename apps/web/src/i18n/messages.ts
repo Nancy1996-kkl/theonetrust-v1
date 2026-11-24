@@ -25,6 +25,7 @@ const en = {
   footerVision:
     'No one around us should go without food, schooling or care just because they cannot pay.',
   receiptHelp: 'Receipt help',
+  socialLinks: 'Find us online',
   terms: 'Terms',
   privacy: 'Privacy',
   refund: 'Refund & cancellation',
@@ -61,6 +62,7 @@ const ta: Messages = {
   footerVision:
     'பணம் இல்லை என்ற ஒரே காரணத்துக்காக, நம்மைச் சுற்றி யாரும் உணவு, படிப்பு, மருத்துவம் இல்லாமல் இருக்கக் கூடாது.',
   receiptHelp: 'ஒப்புகைச் சீட்டு உதவி',
+  socialLinks: 'இணையத்தில் எங்களைக் காண',
   terms: 'விதிமுறைகள்',
   privacy: 'தனியுரிமை',
   refund: 'பணம் திரும்பத் தருதல், ரத்து',

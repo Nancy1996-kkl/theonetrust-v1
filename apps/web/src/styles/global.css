@@ -3,6 +3,7 @@
 @import '@fontsource-variable/noto-sans-tamil';
 /* Plus Jakarta Sans everywhere (client, Nov 2026). */
 @import '@fontsource-variable/plus-jakarta-sans/wght.css';
+@import '@fontsource/cinzel/600.css'; /* brand wordmark only */
 @import '@fontsource-variable/plus-jakarta-sans/wght-italic.css'; /* hero accent words */
 @import './tokens.css';
 @import './components.css';

@@ -19,6 +19,15 @@ export interface TrustFacts {
   callHours: Record<UiLang, string> | null;
   /** Map link for the area (opens Google Maps). Swap for the exact address once confirmed. */
   mapUrl?: string | null;
+  /** The trust's own social pages. Only confirmed URLs are shown; null hides the icon. */
+  social?: SocialLinks;
+}
+
+export interface SocialLinks {
+  facebook: string | null;
+  instagram: string | null;
+  youtube: string | null;
+  x: string | null;
 }
 
 export const TRUST_FACTS: TrustFacts = {
@@ -35,4 +44,6 @@ export const TRUST_FACTS: TrustFacts = {
   callHours: { en: 'Every day, 8 AM – 10 PM', ta: 'தினமும், காலை 8 – இரவு 10' },
   // Town-level placeholder (client, Nov 2026); replace with the trust's exact location later.
   mapUrl: 'https://www.google.com/maps/search/?api=1&query=Kanchipuram%2C+Tamil+Nadu',
+  // [CONFIRM] #1 — the client asked for social icons (Nov 2026); page links are still pending.
+  social: { facebook: null, instagram: null, youtube: null, x: null },
 };

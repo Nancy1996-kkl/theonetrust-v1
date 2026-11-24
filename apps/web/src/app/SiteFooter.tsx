@@ -1,6 +1,7 @@
 import { Link } from 'react-router';
 import { AreaLink } from '../components/ui/AreaLink.tsx';
 import { LanguageSwitch } from '../components/ui/LanguageSwitch.tsx';
+import { SocialLinks } from '../components/ui/SocialLinks.tsx';
 import type { UiLang } from '../components/ui/ui-strings.ts';
 import { TRUST_FACTS, type TrustFacts } from '../config/trust-facts.ts';
 import { homePath, localizedPath } from '../i18n/lang.ts';
@@ -35,7 +36,7 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
           <section className="site-footer__group site-footer__trust" aria-labelledby="footer-trust">
             <h2 id="footer-trust" className="site-footer__title site-footer__brand">
               <img className="site-footer__logo" src={emblemUrl} alt="" width={131} height={112} />
-              {name}
+              <span className="brand-wordmark">{name}</span>
             </h2>
             {facts.registration && <p>{facts.registration}</p>}
             <p className="site-footer__vision">{t.footerVision}</p>
@@ -157,6 +158,7 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
               © {shownYear} {name}
             </p>
           </div>
+          <SocialLinks facts={facts} label={t.socialLinks} />
           <LanguageSwitch current={lang} onChange={onLanguageChange} />
         </div>
       </div>

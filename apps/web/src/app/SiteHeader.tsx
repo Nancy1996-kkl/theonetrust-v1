@@ -103,7 +103,7 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
         <a className="site-header__brand" href={home} aria-label={t.homeLink}>
           {/* Trust logo emblem (client, 16 Nov 2026). Decorative: the link has an aria-label. */}
           <img className="site-header__logo" src={emblemUrl} alt="" width={131} height={112} />
-          <span className="site-header__name">{TRUST_FACTS.siteName}</span>
+          <span className="site-header__name brand-wordmark">{TRUST_FACTS.siteName}</span>
         </a>
 
         <nav className="site-header__nav" aria-label={t.sectionsNav}>

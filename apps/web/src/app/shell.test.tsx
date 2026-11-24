@@ -304,6 +304,59 @@ describe('footer', () => {
     expect(wordmark).toHaveTextContent(/^Theonetrust$/);
   });
 
+  it('brand wordmark (client, Nov 2026): header and footer name use the serif wordmark style', () => {
+    renderRoute('/');
+    expect(banner().querySelector('.site-header__name')).toHaveClass('brand-wordmark');
+    expect(banner().querySelector('.site-header__name')).toHaveTextContent(/^Theonetrust\.in$/);
+    expect(footer().querySelector('.site-footer__brand .brand-wordmark')).toHaveTextContent(
+      /^Theonetrust\.in$/,
+    );
+  });
+
+  it('social icons (client, Nov 2026): only confirmed links, each named by its network', () => {
+    renderRoute('/');
+    const social = within(footer()).getByRole('list', { name: 'Find us online' });
+    const links = within(social).getAllByRole('link');
+    // WhatsApp is the only confirmed page today; the others wait for the trust's links.
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAccessibleName('WhatsApp');
+    expect(links[0]).toHaveAttribute('href', 'https://wa.me/919600516999');
+    expect(links[0]).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(social.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('social icons show each confirmed page and disappear when none is confirmed', () => {
+    const base = { ...TRUST_FACTS, whatsappUrl: null };
+    const { unmount } = render(
+      <MemoryRouter>
+        <SiteFooter
+          onLanguageChange={vi.fn()}
+          facts={{
+            ...base,
+            social: {
+              facebook: 'https://facebook.com/example',
+              instagram: 'https://instagram.com/example',
+              youtube: null,
+              x: 'https://x.com/example',
+            },
+          }}
+        />
+      </MemoryRouter>,
+    );
+    const names = within(screen.getByRole('list', { name: 'Find us online' }))
+      .getAllByRole('link')
+      .map((a) => a.getAttribute('aria-label'));
+    expect(names).toEqual(['Facebook', 'Instagram', 'X (Twitter)']);
+    unmount();
+
+    render(
+      <MemoryRouter>
+        <SiteFooter onLanguageChange={vi.fn()} facts={base} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('list', { name: 'Find us online' })).toBeNull();
+  });
+
   it('policy links follow the language', () => {
     renderRoute('/ta/');
     const legal = within(footer()).getByRole('navigation', { name: 'விதிகள், கொள்கைகள்' });
