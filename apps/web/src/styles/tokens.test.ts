@@ -59,8 +59,8 @@ describe('colour contrast (WCAG 2.2 AA)', () => {
     }
   });
 
-  it('never uses the bright logo colours (orange, turquoise, green) as a text colour', () => {
-    const bright = ['--palette-orange', '--palette-turquoise', '--palette-green'].map((n) =>
+  it('never uses the bright logo colours (gold, fresh green, leaf green) as a text colour', () => {
+    const bright = ['--palette-gold', '--palette-green-bright', '--palette-leaf-green'].map((n) =>
       tokens.get(n),
     );
     const brightText = results.filter(
@@ -189,17 +189,19 @@ describe('type scale (UX brief §4: mobile @360 → desktop @1440)', () => {
     expect(Math.min(...weights)).toBeGreaterThanOrEqual(400);
   });
 
-  it('one family site-wide: Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (client, Nov 2026)', () => {
+  it('headings in Poppins (logo lettering), body in Plus Jakarta Sans, Tamil letters from Noto Sans Tamil (owner, 24 Nov 2026)', () => {
     // Legacy non-Unicode fonts such as Bamini break SEO, screen readers and typing (#46).
     expect(tokens.get('--font-heading')).toMatch(
-      /^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans'/,
+      /^'Poppins', 'Plus Jakarta Sans Variable', 'Noto Sans Tamil Variable'/,
     );
-    expect(tokens.get('--font-body')).toBe('var(--font-heading)');
+    expect(tokens.get('--font-body')).toMatch(/^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans'/);
     expect(tokens.get('--font-tamil')).toMatch(
       /^'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable'/,
     );
-    expect(tokens.get('--font-heading-ta')).toBe('var(--font-tamil)');
-    expect(tokens.get('--font-heading-ta')).not.toMatch(/bamini/i);
+    expect(tokens.get('--font-heading-ta')).toMatch(/^'Poppins', 'Noto Sans Tamil Variable'/);
+    for (const name of ['--font-heading', '--font-body', '--font-tamil', '--font-heading-ta']) {
+      expect(tokens.get(name), name).not.toMatch(/bamini/i);
+    }
   });
 
   it('gives Tamil more line height than English', () => {

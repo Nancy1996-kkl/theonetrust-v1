@@ -34,7 +34,7 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
         <div className="site-footer__grid">
           <section className="site-footer__group site-footer__trust" aria-labelledby="footer-trust">
             <h2 id="footer-trust" className="site-footer__title site-footer__brand">
-              <img className="site-footer__logo" src={emblemUrl} alt="" width={131} height={112} />
+              <img className="site-footer__logo" src={emblemUrl} alt="" width={131} height={117} />
               {name}
             </h2>
             {facts.registration && <p>{facts.registration}</p>}

@@ -1,9 +1,14 @@
 /* Self-hosted fonts (no third-party requests). Most packages split files by unicode-range so a page
    loads only the scripts it shows. */
 @import '@fontsource-variable/noto-sans-tamil';
-/* Plus Jakarta Sans everywhere (client, Nov 2026). */
+/* Body text: Plus Jakarta Sans. */
 @import '@fontsource-variable/plus-jakarta-sans/wght.css';
 @import '@fontsource-variable/plus-jakarta-sans/wght-italic.css'; /* hero accent words */
+/* Headings and the brand name: Poppins, the closest free match to the logo's lettering
+   (owner, 24 Nov 2026). Only the weights headings use; files split by unicode-range. */
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
 @import './tokens.css';
 @import './components.css';
 @import './shell.css';
@@ -163,11 +168,11 @@ button {
 .surface {
   --color-text: var(--palette-charcoal);
   --color-text-muted: var(--palette-muted);
-  --color-text-heading: var(--palette-teal-deep);
-  --color-link: var(--palette-teal);
-  --color-focus: var(--palette-turquoise-ink);
-  --color-action-secondary-text: var(--palette-teal);
-  --color-action-secondary-border: var(--palette-teal);
+  --color-text-heading: var(--palette-green-deep);
+  --color-link: var(--palette-green);
+  --color-focus: var(--palette-focus-ink);
+  --color-action-secondary-text: var(--palette-green);
+  --color-action-secondary-border: var(--palette-green);
   --color-action-secondary-bg-hover: var(--palette-mint);
   --color-border-input: var(--palette-field-border);
 
@@ -228,11 +233,10 @@ button {
   }
 }
 
-/* Client (Nov 2026): every heading and title in Plus Jakarta Sans, whatever a component sets.
-   "Plus Jakarta Sans Variable" is the name of our self-hosted file; Plus Jakarta has no Tamil
-   letters, so those come from Noto Sans Tamil. */
+/* Every heading, title and the brand name in the heading family (Poppins, matching the logo),
+   whatever a component sets. Poppins has no Tamil letters, so those come from Noto Sans Tamil
+   (the --font-heading stack lists it). */
 :is(h1, h2, h3, h4, h5, h6, [class*='__title'], [class*='__brand']),
 :is(h1, h2, h3, h4, h5, h6, [class*='__title'], [class*='__brand']) * {
-  font-family:
-    'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', 'Noto Sans Tamil Variable', sans-serif !important;
+  font-family: var(--font-heading) !important;
 }

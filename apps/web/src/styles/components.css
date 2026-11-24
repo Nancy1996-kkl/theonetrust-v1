@@ -138,7 +138,7 @@
 
 .ui-button--donate:hover {
   background: var(--color-action-donate-bg-hover);
-  /* Soft orange glow (brand brief): the only element on the page that glows. */
+  /* Soft gold glow (brand brief): the only element on the page that glows. */
   box-shadow: var(--shadow-glow-gold);
 }
 

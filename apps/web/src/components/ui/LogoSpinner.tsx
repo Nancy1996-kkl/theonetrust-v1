@@ -21,7 +21,7 @@ export function LogoSpinner({ size = 'page', className }: LogoSpinnerProps) {
       data-testid="logo-spinner"
     >
       <span className="ui-logo-spinner__ring" />
-      <img className="ui-logo-spinner__emblem" src={emblemUrl} alt="" width={131} height={112} />
+      <img className="ui-logo-spinner__emblem" src={emblemUrl} alt="" width={131} height={117} />
     </span>
   );
 }
