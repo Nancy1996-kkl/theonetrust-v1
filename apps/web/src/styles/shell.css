@@ -384,6 +384,13 @@
   :lang(ta) .site-header__lang .ui-lang__option {
     padding-inline: var(--space-2);
   }
+
+  /* The serif capitals wordmark (#141) is ~40px wider than the old name and wrapped the Tamil
+     row again at 1366–1440px; one size step smaller and tighter tracking restore the room. */
+  :lang(ta) .site-header__name.brand-wordmark {
+    font-size: var(--text-wordmark-header-ta);
+    letter-spacing: 0.05em;
+  }
 }
 
 /* ── Footer (client, Nov 2026) ───────────────────────────────────────
