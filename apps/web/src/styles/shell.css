@@ -33,7 +33,7 @@
   /* A soft dark-green fade behind the words keeps them readable over any video frame. */
   background: linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--color-surface-inverse) 70%, transparent),
+    color-mix(in srgb, var(--color-hero-band) 70%, transparent),
     transparent
   );
   backdrop-filter: none;

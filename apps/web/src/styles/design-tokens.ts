@@ -371,6 +371,12 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
     use: 'ui',
     where: 'Donate hover edge on cream band',
   },
+  {
+    fg: '--color-text-accent-on-inverse',
+    bg: '--color-badge-inverse-bg',
+    use: 'text',
+    where: 'Policy card number badge',
+  },
 ];
 
 /**

@@ -194,7 +194,7 @@
   block-size: var(--space-10);
   margin-block-end: var(--space-3);
   border-radius: var(--radius-pill);
-  background: var(--color-surface-inverse);
+  background: var(--color-badge-inverse-bg);
   color: var(--color-text-accent-on-inverse);
   font-family: var(--font-heading);
   font-weight: var(--weight-bold);

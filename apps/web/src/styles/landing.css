@@ -82,6 +82,9 @@
    shared .surface-inverse fill, which is declared later. */
 .landing-hero.surface-inverse {
   background: var(--color-hero-band);
+  /* Outline buttons ("Learn more") would hover to darkest green — the band itself — so on the
+     hero they hover to Deep Green instead (white text 7.17:1). */
+  --color-action-secondary-bg-hover: var(--color-surface-inverse);
 }
 
 .landing-hero__media {

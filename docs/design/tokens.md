@@ -147,6 +147,7 @@ so every text pair passes WCAG 2.2 AA.
 | Selected-language pill on green band | `--color-lang-selected-bg-on-inverse` #FFFFFF | `--color-surface-inverse` #0B6619 | ui | 7.17:1 | 3:1 | ✔ AA |
 | Donate hover edge on page | `--color-action-donate-border-hover` #845400 | `--color-bg` #F7F7F7 | ui | 6.03:1 | 3:1 | ✔ AA |
 | Donate hover edge on cream band | `--color-action-donate-border-hover` #845400 | `--color-home-warm` #FCF4D6 | ui | 5.86:1 | 3:1 | ✔ AA |
+| Policy card number badge | `--color-text-accent-on-inverse` #FDD947 | `--color-badge-inverse-bg` #024414 | text | 8.25:1 | 4.5:1 | ✔ AA |
 <!-- contrast-table:end -->
 <!-- prettier-ignore-end -->
 

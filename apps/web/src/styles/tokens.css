@@ -120,6 +120,9 @@
   --color-action-secondary-bg-hover-on-inverse: var(--palette-green-deep);
   /* Selected language on green bands: white with darkest-green text — gold stays for Donate
      only (brief §2); the selection is also bold and underlined, never colour alone. */
+  /* Small numbered badges (policy cards): darkest green, so light-gold digits keep a wide margin
+     (8.26:1) even while the badge pops in blurred over a light page. */
+  --color-badge-inverse-bg: var(--palette-green-deep);
   --color-lang-selected-bg-on-inverse: var(--palette-white);
   --color-lang-selected-text-on-inverse: var(--palette-green-deep);
   /* Donate keeps a visible edge on light surfaces when it brightens on hover */

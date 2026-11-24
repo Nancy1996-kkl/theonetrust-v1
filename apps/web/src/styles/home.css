@@ -51,7 +51,8 @@
   align-items: center;
   gap: var(--space-2);
   margin: 0 0 var(--space-2);
-  color: var(--color-action-primary-bg);
+  /* Darkest green: 10:1 on every light band, so the small label stays AA while it fades in. */
+  color: var(--color-text-heading);
   font-weight: var(--weight-bold);
   font-size: var(--text-small);
   letter-spacing: 0.04em;
