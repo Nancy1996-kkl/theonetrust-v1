@@ -20,7 +20,7 @@ export interface DonationPaidContext {
   amountPaise: number;
   programme: { en: string; ta: string } | null;
   method: ReceiptMethod;
-  /** Razorpay payment ID or the bank reference the owner recorded. Never card data. */
+  /** The gateway's payment ID or the bank reference the owner recorded. Never card data. */
   paymentReference: string | null;
   receiptNumber: string | null;
   receiptUrl: string | null;

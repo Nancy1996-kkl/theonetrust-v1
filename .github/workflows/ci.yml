@@ -58,7 +58,7 @@ jobs:
           export TESTS_NOT_NEEDED_REASON="$(printf '%s' "$PR_BODY" | sed -n 's/^Tests-Not-Needed:[[:space:]]*//p' | head -n1)"
           pnpm check:tests-required
 
-      - name: No live payment keys (Razorpay test mode only)
+      - name: No payment secrets committed
         run: pnpm check:no-live-keys
 
       - name: Whitespace and conflict markers

@@ -50,7 +50,7 @@ export interface AdminRouteOptions {
   db?: Db;
   /** Whether an email provider is configured (shown on the delivery-status page). */
   emailSending?: boolean;
-  /** For the owner's audited "re-check with Razorpay" (#31). */
+  /** For the owner's audited "re-check with the gateway" (#31). */
   paymentProvider?: PaymentProvider | undefined;
   receiptKey?: Buffer | undefined;
   /** AES key for PAN/address — used only by the audited Form 113 export (#35). */
