@@ -198,7 +198,6 @@ export function DonationDetailPage() {
           col('status', l.providerStatus, (a) => a.providerStatus ?? '—'),
           col('captured', l.captured, (a) => money(a.capturedPaise), { align: 'end' }),
           col('refunded', l.refunded, (a) => money(a.refundedPaise), { align: 'end' }),
-          col('sig', l.signature, (a) => (a.signatureVerified ? l.yes : l.no)),
         ]}
         rowKey={(a) => a.providerOrderId}
       />

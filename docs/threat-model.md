@@ -1,7 +1,7 @@
 # Threat model — Theonetrust.in (#38)
 
 Scope: the public site (`apps/web`, static), the API (`apps/api`, Fastify + PostgreSQL), Cashfree
-(payments and monthly mandates), the email provider and the owner dashboard. Reviewed against
+(payments), the email provider and the owner dashboard. Reviewed against
 PROJECT_SPEC §12 and OWASP ASVS 5.0 (levels 1–2). Last reviewed: 2026-11-05.
 
 ## What we protect
@@ -13,7 +13,7 @@ PROJECT_SPEC §12 and OWASP ASVS 5.0 (levels 1–2). Last reviewed: 2026-11-05.
 | Help-request data (people asking for help)                                             | Vulnerable people; dignity                                                  |
 | Cashfree client secret (also signs webhooks), `AUTH_SECRET_KEY`, DB URL, email API key | Any one of them breaks payments, sessions or data                           |
 | Owner account and session                                                              | Full access to all of the above                                             |
-| Acknowledgement and manage-link tokens                                                 | Unguessable capability links                                                |
+| Acknowledgement link tokens                                                            | Unguessable capability links                                                |
 | Published content and documents                                                        | Must never show unapproved or invented claims                               |
 
 ## Trust boundaries
@@ -36,7 +36,7 @@ PROJECT_SPEC §12 and OWASP ASVS 5.0 (levels 1–2). Last reviewed: 2026-11-05.
 | S2  | Forged webhook                                          | HMAC over the raw body, constant-time compare; an unsigned or wrongly signed request is rejected and never processed                                                | `webhook.db.test.ts`                              |
 | S3  | Owner account takeover                                  | Argon2 password hash, lockout, sign-in rate limit, TOTP, recovery codes once-only, session idle + max lifetime                                                      | `auth.db.test.ts`                                 |
 | S4  | Forged client IP to dodge rate limits                   | `X-Forwarded-For` trusted only from `TRUST_PROXY` addresses (was: from anyone — fixed in #38)                                                                       | `foundation.test.ts`                              |
-| T1  | Replayed / duplicate / out-of-order events              | Unique `(provider, providerEventId)`, unique payment ID, forward-only status transitions                                                                            | `webhook.db.test.ts`, `lifecycle.db.test.ts`      |
+| T1  | Replayed / duplicate / out-of-order events              | Unique `(provider, providerEventId)`, unique payment ID, forward-only status transitions                                                                            | `webhook.db.test.ts`, `webhook.db.test.ts`        |
 | T2  | Amount tampering in the browser                         | Server computes amounts in integer paise; mismatch → manual review exception                                                                                        | `payment-suite.db.test.ts`                        |
 | T3  | CSRF on owner actions                                   | SameSite=Strict cookie + CSRF header + Origin check on every unsafe method                                                                                          | `auth.db.test.ts`                                 |
 | T4  | Malicious upload (executable, script, renamed file)     | Server checks real type from bytes + declared type + extension, size limit, private storage under generated keys, `nosniff`                                         | `cms.test.ts`, `cms.db.test.ts`                   |
@@ -46,7 +46,7 @@ PROJECT_SPEC §12 and OWASP ASVS 5.0 (levels 1–2). Last reviewed: 2026-11-05.
 | I2  | Secrets in Git or the web bundle                        | `check:no-live-keys` (repo), `check:bundle` (built bundle incl. source maps), env schema keeps secrets server-only                                                  | `scripts/*.test.mjs`                              |
 | I3  | XSS / third-party script injection                      | React escaping; CSP `script-src 'self' https://sdk.cashfree.com`, `object-src 'none'`, `frame-ancestors 'none'`                                                     | e2e suite runs under the CSP                      |
 | I4  | Clickjacking of the dashboard                           | `frame-ancestors 'none'` + `X-Frame-Options: DENY` (site and API)                                                                                                   | `foundation.test.ts`, `security-headers.test.mjs` |
-| D1  | Request floods                                          | Global per-IP limit + stricter per-route limits (sign-in, donations, verify, help, receipts, manage)                                                                | route tests                                       |
+| D1  | Request floods                                          | Global per-IP limit + stricter per-route limits (sign-in, donations, verify, help, receipts)                                                                        | route tests                                       |
 | D2  | Huge bodies                                             | `BODY_LIMIT_BYTES` (64 KB default); uploads have their own bounded limit                                                                                            | `cms.db.test.ts`                                  |
 | E1  | Reaching admin data without a session                   | Guard on every `/admin/*` request incl. unknown paths (401, not 404)                                                                                                | `admin` route tests                               |
 

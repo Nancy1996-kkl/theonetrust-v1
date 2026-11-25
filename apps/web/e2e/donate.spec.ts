@@ -20,6 +20,7 @@ const T = {
     payAgain: 'Open the payment window again',
     failed: "Payment didn't go through",
     tryAgain: 'Try again',
+    windowTitle: "The payment window couldn't open",
     pending: "We're confirming your payment",
     checkAgain: 'Check again',
   },
@@ -33,9 +34,10 @@ const T = {
     consent: 'என் நன்கொடையைப் பதிவு செய்ய, அறக்கட்டளை இந்த விவரங்களை வைத்துக்கொள்ளலாம்.',
     pay: '₹1,000 பாதுகாப்பாகச் செலுத்து',
     thanks: 'நன்றி — உங்கள் பணம் வந்து சேர்ந்தது',
-    payAgain: 'கட்டணச் சாளரத்தை மீண்டும் திறக்கவும்',
+    payAgain: 'பணம் செலுத்தும் சாளரத்தை மீண்டும் திற',
     failed: 'பணம் செலுத்த முடியவில்லை',
     tryAgain: 'மீண்டும் முயற்சி செய்',
+    windowTitle: 'பணம் செலுத்தும் சாளரம் திறக்கவில்லை',
     pending: 'உங்கள் பணம் வந்ததா என்று இன்னும் பார்த்துக்கொண்டிருக்கிறோம்',
     checkAgain: 'மீண்டும் சரிபார்',
   },
@@ -81,7 +83,22 @@ for (const lang of ['en', 'ta'] as const) {
     await panel.getByRole('button', { name: t.pay }).click();
     await expect(panel.getByRole('heading', { name: t.pending })).toBeVisible();
     await expect(panel.getByRole('heading', { name: t.thanks })).toHaveCount(0);
+    // This time the donor pays in the reopened window (same order): thanks only after the check.
+    await page.evaluate(() => {
+      (window as unknown as { __donateMock: string }).__donateMock = 'success';
+    });
     await panel.getByRole('button', { name: t.payAgain }).click();
+    await expect(panel.getByRole('heading', { name: t.thanks })).toBeVisible();
+  });
+
+  test(`a payment window that cannot open says so and offers try again (${lang})`, async ({
+    page,
+  }) => {
+    const panel = await toReview(page, lang, 'window-fail');
+    await panel.getByRole('button', { name: t.pay }).click();
+    await expect(panel.getByRole('heading', { name: t.windowTitle })).toBeVisible();
+    await expect(panel).not.toContainText('TOT-D-');
+    await panel.getByRole('button', { name: t.tryAgain }).click();
     await expect(panel.getByRole('button', { name: t.pay })).toBeVisible();
   });
 
@@ -93,14 +110,6 @@ for (const lang of ['en', 'ta'] as const) {
     await expect(panel.getByRole('button', { name: t.pay })).toBeVisible();
   });
 }
-
-test('a payment window that cannot open says so and offers try again', async ({ page }) => {
-  const panel = await toReview(page, 'en', 'window-fail');
-  await panel.getByRole('button', { name: T.en.pay }).click();
-  await expect(panel.getByRole('heading', { name: T.en.failed })).toBeVisible();
-  await panel.getByRole('button', { name: T.en.tryAgain }).click();
-  await expect(panel.getByRole('button', { name: T.en.pay })).toBeVisible();
-});
 
 test('pending verification never shows success until checked again', async ({ page }) => {
   const panel = await toReview(page, 'ta', 'pending');
@@ -225,4 +234,25 @@ test('back button after a payment closes the panel; reopening never repeats the 
   await expect(reopened).toBeVisible();
   await expect(reopened.getByRole('button', { name: T.en.pay })).toHaveCount(0);
   await expect(reopened.getByRole('heading', { name: T.en.pending })).toHaveCount(0);
+});
+
+// ── Monthly giving is retired with Razorpay (back with Cashfree Subscriptions) ───────────
+
+test('no monthly giving is offered anywhere; old manage links show "not found"', async ({
+  page,
+}) => {
+  await page.goto('/');
+  // ("Monthly groceries" is a kind of help, not a way of giving.)
+  await expect(page.locator('main')).not.toContainText(/every month|“Monthly”|monthly giving/i);
+  await page.goto('/?frequency=monthly#donate');
+  const panel = page.getByRole('dialog');
+  await panel.getByRole('button', { name: 'Continue' }).click();
+  await expect(panel.getByRole('radio', { name: /monthly/i })).toHaveCount(0);
+  for (const [path, title] of [
+    [`/manage/${'Q'.repeat(43)}`, 'Page not found'],
+    [`/ta/manage/${'Q'.repeat(43)}`, 'பக்கம் கிடைக்கவில்லை'],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+  }
 });

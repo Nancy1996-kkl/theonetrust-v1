@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.ts';
 import { loadEnv } from '../../config/env.ts';
 import { useTestDb } from '../../test/db.ts';
+import { applyPayment } from './reconcile.ts';
 import {
   cashfreePaymentEvent,
   fakeCashfree,
@@ -332,6 +333,49 @@ describe('failed try, then success on the same order (audit F-1)', () => {
     await failedEvent(other.ref, pays(other.ref, 100_000, { status: 'FAILED' }));
     await failedEvent(other.ref, pays(other.ref, 1_000, { status: 'FAILED' }));
     expect(await ledger(other.ref)).toBe('FAILED');
+  });
+});
+
+describe('the same payment seen twice at once (two webhooks re-fetching one order)', () => {
+  it('"captured" losing the claim race to "authorized" of the SAME payment still ends PAID', async () => {
+    const d = await donation(100_000, { wantsReceipt: true });
+    const [attempt] = await attemptsFor(d.ref);
+    const base = {
+      paymentId: '555000001',
+      orderId: d.ref,
+      providerRawStatus: 'SUCCESS',
+      amountPaise: 100_000,
+      currency: 'INR',
+      method: 'upi',
+      refundedPaise: 0,
+    };
+    // Deterministic race: another request has claimed the attempt with this payment as
+    // "authorized" (row locked, not yet committed) while the webhook's "captured" runs.
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const holder = db.$transaction(
+      async (tx) => {
+        await tx.paymentAttempt.update({
+          where: { id: attempt!.id },
+          data: { providerPaymentId: base.paymentId, providerStatus: 'authorized' },
+        });
+        await gate;
+      },
+      { timeout: 15_000 },
+    );
+    const captured = applyPayment(db, attempt!.id, { ...base, state: 'captured' }, new Date());
+    await new Promise((resolve) => setTimeout(resolve, 400)); // it read the row, now it waits
+    release();
+    await holder;
+    expect(await captured).toBe('PAID');
+    expect(await ledger(d.ref)).toBe('PAID');
+    const intent = await db.donationIntent.findUniqueOrThrow({ where: { publicReference: d.ref } });
+    expect(await db.paymentException.count({ where: { donationIntentId: intent.id } })).toBe(0);
+    expect(await db.receipt.count({ where: { donationIntentId: intent.id } })).toBe(1);
+    const [after] = await attemptsFor(d.ref);
+    expect(after).toMatchObject({ providerPaymentId: base.paymentId, providerStatus: 'captured' });
   });
 });
 

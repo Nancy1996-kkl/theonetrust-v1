@@ -33,6 +33,10 @@ const en = {
   mobileHint:
     'Our payment partner needs your mobile number to take the payment. We never sell it or show it publicly.',
   payAgainSameOrder: 'Open the payment window again',
+  stillPending: 'Still not confirmed — checked at {time}. You can check again in a minute.',
+  windowTitle: "The payment window couldn't open",
+  windowText:
+    "Nothing was paid. An ad blocker, a weak network or an app's built-in browser may be stopping Cashfree's secure window. Please try again, or open this page in your phone's browser.",
   payAgainHint:
     'Closed the payment window before paying? Open it again: it is the same payment, so you can never be charged twice.',
   noDoubleCharge: "You won't be charged twice for this donation. This can take a few minutes.",
@@ -55,14 +59,13 @@ const en = {
   sumGift: 'Gift',
   sumFee: 'Payment fee',
   sumName: 'Name',
-  trustLine: 'Secure payment via Cashfree · UPI QR or app, card, netbanking',
+  trustLine: 'Secure payment via Cashfree · UPI app, card, netbanking',
   payNow: 'Pay {amount} securely',
   confirming: 'Confirming your payment…',
   dontClose: "Please don't close this page or pay again.",
   thanks: 'Thank you — payment received',
   reference: 'Reference',
   backToPage: 'Back to the page',
-  consentTitle: 'Please check before you agree',
   taxOpt: 'I want to claim a tax deduction for this donation',
   taxExplain:
     'A deduction is possible only under the old tax regime, and only for donations not paid in cash. The trust needs your PAN and address to report your donation to the Income Tax Department; they are stored encrypted and never shown on receipts, links or emails.',
@@ -137,7 +140,12 @@ const ta: Record<DonateMessageKey, string> = {
   mobileError: '10 இலக்க கைபேசி எண்ணை எழுதுங்கள்',
   mobileHint:
     'பணம் செலுத்த, எங்கள் கட்டண நிறுவனத்துக்கு உங்கள் கைபேசி எண் தேவை. இதை நாங்கள் யாருக்கும் விற்பதும் இல்லை, வெளியே காட்டுவதும் இல்லை.',
-  payAgainSameOrder: 'கட்டணச் சாளரத்தை மீண்டும் திறக்கவும்',
+  payAgainSameOrder: 'பணம் செலுத்தும் சாளரத்தை மீண்டும் திற',
+  stillPending:
+    'இன்னும் உறுதியாகவில்லை — {time}-க்குச் சரிபார்த்தோம். ஒரு நிமிடம் கழித்து மீண்டும் சரிபார்க்கலாம்.',
+  windowTitle: 'பணம் செலுத்தும் சாளரம் திறக்கவில்லை',
+  windowText:
+    'எந்தப் பணமும் எடுக்கப்படவில்லை. விளம்பரத் தடுப்பான், பலவீனமான இணையம், அல்லது ஒரு செயலிக்குள் இருக்கும் உலாவி Cashfree-இன் பாதுகாப்பான சாளரத்தைத் தடுத்திருக்கலாம். மீண்டும் முயற்சி செய்யுங்கள், அல்லது இந்தப் பக்கத்தை உங்கள் கைபேசியின் உலாவியில் திறந்து பாருங்கள்.',
   payAgainHint:
     'பணம் செலுத்தும் முன் சாளரத்தை மூடிவிட்டீர்களா? மீண்டும் திறக்கலாம்: இது அதே பணம் செலுத்துதல்தான், அதனால் இரண்டு முறை பணம் எடுக்கப்படாது.',
   noDoubleCharge:
@@ -163,14 +171,13 @@ const ta: Record<DonateMessageKey, string> = {
   sumGift: 'நன்கொடை',
   sumFee: 'பணம் அனுப்பும் செலவு',
   sumName: 'பெயர்',
-  trustLine: 'Cashfree மூலம் பாதுகாப்பாகச் செலுத்தலாம் · UPI QR அல்லது செயலி, கார்டு, நெட்பேங்கிங்',
+  trustLine: 'Cashfree மூலம் பாதுகாப்பாகச் செலுத்தலாம் · UPI செயலி, கார்டு, நெட்பேங்கிங்',
   payNow: '{amount} பாதுகாப்பாகச் செலுத்து',
   confirming: 'உங்கள் பணம் வந்ததா என்று பார்க்கிறோம்…',
   dontClose: 'இந்தப் பக்கத்தை மூட வேண்டாம், மறுபடி பணம் செலுத்த வேண்டாம்.',
   thanks: 'நன்றி — உங்கள் பணம் வந்து சேர்ந்தது',
   reference: 'குறிப்பு எண்',
   backToPage: 'பக்கத்துக்குத் திரும்ப',
-  consentTitle: 'ஒப்புக்கொள்ளும் முன் இதைப் படியுங்கள்',
   taxOpt: 'இந்த நன்கொடைக்கு வரி விலக்கு வேண்டும்',
   taxExplain:
     'பழைய வரி முறையில் இருப்பவர்களுக்கு மட்டும், ரொக்கமாகக் கொடுக்காத நன்கொடைக்கு மட்டும் விலக்கு கிடைக்கும். உங்கள் நன்கொடையை வருமான வரித் துறைக்குத் தெரிவிக்க அறக்கட்டளைக்கு உங்கள் PAN, முகவரி தேவை; அவை மறைகுறியாக்கம் செய்து பாதுகாப்பாக வைக்கப்படும், ஒப்புகையிலோ இணைப்பிலோ மின்னஞ்சலிலோ எப்போதும் வராது.',

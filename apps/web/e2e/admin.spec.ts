@@ -432,4 +432,6 @@ test('owner ledger: overview → find a donation → re-check it with a reason; 
   ).toContainText('Pending too long');
   await page.getByRole('link', { name: 'Receipts', exact: true }).click();
   await expect(page.getByText('No acknowledgements yet.')).toBeVisible();
+  // Monthly giving is retired with Razorpay: no link to it in the dashboard.
+  await expect(page.getByRole('link', { name: 'Monthly giving', exact: true })).toHaveCount(0);
 });

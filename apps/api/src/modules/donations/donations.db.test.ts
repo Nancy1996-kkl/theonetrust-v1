@@ -58,9 +58,11 @@ const TABLE = {
   },
 };
 const slug = unique('edu');
+/** Online giving switched on (the test double above stands in for Cashfree's adapter). */
+const ON = { NODE_ENV: 'test', PAYMENT_PROVIDER: 'cashfree', CASHFREE_ENV: 'sandbox' };
 
 beforeAll(async () => {
-  app = buildApp(loadEnv({ NODE_ENV: 'test' }), { db, now: () => NOW, paymentProvider: provider });
+  app = buildApp(loadEnv(ON), { db, now: () => NOW, paymentProvider: provider });
   await db.programme.createMany({
     data: [
       { slug, titleTa: 'கல்வி', titleEn: 'Education', active: true },
@@ -360,7 +362,7 @@ describe('retries and provider failures', () => {
 
     it('if the winner cannot create the order, the waiting request answers 409 (retry), not 500', async () => {
       // A short wait (injected) so the test does not sit through the production wait.
-      const quick = buildApp(loadEnv({ NODE_ENV: 'test' }), {
+      const quick = buildApp(loadEnv(ON), {
         db,
         now: () => NOW,
         paymentProvider: provider,

@@ -53,6 +53,8 @@ type Screen =
   | 'paid'
   | 'pending'
   | 'failed'
+  /** Cashfree's window could not open (blocked script, network): nothing was paid. */
+  | 'window'
   | 'invalid'
   | 'wait'
   | 'network'
@@ -188,6 +190,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const [utr, setUtr] = useState('');
   const [utrError, setUtrError] = useState(false);
   const [receiptToken, setReceiptToken] = useState<string | null>(null);
+  /** When "Check again" last found the payment still unconfirmed (shown, and announced). */
+  const [checkedAt, setCheckedAt] = useState<string | null>(null);
   const attemptKey = useRef<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -333,6 +337,14 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     const status = await client.status(ref);
     setBusy(false);
     settle(status, ref);
+    // Still not confirmed: say so, or "Check again" would look like it did nothing.
+    setCheckedAt(
+      status === 'PAID' || status === 'FAILED'
+        ? null
+        : new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' }).format(
+            new Date(),
+          ),
+    );
   }
 
   function validateDetails(): boolean {
@@ -467,7 +479,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       attemptKey.current = null;
       setIntent(null);
       pending.clear();
-      setScreen('failed');
+      setScreen('window');
       return;
     }
     // The page is moving to Cashfree's own; the return link re-opens this pop-up to check. If it
@@ -561,6 +573,11 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
           <p className="donate__muted">{screen === 'pending' ? t.pendingHelp : t.failedHelp}</p>
         )}
         {screen === 'pending' && intent && <p className="donate__muted">{t.payAgainHint}</p>}
+        {screen === 'pending' && (
+          <p className="donate__muted" role="status" aria-live="polite">
+            {checkedAt ? fill(t.stillPending, { time: checkedAt }) : ''}
+          </p>
+        )}
       </>
     );
     footer = isPaid ? (
@@ -578,10 +595,11 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
           <Button
             fullWidth
             variant="secondary"
+            disabled={busy}
             onClick={() => {
               pollToken.current += 1;
-              setScreen('form');
-              setStep('review');
+              setCheckedAt(null);
+              void pay();
             }}
           >
             {t.payAgainSameOrder}
@@ -654,6 +672,31 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         >
           {t.back}
         </Button>
+      </div>
+    );
+  } else if (screen === 'window') {
+    body = (
+      <>
+        {heading(t.windowTitle)}
+        <Callout tone="warning">{t.windowText}</Callout>
+      </>
+    );
+    footer = (
+      <div className="donate__actions">
+        <Button
+          fullWidth
+          onClick={() => {
+            setScreen('form');
+            setStep('review');
+          }}
+        >
+          {t.tryAgain}
+        </Button>
+        {limits?.bankTransferOffered && (
+          <Button variant="ghost" fullWidth loading={busy} onClick={() => void startBank()}>
+            {t.bankTransferLink}
+          </Button>
+        )}
       </div>
     );
   } else if (screen === 'bank-sent') {

@@ -268,6 +268,40 @@ describe('webhook delivery', () => {
     });
   });
 
+  it('PAYMENT_PROVIDER=none stops NEW donations only: in-flight payments are still recorded', async () => {
+    const d = await donation(); // made while online giving was on
+    const paymentId = cf.pay(d.ref);
+    const off = buildApp(loadEnv({ NODE_ENV: 'test', ...cf.env, PAYMENT_PROVIDER: 'none' }), {
+      db,
+      paymentProvider: cf.provider,
+    });
+    try {
+      const fresh = await off.inject({
+        method: 'POST',
+        url: '/api/v1/donation-intents',
+        remoteAddress: '10.11.9.1',
+        payload: {
+          giftPaise: 100_000,
+          currency: 'INR',
+          programme: null,
+          donorName: 'Synthetic Donor',
+          donorPhone: '+919876543210',
+          hideNamePublicly: true,
+          wantsReceipt: false,
+          coverFee: false,
+          consent: true,
+          locale: 'en',
+        },
+      });
+      expect(fresh.statusCode).toBe(503);
+      const res = await sendCashfreeWebhook(off, SECRET, cashfreePaymentEvent(d.ref, paymentId));
+      expect(res.json()).toEqual({ received: true });
+      expect(await statusOf(d.ref)).toBe('PAID');
+    } finally {
+      await off.close();
+    }
+  });
+
   it('applyRefund is exported for reuse', () => {
     expect(typeof reconcile.applyRefund).toBe('function');
   });

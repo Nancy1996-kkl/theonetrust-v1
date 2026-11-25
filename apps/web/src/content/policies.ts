@@ -270,8 +270,8 @@ export const POLICIES: Record<PolicyId, Policy> = {
       'பணம் திரும்பத் தருதல், ரத்து, திருத்தம் — கொள்கை',
     ),
     intro: p(
-      'Donations are voluntary and are normally not refunded. This page explains when we do refund, how to cancel monthly giving and how to correct a mistake.',
-      'நன்கொடை நீங்களாக விரும்பிக் கொடுப்பது; பொதுவாக அது திருப்பித் தரப்படாது. எப்போது திருப்பித் தருவோம், மாதாந்திர நன்கொடையை எப்படி ரத்து செய்வது, தவறு இருந்தால் எப்படித் திருத்துவது — இதை இந்தப் பக்கம் சொல்கிறது.',
+      'Donations are voluntary and are normally not refunded. This page explains when we do refund and how to correct a mistake.',
+      'நன்கொடை நீங்களாக விரும்பிக் கொடுப்பது; பொதுவாக அது திருப்பித் தரப்படாது. எப்போது திருப்பித் தருவோம், தவறு இருந்தால் எப்படித் திருத்துவது — இதை இந்தப் பக்கம் சொல்கிறது.',
     ),
     sections: [
       {
@@ -313,19 +313,8 @@ export const POLICIES: Record<PolicyId, Policy> = {
         heading: p('Failed or pending payments', 'தோல்வியடைந்த அல்லது இன்னும் உறுதியாகாத பணம்'),
         paragraphs: [
           p(
-            'If money left your account but the payment failed, it is normally reversed by your bank automatically. Please do not pay again while a payment shows as pending.',
-            'உங்கள் கணக்கிலிருந்து பணம் போய், செலுத்துதல் தோல்வியடைந்தால், பொதுவாக உங்கள் வங்கியே அதைத் திருப்பித் தந்துவிடும். “இன்னும் உறுதியாகவில்லை” என்று காட்டும்போது மறுபடி பணம் செலுத்த வேண்டாம்.',
-          ),
-        ],
-      },
-      {
-        id: 'monthly',
-        confirmed: false, // [CONFIRM] — monthly giving enablement (#32)
-        heading: p('Cancelling monthly giving', 'மாதாந்திர நன்கொடையை ரத்து செய்தல்'),
-        paragraphs: [
-          p(
-            'You can cancel at any time with the “manage” link in your monthly-giving email, without logging in. UPI AutoPay can also be paused or cancelled in your UPI app. Payments already made before you cancel are not refunded unless one of the reasons above applies.',
-            'மாதாந்திர நன்கொடை மின்னஞ்சலில் இருக்கும் “நிர்வகி” இணைப்பைத் திறந்து, கணக்கில் நுழையாமலே எப்போது வேண்டுமானாலும் ரத்து செய்யலாம். UPI AutoPay-ஐ உங்கள் UPI செயலியிலேயே நிறுத்தி வைக்கலாம் அல்லது ரத்து செய்யலாம். மேலே சொன்ன காரணங்களில் ஒன்று இல்லையென்றால், ரத்து செய்வதற்கு முன் செலுத்திய பணம் திருப்பித் தரப்படாது.',
+            'If money left your account but the payment failed, it is normally reversed by your bank automatically. While a payment shows as pending, please do not start a new donation for it; reopening the same payment from the pop-up is safe — one donation can be paid only once.',
+            'உங்கள் கணக்கிலிருந்து பணம் போய், செலுத்துதல் தோல்வியடைந்தால், பொதுவாக உங்கள் வங்கியே அதைத் திருப்பித் தந்துவிடும். “இன்னும் உறுதியாகவில்லை” என்று காட்டும்போது அதற்காகப் புதிய நன்கொடை தொடங்க வேண்டாம்; அதே பணம் செலுத்துதலை நன்கொடைச் சாளரத்திலிருந்து மீண்டும் திறப்பது பாதுகாப்பானது — ஒரு நன்கொடைக்கு ஒருமுறை மட்டுமே பணம் எடுக்க முடியும்.',
           ),
         ],
       },

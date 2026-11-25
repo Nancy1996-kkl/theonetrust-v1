@@ -355,7 +355,8 @@ describe('donate pop-up with Cashfree', () => {
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     await user.click(await within(dialog).findByRole('button', { name: t.payAgainSameOrder }));
-    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    // The window opens straight away (no extra step), on the same order.
+    await waitFor(() => expect(donate.checkout).toHaveBeenCalledTimes(2));
     await within(dialog).findByRole('heading', { name: t.pending });
     expect(donate.start).toHaveBeenCalledTimes(1);
     expect(donate.checkout).toHaveBeenCalledTimes(2);
@@ -377,7 +378,7 @@ describe('donate pop-up with Cashfree', () => {
   it('Cashfree’s script blocked → failed and the reference is not kept', async () => {
     const user = userEvent.setup();
     const donate = cashfreeClient({
-      checkout: vi.fn(async () => ({ kind: 'failed' as const, reason: 'other' as const })),
+      checkout: vi.fn(async () => ({ kind: 'failed' as const })),
     });
     renderAt('/#donate', donate);
     const dialog = await toDetails(user);
@@ -387,8 +388,34 @@ describe('donate pop-up with Cashfree', () => {
     );
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
-    expect(await within(dialog).findByRole('heading', { name: t.failed })).toBeVisible();
+    expect(await within(dialog).findByRole('heading', { name: t.windowTitle })).toBeVisible();
+    // Nothing was paid: no reference to quote, no "if money left your account" help.
+    expect(dialog).not.toHaveTextContent('TOT-D-');
+    expect(dialog).not.toHaveTextContent(t.failedHelp);
     expect(sessionStorage.getItem(PENDING_KEY)).toBeNull();
+    await expectNoA11yViolations(dialog);
+  });
+
+  it('"Check again" that finds it still pending says so (announced), never silent', async () => {
+    const user = userEvent.setup();
+    const donate = cashfreeClient({
+      verify: vi.fn(async () => 'PENDING' as const),
+      status: vi.fn(async () => 'PENDING' as const),
+    });
+    renderAt('/#donate', donate);
+    const dialog = await toDetails(user);
+    await user.type(
+      within(dialog).getByRole('textbox', { name: new RegExp(t.mobile) }),
+      '9876543210',
+    );
+    await user.click(within(dialog).getByRole('button', { name: t.continue }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    await within(dialog).findByRole('heading', { name: t.pending });
+    const live = within(dialog).getByRole('status');
+    expect(live).toHaveTextContent('');
+    await user.click(within(dialog).getByRole('button', { name: t.checkAgain }));
+    await waitFor(() => expect(live).toHaveTextContent(/Still not confirmed — checked at/));
+    expect(live).toHaveAttribute('aria-live', 'polite');
   });
 });
 

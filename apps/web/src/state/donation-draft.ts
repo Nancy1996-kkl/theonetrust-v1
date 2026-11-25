@@ -9,15 +9,14 @@ import { parseRupees } from '../components/ui/amount.ts';
 export interface DonationDraft {
   programme: string | null;
   amountPaise: Paise | null;
-  frequency: 'once' | 'monthly';
 }
 
-export const EMPTY_DRAFT: DonationDraft = { programme: null, amountPaise: null, frequency: 'once' };
+export const EMPTY_DRAFT: DonationDraft = { programme: null, amountPaise: null };
 
 const PROGRAMME_SLUG = /^[a-z0-9](?:[a-z0-9-]{0,38}[a-z0-9])?$/;
 
 /**
- * Reads the approved pre-fill keys (?programme=&amount=&frequency=, sitemap URL rules).
+ * Reads the approved pre-fill keys (?programme=&amount=, sitemap URL rules).
  * Anything unknown or invalid is ignored — the server validates everything again.
  */
 export function draftFromSearch(search: string): DonationDraft {
@@ -27,7 +26,6 @@ export function draftFromSearch(search: string): DonationDraft {
   return {
     programme: PROGRAMME_SLUG.test(programme) ? programme : null,
     amountPaise: amount.ok ? rupeesToPaise(amount.rupees) : null,
-    frequency: params.get('frequency') === 'monthly' ? 'monthly' : 'once',
   };
 }
 
@@ -56,7 +54,7 @@ export function initialDraft(
   storage: Pick<Storage, 'getItem'> | undefined,
 ): DonationDraft {
   const fromUrl = draftFromSearch(search);
-  if (fromUrl.programme || fromUrl.amountPaise || fromUrl.frequency === 'monthly') return fromUrl;
+  if (fromUrl.programme || fromUrl.amountPaise) return fromUrl;
   try {
     const raw = storage?.getItem(DRAFT_STORAGE_KEY);
     if (!raw) return fromUrl;

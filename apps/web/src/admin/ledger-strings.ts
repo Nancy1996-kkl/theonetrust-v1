@@ -147,7 +147,6 @@ const en = {
   paymentId: 'Payment',
   providerStatus: 'Gateway status',
   captured: 'Captured',
-  signature: 'Signature checked',
   history: 'Status history',
   source: 'Source',
   webhooks: 'Webhook history',
@@ -249,7 +248,7 @@ export type LedgerStrings = typeof en;
 const ta: LedgerStrings = {
   navDonations: 'நன்கொடைகள்',
   navExceptions: 'கவனிக்க வேண்டியவை',
-  navWebhooks: 'Cashfree அறிவிப்புகள்',
+  navWebhooks: 'பணம் செலுத்தல் அறிவிப்புகள்',
   whTitle: 'Cashfree-இலிருந்து வந்த பணம் செலுத்தல் அறிவிப்புகள்',
   whIntro:
     'Cashfree அனுப்பிய ஒவ்வொரு அறிவிப்பும், அதை நாங்கள் என்ன செய்தோம் என்பதும் இங்கே. ஏதாவது தோல்வியடைந்தால் Cashfree மறுபடி அனுப்பும், நாங்களும் மறுபடி பார்ப்போம். {minutes} நிமிடம் ஆகியும் முடியாத அறிவிப்பை நீங்கள் பார்க்க வேண்டும்: அந்த நன்கொடையைத் திறந்து Cashfree-இல் மீண்டும் சரிபார்க்கவும்.',
@@ -382,7 +381,6 @@ const ta: LedgerStrings = {
   paymentId: 'பணம் செலுத்தல்',
   providerStatus: 'கட்டண நுழைவாயில் நிலை',
   captured: 'வந்தது',
-  signature: 'கையொப்பம் சரி',
   history: 'நிலை வரலாறு',
   source: 'மூலம்',
   webhooks: 'Webhook வரலாறு',

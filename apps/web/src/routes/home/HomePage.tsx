@@ -537,7 +537,6 @@ function Donation() {
               intro={T.donateLead}
             />
             <p>{T.donateBody[lang]}</p>
-            <p className="hp-note">{T.monthlyNote[lang]}</p>
             <div className="hp-donate__box">
               <ul className="hp-chips">
                 {DONATE_PRESETS_RUPEES.map((r) => (

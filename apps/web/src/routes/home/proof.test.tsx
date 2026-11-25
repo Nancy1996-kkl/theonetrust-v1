@@ -161,7 +161,6 @@ describe('proof content file', () => {
         'tax',
         'upi-over-2000',
         'upi-failed',
-        'stop-monthly',
         'request-help',
         'data-use',
         'report-concern',
@@ -172,6 +171,8 @@ describe('proof content file', () => {
       ]),
     );
     expect(new Set(ids).size).toBe(ids.length);
+    // Monthly giving is retired with Razorpay (back with Cashfree Subscriptions): never promised.
+    expect(ids).not.toContain('stop-monthly');
     // Ordered as a donor thinks: how to give first, privacy and help last.
     expect(ids[0]).toBe('how-to-donate');
     expect(ids.at(-1)).toBe('report-concern');

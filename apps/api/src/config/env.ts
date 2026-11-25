@@ -79,8 +79,9 @@ const EnvSchema = z
     LOGIN_MAX_FAILURES: z.coerce.number().int().min(3).max(20).default(5),
     LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
     /**
-     * Which gateway takes online donations. `cashfree` needs the CASHFREE_* keys; `none` (the
-     * default) switches online donations off cleanly (503) — bank transfer still works.
+     * Which gateway takes NEW online donations. `cashfree` needs the CASHFREE_* keys; `none` (the
+     * default) refuses new online donations (503) — bank transfer still works. With the Cashfree
+     * keys and CASHFREE_ENV still set, payments already in flight keep being recorded.
      */
     PAYMENT_PROVIDER: z.enum(['cashfree', 'none']).default('none'),
     /**

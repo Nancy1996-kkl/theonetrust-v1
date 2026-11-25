@@ -4,7 +4,9 @@
 **Primary build environment:** Claude Desktop → **Code** tab\
 **Frontend:** React + TypeScript + Vite\
 **Product shape:** Public bilingual single-page website + private owner dashboard + separately deployable API/payment service\
-**Payment provider for launch:** Razorpay, subject to merchant account approval and enabled payment methods
+**Payment provider for launch:** ~~Razorpay~~ **Cashfree** (owner decision, Nov 2026 — see
+`docs/decisions/2026-11-20-cashfree-migration-plan.md`; where this spec says Razorpay, read Cashfree.
+Monthly giving and Smart Collect are out of scope until Cashfree Subscriptions, plan Phase 9)
 
 > This is an implementation specification, not a claim that the trust is legally eligible for any particular tax benefit or payment method. Replace all `[CONFIRM]` values with verified trust documents and current provider settings before launch. Do not invent trust registrations, statistics, beneficiary stories, project costs, testimonials, or impact figures.
 

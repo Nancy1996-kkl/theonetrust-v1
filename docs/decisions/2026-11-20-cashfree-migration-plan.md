@@ -632,7 +632,9 @@ https://sandbox.cashfree.com https://api.cashfree.com`; `img-src https://*.cashf
     5 viewports; reduced motion; keyboard-only; axe clean.
   - Visual baselines for the new step-1 fields (owner reviews diffs before baseline update).
 - **Rollback**: set `VITE_DONATE_PROVIDER` empty and keep `VITE_DONATE_BUTTON_ID` → redeploy, or
-  Vercel "Instant Rollback" to the previous production deployment.
+  Vercel "Instant Rollback" to the previous production deployment. (After Phase 8 is merged these
+  variables are no longer read: only Instant Rollback to a pre-Phase-8 deployment brings the
+  Razorpay button back.)
 - **Owner input**: approve the copy (both languages) and the "phone required" change; decide whether
   to send name/email to Cashfree.
 
@@ -708,8 +710,9 @@ https://sandbox.cashfree.com https://api.cashfree.com`; `img-src https://*.cashf
 
 #### 7c. Rollback
 
-- **Web**: Vercel Instant Rollback to the previous production deployment (Razorpay button build), or
-  redeploy with `VITE_DONATE_PROVIDER` empty and `VITE_DONATE_BUTTON_ID` set.
+- **Web**: Vercel Instant Rollback to the previous production deployment (Razorpay button build).
+  (Before Phase 8 is merged, redeploying with `VITE_DONATE_PROVIDER` empty and
+  `VITE_DONATE_BUTTON_ID` set also works; after it, those variables are no longer read.)
 - **API**: set `PAYMENT_PROVIDER=none` and redeploy → no new orders; **keep the Cashfree secret and
   webhook** so in-flight payments are still recorded; the daily job keeps reconciling.
 - **DB**: migrations are additive except the enum value (harmless when unused); never roll back data.

@@ -76,8 +76,8 @@ export const HOME_TEXT = {
   donateKicker: { en: 'Give today', ta: 'இன்றே கொடுங்கள்' },
   donateTitle: { en: 'Be a part of our mission', ta: 'எங்கள் பணியில் நீங்களும் சேருங்கள்' },
   donateLead: {
-    en: 'Any amount helps. Give once, or set up a small gift every month.',
-    ta: 'எந்தத் தொகையும் உதவும். ஒருமுறை கொடுக்கலாம், அல்லது மாதந்தோறும் ஒரு சின்னத் தொகை கொடுக்கலாம்.',
+    en: 'Any amount helps — every gift reaches people who need it.',
+    ta: 'எந்தத் தொகையும் உதவும் — ஒவ்வொரு நன்கொடையும் தேவைப்படுபவர்களைச் சென்று சேரும்.',
   },
   donateBody: {
     en: 'Choose an amount or type your own (from ₹1). Pay by UPI, card or netbanking — the payment opens in a secure window on this page.',
@@ -85,10 +85,6 @@ export const HOME_TEXT = {
   },
   donateOther: { en: 'Other amount', ta: 'வேறு தொகை' },
   donateNow: { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' },
-  monthlyNote: {
-    en: 'Want to give every month? Choose “Monthly” in the next step — you can stop any time.',
-    ta: 'மாதந்தோறும் கொடுக்க விரும்புகிறீர்களா? அடுத்த படியில் “மாதந்தோறும்” என்பதைத் தேர்வு செய்யுங்கள் — எப்போது வேண்டுமானாலும் நிறுத்தலாம்.',
-  },
   smallAct: { en: 'Small act, big change', ta: 'சிறு உதவி, பெரிய மாற்றம்' },
   bandTitle: { en: 'Every contribution matters.', ta: 'ஒவ்வொரு நன்கொடையும் முக்கியம்.' },
   bandDonate: { en: 'Donate', ta: 'நன்கொடை' },
@@ -124,8 +120,8 @@ export const STEPS: Step[] = [
   {
     title: { en: 'Pick an amount', ta: 'தொகையைத் தேர்வு செய்யுங்கள்' },
     body: {
-      en: 'Any amount from ₹1. Give once, or every month.',
-      ta: '₹1 முதல் எந்தத் தொகையும். ஒருமுறை, அல்லது மாதந்தோறும்.',
+      en: 'Any amount from ₹1. Every gift helps.',
+      ta: '₹1 முதல் எந்தத் தொகையும். ஒவ்வொரு நன்கொடையும் உதவும்.',
     },
   },
   {

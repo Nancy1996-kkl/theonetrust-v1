@@ -75,7 +75,7 @@ export interface BuildAppOptions {
   db?: Db;
   /** Clock, injectable for session-expiry and authenticator tests. */
   now?: () => Date;
-  /** Payment provider; defaults to Cashfree when PAYMENT_PROVIDER=cashfree and it is configured. */
+  /** Payment provider; defaults to Cashfree when its keys and CASHFREE_ENV are set. */
   paymentProvider?: PaymentProvider;
   /** Private transparency-document storage (#36); defaults to DOCUMENT_STORAGE_DIR when set. */
   documentStore?: DocumentStore;
@@ -184,12 +184,12 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
 
   // Donations (#23): the server owns intents, amounts and gateway orders.
   const siteUrl = env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173';
+  // The gateway is built whenever its keys and mode are set, so payments already in flight keep
+  // being recorded (webhooks, status and owner re-checks, the daily job) even when
+  // PAYMENT_PROVIDER=none switches NEW donations off.
   const paymentProvider =
     options.paymentProvider ??
-    (env.PAYMENT_PROVIDER === 'cashfree' &&
-    env.CASHFREE_CLIENT_ID &&
-    env.CASHFREE_CLIENT_SECRET &&
-    env.CASHFREE_ENV
+    (env.CASHFREE_CLIENT_ID && env.CASHFREE_CLIENT_SECRET && env.CASHFREE_ENV
       ? cashfreeProvider({
           clientId: env.CASHFREE_CLIENT_ID,
           clientSecret: env.CASHFREE_CLIENT_SECRET,
@@ -212,7 +212,8 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     perHour: env.DONATION_RATE_LIMIT_PER_HOUR,
     now: options.now ?? (() => new Date()),
     ...(options.db && { db: options.db }),
-    ...(paymentProvider && { provider: paymentProvider }),
+    // New orders only when online giving is switched on.
+    ...(paymentProvider && env.PAYMENT_PROVIDER === 'cashfree' && { provider: paymentProvider }),
   });
 
   // Payment verification and donor status re-check (#26).

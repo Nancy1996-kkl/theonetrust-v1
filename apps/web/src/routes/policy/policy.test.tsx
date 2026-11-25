@@ -69,8 +69,13 @@ describe('policy content: Tamil and English are equivalent', () => {
     }
   });
 
-  it('the refund policy covers cancelling monthly giving', () => {
-    expect(POLICIES.refund.sections.some((s) => s.id === 'monthly')).toBe(true);
+  it('the refund policy promises nothing about monthly giving (retired until Phase 9)', () => {
+    expect(POLICIES.refund.sections.some((s) => s.id === 'monthly')).toBe(false);
+    for (const lang of ['en', 'ta'] as const) {
+      expect(JSON.stringify(POLICIES.refund)).not.toMatch(
+        lang === 'en' ? /monthly giving/i : /மாதாந்திர நன்கொடை/,
+      );
+    }
   });
 });
 

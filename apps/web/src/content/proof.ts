@@ -200,8 +200,8 @@ export const PROOF_CONTENT: ProofContent = {
           ta: 'நான் எப்படி நன்கொடை கொடுப்பது?',
         },
         answer: {
-          en: 'Press “Donate”, choose a need and an amount, add your name and contact, then pay by UPI app, card or netbanking in Cashfree’s secure checkout. For larger gifts, bank transfer is also offered when the trust has switched it on.',
-          ta: '“நன்கொடை” என்பதை அழுத்தி, ஒரு தேவையையும் தொகையையும் தேர்வு செய்து, உங்கள் பெயரையும் தொடர்பு விவரத்தையும் கொடுங்கள். பிறகு Cashfree-இன் பாதுகாப்பான பக்கத்தில் UPI செயலி, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்துங்கள். பெரிய தொகைக்கு, அறக்கட்டளை இயக்கியிருந்தால், வங்கிப் பரிமாற்றம் (bank transfer) மூலமும் கொடுக்கலாம்.',
+          en: 'Press “Donate”, choose a need and an amount, add your name and contact, then pay by UPI app, card or netbanking in Cashfree’s secure payment window. For larger gifts, bank transfer is also offered when the trust has switched it on.',
+          ta: '“நன்கொடை” என்பதை அழுத்தி, ஒரு தேவையையும் தொகையையும் தேர்வு செய்து, உங்கள் பெயரையும் தொடர்பு விவரத்தையும் கொடுங்கள். பிறகு Cashfree-இன் பாதுகாப்பான சாளரத்தில் UPI செயலி, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்துங்கள். பெரிய தொகைக்கு, அறக்கட்டளை இயக்கியிருந்தால், வங்கிப் பரிமாற்றம் (bank transfer) மூலமும் கொடுக்கலாம்.',
         },
       },
       {
@@ -212,20 +212,8 @@ export const PROOF_CONTENT: ProofContent = {
           ta: 'குறைந்தபட்சம் எவ்வளவு கொடுக்க வேண்டும்?',
         },
         answer: {
-          en: 'No. You can give any amount from ₹1 — once, or every month. Every gift helps.',
-          ta: 'இல்லை. ₹1 முதல் எந்தத் தொகையும் கொடுக்கலாம் — ஒருமுறையோ, மாதந்தோறுமோ. ஒவ்வொரு நன்கொடையும் உதவும்.',
-        },
-      },
-      {
-        id: 'stop-monthly',
-        confirmed: true,
-        question: {
-          en: 'Can I give every month, and stop any time?',
-          ta: 'மாதந்தோறும் கொடுக்கலாமா? எப்போது வேண்டுமானாலும் நிறுத்தலாமா?',
-        },
-        answer: {
-          en: 'Yes. Choose “Monthly” in the donate pop-up. To stop, use the “manage” link in your monthly-giving email — no login needed. If you used UPI AutoPay, you can also pause or cancel it in your UPI app.',
-          ta: 'ஆம். நன்கொடைப் பகுதியில் “மாதந்தோறும்” என்பதைத் தேர்வு செய்யுங்கள். நிறுத்த வேண்டுமென்றால், மாதாந்திர நன்கொடை மின்னஞ்சலில் உள்ள “நிர்வகி” இணைப்பைத் திறந்து, கணக்கில் நுழையாமலே ரத்து செய்யலாம். UPI AutoPay பயன்படுத்தியிருந்தால், உங்கள் UPI செயலியிலேயே நிறுத்தி வைக்கலாம் அல்லது ரத்து செய்யலாம்.',
+          en: 'No. You can give any amount from ₹1. Every gift helps.',
+          ta: 'இல்லை. ₹1 முதல் எந்தத் தொகையும் கொடுக்கலாம். ஒவ்வொரு நன்கொடையும் உதவும்.',
         },
       },
       {

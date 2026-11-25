@@ -194,7 +194,7 @@ describe('URL rules', () => {
     expect(line, 'URL rules must document the /donate pre-fill parameters').toBeDefined();
     const query = /`\?([^`]+)`/.exec(line!)?.[1] ?? '';
     const keys = query.split('&').map((pair) => pair.split('=')[0]);
-    expect(keys).toEqual(['programme', 'amount', 'frequency']);
+    expect(keys).toEqual(['programme', 'amount']);
     for (const key of keys) expect(PII.test(key ?? ''), key).toBe(false);
   });
 });

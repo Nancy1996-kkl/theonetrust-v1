@@ -133,8 +133,8 @@ const en = {
   payTest: 'Test',
   payNone: 'Not configured',
   payKeyId: 'Cashfree client (app) ID',
-  paySecret: 'Key secret',
-  payWebhook: 'Webhook secret',
+  paySecret: 'Client secret',
+  payWebhook: 'Webhook signing (uses the client secret)',
   paySet: 'Set',
   payNotSet: 'Not set',
 };
@@ -275,8 +275,8 @@ const ta: CmsStrings = {
   payTest: 'சோதனை',
   payNone: 'அமைக்கப்படவில்லை',
   payKeyId: 'Cashfree கிளையன்ட் (App) ID',
-  paySecret: 'விசை ரகசியம்',
-  payWebhook: 'Webhook ரகசியம்',
+  paySecret: 'கிளையன்ட் ரகசியம்',
+  payWebhook: 'Webhook கையொப்பம் (கிளையன்ட் ரகசியமே)',
   paySet: 'அமைக்கப்பட்டது',
   payNotSet: 'அமைக்கப்படவில்லை',
 };

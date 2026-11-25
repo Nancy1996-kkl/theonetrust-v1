@@ -85,16 +85,15 @@ describe('saving the language choice', () => {
 });
 
 describe('donation draft pre-fill (sitemap URL rules)', () => {
-  it('reads the approved keys', () => {
+  it('reads the approved keys; the retired monthly key is ignored', () => {
     expect(draftFromSearch('?programme=education&amount=500&frequency=monthly')).toEqual({
       programme: 'education',
       amountPaise: 50000,
-      frequency: 'monthly',
     });
   });
 
-  it('defaults to nothing chosen, one-time', () => {
-    expect(draftFromSearch('')).toEqual({ programme: null, amountPaise: null, frequency: 'once' });
+  it('defaults to nothing chosen', () => {
+    expect(draftFromSearch('')).toEqual({ programme: null, amountPaise: null });
   });
 
   it.each([
@@ -103,15 +102,11 @@ describe('donation draft pre-fill (sitemap URL rules)', () => {
     '?programme=-edu&amount=0',
     `?programme=${'a'.repeat(41)}&amount=abc`,
   ])('ignores invalid values: %s', (search) => {
-    expect(draftFromSearch(search)).toEqual({
-      programme: null,
-      amountPaise: null,
-      frequency: 'once',
-    });
+    expect(draftFromSearch(search)).toEqual({ programme: null, amountPaise: null });
   });
 
   it('normalises programme case and ignores unknown keys like name or phone', () => {
     const draft = draftFromSearch('?programme=Education&name=Someone&phone=999');
-    expect(draft).toEqual({ programme: 'education', amountPaise: null, frequency: 'once' });
+    expect(draft).toEqual({ programme: 'education', amountPaise: null });
   });
 });

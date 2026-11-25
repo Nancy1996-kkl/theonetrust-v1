@@ -225,13 +225,12 @@ describe('donate panel', () => {
     expect(await within(dialog).findByRole('heading', { name: t.pending })).toBeVisible();
     expect(dialog).toHaveTextContent(t.noDoubleCharge);
     await user.click(within(dialog).getByRole('button', { name: t.payAgainSameOrder }));
-    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.thanks })).toBeVisible();
     expect(donate.start).toHaveBeenCalledTimes(1);
     expect(donate.checkout).toHaveBeenCalledTimes(2);
   });
 
-  it('a payment window that cannot open shows failed; trying again starts a new order', async () => {
+  it('a payment window that cannot open says so; trying again starts a new order', async () => {
     const user = userEvent.setup();
     const checkout = vi
       .fn()
@@ -241,8 +240,10 @@ describe('donate panel', () => {
     renderAt('/#donate', donate);
     const dialog = await toReview(user);
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
-    expect(await within(dialog).findByRole('heading', { name: t.failed })).toBeVisible();
+    expect(await within(dialog).findByRole('heading', { name: t.windowTitle })).toBeVisible();
     expect(sessionStorage.getItem(PENDING_KEY)).toBeNull();
+    // Bank transfer is offered as the other way (the server offers it here).
+    expect(within(dialog).getByRole('button', { name: t.bankTransferLink })).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: t.tryAgain }));
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.thanks })).toBeVisible();
@@ -366,10 +367,7 @@ describe('donation draft storage', () => {
       getItem: (k: string) => store.get(k) ?? null,
       setItem: (k: string, v: string) => void store.set(k, v),
     };
-    saveDraft(
-      { programme: 'education', amountPaise: 200_000 as never, frequency: 'once' },
-      storage,
-    );
+    saveDraft({ programme: 'education', amountPaise: 200_000 as never }, storage);
     expect(initialDraft('', storage)).toMatchObject({
       programme: 'education',
       amountPaise: 200_000,
@@ -385,7 +383,7 @@ describe('donation draft storage', () => {
     expect(initialDraft('', undefined)).toMatchObject({ amountPaise: null });
     expect(() =>
       saveDraft(
-        { programme: null, amountPaise: null, frequency: 'once' },
+        { programme: null, amountPaise: null },
         {
           setItem: () => {
             throw new Error('blocked');

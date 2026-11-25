@@ -59,7 +59,7 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
   links use random tokens; the server stores only their hash.
 - Panels open from anchors on the single page: `#donate` opens the donate panel, `#get-help` opens
   the Get Help panel. Closing a panel returns to where the visitor was.
-- The single page accepts only safe pre-fill parameters for the donate panel: `?programme=<slug>&amount=<whole rupees>&frequency=monthly`
+- The single page accepts only safe pre-fill parameters for the donate panel: `?programme=<slug>&amount=<whole rupees>`
   (e.g. `/ta/?programme=education#donate`). Unknown or invalid values are ignored, never trusted —
   the server validates everything again.
 - The payment result never appears in the URL. While a payment is being confirmed, a private status

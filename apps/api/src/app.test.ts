@@ -113,7 +113,7 @@ describe('Cashfree wiring (Phase 4)', () => {
     expect(res.statusCode).toBe(503);
   });
 
-  it('with online giving off (none), the Cashfree webhook stays unavailable', async () => {
+  it('with online giving off (none) the Cashfree webhook still exists (503 only without a database)', async () => {
     app = buildApp(loadEnv({ ...cashfreeEnv, PAYMENT_PROVIDER: 'none' }));
     const res = await app.inject({
       method: 'POST',
