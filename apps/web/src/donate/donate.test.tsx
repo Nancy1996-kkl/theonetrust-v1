@@ -11,8 +11,6 @@ import {
   DonateClientContext,
   createApiDonateClient,
   createMockDonateClient,
-  isLimitFailure,
-  loadCheckout,
   newIdempotencyKey,
   selectDonateClient,
   unavailableDonateClient,
@@ -27,7 +25,12 @@ const INTENT: DonationIntentResponse = {
   feePaise: 0,
   amountPaise: 100_000,
   currency: 'INR',
-  checkout: { provider: 'RAZORPAY', keyId: 'rzp_test_key', orderId: 'order_ABC123' },
+  checkout: {
+    provider: 'CASHFREE',
+    paymentSessionId: 'session_ABC',
+    mode: 'sandbox',
+    orderId: 'TOT-D-ABCDEFGHJKMN',
+  },
 };
 
 const BANK_INTENT = {
@@ -57,11 +60,7 @@ function client(overrides: Partial<DonateClient> = {}): DonateClient {
     start: vi.fn(async () => ({ ok: true as const, intent: INTENT })),
     startBankTransfer: vi.fn(async () => ({ ok: true as const, intent: BANK_INTENT })),
     claimBankTransfer: vi.fn(async () => true),
-    checkout: vi.fn(async () => ({
-      kind: 'completed' as const,
-      paymentId: 'pay_1',
-      signature: 'sig',
-    })),
+    checkout: vi.fn(async () => ({ kind: 'returned' as const })),
     verify: vi.fn(async () => 'PAID' as const),
     status: vi.fn(async () => 'PAID' as const),
     receipt: vi.fn(async () => null),
@@ -149,11 +148,9 @@ describe('donate panel', () => {
       }),
       expect.stringMatching(/^[0-9a-f]{32}$/),
     );
-    expect(donate.verify).toHaveBeenCalledWith(INTENT, {
-      kind: 'completed',
-      paymentId: 'pay_1',
-      signature: 'sig',
-    });
+    // Only the reference goes back: the server re-fetches the order from the gateway.
+    expect(donate.verify).toHaveBeenCalledWith(INTENT.publicReference);
+    expect(donate.checkout).toHaveBeenCalledWith(INTENT);
     expect(sessionStorage.getItem(PENDING_KEY)).toBeNull();
     // No acknowledgement issued (declined / below the threshold): no link.
     expect(within(dialog).queryByRole('link', { name: t.viewReceipt })).toBeNull();
@@ -215,38 +212,44 @@ describe('donate panel', () => {
     expect(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' })).toBeVisible();
   });
 
-  it('cancel keeps choices and reuses the same order (one idempotency key)', async () => {
+  it('closing the window without paying keeps choices and reuses the same order (one key)', async () => {
+    const user = userEvent.setup();
+    const verify = vi
+      .fn()
+      .mockResolvedValueOnce('PENDING' as const)
+      .mockResolvedValueOnce('PAID' as const);
+    const donate = client({ verify, status: vi.fn(async () => 'PENDING' as const) });
+    renderAt('/#donate', donate);
+    const dialog = await toReview(user);
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    expect(await within(dialog).findByRole('heading', { name: t.pending })).toBeVisible();
+    expect(dialog).toHaveTextContent(t.noDoubleCharge);
+    await user.click(within(dialog).getByRole('button', { name: t.payAgainSameOrder }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    expect(await within(dialog).findByRole('heading', { name: t.thanks })).toBeVisible();
+    expect(donate.start).toHaveBeenCalledTimes(1);
+    expect(donate.checkout).toHaveBeenCalledTimes(2);
+  });
+
+  it('a payment window that cannot open shows failed; trying again starts a new order', async () => {
     const user = userEvent.setup();
     const checkout = vi
       .fn()
-      .mockResolvedValueOnce({ kind: 'dismissed' })
-      .mockResolvedValueOnce({ kind: 'completed', paymentId: 'pay_2', signature: 's' });
+      .mockResolvedValueOnce({ kind: 'failed' })
+      .mockResolvedValueOnce({ kind: 'returned' });
     const donate = client({ checkout });
     renderAt('/#donate', donate);
     const dialog = await toReview(user);
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
-    expect(await within(dialog).findByText(new RegExp(t.cancelled))).toBeVisible();
+    expect(await within(dialog).findByRole('heading', { name: t.failed })).toBeVisible();
+    expect(sessionStorage.getItem(PENDING_KEY)).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: t.tryAgain }));
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     expect(await within(dialog).findByRole('heading', { name: t.thanks })).toBeVisible();
-    expect(donate.start).toHaveBeenCalledTimes(1);
-  });
-
-  it('a payment failure and a UPI limit offer recovery', async () => {
-    const user = userEvent.setup();
-    const checkout = vi
-      .fn()
-      .mockResolvedValueOnce({ kind: 'failed', reason: 'upi_limit' })
-      .mockResolvedValueOnce({ kind: 'failed', reason: 'other' });
-    renderAt('/#donate', client({ checkout }));
-    const dialog = await toReview(user);
-    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
-    expect(await within(dialog).findByRole('heading', { name: t.limitTitle })).toBeVisible();
-    await user.click(within(dialog).getByRole('button', { name: t.smaller }));
-    expect(within(dialog).getByRole('heading', { name: t.howMuch })).toBeVisible();
-    await user.click(within(dialog).getByRole('button', { name: t.continue }));
-    await user.click(within(dialog).getByRole('button', { name: t.continue }));
-    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
-    expect(await within(dialog).findByRole('heading', { name: t.failed })).toBeVisible();
+    expect(donate.start).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(donate.start).mock.calls[0]?.[1]).not.toBe(
+      vi.mocked(donate.start).mock.calls[1]?.[1],
+    );
   });
 
   it.each([
@@ -419,7 +422,7 @@ describe('createApiDonateClient', () => {
     const api = createApiDonateClient('http://localhost:4000/api/v1', fetchImpl);
     expect(await api.estimate(100)).toMatchObject({ minPaise: 100 });
     expect(await api.start(REQ, 'k'.repeat(32))).toEqual({ ok: true, intent: INTENT });
-    expect(await api.verify(INTENT, { paymentId: 'pay_1', signature: 's' })).toBe('PAID');
+    expect(await api.verify(INTENT.publicReference)).toBe('PAID');
     expect(await api.status('TOT-D-X')).toBe('PENDING');
     const calls = fetchImpl.mock.calls.map((c) => [String(c[0]), c[1]?.method ?? 'GET']);
     expect(calls).toEqual([
@@ -431,21 +434,19 @@ describe('createApiDonateClient', () => {
     expect(
       (fetchImpl.mock.calls[1]![1]?.headers as Record<string, string>)['idempotency-key'],
     ).toBe('k'.repeat(32));
+    // The browser sends only the reference: nothing it says can mark a donation paid.
     expect(JSON.parse(String(fetchImpl.mock.calls[2]![1]?.body))).toEqual({
       publicReference: INTENT.publicReference,
-      orderId: 'order_ABC123',
-      paymentId: 'pay_1',
-      signature: 's',
     });
   });
 
-  it('accepts only a well-formed gateway descriptor, and never opens Razorpay for another gateway', async () => {
+  it('accepts only a well-formed Cashfree descriptor; a retired Razorpay one is refused', async () => {
     const start = (checkout: unknown) =>
       createApiDonateClient(
         '',
         vi.fn(async () => ok({ ...INTENT, checkout }, 201)),
       ).start(REQ, 'k'.repeat(32));
-    expect(await start({ provider: 'RAZORPAY', keyId: '', orderId: 'order_1' })).toEqual({
+    expect(await start({ provider: 'RAZORPAY', keyId: 'rzp_test_x', orderId: 'order_1' })).toEqual({
       ok: false,
       reason: 'network',
     });
@@ -461,19 +462,22 @@ describe('createApiDonateClient', () => {
     };
     const started = await start(cashfree);
     expect(started).toMatchObject({ ok: true });
-    // A Cashfree descriptor opens Cashfree's window only: the Razorpay loader is never touched
-    // (here Cashfree's script fails to load, so the donor sees "failed").
-    const load = vi.fn(async () => Promise.reject(new Error('must not load')));
+    // Cashfree's script fails to load: the donor sees "failed" (nothing was paid).
     const loadCf = vi.fn(async () => Promise.reject(new Error('blocked')));
-    const api = createApiDonateClient('', vi.fn(), load, loadCf);
-    expect(
-      await api.checkout({ ...INTENT, checkout: cashfree } as DonationIntentResponse, {
-        name: 'A',
-        lang: 'en',
-      }),
-    ).toEqual({ kind: 'failed', reason: 'other' });
-    expect(load).not.toHaveBeenCalled();
+    const api = createApiDonateClient('', vi.fn(), loadCf);
+    expect(await api.checkout({ ...INTENT, checkout: cashfree } as DonationIntentResponse)).toEqual(
+      { kind: 'failed' },
+    );
     expect(loadCf).toHaveBeenCalledOnce();
+    // A malformed descriptor is never opened at all.
+    const never = vi.fn();
+    expect(
+      await createApiDonateClient('', vi.fn(), never).checkout({
+        ...INTENT,
+        checkout: { provider: 'RAZORPAY' },
+      } as unknown as DonationIntentResponse),
+    ).toEqual({ kind: 'failed' });
+    expect(never).not.toHaveBeenCalled();
   });
 
   it('receipt(): the token only for a PAID donation that has one; null otherwise', async () => {
@@ -525,106 +529,27 @@ describe('createApiDonateClient', () => {
     );
     expect(await down.start(REQ, 'k')).toEqual({ ok: false, reason: 'network' });
     expect(await down.estimate()).toBeNull();
-    expect(await down.verify(INTENT, { paymentId: 'p', signature: 's' })).toBe('UNKNOWN');
+    expect(await down.verify(INTENT.publicReference)).toBe('UNKNOWN');
     expect(await down.status('r')).toBe('UNKNOWN');
     const odd = createApiDonateClient(
       '',
       vi.fn(async () => ok({ status: 'MAYBE' })),
     );
-    expect(await odd.verify(INTENT, { paymentId: 'p', signature: 's' })).toBe('UNKNOWN');
+    expect(await odd.verify(INTENT.publicReference)).toBe('UNKNOWN');
     const notFound = createApiDonateClient(
       '',
       vi.fn(async () => ok({}, 404)),
     );
-    expect(await notFound.verify(INTENT, { paymentId: 'p', signature: 's' })).toBe('UNKNOWN');
+    expect(await notFound.verify(INTENT.publicReference)).toBe('UNKNOWN');
     expect(await notFound.status('r')).toBe('UNKNOWN');
     expect(await notFound.estimate()).toBeNull();
-  });
-
-  it('opens Razorpay Checkout with the order and maps completed / dismissed / failed', async () => {
-    let handlers: Record<string, (r: never) => void> = {};
-    let options: Record<string, unknown> = {};
-    const Razorpay = vi.fn(function (this: unknown, o: Record<string, unknown>) {
-      options = o;
-      return {
-        open: () => undefined,
-        on: (event: string, cb: (r: never) => void) => {
-          handlers[event] = cb;
-        },
-      };
-    });
-    const api = createApiDonateClient('', vi.fn(), async () => Razorpay as never);
-    const prefill = { name: 'A', email: 'a@b.co', contact: '+919876543210', lang: 'en' as const };
-
-    let p = api.checkout(INTENT, prefill);
-    await Promise.resolve();
-    expect(options).toMatchObject({
-      key: 'rzp_test_key',
-      order_id: 'order_ABC123',
-      amount: 100_000,
-      currency: 'INR',
-    });
-    (options.handler as (r: unknown) => void)({
-      razorpay_payment_id: 'pay_9',
-      razorpay_signature: 'sig9',
-    });
-    expect(await p).toEqual({ kind: 'completed', paymentId: 'pay_9', signature: 'sig9' });
-
-    handlers = {};
-    p = api.checkout(INTENT, { name: 'A', lang: 'ta' });
-    await Promise.resolve();
-    (options.modal as { ondismiss: () => void }).ondismiss();
-    expect(await p).toEqual({ kind: 'dismissed' });
-
-    p = api.checkout(INTENT, prefill);
-    await Promise.resolve();
-    handlers['payment.failed']?.({ error: { reason: 'amount_exceeds_limit' } } as never);
-    expect(await p).toEqual({ kind: 'failed', reason: 'upi_limit' });
-
-    p = api.checkout(INTENT, prefill);
-    await Promise.resolve();
-    handlers['payment.failed']?.({ error: { code: 'BAD_REQUEST_ERROR' } } as never);
-    expect(await p).toEqual({ kind: 'failed', reason: 'other' });
-
-    const broken = createApiDonateClient('', vi.fn(), async () =>
-      Promise.reject(new Error('blocked')),
-    );
-    expect(await broken.checkout(INTENT, prefill)).toEqual({ kind: 'failed', reason: 'other' });
   });
 });
 
 describe('helpers and adapters', () => {
-  it('loads the Checkout script once', async () => {
-    const doc = document.implementation.createHTMLDocument();
-    const fakeWindow = {} as { Razorpay?: unknown };
-    Object.defineProperty(doc, 'defaultView', { value: fakeWindow });
-    const loading = loadCheckout(doc);
-    const script = doc.head.querySelector('script')!;
-    expect(script.src).toBe('https://checkout.razorpay.com/v1/checkout.js');
-    fakeWindow.Razorpay = function Razorpay() {};
-    script.onload?.(new Event('load'));
-    expect(await loading).toBe(fakeWindow.Razorpay);
-    expect(await loadCheckout(doc)).toBe(fakeWindow.Razorpay);
-    const doc2 = document.implementation.createHTMLDocument();
-    Object.defineProperty(doc2, 'defaultView', { value: {} });
-    const failing = loadCheckout(doc2);
-    doc2.head.querySelector('script')!.onerror?.(new Event('error'));
-    await expect(failing).rejects.toThrow('failed to load');
-    const doc3 = document.implementation.createHTMLDocument();
-    Object.defineProperty(doc3, 'defaultView', { value: {} });
-    const missing = loadCheckout(doc3);
-    doc3.head.querySelector('script')!.onload?.(new Event('load'));
-    await expect(missing).rejects.toThrow('missing');
-  });
-
   it('idempotency keys are random hex', () => {
     expect(newIdempotencyKey()).toMatch(/^[0-9a-f]{32}$/);
     expect(newIdempotencyKey()).not.toBe(newIdempotencyKey());
-  });
-
-  it('recognises limit failures', () => {
-    expect(isLimitFailure('transaction amount limit exceeded')).toBe(true);
-    expect(isLimitFailure(undefined)).toBe(false);
   });
 
   it('selects the adapter from VITE_DONATE_ADAPTER', () => {
@@ -640,18 +565,25 @@ describe('helpers and adapters', () => {
     const mock = createMockDonateClient(0);
     const g = globalThis as { __donateMock?: string };
     for (const [scenario, kind] of [
-      ['cancel', 'dismissed'],
-      ['fail', 'failed'],
-      ['limit', 'failed'],
-      ['success', 'completed'],
+      ['success', 'returned'],
+      ['fail', 'returned'],
+      ['redirect', 'redirecting'],
+      ['cashfree-redirect', 'redirecting'],
+      ['window-fail', 'failed'],
     ] as const) {
       g.__donateMock = scenario;
-      expect((await mock.checkout(INTENT, { name: 'A', lang: 'en' })).kind).toBe(kind);
+      expect((await mock.checkout(INTENT)).kind).toBe(kind);
     }
+    g.__donateMock = 'fail';
+    expect(await mock.verify('r')).toBe('FAILED');
+    expect(await mock.status('r')).toBe('FAILED');
+    g.__donateMock = 'cashfree-pending';
+    expect(await mock.verify('r')).toBe('PENDING');
+    expect(await mock.status('r')).toBe('PAID');
     g.__donateMock = 'start-fail';
     expect((await mock.start({} as never, 'k')).ok).toBe(false);
     g.__donateMock = 'stuck';
-    expect(await mock.verify(INTENT, { paymentId: 'p', signature: 's' })).toBe('PENDING');
+    expect(await mock.verify('r')).toBe('PENDING');
     expect(await mock.status('r')).toBe('PENDING');
     delete g.__donateMock;
     expect((await mock.start({ giftPaise: 500 } as never, 'k')).ok).toBe(true);
@@ -661,14 +593,10 @@ describe('helpers and adapters', () => {
     expect(await mock.receipt('r')).toBeNull();
     delete g.__donateMock;
     expect(await unavailableDonateClient.receipt('r')).toBeNull();
-    expect(await mock.estimate()).toMatchObject({ feeCoverOffered: false });
-    expect(await unavailableDonateClient.checkout(INTENT, { name: 'A', lang: 'en' })).toEqual({
-      kind: 'dismissed',
-    });
+    expect(await mock.estimate()).toMatchObject({ feeCoverOffered: false, phoneRequired: true });
+    expect(await unavailableDonateClient.checkout(INTENT)).toEqual({ kind: 'failed' });
     expect(await unavailableDonateClient.estimate()).toBeNull();
-    expect(await unavailableDonateClient.verify(INTENT, { paymentId: 'p', signature: 's' })).toBe(
-      'UNKNOWN',
-    );
+    expect(await unavailableDonateClient.verify('r')).toBe('UNKNOWN');
     expect(await unavailableDonateClient.status('r')).toBe('UNKNOWN');
     expect(await unavailableDonateClient.start({} as never, 'k')).toEqual({
       ok: false,

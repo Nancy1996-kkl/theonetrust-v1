@@ -1,6 +1,5 @@
 import type { DonationStatus } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
-import { normaliseRazorpayPayment, type ProviderPayment } from '../donations/provider.ts';
 import { enqueueDonationPaid } from '../notifications/outbox.ts';
 import { ensureTaxTracking } from '../tax/tracking.ts';
 import { adjustReceiptForRefund, issueReceiptIfEligible } from '../receipts/issue.ts';
@@ -39,17 +38,6 @@ const STATUS_FOR: Partial<Record<PaymentState, DonationStatus>> = {
   failed: 'FAILED',
 };
 
-/** Razorpay entry point: translates Razorpay's words, then applies the shared rules. */
-export function applyProviderPayment(
-  db: Db,
-  attemptId: string,
-  payment: ProviderPayment,
-  now: Date,
-  opts: { signatureVerified?: boolean } = {},
-): Promise<ReconcileOutcome> {
-  return applyPayment(db, attemptId, normaliseRazorpayPayment(payment), now, opts);
-}
-
 /**
  * Applies everything the gateway knows about one of our orders (the re-check path): every
  * captured payment, else the authorized one, else the first reported. Returns the donation's
@@ -84,7 +72,6 @@ export async function applyPayment(
   attemptId: string,
   payment: NormalisedPayment,
   now: Date,
-  opts: { signatureVerified?: boolean } = {},
 ): Promise<ReconcileOutcome> {
   return db.$transaction(async (tx) => {
     const attempt = await tx.paymentAttempt.findUniqueOrThrow({
@@ -149,11 +136,17 @@ export async function applyPayment(
         providerStatus: payment.state,
         method: payment.method,
         ...(payment.state === 'captured' && { capturedPaise: payment.amountPaise }),
-        ...(opts.signatureVerified && !attempt.signatureVerifiedAt && { signatureVerifiedAt: now }),
       },
     });
     if (written.count === 0) {
       if (claims) {
+        // The winner may have claimed it with THIS same payment (two webhooks re-fetching the
+        // same order at once): that is the same money, already applied — not a duplicate.
+        const winner = await tx.paymentAttempt.findUniqueOrThrow({
+          where: { id: attempt.id },
+          select: { providerPaymentId: true },
+        });
+        if (winner.providerPaymentId === payment.paymentId) return currentStatus(tx, intent.id);
         return flagForReview(tx, intent.id, 'DUPLICATE_PAYMENT', payment.paymentId, true);
       }
       return currentStatus(tx, intent.id); // a failed try lost to a payment that settled the order
@@ -209,6 +202,10 @@ async function flagForReview(
   providerPaymentId: string,
   moneyMoved: boolean,
 ): Promise<DonationStatus> {
+  // Cashfree's webhooks re-fetch the WHOLE order, so two webhooks arriving together can both
+  // see the same duplicate payment: a transaction lock per (kind, donation, payment) makes the
+  // second one wait and then find the first one's exception, so the owner sees it once.
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`exception:${kind}:${intentId}:${providerPaymentId}`}, 0))`;
   const known = await tx.paymentException.findFirst({
     where: { kind, donationIntentId: intentId, providerPaymentId },
     select: { id: true },
@@ -242,7 +239,7 @@ export function donorStatus(status: DonationStatus): 'PAID' | 'PENDING' | 'FAILE
 export async function applyRefund(
   db: Db,
   attemptId: string,
-  payment: ProviderPayment,
+  payment: { refundedPaise: number; state: PaymentState },
   refundStatus: 'created' | 'processed' | 'failed',
   now: Date = new Date(),
 ): Promise<DonationStatus> {
@@ -258,7 +255,7 @@ export async function applyRefund(
     );
     await tx.paymentAttempt.update({
       where: { id: attempt.id },
-      data: { refundedPaise: refunded, providerStatus: normaliseRazorpayPayment(payment).state },
+      data: { refundedPaise: refunded, providerStatus: payment.state },
     });
     const full = refunded > 0 && refunded >= attempt.capturedPaise;
     // A processed refund is recorded on the acknowledgement as a new entry, never a deletion.

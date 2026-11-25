@@ -8,7 +8,7 @@ import { loadEnv } from '../../config/env.ts';
 import { deriveAuthKeys } from '../../security/crypto.ts';
 import { unique, useTestDb } from '../../test/db.ts';
 import { base32Decode, hotp, timeStep } from '../auth/totp.ts';
-import type { PaymentProvider } from '../donations/provider.ts';
+import { fakeCashfree } from '../../test/fake-cashfree.ts';
 import { openAddress, openPan } from './identity.ts';
 
 /**
@@ -22,7 +22,6 @@ const KEYS = deriveAuthKeys(AUTH_SECRET_KEY);
 const PAN = 'ABCDE1234F';
 let app: FastifyInstance;
 let ip = 0;
-let seq = 0;
 const logs: string[] = [];
 let send: (
   m: 'GET' | 'POST' | 'PATCH',
@@ -30,23 +29,18 @@ let send: (
   body?: unknown,
 ) => Promise<LightMyRequestResponse>;
 
-const provider: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_tax0000001',
-  verifyCheckoutSignature: () => false,
-  fetchPayment: async () => Promise.reject(new Error('unused')),
-  fetchOrderPayments: async () => [],
-  createOrder: async (input) => ({
-    orderId: `order_TX${String(++seq).padStart(8, '0')}`,
-    amountPaise: input.amountPaise,
-    currency: 'INR',
-    status: 'created',
-  }),
-};
+const cf = fakeCashfree('tax-cashfree-secret-0001');
+const provider = cf.provider;
 
 beforeAll(async () => {
   app = buildApp(
-    loadEnv({ NODE_ENV: 'test', AUTH_SECRET_KEY, CORS_ORIGINS: ORIGIN, LOG_LEVEL: 'info' }),
+    loadEnv({
+      NODE_ENV: 'test',
+      ...cf.env,
+      AUTH_SECRET_KEY,
+      CORS_ORIGINS: ORIGIN,
+      LOG_LEVEL: 'info',
+    }),
     {
       db,
       paymentProvider: provider,
@@ -125,6 +119,7 @@ const intent = (taxOptIn?: Record<string, unknown>) =>
       programme: null,
       donorName: 'Synthetic Tax Donor',
       donorEmail: 'tax.donor@example.org',
+      donorPhone: '+919876543210',
       hideNamePublicly: true,
       wantsReceipt: true,
       coverFee: false,

@@ -63,7 +63,7 @@ describe('vercel.json security headers (audit F-2)', () => {
     const re = new RegExp(`^${SITE_PAGES}$`);
     for (const page of ['/', '/privacy', '/ta/privacy', '/assets/app.js', '/receipt/x', '/apix'])
       assert.ok(re.test(page), page);
-    for (const api of ['/api/v1/health', '/api/v1/webhooks/razorpay'])
+    for (const api of ['/api/v1/health', '/api/v1/webhooks/cashfree'])
       assert.ok(!re.test(api), api);
   });
 

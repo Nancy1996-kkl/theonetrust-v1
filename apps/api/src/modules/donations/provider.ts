@@ -1,13 +1,8 @@
 import type { CheckoutDescriptor } from '@theonetrust/contracts';
-import type {
-  NormalisedPayment,
-  PaymentState,
-  ProviderOrderState,
-} from '../payments/order-state.ts';
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import type { ProviderOrderState } from '../payments/order-state.ts';
 /**
  * Payment provider boundary (spec §8 "Separation rule"). Domain code talks to this interface;
- * Razorpay specifics stay in the adapter, so a provider can be added or replaced without
+ * gateway specifics stay in the adapter (cashfree.ts), so a provider can be added or replaced without
  * touching the donation flow or the dashboard.
  */
 export interface CreateOrderInput {
@@ -30,20 +25,7 @@ export interface ProviderOrder {
   currency: 'INR';
   status: string;
   /** Cashfree's one-time payment_session_id for the browser pop-up. */
-  sessionId?: string;
-}
-
-/** Trusted payment state, read from the provider's API with our secret (never from the browser). */
-export interface ProviderPayment {
-  paymentId: string;
-  orderId: string | null;
-  amountPaise: number;
-  currency: string;
-  /** created | authorized | captured | refunded | failed */
-  status: string;
-  method: string | null;
-  /** Paise refunded so far. */
-  refundedPaise: number;
+  sessionId: string;
 }
 
 /**
@@ -55,36 +37,31 @@ export function checkoutDescriptor(
   orderId: string,
   sessionId?: string | null,
 ): CheckoutDescriptor {
-  if (provider.name === 'CASHFREE') {
-    if (!sessionId || !provider.checkoutMode) throw new PaymentProviderError('unexpected_response');
-    return {
-      provider: 'CASHFREE',
-      paymentSessionId: sessionId,
-      mode: provider.checkoutMode,
-      orderId,
-    };
-  }
-  return { provider: 'RAZORPAY', keyId: provider.publicKeyId, orderId };
+  if (!sessionId) throw new PaymentProviderError('unexpected_response');
+  return {
+    provider: 'CASHFREE',
+    paymentSessionId: sessionId,
+    mode: provider.checkoutMode,
+    orderId,
+  };
 }
 
-/** Longest a single call to Razorpay may take before it counts as a network failure. */
-export const RAZORPAY_TIMEOUT_MS = 10_000;
+/** Longest a single call to the gateway may take before it counts as a network failure. */
+export const PROVIDER_TIMEOUT_MS = 10_000;
 
 export interface PaymentProvider {
-  readonly name: 'RAZORPAY' | 'CASHFREE';
-  /** The key ID the browser needs to open Checkout. Never the secret. Empty for Cashfree. */
-  readonly publicKeyId: string;
-  /** Cashfree: which SDK mode the browser loads (sandbox | production). */
-  readonly checkoutMode?: 'sandbox' | 'production';
-  /** The gateway refuses orders without the donor's mobile number (Cashfree). */
-  readonly requiresCustomerPhone?: boolean;
-  /** Gateway-neutral order state (Cashfree); Razorpay uses razorpayOrderState instead. */
-  fetchOrderState?(orderRef: string): Promise<ProviderOrderState>;
+  readonly name: 'CASHFREE';
+  /** Which SDK mode the browser loads (sandbox | production). */
+  readonly checkoutMode: 'sandbox' | 'production';
+  /** The gateway refuses orders without the donor's mobile number. */
+  readonly requiresCustomerPhone: boolean;
+  /** Every payment tried on one of our orders, read with our secret (never from the browser). */
+  fetchOrderState(orderRef: string): Promise<ProviderOrderState>;
   /**
-   * Refunds of one payment on one order (Cashfree): total refunded, the overall refund state, and
-   * whether another payment of the order was refunded (never counted against the donation).
+   * Refunds of one payment on one order: total refunded, the overall refund state, and whether
+   * another payment of the order was refunded (never counted against the donation).
    */
-  fetchRefunds?(
+  fetchRefunds(
     orderRef: string,
     paymentId: string,
   ): Promise<{
@@ -93,314 +70,11 @@ export interface PaymentProvider {
     otherPaymentRefunds: boolean;
   }>;
   createOrder(input: CreateOrderInput): Promise<ProviderOrder>;
-  /** HMAC-SHA256(order_id|payment_id, key secret), compared in constant time. */
-  verifyCheckoutSignature(orderId: string, paymentId: string, signature: string): boolean;
-  fetchPayment(paymentId: string): Promise<ProviderPayment>;
-  /** All payments made against an order (used when the browser callback never arrived). */
-  fetchOrderPayments(orderId: string): Promise<ProviderPayment[]>;
-  /** One-time UPI QR for exactly one amount (Razorpay QR Codes, client Nov 2026). */
-  createQrCode?(input: CreateQrInput): Promise<ProviderQr>;
-  /** Payments made on a QR (the re-check when the webhook is late). */
-  fetchQrPayments?(qrId: string): Promise<ProviderPayment[]>;
-  /** The QR picture, fetched server-side so the browser never talks to Razorpay for it. */
-  fetchQrImage?(imageUrl: string): Promise<{ contentType: string; data: Buffer }>;
 }
-
-export interface CreateQrInput {
-  amountPaise: number;
-  /** Our public reference, shown in the provider dashboard. */
-  reference: string;
-  /** When the QR stops accepting payment. */
-  closeBy: Date;
-  /** Non-personal labels only. */
-  notes: Record<string, string>;
-}
-
-export interface ProviderQr {
-  qrId: string;
-  imageUrl: string;
-  amountPaise: number;
-  closeBy: Date;
-}
-
-export const QR_ID = /^qr_[A-Za-z0-9]{6,40}$/;
-/** QR images are only ever fetched from Razorpay's own hosts. */
-export function isRazorpayImageUrl(url: string): boolean {
-  try {
-    const u = new URL(url);
-    return u.protocol === 'https:' && /(^|\.)(rzp\.io|razorpay\.com)$/.test(u.hostname);
-  } catch {
-    return false;
-  }
-}
-const MAX_QR_IMAGE_BYTES = 1_048_576;
 
 export class PaymentProviderError extends Error {
   constructor(readonly reason: 'network' | 'rejected' | 'unexpected_response') {
     super(`Payment provider error: ${reason}`);
     this.name = 'PaymentProviderError';
   }
-}
-
-export interface RazorpayConfig {
-  keyId: string;
-  keySecret: string;
-  /** Overridable for tests; production uses the official API host. */
-  baseUrl?: string;
-  fetch?: typeof fetch;
-  timeoutMs?: number;
-}
-
-const PAYMENT_ID = /^pay_[A-Za-z0-9]{6,40}$/;
-const ORDER_ID = /^order_[A-Za-z0-9]{6,40}$/;
-
-/** Validates a Razorpay Payment entity (API response or signed webhook payload). */
-export function parseProviderPayment(raw: unknown): ProviderPayment {
-  const p = raw as {
-    id?: unknown;
-    order_id?: unknown;
-    amount?: unknown;
-    currency?: unknown;
-    status?: unknown;
-    method?: unknown;
-    amount_refunded?: unknown;
-  } | null;
-  if (
-    typeof p?.id !== 'string' ||
-    !PAYMENT_ID.test(p.id) ||
-    !Number.isInteger(p.amount) ||
-    typeof p.currency !== 'string' ||
-    typeof p.status !== 'string'
-  ) {
-    throw new PaymentProviderError('unexpected_response');
-  }
-  return {
-    paymentId: p.id,
-    orderId: typeof p.order_id === 'string' ? p.order_id : null,
-    amountPaise: p.amount as number,
-    currency: p.currency,
-    status: p.status,
-    method: typeof p.method === 'string' ? p.method : null,
-    refundedPaise: Number.isInteger(p.amount_refunded) ? (p.amount_refunded as number) : 0,
-  };
-}
-
-/** Razorpay Orders API over HTTPS with Basic auth (no SDK needed, nothing logged). */
-export function razorpayProvider(config: RazorpayConfig): PaymentProvider {
-  const base = config.baseUrl ?? 'https://api.razorpay.com';
-  const doFetch = config.fetch ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
-  const auth = `Basic ${Buffer.from(`${config.keyId}:${config.keySecret}`).toString('base64')}`;
-  async function getJson(path: string): Promise<unknown> {
-    let res: Response;
-    try {
-      res = await doFetch(`${base}${path}`, {
-        headers: { authorization: auth },
-        signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
-      });
-    } catch {
-      throw new PaymentProviderError('network');
-    }
-    if (!res.ok) throw new PaymentProviderError('rejected');
-    const body: unknown = await res.json().catch(() => null);
-    if (body === null) throw new PaymentProviderError('unexpected_response');
-    return body;
-  }
-
-  return {
-    name: 'RAZORPAY',
-    publicKeyId: config.keyId,
-    verifyCheckoutSignature(orderId, paymentId, signature) {
-      if (
-        !ORDER_ID.test(orderId) ||
-        !PAYMENT_ID.test(paymentId) ||
-        !/^[0-9a-f]{64}$/.test(signature)
-      ) {
-        return false;
-      }
-      const expected = createHmac('sha256', config.keySecret)
-        .update(`${orderId}|${paymentId}`)
-        .digest('hex');
-      return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
-    },
-    async fetchPayment(paymentId) {
-      if (!PAYMENT_ID.test(paymentId)) throw new PaymentProviderError('rejected');
-      return parseProviderPayment(await getJson(`/v1/payments/${paymentId}`));
-    },
-    async fetchOrderPayments(orderId) {
-      if (!ORDER_ID.test(orderId)) throw new PaymentProviderError('rejected');
-      const body = (await getJson(`/v1/orders/${orderId}/payments`)) as { items?: unknown };
-      if (!Array.isArray(body.items)) throw new PaymentProviderError('unexpected_response');
-      return body.items.map(parseProviderPayment);
-    },
-    async createQrCode(input) {
-      let res: Response;
-      try {
-        res = await doFetch(`${base}/v1/payments/qr_codes`, {
-          method: 'POST',
-          headers: { authorization: auth, 'content-type': 'application/json' },
-          body: JSON.stringify({
-            type: 'upi_qr',
-            name: 'Theonetrust.in',
-            usage: 'single_use',
-            fixed_amount: true,
-            payment_amount: input.amountPaise,
-            description: input.reference,
-            close_by: Math.floor(input.closeBy.getTime() / 1000),
-            notes: input.notes,
-          }),
-          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
-        });
-      } catch {
-        throw new PaymentProviderError('network');
-      }
-      if (!res.ok) throw new PaymentProviderError('rejected');
-      const body = (await res.json().catch(() => null)) as {
-        id?: unknown;
-        image_url?: unknown;
-        payment_amount?: unknown;
-        close_by?: unknown;
-        status?: unknown;
-      } | null;
-      // Trust nothing: exactly the amount we asked for, an active QR, a Razorpay image link.
-      if (
-        typeof body?.id !== 'string' ||
-        !QR_ID.test(body.id) ||
-        typeof body.image_url !== 'string' ||
-        !isRazorpayImageUrl(body.image_url) ||
-        body.payment_amount !== input.amountPaise ||
-        body.status !== 'active'
-      ) {
-        throw new PaymentProviderError('unexpected_response');
-      }
-      const closeBy = Number(body.close_by);
-      return {
-        qrId: body.id,
-        imageUrl: body.image_url,
-        amountPaise: body.payment_amount,
-        closeBy: Number.isFinite(closeBy) && closeBy > 0 ? new Date(closeBy * 1000) : input.closeBy,
-      };
-    },
-    async fetchQrPayments(qrId) {
-      if (!QR_ID.test(qrId)) throw new PaymentProviderError('rejected');
-      const body = (await getJson(`/v1/payments/qr_codes/${qrId}/payments`)) as {
-        items?: unknown;
-      };
-      if (!Array.isArray(body.items)) throw new PaymentProviderError('unexpected_response');
-      return body.items.map(parseProviderPayment);
-    },
-    async fetchQrImage(imageUrl) {
-      if (!isRazorpayImageUrl(imageUrl)) throw new PaymentProviderError('rejected');
-      let res: Response;
-      try {
-        res = await doFetch(imageUrl, {
-          redirect: 'follow',
-          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
-        });
-      } catch {
-        throw new PaymentProviderError('network');
-      }
-      const contentType = res.headers.get('content-type') ?? '';
-      if (!res.ok || !/^image\/(png|jpeg)\b/.test(contentType)) {
-        throw new PaymentProviderError('unexpected_response');
-      }
-      const data = Buffer.from(await res.arrayBuffer());
-      if (data.length === 0 || data.length > MAX_QR_IMAGE_BYTES) {
-        throw new PaymentProviderError('unexpected_response');
-      }
-      return { contentType: contentType.split(';')[0] ?? 'image/png', data };
-    },
-    async createOrder(input) {
-      let res: Response;
-      try {
-        res = await doFetch(`${base}/v1/orders`, {
-          method: 'POST',
-          headers: { authorization: auth, 'content-type': 'application/json' },
-          body: JSON.stringify({
-            amount: input.amountPaise,
-            currency: input.currency,
-            receipt: input.receipt,
-            notes: input.notes,
-            partial_payment: false,
-          }),
-          signal: AbortSignal.timeout(config.timeoutMs ?? RAZORPAY_TIMEOUT_MS),
-        });
-      } catch {
-        throw new PaymentProviderError('network');
-      }
-      if (!res.ok) throw new PaymentProviderError('rejected');
-      const body = (await res.json().catch(() => null)) as {
-        id?: unknown;
-        amount?: unknown;
-        currency?: unknown;
-        status?: unknown;
-      } | null;
-      // Trust nothing: the order must be exactly what we asked for.
-      if (
-        typeof body?.id !== 'string' ||
-        !/^order_[A-Za-z0-9]{6,40}$/.test(body.id) ||
-        body.amount !== input.amountPaise ||
-        body.currency !== 'INR'
-      ) {
-        throw new PaymentProviderError('unexpected_response');
-      }
-      return {
-        orderId: body.id,
-        amountPaise: body.amount,
-        currency: 'INR',
-        status: typeof body.status === 'string' ? body.status : 'created',
-      };
-    },
-  };
-}
-
-/**
- * Razorpay's payment words → the gateway-neutral states (Phase 1b). The original word travels
- * with it (providerRawStatus) so an unexpected word stays visible in the owner's audit trail.
- */
-const RAZORPAY_STATE: Record<string, PaymentState> = {
-  created: 'pending',
-  authorized: 'authorized',
-  captured: 'captured',
-  failed: 'failed',
-  refunded: 'refunded',
-};
-
-export function normaliseRazorpayPayment(payment: ProviderPayment): NormalisedPayment {
-  return {
-    paymentId: payment.paymentId,
-    orderId: payment.orderId,
-    state: RAZORPAY_STATE[payment.status] ?? 'unknown',
-    providerRawStatus: payment.status,
-    amountPaise: payment.amountPaise,
-    currency: payment.currency,
-    method: payment.method,
-    refundedPaise: payment.refundedPaise,
-  };
-}
-
-/** A monthly charge with no order of its own is stored as `subpay_<payment id>` (#33). */
-const SUBSCRIPTION_CHARGE = /^subpay_(?<paymentId>pay_[A-Za-z0-9]{6,40})$/;
-
-/**
- * Every payment Razorpay knows for one of our attempts, asked with our secret (Phase 1b): by
- * order; a QR attempt by the QR it was paid on; a monthly charge by its payment. A QR or monthly
- * payment carries no order of ours, so it is matched to the attempt's reference.
- */
-export async function razorpayOrderState(
-  provider: PaymentProvider,
-  orderRef: string,
-): Promise<ProviderOrderState> {
-  const asAttempt = (p: ProviderPayment): ProviderPayment => ({ ...p, orderId: orderRef });
-  let payments: ProviderPayment[];
-  if (QR_ID.test(orderRef)) {
-    payments = provider.fetchQrPayments
-      ? (await provider.fetchQrPayments(orderRef)).map(asAttempt)
-      : [];
-  } else {
-    const chargeId = SUBSCRIPTION_CHARGE.exec(orderRef)?.groups?.paymentId;
-    payments = chargeId
-      ? [asAttempt(await provider.fetchPayment(chargeId))]
-      : await provider.fetchOrderPayments(orderRef);
-  }
-  return { orderRef, payments: payments.map(normaliseRazorpayPayment) };
 }

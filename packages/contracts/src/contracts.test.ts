@@ -7,7 +7,6 @@ import {
   formatInr,
   isApiErrorCode,
   isCashfreeCheckout,
-  isRazorpayCheckout,
   ONLINE_PAYMENT_PROVIDERS,
   isDonationStatus,
   isLocale,
@@ -117,19 +116,6 @@ describe('receipt contracts (#29)', () => {
   });
 });
 
-describe('monthly giving contracts (#32)', () => {
-  it('routes by amount and never starts on the 29th–31st (IST)', async () => {
-    const { methodRouteFor, methodsFor, monthlyStartDate } = await import('./index.ts');
-    expect(methodRouteFor(1_500_000)).toBe('upi_autopay');
-    expect(methodRouteFor(1_500_001)).toBe('emandate_card');
-    expect(methodsFor('emandate_card')).toEqual(['emandate', 'card']);
-    expect(methodsFor('upi_autopay')).toEqual(['upi', 'emandate', 'card']);
-    expect(monthlyStartDate(new Date('2026-11-28T18:29:59Z'))).toBeNull();
-    expect(monthlyStartDate(new Date('2026-11-28T18:30:00Z'))).toBe('2026-12-01');
-    expect(monthlyStartDate(new Date('2026-12-30T05:00:00Z'))).toBe('2027-01-01');
-  });
-});
-
 describe('content management contracts (#36)', () => {
   it('allows only documents, never executables', async () => {
     const { DOCUMENT_FILE_TYPES } = await import('./index.ts');
@@ -137,33 +123,15 @@ describe('content management contracts (#36)', () => {
   });
 });
 
-describe('donation QR contracts (client, Nov 2026)', () => {
-  it('offers five QR amounts from ₹200 up to ₹2,000', async () => {
-    const { DONATION_QR_AMOUNTS_RUPEES } = await import('./index.ts');
-    expect(DONATION_QR_AMOUNTS_RUPEES).toEqual([200, 500, 1000, 1500, 2000]);
-    expect(Math.max(...DONATION_QR_AMOUNTS_RUPEES)).toBe(2000);
-  });
-});
-
 describe('payment gateway descriptors (Phase 1)', () => {
-  it('lists the online gateways', () => {
-    expect(ONLINE_PAYMENT_PROVIDERS).toEqual(['RAZORPAY', 'CASHFREE']);
+  it('lists the online gateway: Cashfree only (Razorpay is retired)', () => {
+    expect(ONLINE_PAYMENT_PROVIDERS).toEqual(['CASHFREE']);
   });
 
-  it('recognises a well-formed Razorpay descriptor only', () => {
+  it('a retired Razorpay descriptor is not a checkout the browser can open', () => {
     expect(
-      isRazorpayCheckout({ provider: 'RAZORPAY', keyId: 'rzp_test_x', orderId: 'order_1' }),
-    ).toBe(true);
-    for (const bad of [
-      null,
-      undefined,
-      'RAZORPAY',
-      { provider: 'RAZORPAY', keyId: '', orderId: 'order_1' },
-      { provider: 'RAZORPAY', keyId: 'k' },
-      { provider: 'CASHFREE', keyId: 'k', orderId: 'o' },
-    ]) {
-      expect(isRazorpayCheckout(bad)).toBe(false);
-    }
+      isCashfreeCheckout({ provider: 'RAZORPAY', keyId: 'rzp_test_x', orderId: 'order_1' }),
+    ).toBe(false);
   });
 
   it('recognises a donation reference only in its exact form', async () => {

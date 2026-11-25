@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Payments run in Razorpay test mode until launch (#28, #39): no live key may be committed.
- * Scans every tracked file for a Razorpay live key ID, a filled-in Razorpay secret assignment,
- * and any committed .env file other than .env.example. Prints file:line only, never the value.
+ * No payment secret may ever be committed (#28, #39). Scans every tracked file for a filled-in
+ * Cashfree client secret, the retired Razorpay keys (still guarded: old values must never land
+ * in Git either) and any committed .env file other than .env.example. Prints file:line only,
+ * never the value.
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -62,7 +63,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const findings = scan(trackedFiles());
   for (const f of findings) console.error(`✖ ${f.path}:${f.line} — ${f.rule}`);
   if (findings.length) {
-    console.error('Live payment credentials must never be committed (Razorpay test mode only).');
+    console.error(
+      'Payment credentials must never be committed: keys live only in the host settings.',
+    );
     process.exit(1);
   }
   console.log('✔ no live payment keys or secrets in tracked files');

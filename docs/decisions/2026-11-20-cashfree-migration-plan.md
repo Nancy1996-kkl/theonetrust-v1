@@ -696,7 +696,8 @@ https://sandbox.cashfree.com https://api.cashfree.com`; `img-src https://*.cashf
    success/failed/user-dropped and refund events.
 5. Production env in Vercel (owner enters values): `CASHFREE_CLIENT_ID`, `CASHFREE_CLIENT_SECRET`,
    `CASHFREE_ENV=production`, `PAYMENT_PROVIDER=cashfree`, `PUBLIC_SITE_URL`, `CORS_ORIGINS`;
-   web `VITE_DONATE_PROVIDER=cashfree`, `VITE_DONATE_ADAPTER=api`, `VITE_API_BASE_URL=/api/v1`.
+   web `VITE_DONATE_ADAPTER=api`, `VITE_API_BASE_URL=/api/v1` (`VITE_DONATE_PROVIDER` is no longer
+   read once Phase 8 is merged: the pop-up is always Cashfree's).
 6. Run `migrate deploy` (owner machine), re-run `01-…sql`, `launch:check` all ✔, `check:bundle` ✔,
    `check-deployed-headers` ✔ on the production URL.
 7. Smoke: ₹1 real UPI donation → panel shows success only after verification → `/admin` shows PAID,
@@ -714,6 +715,13 @@ https://sandbox.cashfree.com https://api.cashfree.com`; `img-src https://*.cashf
 - **DB**: migrations are additive except the enum value (harmless when unused); never roll back data.
 
 ### Phase 8 — Cleanup (≥ 30 days after go-live) — M
+
+> **25 Nov 2026 — owner decision:** remove Razorpay completely, prepared now and **merged only when
+> Cashfree is tested and live** (so the site always has a working Donate). Done in the
+> `feat/remove-razorpay` PR: Razorpay API adapter, webhook route, QR, subscriptions (monthly giving
+> retired until Phase 9), button/link pop-ups, env, CSP origins, wording. Kept: the `RAZORPAY`
+> enum value and every historical row; the scanners still refuse retired Razorpay keys. Rollback
+> after the merge = Vercel Instant Rollback to the last pre-merge production deployment.
 
 Remove `payments/provider/razorpay.ts`, `webhook-routes.ts` (Razorpay), Razorpay QR,
 `razorpay-button.ts`, `DonateLinkPanel`, Razorpay CSP origins, Razorpay env vars and scanners'

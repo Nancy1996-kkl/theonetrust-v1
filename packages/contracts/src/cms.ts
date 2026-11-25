@@ -135,7 +135,6 @@ export interface AdminTrustSettings {
     keyId: string | null;
     keySecretSet: boolean;
     webhookSecretSet: boolean;
-    subscriptionsEnabled: boolean;
   };
 }
 

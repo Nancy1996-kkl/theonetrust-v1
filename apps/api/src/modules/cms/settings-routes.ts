@@ -12,10 +12,11 @@ import { defined } from './content.ts';
 
 /** Server configuration shown as status only. Secrets are never passed in here. */
 export interface PaymentConfigStatus {
+  mode: 'live' | 'test' | 'not_configured';
+  /** The gateway's client (app) ID — an identifier, not a secret. */
   keyId: string | undefined;
   keySecretSet: boolean;
   webhookSecretSet: boolean;
-  subscriptionsEnabled: boolean;
 }
 
 const optional = (max: number) => z.string().trim().min(2).max(max).nullable().optional();
@@ -43,15 +44,10 @@ function view(
     ownerEmailSource: s.ownerEmail ? 'settings' : serverOwnerEmail ? 'server' : 'none',
     feeTable: s.feeTable,
     payment: {
-      mode: !payment.keyId
-        ? 'not_configured'
-        : payment.keyId.startsWith('rzp_live_')
-          ? 'live'
-          : 'test',
+      mode: payment.mode,
       keyId: payment.keyId ?? null,
       keySecretSet: payment.keySecretSet,
       webhookSecretSet: payment.webhookSecretSet,
-      subscriptionsEnabled: payment.subscriptionsEnabled,
     },
   };
 }

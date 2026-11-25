@@ -40,10 +40,15 @@ function client(overrides: Partial<DonateClient> = {}): DonateClient {
         feePaise: 0,
         amountPaise: 100_000,
         currency: 'INR' as const,
-        checkout: { provider: 'RAZORPAY' as const, keyId: 'rzp_test_k', orderId: 'order_X1' },
+        checkout: {
+          provider: 'CASHFREE' as const,
+          paymentSessionId: 'session_X1',
+          mode: 'sandbox' as const,
+          orderId: 'TOT-D-ABCDEFGHJKMN',
+        },
       },
     })),
-    checkout: vi.fn(async () => ({ kind: 'failed' as const, reason: 'upi_limit' as const })),
+    checkout: vi.fn(async () => ({ kind: 'failed' as const })),
     verify: vi.fn(),
     status: vi.fn(),
     receipt: vi.fn(async () => null),
@@ -98,7 +103,7 @@ describe('bank transfer in the donate panel', () => {
     await user.click(within(dialog).getByRole('button', { name: t.backToPage }));
   });
 
-  it('is offered from the UPI-limit screen; failures explained; back returns to review', async () => {
+  it('is offered on the review step; failures explained; back returns to review', async () => {
     const user = userEvent.setup();
     const startBankTransfer = vi
       .fn()
@@ -106,8 +111,7 @@ describe('bank transfer in the donate panel', () => {
       .mockResolvedValue({ ok: true, intent: BANK });
     const donate = client({ startBankTransfer, claimBankTransfer: vi.fn(async () => false) });
     const dialog = await review(user, donate);
-    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
-    await user.click(await within(dialog).findByRole('button', { name: t.payBank }));
+    await user.click(within(dialog).getByRole('button', { name: t.bankTransferLink }));
     expect(await within(dialog).findByRole('heading', { name: t.netTitle })).toBeVisible();
     await user.click(within(dialog).getByRole('button', { name: t.tryAgain }));
     await user.click(within(dialog).getByRole('button', { name: t.bankTransferLink }));

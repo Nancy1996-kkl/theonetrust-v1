@@ -132,14 +132,11 @@ const en = {
   payLive: 'Live',
   payTest: 'Test',
   payNone: 'Not configured',
-  payKeyId: 'Public key ID',
+  payKeyId: 'Cashfree client (app) ID',
   paySecret: 'Key secret',
   payWebhook: 'Webhook secret',
-  payMonthly: 'Monthly giving',
   paySet: 'Set',
   payNotSet: 'Not set',
-  payOn: 'On',
-  payOff: 'Off',
 };
 
 export type CmsStrings = typeof en;
@@ -277,14 +274,11 @@ const ta: CmsStrings = {
   payLive: 'உண்மையான பணம்',
   payTest: 'சோதனை',
   payNone: 'அமைக்கப்படவில்லை',
-  payKeyId: 'பொது விசை ID',
+  payKeyId: 'Cashfree கிளையன்ட் (App) ID',
   paySecret: 'விசை ரகசியம்',
   payWebhook: 'Webhook ரகசியம்',
-  payMonthly: 'மாதாந்திர நன்கொடை',
   paySet: 'அமைக்கப்பட்டது',
   payNotSet: 'அமைக்கப்படவில்லை',
-  payOn: 'இயக்கத்தில்',
-  payOff: 'அணைப்பில்',
 };
 
 export const CMS_STRINGS: Record<UiLang, CmsStrings> = { en, ta };

@@ -23,11 +23,10 @@ import { processDueNotifications } from './modules/notifications/worker.ts';
 
 /**
  * POSTs after which an email or sheet row is usually queued (a payment confirmed, a webhook, a
- * help request, monthly giving). After such a response the function keeps running briefly to send
+ * help request, an owner action). After such a response the function keeps running briefly to send
  * them (Phase 2d) — Vercel's free plan runs cron only daily, so donors would otherwise wait.
  */
-export const DRAIN_AFTER =
-  /^\/api\/v1\/(payments\/verify|webhooks\/|help-requests|subscriptions\/|admin\/)/;
+export const DRAIN_AFTER = /^\/api\/v1\/(payments\/verify|webhooks\/|help-requests|admin\/)/;
 /** Rows sent per inline drain; the daily job sends anything left. */
 export const INLINE_DRAIN_BATCH = 10;
 

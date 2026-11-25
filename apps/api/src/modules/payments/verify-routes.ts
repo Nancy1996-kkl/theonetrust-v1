@@ -6,18 +6,12 @@ import { AppError } from '../../http/errors.ts';
 import { parseInput } from '../../http/validation.ts';
 import { PaymentProviderError, type PaymentProvider } from '../donations/provider.ts';
 import { currentReceiptToken } from '../receipts/issue.ts';
-import { applyProviderPayment, donorStatus } from './reconcile.ts';
+import { donorStatus } from './reconcile.ts';
 import { recheckAttempt } from './recheck.ts';
 
 const reference = z.string().regex(/^TOT-D-[0-9A-HJKMNP-TV-Z]{12}$/);
-const VerifyBody = z.object({
-  publicReference: reference,
-  orderId: z.string().regex(/^order_[A-Za-z0-9]{6,40}$/),
-  paymentId: z.string().regex(/^pay_[A-Za-z0-9]{6,40}$/),
-  signature: z.string().max(128),
-});
 /** Cashfree has no browser signature: the donor's page only names the donation to re-check. */
-const CashfreeVerifyBody = z.object({ publicReference: reference }).strict();
+const VerifyBody = z.object({ publicReference: reference }).strict();
 const StatusParams = z.object({ reference });
 
 export interface VerifyRouteOptions {
@@ -33,9 +27,9 @@ export interface VerifyRouteOptions {
 }
 
 /**
- * `POST /api/v1/payments/verify` (Checkout callback) and
+ * `POST /api/v1/payments/verify` (the donor is back from the payment window) and
  * `GET /api/v1/donations/status/:reference` (safe re-check). Neither trusts the browser: the
- * signature is checked in constant time, then the payment state is FETCHED from Razorpay and
+ * browser only names the donation; the order is FETCHED from the gateway with our secret and
  * compared with our own order before anything changes. Responses carry donor-safe fields only.
  */
 export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRouteOptions) {
@@ -75,56 +69,25 @@ export async function paymentVerifyRoutes(app: FastifyInstance, opts: VerifyRout
     { config: { rateLimit: { max: opts.verifyPerHour, timeWindow: 3_600_000 } } },
     async (request) => {
       const { db, provider } = deps();
-      if (provider.name === 'CASHFREE') {
-        // Nothing from the browser is trusted: the order is fetched from Cashfree with our secret.
-        const { publicReference } = parseInput(CashfreeVerifyBody, request.body);
-        const intent = await intentWithAttempt(db, publicReference);
-        const attempt = intent.paymentAttempts[0];
-        if (!attempt || intent.channel !== 'CHECKOUT') throw new AppError('NOT_FOUND');
-        try {
-          const { status } = await recheckAttempt(db, provider, attempt, opts.now());
-          return reply(db, intent, status);
-        } catch (error) {
-          request.log.warn(
-            {
-              reason: error instanceof PaymentProviderError ? error.reason : 'unknown',
-              ref: intent.publicReference,
-            },
-            'Payment re-check failed',
-          );
-          // Cashfree could not be asked: stay as recorded, the status route re-checks later.
-          return reply(db, intent, intent.status);
-        }
-      }
-      const body = parseInput(VerifyBody, request.body);
-      const intent = await intentWithAttempt(db, body.publicReference);
-      const attempt = intent.paymentAttempts.find((a) => a.providerOrderId === body.orderId);
+      // Nothing from the browser is trusted: the order is fetched from the gateway with our secret.
+      const { publicReference } = parseInput(VerifyBody, request.body);
+      const intent = await intentWithAttempt(db, publicReference);
+      const attempt = intent.paymentAttempts[0];
       if (!attempt || intent.channel !== 'CHECKOUT') throw new AppError('NOT_FOUND');
-
-      // A forged or replayed-for-another-order signature changes NOTHING.
-      if (!provider.verifyCheckoutSignature(body.orderId, body.paymentId, body.signature)) {
-        request.log.warn({ ref: intent.publicReference }, 'Checkout signature rejected');
-        throw new AppError('VALIDATION_ERROR', [{ path: 'signature', issue: 'invalid' }]);
-      }
-
-      let payment;
       try {
-        payment = await provider.fetchPayment(body.paymentId);
+        const { status } = await recheckAttempt(db, provider, attempt, opts.now());
+        return reply(db, intent, status);
       } catch (error) {
         request.log.warn(
           {
             reason: error instanceof PaymentProviderError ? error.reason : 'unknown',
             ref: intent.publicReference,
           },
-          'Payment fetch failed',
+          'Payment re-check failed',
         );
-        // Signature was fine but Razorpay could not be asked: stay pending, re-check later.
+        // The gateway could not be asked: stay as recorded, the status route re-checks later.
         return reply(db, intent, intent.status);
       }
-      const status = await applyProviderPayment(db, attempt.id, payment, opts.now(), {
-        signatureVerified: true,
-      });
-      return reply(db, intent, status);
     },
   );
 

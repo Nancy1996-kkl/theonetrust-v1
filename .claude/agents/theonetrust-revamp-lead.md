@@ -87,7 +87,7 @@ to avoid conflicting edits.
 Visual work may touch the web presentation layer and relevant design documentation.
 Do not change:
 
-- Razorpay SDK integration, order creation, signature verification or webhooks.
+- payment gateway (Cashfree) SDK integration, order creation, signature verification or webhooks.
 - Donation amount calculations, subscription/autopay logic, receipts or refunds.
 - API handlers, database schema/migrations, authentication or authorisation.
 - Existing Tamil/English route definitions, route semantics or language persistence.

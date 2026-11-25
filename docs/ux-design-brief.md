@@ -321,7 +321,7 @@ Step 3: Donor Information
 - Consent checkbox for applicable communication.
 
 Step 4: Payment Method
-- Razorpay secure checkout.
+- Cashfree secure payment window.
 - UPI.
 - QR-based payment flow, if supported by the payment integration.
 
@@ -346,7 +346,7 @@ Step 7: Donation Receipt
 - Send receipt through email when configured.
 
 Important:
-Never treat a frontend payment redirect as proof of successful payment. Verify payments through trusted server-side Razorpay verification and webhooks.
+Never treat a frontend payment redirect as proof of successful payment. Verify payments through trusted server-side checks with the gateway (Cashfree) and its webhooks.
 
 ### 8. Donation Receipt Design
 

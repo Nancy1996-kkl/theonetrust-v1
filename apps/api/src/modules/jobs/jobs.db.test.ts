@@ -4,7 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.ts';
 import { loadEnv } from '../../config/env.ts';
 import { useTestDb } from '../../test/db.ts';
-import type { PaymentProvider, ProviderPayment } from '../donations/provider.ts';
+import { fakeCashfree } from '../../test/fake-cashfree.ts';
 import type { EmailMessage, EmailProvider } from '../notifications/provider.ts';
 import { RATE_LIMIT_KEEP_MS, RECHECK_MAX_AGE_MS, RECHECK_MIN_AGE_MS } from './daily.ts';
 
@@ -21,32 +21,15 @@ const email: EmailProvider = {
     return { id: `msg_${sent.length}` };
   },
 };
-const remote = new Map<string, ProviderPayment>();
+const cf = fakeCashfree('jobs-cashfree-secret-0001');
 let seq = 0;
-const provider: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_jobs0000001',
-  verifyCheckoutSignature: () => false,
-  createOrder: async (i) => ({
-    orderId: `order_J${String(++seq).padStart(8, '0')}`,
-    amountPaise: i.amountPaise,
-    currency: 'INR',
-    status: 'created',
-  }),
-  fetchPayment: async (id) => {
-    const p = remote.get(id);
-    if (!p) throw new Error('unknown');
-    return p;
-  },
-  fetchOrderPayments: async (orderId) => [...remote.values()].filter((p) => p.orderId === orderId),
-};
 
 let app: FastifyInstance;
 beforeAll(async () => {
-  app = buildApp(loadEnv({ NODE_ENV: 'test', CRON_SECRET }), {
+  app = buildApp(loadEnv({ NODE_ENV: 'test', ...cf.env, CRON_SECRET }), {
     db,
     now: () => NOW,
-    paymentProvider: provider,
+    paymentProvider: cf.provider,
     outbox: {
       db,
       provider: email,
@@ -81,6 +64,7 @@ async function donation(ageMs: number) {
       programme: null,
       donorName: 'Synthetic Donor',
       donorEmail: 'donor@example.org',
+      donorPhone: '+919876543210',
       hideNamePublicly: true,
       wantsReceipt: false,
       coverFee: false,
@@ -88,27 +72,16 @@ async function donation(ageMs: number) {
       locale: 'en',
     },
   });
-  const { publicReference, checkout } = res.json() as {
-    publicReference: string;
-    checkout: { orderId: string };
-  };
+  const { publicReference } = res.json() as { publicReference: string };
   await db.donationIntent.update({
     where: { publicReference },
     data: { createdAt: new Date(NOW.getTime() - ageMs) },
   });
-  return { ref: publicReference, orderId: checkout.orderId };
+  return { ref: publicReference };
 }
-function captured(orderId: string) {
-  const p: ProviderPayment = {
-    paymentId: `pay_J${String(++seq).padStart(8, '0')}`,
-    orderId,
-    amountPaise: 100_000,
-    currency: 'INR',
-    status: 'captured',
-    method: 'upi',
-    refundedPaise: 0,
-  };
-  remote.set(p.paymentId, p);
+function captured(ref: string) {
+  seq += 1;
+  cf.pay(ref);
 }
 const status = async (ref: string) =>
   (await db.donationIntent.findUniqueOrThrow({ where: { publicReference: ref } })).status;
@@ -133,11 +106,11 @@ describe('daily job route (Phase 2d)', () => {
 
   it('heals lost payments in the window, sends queued emails, clears old counters', async () => {
     const lost = await donation(RECHECK_MIN_AGE_MS + 60_000); // webhook never arrived
-    captured(lost.orderId);
+    captured(lost.ref);
     const fresh = await donation(60_000); // the donor may still be paying: left alone
-    captured(fresh.orderId);
+    captured(fresh.ref);
     const old = await donation(RECHECK_MAX_AGE_MS + 60_000); // too old: owner re-check only
-    captured(old.orderId);
+    captured(old.ref);
     const hex = (s: string) => createHash('sha256').update(s).digest('hex');
     await db.rateLimitBucket.createMany({
       data: [
@@ -165,7 +138,7 @@ describe('daily job route (Phase 2d)', () => {
     expect(report.rateLimits).toMatchObject({ ok: true });
     expect(report.rateLimits.deleted).toBeGreaterThanOrEqual(1);
     expect(await db.rateLimitBucket.count({ where: { key: hex(`new-${seq}`) } })).toBe(1);
-    expect(res.body).not.toMatch(/donor@|Synthetic|pay_|order_/); // counts only
+    expect(res.body).not.toMatch(/donor@|Synthetic|TOT-D-|\d{12}/); // counts only
   });
 
   it('a failing step is reported by name and never stops the others', async () => {

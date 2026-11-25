@@ -55,7 +55,7 @@ function Section<Row>({
 /**
  * `/admin/donations/:id` (#31): everything about one donation — payment attempts, status
  * history, webhook history, bank transfers, acknowledgements, emails and exceptions. The only
- * action is an audited "re-check with Razorpay"; amounts and statuses are never edited here.
+ * action is an audited "re-check with the gateway (Cashfree)"; amounts and statuses are never edited here.
  */
 export function DonationDetailPage() {
   const { api, t, lang } = useAdmin();

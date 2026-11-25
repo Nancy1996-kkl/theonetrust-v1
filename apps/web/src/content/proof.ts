@@ -200,8 +200,8 @@ export const PROOF_CONTENT: ProofContent = {
           ta: 'நான் எப்படி நன்கொடை கொடுப்பது?',
         },
         answer: {
-          en: 'Press “Donate”, choose a need and an amount, add your name and contact, then pay by UPI app, card or netbanking in Razorpay’s secure checkout. For larger gifts, bank transfer is also offered when the trust has switched it on.',
-          ta: '“நன்கொடை” என்பதை அழுத்தி, ஒரு தேவையையும் தொகையையும் தேர்வு செய்து, உங்கள் பெயரையும் தொடர்பு விவரத்தையும் கொடுங்கள். பிறகு Razorpay-இன் பாதுகாப்பான பக்கத்தில் UPI செயலி, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்துங்கள். பெரிய தொகைக்கு, அறக்கட்டளை இயக்கியிருந்தால், வங்கிப் பரிமாற்றம் (bank transfer) மூலமும் கொடுக்கலாம்.',
+          en: 'Press “Donate”, choose a need and an amount, add your name and contact, then pay by UPI app, card or netbanking in Cashfree’s secure checkout. For larger gifts, bank transfer is also offered when the trust has switched it on.',
+          ta: '“நன்கொடை” என்பதை அழுத்தி, ஒரு தேவையையும் தொகையையும் தேர்வு செய்து, உங்கள் பெயரையும் தொடர்பு விவரத்தையும் கொடுங்கள். பிறகு Cashfree-இன் பாதுகாப்பான பக்கத்தில் UPI செயலி, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்துங்கள். பெரிய தொகைக்கு, அறக்கட்டளை இயக்கியிருந்தால், வங்கிப் பரிமாற்றம் (bank transfer) மூலமும் கொடுக்கலாம்.',
         },
       },
       {
@@ -281,8 +281,8 @@ export const PROOF_CONTENT: ProofContent = {
           ta: 'பணத்தைத் திருப்பிப் பெற முடியுமா?',
         },
         answer: {
-          en: 'Donations are normally not refunded. We do refund if you were charged twice, entered a wrong amount by mistake, or the payment was made without your permission. Contact us with the date, amount and payment reference; the refund goes back to your original payment method through Razorpay. The refund policy has the details.',
-          ta: 'பொதுவாக நன்கொடை திருப்பித் தரப்படாது. ஆனால் ஒரே நன்கொடைக்கு இரண்டு முறை பணம் எடுக்கப்பட்டிருந்தால், தொகையைத் தவறாகப் போட்டிருந்தால், அல்லது உங்கள் அனுமதி இல்லாமல் பணம் செலுத்தப்பட்டிருந்தால் திருப்பித் தருவோம். தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண்ணுடன் எங்களைத் தொடர்பு கொள்ளுங்கள்; பணம் Razorpay வழியாக நீங்கள் செலுத்திய அதே முறைக்குத் திரும்ப வரும். முழு விவரம் பணம் திருப்பித் தருதல் கொள்கையில் உள்ளது.',
+          en: 'Donations are normally not refunded. We do refund if you were charged twice, entered a wrong amount by mistake, or the payment was made without your permission. Contact us with the date, amount and payment reference; the refund goes back to your original payment method through Cashfree. The refund policy has the details.',
+          ta: 'பொதுவாக நன்கொடை திருப்பித் தரப்படாது. ஆனால் ஒரே நன்கொடைக்கு இரண்டு முறை பணம் எடுக்கப்பட்டிருந்தால், தொகையைத் தவறாகப் போட்டிருந்தால், அல்லது உங்கள் அனுமதி இல்லாமல் பணம் செலுத்தப்பட்டிருந்தால் திருப்பித் தருவோம். தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண்ணுடன் எங்களைத் தொடர்பு கொள்ளுங்கள்; பணம் Cashfree வழியாக நீங்கள் செலுத்திய அதே முறைக்குத் திரும்ப வரும். முழு விவரம் பணம் திருப்பித் தருதல் கொள்கையில் உள்ளது.',
         },
       },
       {
@@ -329,8 +329,8 @@ export const PROOF_CONTENT: ProofContent = {
           ta: 'என் விவரங்கள் பாதுகாப்பாக இருக்குமா?',
         },
         answer: {
-          en: 'Yes. Your name and contact details are used only for your donation or request — to send your acknowledgement and to contact you about it. They are never shown publicly or sold. Payments are handled by Razorpay; we never see your card details or UPI PIN. The privacy policy has the details.',
-          ta: 'ஆம். உங்கள் பெயரையும் தொடர்பு விவரங்களையும் உங்கள் நன்கொடை அல்லது கோரிக்கைக்கு மட்டுமே — ஒப்புகை அனுப்பவும், அதைப் பற்றி உங்களிடம் பேசவும் — பயன்படுத்துவோம். அவற்றை யாருக்கும் காட்டுவதும் இல்லை, விற்பதும் இல்லை. பணம் செலுத்துதலை Razorpay கவனித்துக்கொள்கிறது; உங்கள் கார்டு விவரங்களையோ UPI PIN-ஐயோ நாங்கள் பார்ப்பதில்லை. முழு விவரம் தனியுரிமைக் கொள்கையில் உள்ளது.',
+          en: 'Yes. Your name and contact details are used only for your donation or request — to send your acknowledgement and to contact you about it. They are never shown publicly or sold. Payments are handled by Cashfree; we never see your card details or UPI PIN. The privacy policy has the details.',
+          ta: 'ஆம். உங்கள் பெயரையும் தொடர்பு விவரங்களையும் உங்கள் நன்கொடை அல்லது கோரிக்கைக்கு மட்டுமே — ஒப்புகை அனுப்பவும், அதைப் பற்றி உங்களிடம் பேசவும் — பயன்படுத்துவோம். அவற்றை யாருக்கும் காட்டுவதும் இல்லை, விற்பதும் இல்லை. பணம் செலுத்துதலை Cashfree கவனித்துக்கொள்கிறது; உங்கள் கார்டு விவரங்களையோ UPI PIN-ஐயோ நாங்கள் பார்ப்பதில்லை. முழு விவரம் தனியுரிமைக் கொள்கையில் உள்ளது.',
         },
       },
       {

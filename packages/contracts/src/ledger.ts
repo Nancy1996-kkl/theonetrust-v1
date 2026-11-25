@@ -12,7 +12,7 @@ export type LedgerReceiptFilter = (typeof LEDGER_RECEIPT_FILTERS)[number];
 export const LEDGER_PAGE_SIZE = 25;
 
 export interface LedgerFilters {
-  /** Exact receipt number, donation reference, Razorpay order/payment ID or bank reference. */
+  /** Exact receipt number, donation reference, gateway order/payment ID or bank reference. */
   q?: string;
   /** IST calendar dates, YYYY-MM-DD, inclusive. */
   from?: string;
@@ -180,35 +180,7 @@ export interface ReasonRequest {
   reason: string;
 }
 
-/** Owner's monthly-giving list (#33). */
-export interface AdminSubscriptionItem {
-  id: string;
-  reference: string;
-  amountPaise: number;
-  status: 'CREATED' | 'AUTHENTICATED' | 'ACTIVE' | 'PAUSED' | 'HALTED' | 'CANCELLED' | 'COMPLETED';
-  methodRoute: 'upi_autopay' | 'emandate_card';
-  donorName: string;
-  createdAt: string;
-  charges: number;
-  paidCharges: number;
-  lastChargeAt: string | null;
-  openExceptions: number;
-}
-
-export interface AdminSubscriptionList {
-  items: AdminSubscriptionItem[];
-  page: number;
-  pageSize: number;
-  total: number;
-}
-
-export interface AdminSubscriptionDetail extends AdminSubscriptionItem {
-  history: Array<{ from: string; to: string; source: string; at: string }>;
-  chargeList: LedgerItem[];
-  exceptions: Array<{ id: string; kind: string; status: 'OPEN' | 'RESOLVED'; createdAt: string }>;
-}
-
-/** Webhook delivery view (#39): what Razorpay sent and how it was handled. No payloads. */
+/** Webhook delivery view (#39): what the gateway sent and how it was handled. No payloads. */
 export type WebhookStatusDto = 'RECEIVED' | 'PROCESSED' | 'IGNORED' | 'FAILED';
 
 export interface AdminWebhookItem {
@@ -220,7 +192,7 @@ export interface AdminWebhookItem {
   attempts: number;
   receivedAt: string;
   processedAt: string | null;
-  /** Still RECEIVED or FAILED after the stale window: Razorpay retries, the owner should look. */
+  /** Still RECEIVED or FAILED after the stale window: the gateway retries, the owner should look. */
   needsAttention: boolean;
   donation: { id: string; reference: string } | null;
 }

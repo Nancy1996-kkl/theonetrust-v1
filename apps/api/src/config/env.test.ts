@@ -130,17 +130,6 @@ describe('loadEnv — sign-in settings', () => {
   });
 });
 
-describe('loadEnv — donation QR (client, Nov 2026)', () => {
-  it('is off by default with a ₹2,000 cap and a 15-minute expiry', () => {
-    const env = loadEnv({});
-    expect(env.RAZORPAY_QR_ENABLED).toBe(false);
-    expect(env.DONATION_QR_MAX_PAISE).toBe(200_000);
-    expect(env.DONATION_QR_EXPIRY_MINUTES).toBe(15);
-    expect(loadEnv({ RAZORPAY_QR_ENABLED: 'true' }).RAZORPAY_QR_ENABLED).toBe(true);
-    expect(() => loadEnv({ DONATION_QR_EXPIRY_MINUTES: '500' })).toThrow();
-  });
-});
-
 describe('loadEnv — trusted proxy (#38)', () => {
   it('defaults to private and loopback networks and refuses odd values', () => {
     expect(loadEnv({}).TRUST_PROXY).toBe('loopback, linklocal, uniquelocal');
@@ -172,30 +161,15 @@ describe('loadEnv — public content', () => {
   });
 });
 
-describe('loadEnv — Razorpay keys', () => {
-  const test = { RAZORPAY_KEY_ID: 'rzp_test_abcdefgh12', RAZORPAY_KEY_SECRET: 'secret-secret-123' };
-
-  it('accepts a test key pair, and neither', () => {
-    expect(loadEnv(test).RAZORPAY_KEY_ID).toBe('rzp_test_abcdefgh12');
-    expect(
-      loadEnv({ RAZORPAY_KEY_ID: '', RAZORPAY_KEY_SECRET: '' }).RAZORPAY_KEY_ID,
-    ).toBeUndefined();
+describe('loadEnv — retired gateway settings', () => {
+  it('ignores leftover Razorpay variables: nothing reads them and none reaches the config', () => {
+    const env = loadEnv({
+      RAZORPAY_KEY_ID: 'rzp_test_abcdefgh12',
+      RAZORPAY_KEY_SECRET: 'secret-secret-123',
+      RAZORPAY_QR_ENABLED: 'true',
+    }) as Record<string, unknown>;
+    expect(Object.keys(env).filter((k) => k.startsWith('RAZORPAY'))).toEqual([]);
     expect(loadEnv({}).DONATION_RATE_LIMIT_PER_HOUR).toBe(20);
-  });
-
-  it.each([
-    ['RAZORPAY_KEY_SECRET', { RAZORPAY_KEY_ID: 'rzp_test_abcdefgh12' }],
-    ['RAZORPAY_KEY_ID', { RAZORPAY_KEY_SECRET: 'secret-secret-123' }],
-    ['RAZORPAY_KEY_ID', { ...test, RAZORPAY_KEY_ID: ['rzp', 'live', 'abcdefgh12'].join('_') }],
-    ['RAZORPAY_KEY_ID', { ...test, RAZORPAY_KEY_ID: 'not-a-key' }],
-  ])('rejects %s', (key, source) => {
-    expect(() => loadEnv(source)).toThrow(expect.objectContaining({ invalidKeys: [key] }));
-  });
-
-  it('never echoes the secret', () => {
-    expect(() => loadEnv({ RAZORPAY_KEY_SECRET: 'super-secret-value-1' })).toThrow(
-      expect.objectContaining({ message: expect.not.stringContaining('super-secret') }),
-    );
   });
 });
 
@@ -215,10 +189,12 @@ describe('loadEnv — payment safety windows (Phase 0)', () => {
 });
 
 describe('loadEnv — payment gateway (Phase 1)', () => {
-  it('defaults to razorpay, accepts none, refuses anything else', () => {
-    expect(loadEnv({ NODE_ENV: 'test' }).PAYMENT_PROVIDER).toBe('razorpay');
+  it('defaults to none (online giving off), accepts cashfree, refuses anything else', () => {
+    expect(loadEnv({ NODE_ENV: 'test' }).PAYMENT_PROVIDER).toBe('none');
     expect(loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'none' }).PAYMENT_PROVIDER).toBe('none');
-    expect(() => loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'stripe' })).toThrow();
+    for (const retired of ['razorpay', 'stripe']) {
+      expect(() => loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: retired })).toThrow();
+    }
   });
 });
 
@@ -253,9 +229,9 @@ describe('loadEnv — Cashfree (Phase 4)', () => {
     CASHFREE_CLIENT_SECRET: 'cf-secret-0123456789',
   };
 
-  it('keeps Razorpay the default, no Cashfree mode until chosen, a pinned API version', () => {
+  it('is off by default, no Cashfree mode until chosen, a pinned API version', () => {
     const env = loadEnv({});
-    expect(env.PAYMENT_PROVIDER).toBe('razorpay');
+    expect(env.PAYMENT_PROVIDER).toBe('none');
     expect(env.CASHFREE_ENV).toBeUndefined();
     expect(env.CASHFREE_API_VERSION).toBe('2026-01-01');
     expect(env.CASHFREE_ORDER_EXPIRY_MINUTES).toBe(30);

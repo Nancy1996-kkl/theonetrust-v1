@@ -27,16 +27,10 @@ import { publicContentRoutes } from './modules/public-content/routes.ts';
 import { helpPublicRoutes } from './modules/help/public-routes.ts';
 import { donationRoutes } from './modules/donations/routes.ts';
 import { paymentVerifyRoutes } from './modules/payments/verify-routes.ts';
-import { razorpayWebhookRoutes } from './modules/payments/webhook-routes.ts';
 import { cashfreeWebhookRoutes } from './modules/payments/cashfree-webhook-routes.ts';
 import { cashfreeProvider } from './modules/donations/cashfree.ts';
-import { razorpayProvider, type PaymentProvider } from './modules/donations/provider.ts';
+import type { PaymentProvider } from './modules/donations/provider.ts';
 import { receiptRoutes } from './modules/receipts/routes.ts';
-import {
-  razorpaySubscriptions,
-  type SubscriptionProvider,
-} from './modules/subscriptions/provider.ts';
-import { subscriptionRoutes } from './modules/subscriptions/routes.ts';
 import { healthRoutes } from './routes/health.ts';
 import { deriveAuthKeys } from './security/crypto.ts';
 
@@ -63,7 +57,6 @@ const PII_KEYS = [
 export const REDACT_PATHS = [
   'req.headers.authorization',
   'req.headers.cookie',
-  'req.headers["x-razorpay-signature"]',
   'req.headers["x-webhook-signature"]',
   'res.headers["set-cookie"]',
   ...PII_KEYS.flatMap((key) => [key, `*.${key}`, `*.*.${key}`]),
@@ -82,10 +75,8 @@ export interface BuildAppOptions {
   db?: Db;
   /** Clock, injectable for session-expiry and authenticator tests. */
   now?: () => Date;
-  /** Payment provider; defaults to Razorpay when its keys are configured. */
+  /** Payment provider; defaults to Cashfree when PAYMENT_PROVIDER=cashfree and it is configured. */
   paymentProvider?: PaymentProvider;
-  /** Razorpay Subscriptions (#32); defaults to Razorpay when keys are set and it is enabled. */
-  subscriptionProvider?: SubscriptionProvider;
   /** Private transparency-document storage (#36); defaults to DOCUMENT_STORAGE_DIR when set. */
   documentStore?: DocumentStore;
 }
@@ -195,54 +186,24 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
   const siteUrl = env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173';
   const paymentProvider =
     options.paymentProvider ??
-    (env.PAYMENT_PROVIDER === 'razorpay' && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
-      ? razorpayProvider({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
-      : env.PAYMENT_PROVIDER === 'cashfree' &&
-          env.CASHFREE_CLIENT_ID &&
-          env.CASHFREE_CLIENT_SECRET &&
-          env.CASHFREE_ENV
-        ? cashfreeProvider({
-            clientId: env.CASHFREE_CLIENT_ID,
-            clientSecret: env.CASHFREE_CLIENT_SECRET,
-            mode: env.CASHFREE_ENV,
-            apiVersion: env.CASHFREE_API_VERSION,
-            siteUrl,
-            ...(siteUrl.startsWith('https://') && {
-              notifyUrl: `${siteUrl.replace(/\/+$/, '')}${API_V1_PREFIX}/webhooks/cashfree`,
-            }),
-            orderExpiryMinutes: env.CASHFREE_ORDER_EXPIRY_MINUTES,
-            now: options.now ?? (() => new Date()),
-          })
-        : undefined);
-  // Monthly giving (#32): only when switched on [CONFIRM] and fully configured.
-  const subscriptionProvider =
-    options.subscriptionProvider ??
-    (env.PAYMENT_PROVIDER === 'razorpay' && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET
-      ? razorpaySubscriptions({ keyId: env.RAZORPAY_KEY_ID, keySecret: env.RAZORPAY_KEY_SECRET })
+    (env.PAYMENT_PROVIDER === 'cashfree' &&
+    env.CASHFREE_CLIENT_ID &&
+    env.CASHFREE_CLIENT_SECRET &&
+    env.CASHFREE_ENV
+      ? cashfreeProvider({
+          clientId: env.CASHFREE_CLIENT_ID,
+          clientSecret: env.CASHFREE_CLIENT_SECRET,
+          mode: env.CASHFREE_ENV,
+          apiVersion: env.CASHFREE_API_VERSION,
+          siteUrl,
+          ...(siteUrl.startsWith('https://') && {
+            notifyUrl: `${siteUrl.replace(/\/+$/, '')}${API_V1_PREFIX}/webhooks/cashfree`,
+          }),
+          orderExpiryMinutes: env.CASHFREE_ORDER_EXPIRY_MINUTES,
+          now: options.now ?? (() => new Date()),
+        })
       : undefined);
-  const subscriptionKeyId = paymentProvider?.publicKeyId ?? env.RAZORPAY_KEY_ID;
-  // PAYMENT_PROVIDER=none switches monthly giving off too (new mandates are online payments).
-  const monthlyOffered = Boolean(
-    env.PAYMENT_PROVIDER === 'razorpay' &&
-    env.RAZORPAY_SUBSCRIPTIONS_ENABLED &&
-    options.db &&
-    keys &&
-    subscriptionProvider &&
-    subscriptionKeyId,
-  );
-  app.register(subscriptionRoutes, {
-    prefix: `${API_V1_PREFIX}/subscriptions`,
-    enabled: monthlyOffered,
-    perHour: env.DONATION_RATE_LIMIT_PER_HOUR,
-    now: options.now ?? (() => new Date()),
-    ...(options.db && { db: options.db }),
-    ...(subscriptionProvider && { provider: subscriptionProvider }),
-    ...(subscriptionKeyId && { keyId: subscriptionKeyId }),
-    ...(keys && { manageKey: keys.manage }),
-  });
-
   app.register(donationRoutes, {
-    monthlyOffered,
     ...(options.idempotencyWaitMs !== undefined && {
       idempotencyWaitMs: options.idempotencyWaitMs,
     }),
@@ -252,9 +213,6 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     now: options.now ?? (() => new Date()),
     ...(options.db && { db: options.db }),
     ...(paymentProvider && { provider: paymentProvider }),
-    ...(env.RAZORPAY_QR_ENABLED && {
-      qr: { maxPaise: env.DONATION_QR_MAX_PAISE, expiryMinutes: env.DONATION_QR_EXPIRY_MINUTES },
-    }),
   });
 
   // Payment verification and donor status re-check (#26).
@@ -283,22 +241,13 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     ...(paymentProvider && { provider: paymentProvider }),
   });
 
-  // Razorpay webhook (#27): raw-body signature check, durable idempotent event log.
-  app.register(razorpayWebhookRoutes, {
-    prefix: `${API_V1_PREFIX}/webhooks`,
-    now: options.now ?? (() => new Date()),
-    reprocessAfterMs: env.WEBHOOK_REPROCESS_AFTER_MS,
-    ...(options.db && { db: options.db }),
-    ...(env.RAZORPAY_WEBHOOK_SECRET && { secret: env.RAZORPAY_WEBHOOK_SECRET }),
-  });
-
   // Cashfree webhook (Phase 4c): signed with the client secret; the order is always re-fetched.
   app.register(cashfreeWebhookRoutes, {
     prefix: `${API_V1_PREFIX}/webhooks`,
     now: options.now ?? (() => new Date()),
     reprocessAfterMs: env.WEBHOOK_REPROCESS_AFTER_MS,
     ...(options.db && { db: options.db }),
-    ...(paymentProvider?.name === 'CASHFREE' && { provider: paymentProvider }),
+    ...(paymentProvider && { provider: paymentProvider }),
     ...(env.CASHFREE_CLIENT_SECRET && { secret: env.CASHFREE_CLIENT_SECRET }),
   });
 
@@ -386,10 +335,16 @@ export function buildApp(env: Env, options: BuildAppOptions = {}): FastifyInstan
     },
     ownerEmail: env.OWNER_NOTIFICATION_EMAIL,
     paymentStatus: {
-      keyId: env.RAZORPAY_KEY_ID,
-      keySecretSet: Boolean(env.RAZORPAY_KEY_SECRET),
-      webhookSecretSet: Boolean(env.RAZORPAY_WEBHOOK_SECRET),
-      subscriptionsEnabled: env.RAZORPAY_SUBSCRIPTIONS_ENABLED,
+      mode:
+        env.PAYMENT_PROVIDER !== 'cashfree' || !env.CASHFREE_CLIENT_ID || !env.CASHFREE_ENV
+          ? 'not_configured'
+          : env.CASHFREE_ENV === 'production'
+            ? 'live'
+            : 'test',
+      keyId: env.CASHFREE_CLIENT_ID,
+      keySecretSet: Boolean(env.CASHFREE_CLIENT_SECRET),
+      // Cashfree signs its webhooks with the client secret: no separate webhook secret exists.
+      webhookSecretSet: Boolean(env.CASHFREE_CLIENT_SECRET),
     },
     now: options.now ?? (() => new Date()),
     ...(auth && options.db && { db: options.db }),

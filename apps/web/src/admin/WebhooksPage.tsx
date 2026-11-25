@@ -22,8 +22,8 @@ const TONE: Record<WebhookStatusDto, 'success' | 'warning' | 'error' | 'neutral'
 };
 
 /**
- * `/admin/webhooks` (#39): what Razorpay sent and how it was handled. Read-only: a failed
- * delivery is retried by Razorpay; the owner re-checks a donation from its own page.
+ * `/admin/webhooks` (#39): what the gateway (Cashfree) sent and how it was handled. Read-only: a failed
+ * delivery is retried by the gateway; the owner re-checks a donation from its own page.
  */
 export function WebhooksPage() {
   const { api, t, lang } = useAdmin();

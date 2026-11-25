@@ -1,7 +1,7 @@
 import type { Bilingual } from './landing.ts';
 
 /**
- * Policy pages (issue #14) required by Razorpay before live payments: /privacy, /terms,
+ * Policy pages (issue #14) required by the payment gateway (Cashfree) before live payments: /privacy, /terms,
  * /refund-policy (with "shipping does not apply"). English and Tamil must say the same thing —
  * policies.test.ts checks the structure matches section by section.
  *
@@ -86,8 +86,8 @@ export const POLICIES: Record<PolicyId, Policy> = {
             'விருப்பப்பட்டால்: ஒப்புகை அனுப்ப மின்னஞ்சல் முகவரி. வரி விலக்கு வசதி இருக்கும்போது, நீங்கள் அதைத் தேர்வு செய்தால் மட்டும் உங்கள் PAN, முகவரி கேட்போம்.',
           ),
           p(
-            'Card, UPI and bank details are entered on Razorpay, our payment provider. We never see or store them.',
-            'கார்டு, UPI, வங்கி விவரங்களை நீங்கள் Razorpay-இல் (நாங்கள் பயன்படுத்தும் பணம் செலுத்தும் நிறுவனம்) மட்டுமே போடுவீர்கள். அவற்றை நாங்கள் பார்ப்பதும் இல்லை, வைத்துக்கொள்வதும் இல்லை.',
+            'Card, UPI and bank details are entered on Cashfree, our payment provider. We never see or store them.',
+            'கார்டு, UPI, வங்கி விவரங்களை நீங்கள் Cashfree-இல் (நாங்கள் பயன்படுத்தும் பணம் செலுத்தும் நிறுவனம்) மட்டுமே போடுவீர்கள். அவற்றை நாங்கள் பார்ப்பதும் இல்லை, வைத்துக்கொள்வதும் இல்லை.',
           ),
         ],
       },
@@ -129,8 +129,8 @@ export const POLICIES: Record<PolicyId, Policy> = {
         heading: p('Who can see it', 'அதை யார் பார்க்க முடியும்'),
         paragraphs: [
           p(
-            'Only the trust’s authorised people, through a protected dashboard. Service providers that run the site for us — payment (Razorpay), email and hosting — process it only to provide their service.',
-            'பாதுகாப்பான நிர்வாகப் பக்கம் வழியாக, அறக்கட்டளை அனுமதித்தவர்கள் மட்டுமே பார்க்க முடியும். எங்களுக்காக இந்தத் தளத்தை இயக்கும் நிறுவனங்கள் — பணம் செலுத்துதல் (Razorpay), மின்னஞ்சல், இணையதளத்தை இயக்கும் சேவை — தங்கள் வேலைக்குத் தேவையான அளவு மட்டுமே இவற்றைக் கையாளும்.',
+            'Only the trust’s authorised people, through a protected dashboard. Service providers that run the site for us — payment (Cashfree), email and hosting — process it only to provide their service.',
+            'பாதுகாப்பான நிர்வாகப் பக்கம் வழியாக, அறக்கட்டளை அனுமதித்தவர்கள் மட்டுமே பார்க்க முடியும். எங்களுக்காக இந்தத் தளத்தை இயக்கும் நிறுவனங்கள் — பணம் செலுத்துதல் (Cashfree), மின்னஞ்சல், இணையதளத்தை இயக்கும் சேவை — தங்கள் வேலைக்குத் தேவையான அளவு மட்டுமே இவற்றைக் கையாளும்.',
           ),
           p(
             'We never sell your information or show it publicly. Your name, phone, email, PAN or address never appear in links or on public pages, including acknowledgement links.',
@@ -196,8 +196,8 @@ export const POLICIES: Record<PolicyId, Policy> = {
             'நன்கொடை என்பது ₹1 முதல் நீங்களாக விரும்பிக் கொடுப்பது. அது எந்தப் பொருளுக்கோ சேவைக்கோ கொடுக்கும் விலை இல்லை; அதற்குப் பதிலாக எதுவும் தரப்படாது.',
           ),
           p(
-            'A donation is complete only when our server has verified the payment with Razorpay. A payment screen, QR scan, UTR number or screenshot is not proof of payment.',
-            'பணம் வந்ததை Razorpay-இடம் நாங்கள் சரிபார்த்த பிறகுதான் நன்கொடை முடிந்ததாகும். பணம் செலுத்திய திரை, QR ஸ்கேன், UTR எண், திரைப் படம் — இவை பணம் வந்ததற்கான சான்று ஆகாது.',
+            'A donation is complete only when our server has verified the payment with Cashfree. A payment screen, QR scan, UTR number or screenshot is not proof of payment.',
+            'பணம் வந்ததை Cashfree-இடம் நாங்கள் சரிபார்த்த பிறகுதான் நன்கொடை முடிந்ததாகும். பணம் செலுத்திய திரை, QR ஸ்கேன், UTR எண், திரைப் படம் — இவை பணம் வந்ததற்கான சான்று ஆகாது.',
           ),
           p(
             'We do not charge donors any fee.',
@@ -302,8 +302,8 @@ export const POLICIES: Record<PolicyId, Policy> = {
         heading: p('How to ask and how long it takes', 'எப்படிக் கேட்பது, எவ்வளவு நேரம் ஆகும்'),
         paragraphs: [
           p(
-            'Contact us with the date, amount and payment reference. Approved refunds go back to the original payment method through Razorpay; your bank decides when it appears in your account.',
-            'தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண் — இவற்றுடன் எங்களைத் தொடர்பு கொள்ளுங்கள். திருப்பித் தர ஒப்புக்கொண்ட பணம், நீங்கள் செலுத்திய அதே வழியில் Razorpay மூலம் திரும்ப அனுப்பப்படும்; அது உங்கள் கணக்கில் எப்போது வரும் என்பது உங்கள் வங்கியைப் பொறுத்தது.',
+            'Contact us with the date, amount and payment reference. Approved refunds go back to the original payment method through Cashfree; your bank decides when it appears in your account.',
+            'தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண் — இவற்றுடன் எங்களைத் தொடர்பு கொள்ளுங்கள். திருப்பித் தர ஒப்புக்கொண்ட பணம், நீங்கள் செலுத்திய அதே வழியில் Cashfree மூலம் திரும்ப அனுப்பப்படும்; அது உங்கள் கணக்கில் எப்போது வரும் என்பது உங்கள் வங்கியைப் பொறுத்தது.',
           ),
         ],
       },

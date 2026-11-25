@@ -47,9 +47,6 @@ export function AdminNav() {
               <NavLink to="/admin/receipts">{l.navReceipts}</NavLink>
             </li>
             <li>
-              <NavLink to="/admin/monthly-giving">{l.navMonthly}</NavLink>
-            </li>
-            <li>
               <NavLink to="/admin/tax">{l.navTax}</NavLink>
             </li>
             <li>

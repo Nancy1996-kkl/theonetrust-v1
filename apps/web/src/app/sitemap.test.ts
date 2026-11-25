@@ -61,7 +61,7 @@ const appRoutes = [...new Set(flattenRoutes(routes))];
 const isAdmin = (route: string) => route.startsWith('/admin');
 const isPrivateLink = (route: string) => /:token\b/.test(route);
 
-/** ADR 0005: the only public browsing pages are the single page and Razorpay's policy pages. */
+/** ADR 0005: the only public browsing pages are the single page and the gateway's policy pages. */
 const ALLOWED_PUBLIC_PAGES = ['/', '/privacy', '/terms', '/refund-policy', '*'];
 const expectedTamil = (route: string) =>
   route === '/' ? '/ta/' : route === '*' ? '/ta/*' : `/ta${route}`;

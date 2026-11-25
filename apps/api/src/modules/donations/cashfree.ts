@@ -4,7 +4,7 @@ import type {
   PaymentState,
   ProviderOrderState,
 } from '../payments/order-state.ts';
-import { PaymentProviderError, type PaymentProvider, type ProviderPayment } from './provider.ts';
+import { PaymentProviderError, type PaymentProvider } from './provider.ts';
 
 /**
  * Cashfree Payments adapter (Phase 4 of docs/decisions/2026-11-20-cashfree-migration-plan.md).
@@ -329,29 +329,10 @@ export function cashfreeProvider(config: CashfreeConfig): PaymentProvider {
     return { orderRef, payments };
   }
 
-  // Razorpay-only call (payment ID from a browser callback): Cashfree has none, so it is refused.
-  async function refusesRazorpayCall(): Promise<never> {
-    throw new PaymentProviderError('rejected');
-  }
-
   return {
     name: 'CASHFREE',
-    publicKeyId: '',
     checkoutMode: config.mode,
     requiresCustomerPhone: true,
-    // Cashfree has no browser-side signature: the server always re-fetches the order instead.
-    verifyCheckoutSignature: () => false,
-    fetchPayment: refusesRazorpayCall,
-    fetchOrderPayments: async (orderRef) =>
-      (await fetchOrderState(orderRef)).payments.map((p): ProviderPayment => ({
-        paymentId: p.paymentId,
-        orderId: p.orderId,
-        amountPaise: p.amountPaise,
-        currency: p.currency,
-        status: p.state,
-        method: p.method,
-        refundedPaise: 0,
-      })),
     fetchOrderState,
     async fetchRefunds(orderRef, paymentId) {
       return summariseRefunds(await call(`${orderPath(orderRef)}/refunds`), paymentId);

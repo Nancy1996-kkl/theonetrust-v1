@@ -4,20 +4,20 @@ import type {
   DonationEstimateResponse,
   DonationIntentRequest,
   DonationIntentResponse,
-  DonationQrResponse,
   DonationStatusResponse,
+  PaymentVerifyRequest,
 } from '@theonetrust/contracts';
-import { isCashfreeCheckout, isRazorpayCheckout } from '@theonetrust/contracts';
+import { isCashfreeCheckout } from '@theonetrust/contracts';
 import { apiUrl } from '../lib/api-url.ts';
 import { MOCK_RECEIPT_TOKEN } from '../receipt/receipt-client.ts';
 
 /**
- * How the donate panel talks to the trust and to Razorpay (#24).
+ * How the donate panel talks to the trust and to the payment gateway, Cashfree (#24).
  *
  * - `api` (live once payments are switched on): server-created intent and order (#23),
- *   Razorpay Checkout, then server verification (#26). The panel shows "paid" ONLY when the
- *   server says PAID — never because Checkout said so.
- * - `mock` (dev, tests, e2e only): simulates Checkout outcomes. Never used on the live site.
+ *   Cashfree's payment window, then server verification (#26). The panel shows "paid" ONLY when
+ *   the server says PAID — never because the payment window said so.
+ * - `mock` (dev, tests, e2e only): simulates the window's outcomes. Never used on the live site.
  * - `unavailable` (live default until payments are on): the panel says online payments are not
  *   open yet and points to the trust's contact details.
  */
@@ -26,7 +26,6 @@ export type StartResult =
   | { ok: false; reason: 'invalid' | 'rate_limited' | 'unavailable' | 'network' };
 
 export type CheckoutOutcome =
-  | { kind: 'completed'; paymentId: string; signature: string }
   /**
    * Cashfree's window closed (paid, failed or simply closed — its result is never proof): the
    * server is asked by reference and decides.
@@ -34,35 +33,29 @@ export type CheckoutOutcome =
   | { kind: 'returned' }
   /** Cashfree could not open its pop-up (e.g. in-app browsers) and moved the page to its own. */
   | { kind: 'redirecting' }
-  | { kind: 'dismissed' }
-  | { kind: 'failed'; reason: 'upi_limit' | 'other' };
+  /** The payment window could not be opened at all (its script did not load): nothing was paid. */
+  | { kind: 'failed' };
 
 export type VerifiedStatus = DonationStatusResponse['status'] | 'UNKNOWN';
-
-export interface CheckoutPrefill {
-  name: string;
-  email?: string;
-  contact?: string;
-  lang: 'ta' | 'en';
-}
 
 export interface DonateClient {
   acceptsDonations: boolean;
   estimate(giftPaise?: number): Promise<DonationEstimateResponse | null>;
   start(request: DonationIntentRequest, idempotencyKey: string): Promise<StartResult>;
-  checkout(intent: DonationIntentResponse, prefill: CheckoutPrefill): Promise<CheckoutOutcome>;
   /**
-   * Asks the server; anything other than a verified answer is UNKNOWN (shown as pending).
-   * Razorpay sends its callback values; Cashfree only the reference (the server re-fetches).
+   * Opens the gateway's window with the one-time session only: the donor's details went to our
+   * server, never through the browser to the gateway.
    */
-  verify(
-    intent: DonationIntentResponse,
-    outcome: { paymentId: string; signature: string } | { kind: 'returned' },
-  ): Promise<VerifiedStatus>;
+  checkout(intent: DonationIntentResponse): Promise<CheckoutOutcome>;
+  /**
+   * The donor is back: the server re-fetches the order by reference and decides. Anything other
+   * than a verified answer is UNKNOWN (shown as pending).
+   */
+  verify(publicReference: string): Promise<VerifiedStatus>;
   status(publicReference: string): Promise<VerifiedStatus>;
   /** Acknowledgement link token for a PAID donation, when one was issued (#29). */
   receipt(publicReference: string): Promise<string | null>;
-  /** Bank transfer (#25): no Razorpay order; returns the trust account and a reference. */
+  /** Bank transfer (#25): no gateway order; returns the trust account and a reference. */
   startBankTransfer(
     request: DonationIntentRequest,
     idempotencyKey: string,
@@ -71,16 +64,6 @@ export interface DonateClient {
   >;
   /** "I've made the transfer" + optional UTR. Never confirms the payment. */
   claimBankTransfer(publicReference: string, utr: string | null): Promise<boolean>;
-  /**
-   * One-time UPI QR for exactly this amount (client, Nov 2026). Scanning proves nothing: the
-   * panel shows "paid" only when `status` says PAID. `imageUrl` is ready for an <img>.
-   */
-  startQr?(
-    request: DonationIntentRequest,
-    idempotencyKey: string,
-  ): Promise<
-    { ok: true; intent: DonationQrResponse; imageUrl: string } | { ok: false; reason: StartFailure }
-  >;
 }
 
 type StartFailure = 'invalid' | 'rate_limited' | 'unavailable' | 'network';
@@ -106,44 +89,6 @@ export function newIdempotencyKey(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-interface RazorpayOptions {
-  key: string;
-  order_id: string;
-  amount: number;
-  currency: 'INR';
-  name: string;
-  description: string;
-  prefill: { name: string; email?: string; contact?: string };
-  handler: (response: { razorpay_payment_id: string; razorpay_signature: string }) => void;
-  modal: { ondismiss: () => void; escape: boolean; confirm_close: boolean };
-  retry: { enabled: boolean };
-}
-interface RazorpayInstance {
-  open(): void;
-  on(
-    event: 'payment.failed',
-    cb: (response: { error?: { reason?: string; code?: string } }) => void,
-  ): void;
-}
-type RazorpayConstructor = new (options: RazorpayOptions) => RazorpayInstance;
-
-export const CHECKOUT_SCRIPT = 'https://checkout.razorpay.com/v1/checkout.js';
-
-/** Loads Razorpay's Checkout script once, only when the donor is about to pay. */
-export function loadCheckout(doc: Document = document): Promise<RazorpayConstructor> {
-  const w = doc.defaultView as (Window & { Razorpay?: RazorpayConstructor }) | null;
-  if (w?.Razorpay) return Promise.resolve(w.Razorpay);
-  return new Promise((resolve, reject) => {
-    const script = doc.createElement('script');
-    script.src = CHECKOUT_SCRIPT;
-    script.async = true;
-    script.onload = () =>
-      w?.Razorpay ? resolve(w.Razorpay) : reject(new Error('Checkout missing'));
-    script.onerror = () => reject(new Error('Checkout failed to load'));
-    doc.head.append(script);
-  });
 }
 
 export const CASHFREE_SDK = 'https://sdk.cashfree.com/js/v3/cashfree.js';
@@ -222,15 +167,9 @@ export async function pollUntilSettled(
   return status;
 }
 
-/** A failure reason that points at a bank or UPI limit, so the panel can suggest card/netbanking. */
-export function isLimitFailure(reason: string | undefined): boolean {
-  return /limit|exceed|amount/i.test(reason ?? '');
-}
-
 export function createApiDonateClient(
   baseUrl: string | undefined,
   fetchImpl: typeof fetch = (...args) => fetch(...args),
-  load: () => Promise<RazorpayConstructor> = () => loadCheckout(),
   loadCf: () => Promise<CashfreeFactory> = () => loadCashfree(),
 ): DonateClient {
   const json = { 'content-type': 'application/json', accept: 'application/json' };
@@ -262,7 +201,7 @@ export function createApiDonateClient(
       if (res.status === 201 || res.status === 200) {
         const intent = (await res.json().catch(() => null)) as DonationIntentResponse | null;
         if (
-          (isRazorpayCheckout(intent?.checkout) || isCashfreeCheckout(intent?.checkout)) &&
+          isCashfreeCheckout(intent?.checkout) &&
           intent.amountPaise === request.giftPaise + intent.feePaise
         ) {
           return { ok: true, intent };
@@ -292,33 +231,6 @@ export function createApiDonateClient(
       }
       return { ok: false, reason: failureFor(res.status) };
     },
-    async startQr(request, idempotencyKey) {
-      let res: Response;
-      try {
-        res = await fetchImpl(apiUrl(baseUrl, '/donation-intents'), {
-          method: 'POST',
-          credentials: 'omit',
-          headers: { ...json, 'idempotency-key': idempotencyKey },
-          // The QR is for the exact amount on the button: no fee cover on top.
-          body: JSON.stringify({ ...request, channel: 'qr', coverFee: false }),
-        });
-      } catch {
-        return { ok: false, reason: 'network' };
-      }
-      if (res.status === 201 || res.status === 200) {
-        const intent = (await res.json().catch(() => null)) as DonationQrResponse | null;
-        const path = intent?.qr?.imagePath;
-        if (
-          typeof path === 'string' &&
-          /^\/donation-intents\/[A-Z0-9-]+\/qr\.png$/.test(path) &&
-          intent?.amountPaise === request.giftPaise
-        ) {
-          return { ok: true, intent, imageUrl: apiUrl(baseUrl, path) };
-        }
-        return { ok: false, reason: 'network' };
-      }
-      return { ok: false, reason: failureFor(res.status) };
-    },
     async claimBankTransfer(publicReference, utr) {
       try {
         const res = await fetchImpl(
@@ -333,88 +245,29 @@ export function createApiDonateClient(
         return false;
       }
     },
-    async checkout(intent, prefill) {
+    async checkout(intent) {
       const gateway = intent.checkout;
-      if (isCashfreeCheckout(gateway)) {
-        // Only the one-time session goes to Cashfree's window; the donor's details were sent to
-        // our server, never through the browser to Cashfree.
-        let factory: CashfreeFactory;
-        try {
-          factory = await loadCf();
-        } catch {
-          return { kind: 'failed', reason: 'other' };
-        }
-        try {
-          const result = await factory({ mode: gateway.mode }).checkout({
-            paymentSessionId: gateway.paymentSessionId,
-            redirectTarget: '_modal',
-          });
-          return result?.redirect ? { kind: 'redirecting' } : { kind: 'returned' };
-        } catch {
-          // The window may have taken the payment before failing: the server decides.
-          return { kind: 'returned' };
-        }
-      }
-      // This window is Razorpay's; another gateway's descriptor is never opened with it.
-      if (!isRazorpayCheckout(gateway)) return { kind: 'failed', reason: 'other' };
-      let Razorpay: RazorpayConstructor;
+      // Only a well-formed Cashfree session is ever opened.
+      if (!isCashfreeCheckout(gateway)) return { kind: 'failed' };
+      let factory: CashfreeFactory;
       try {
-        Razorpay = await load();
+        factory = await loadCf();
       } catch {
-        return { kind: 'failed', reason: 'other' };
+        return { kind: 'failed' };
       }
-      return new Promise((resolve) => {
-        let settled = false;
-        const done = (outcome: CheckoutOutcome) => {
-          if (!settled) {
-            settled = true;
-            resolve(outcome);
-          }
-        };
-        const instance = new Razorpay({
-          key: gateway.keyId,
-          order_id: gateway.orderId,
-          amount: intent.amountPaise,
-          currency: 'INR',
-          name: 'Theonetrust.in',
-          description: intent.publicReference,
-          prefill: {
-            name: prefill.name,
-            ...(prefill.email && { email: prefill.email }),
-            ...(prefill.contact && { contact: prefill.contact }),
-          },
-          handler: (r) =>
-            done({
-              kind: 'completed',
-              paymentId: r.razorpay_payment_id,
-              signature: r.razorpay_signature,
-            }),
-          modal: {
-            ondismiss: () => done({ kind: 'dismissed' }),
-            escape: true,
-            confirm_close: true,
-          },
-          retry: { enabled: false },
+      try {
+        const result = await factory({ mode: gateway.mode }).checkout({
+          paymentSessionId: gateway.paymentSessionId,
+          redirectTarget: '_modal',
         });
-        instance.on('payment.failed', (r) =>
-          done({
-            kind: 'failed',
-            reason: isLimitFailure(r.error?.reason ?? r.error?.code) ? 'upi_limit' : 'other',
-          }),
-        );
-        instance.open();
-      });
+        return result?.redirect ? { kind: 'redirecting' } : { kind: 'returned' };
+      } catch {
+        // The window may have taken the payment before failing: the server decides.
+        return { kind: 'returned' };
+      }
     },
-    async verify(intent, outcome) {
-      const body =
-        'paymentId' in outcome
-          ? {
-              publicReference: intent.publicReference,
-              orderId: intent.checkout.orderId,
-              paymentId: outcome.paymentId,
-              signature: outcome.signature,
-            }
-          : { publicReference: intent.publicReference };
+    async verify(publicReference) {
+      const body: PaymentVerifyRequest = { publicReference };
       try {
         const res = await fetchImpl(apiUrl(baseUrl, '/payments/verify'), {
           method: 'POST',
@@ -458,21 +311,19 @@ export function createApiDonateClient(
   };
 }
 
-/** A visibly fake placeholder: the mock is never used on the live site. */
-export const MOCK_QR_IMAGE = `data:image/svg+xml,${encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="white"/><rect x="5" y="5" width="90" height="90" fill="none" stroke="black" stroke-width="4"/><text x="50" y="55" font-size="14" text-anchor="middle" font-family="sans-serif">TEST QR</text></svg>',
-)}`;
-
 /**
- * Dev/e2e simulation. Tests choose the outcome with `window.__donateMock`
- * ('success' | 'cancel' | 'fail' | 'limit' | 'pending' | 'stuck' | 'start-fail' | 'no-receipt'); default success.
- * Cashfree (Phase 5): 'cashfree' (paid), 'cashfree-pending' (confirmed by the re-check),
- * 'cashfree-fail' (the server says FAILED), 'cashfree-redirect' (pop-up could not open).
+ * Dev/e2e simulation of the Cashfree flow. Tests choose the outcome with `window.__donateMock`:
+ * 'success' (default: paid), 'pending' (confirmed by the re-check), 'stuck' (stays pending),
+ * 'fail' (the server says FAILED), 'redirect' (the pop-up could not open, the page moves),
+ * 'window-fail' (the payment window could not load), 'start-fail', 'no-receipt'.
+ * The older 'cashfree…' names (Phase 5) still work: 'cashfree-pending' = 'pending', and so on.
  */
 export function createMockDonateClient(delayMs = 200): DonateClient {
-  const scenario = () => (globalThis as { __donateMock?: string }).__donateMock ?? 'success';
+  const scenario = () => {
+    const raw = (globalThis as { __donateMock?: string }).__donateMock ?? 'success';
+    return raw.startsWith('cashfree') ? raw.replace(/^cashfree-?/, '') || 'success' : raw;
+  };
   const wait = <T>(value: T) => new Promise<T>((r) => setTimeout(() => r(value), delayMs));
-  const cashfree = () => scenario().startsWith('cashfree');
   return {
     acceptsDonations: true,
     estimate: () =>
@@ -482,10 +333,7 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
         receiptMinPaise: 50_000,
         feeCoverOffered: false,
         bankTransferOffered: true,
-        monthlyOffered: true,
-        qrOffered: !cashfree(),
-        qrMaxPaise: 200_000,
-        phoneRequired: cashfree(),
+        phoneRequired: true,
       }),
     startBankTransfer: (request) =>
       wait({
@@ -506,24 +354,6 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
         },
       }),
     claimBankTransfer: () => wait(true),
-    startQr: (request) =>
-      scenario() === 'start-fail'
-        ? wait({ ok: false as const, reason: 'network' as const })
-        : wait({
-            ok: true as const,
-            intent: {
-              publicReference: 'TOT-D-MOCK00000000',
-              giftPaise: request.giftPaise,
-              feePaise: 0,
-              amountPaise: request.giftPaise,
-              currency: 'INR' as const,
-              qr: {
-                imagePath: '/donation-intents/TOT-D-MOCK00000000/qr.png',
-                expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
-              },
-            },
-            imageUrl: MOCK_QR_IMAGE,
-          }),
     start: (request) =>
       scenario() === 'start-fail'
         ? wait({ ok: false as const, reason: 'network' as const })
@@ -535,47 +365,36 @@ export function createMockDonateClient(delayMs = 200): DonateClient {
               feePaise: 0,
               amountPaise: request.giftPaise,
               currency: 'INR' as const,
-              checkout: cashfree()
-                ? {
-                    provider: 'CASHFREE' as const,
-                    paymentSessionId: 'session_MOCK',
-                    mode: 'sandbox' as const,
-                    orderId: 'TOT-D-MOCK00000000',
-                  }
-                : {
-                    provider: 'RAZORPAY' as const,
-                    keyId: 'rzp_test_mock',
-                    orderId: 'order_MOCK000000',
-                  },
+              checkout: {
+                provider: 'CASHFREE' as const,
+                paymentSessionId: 'session_MOCK',
+                mode: 'sandbox' as const,
+                orderId: 'TOT-D-MOCK00000000',
+              },
             },
           }),
     checkout: () => {
       const s = scenario();
-      if (s === 'cashfree-redirect') return wait({ kind: 'redirecting' as const });
-      if (s.startsWith('cashfree')) return wait({ kind: 'returned' as const });
-      if (s === 'cancel') return wait({ kind: 'dismissed' as const });
-      if (s === 'fail') return wait({ kind: 'failed' as const, reason: 'other' as const });
-      if (s === 'limit') return wait({ kind: 'failed' as const, reason: 'upi_limit' as const });
-      return wait({ kind: 'completed' as const, paymentId: 'pay_MOCK', signature: 'sig' });
+      if (s === 'redirect') return wait({ kind: 'redirecting' as const });
+      if (s === 'window-fail') return wait({ kind: 'failed' as const });
+      return wait({ kind: 'returned' as const });
     },
     verify: () => {
       const s = scenario();
-      if (s === 'cashfree-fail') return wait('FAILED' as const);
-      return wait(
-        ['pending', 'stuck', 'cashfree-pending'].includes(s)
-          ? ('PENDING' as const)
-          : ('PAID' as const),
-      );
+      if (s === 'fail') return wait('FAILED' as const);
+      return wait(['pending', 'stuck'].includes(s) ? ('PENDING' as const) : ('PAID' as const));
     },
     // "pending": verify answers PENDING and the re-check finds it PAID; "stuck" stays pending.
-    status: () =>
-      wait(
-        scenario() === 'stuck'
+    status: () => {
+      const s = scenario();
+      return wait(
+        s === 'stuck'
           ? ('PENDING' as const)
-          : scenario() === 'cashfree-fail'
+          : s === 'fail'
             ? ('FAILED' as const)
             : ('PAID' as const),
-      ),
+      );
+    },
     // "no-receipt": paid, but the donor declined or the amount is below the threshold.
     receipt: () => wait(scenario() === 'no-receipt' ? null : MOCK_RECEIPT_TOKEN),
   };
@@ -585,7 +404,7 @@ export const unavailableDonateClient: DonateClient = {
   acceptsDonations: false,
   estimate: () => Promise.resolve(null),
   start: () => Promise.resolve({ ok: false, reason: 'unavailable' }),
-  checkout: () => Promise.resolve({ kind: 'dismissed' }),
+  checkout: () => Promise.resolve({ kind: 'failed' }),
   verify: () => Promise.resolve('UNKNOWN'),
   status: () => Promise.resolve('UNKNOWN'),
   receipt: () => Promise.resolve(null),

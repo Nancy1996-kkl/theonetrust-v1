@@ -113,8 +113,8 @@ describe('Cashfree wiring (Phase 4)', () => {
     expect(res.statusCode).toBe(503);
   });
 
-  it('with Razorpay selected, the Cashfree webhook stays unavailable', async () => {
-    app = buildApp(loadEnv({ ...cashfreeEnv, PAYMENT_PROVIDER: 'razorpay' }));
+  it('with online giving off (none), the Cashfree webhook stays unavailable', async () => {
+    app = buildApp(loadEnv({ ...cashfreeEnv, PAYMENT_PROVIDER: 'none' }));
     const res = await app.inject({
       method: 'POST',
       url: '/api/v1/webhooks/cashfree',
@@ -122,5 +122,16 @@ describe('Cashfree wiring (Phase 4)', () => {
       payload: '{}',
     });
     expect(res.statusCode).toBe(503);
+  });
+
+  it('the retired Razorpay webhook address no longer exists (404)', async () => {
+    app = buildApp(loadEnv(cashfreeEnv));
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/webhooks/razorpay',
+      headers: { 'content-type': 'application/json' },
+      payload: '{}',
+    });
+    expect(res.statusCode).toBe(404);
   });
 });

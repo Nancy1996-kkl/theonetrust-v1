@@ -135,10 +135,10 @@ export const LANDING_CONTENT: LandingContent = {
     },
     getHelpCta: { en: 'Get Help', ta: 'உதவி பெற' },
     paymentNote: {
-      confirmed: false, // [CONFIRM] #1 — Razorpay account not yet live
+      confirmed: false, // [CONFIRM] #1 — Cashfree account not yet live
       value: {
-        en: 'Secure payment via Razorpay · UPI, cards, netbanking · Acknowledgement after verified payment',
-        ta: 'Razorpay மூலம் பாதுகாப்பாகப் பணம் செலுத்தலாம் · UPI, கார்டு, நெட்பேங்கிங் · பணம் வந்தது உறுதியான பிறகே ஒப்புகை',
+        en: 'Secure payment via Cashfree · UPI, cards, netbanking · Acknowledgement after verified payment',
+        ta: 'Cashfree மூலம் பாதுகாப்பாகப் பணம் செலுத்தலாம் · UPI, கார்டு, நெட்பேங்கிங் · பணம் வந்தது உறுதியான பிறகே ஒப்புகை',
       },
     },
     pauseBanner: { en: 'Pause banner videos', ta: 'பதாகை வீடியோக்களை நிறுத்து' },

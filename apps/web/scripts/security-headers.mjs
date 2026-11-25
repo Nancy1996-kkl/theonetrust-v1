@@ -4,32 +4,15 @@
  * (Vercel reads only that file; CI fails on drift) and applied by `vite preview`, so every e2e test runs
  * under the same Content-Security-Policy as production — a violation fails the test.
  *
- * Only our own origin, the API origin, Razorpay Checkout and Cashfree's checkout may load or be
- * contacted. Scripts are
- * never inline. Styles allow 'unsafe-inline' because the prerender inlines the stylesheet for a
+ * Only our own origin, the API origin and Cashfree's checkout may load or be contacted. Scripts
+ * are never inline. Styles allow 'unsafe-inline' because the prerender inlines the stylesheet for a
  * fast first paint (scripts, the real XSS risk, stay strict).
  */
-export const RAZORPAY = {
-  // checkout.razorpay.com serves Checkout and the Payment Button embed; the embed then loads
-  // its helpers from cdn.razorpay.com (seen with a test-mode button, Nov 2026).
-  script: ['https://checkout.razorpay.com', 'https://cdn.razorpay.com'],
-  // Checkout opens its own frame and talks to Razorpay's API; the Payment Button form is an
-  // iframe on razorpay.com [CONFIRM against Razorpay's CSP guidance with a test-mode payment
-  // before launch].
-  frame: ['https://api.razorpay.com', 'https://checkout.razorpay.com', 'https://razorpay.com'],
-  connect: ['https://api.razorpay.com', 'https://lumberjack.razorpay.com'],
-  img: 'https://*.razorpay.com',
-  // The Payment Button embed adds a Google Fonts stylesheet for its own button. Our pages keep
-  // self-hosted fonts; only this Razorpay request uses these origins.
-  style: 'https://fonts.googleapis.com',
-  font: 'https://fonts.gstatic.com',
-};
-
 /**
  * Cashfree checkout (Phase 5): cashfree.js v3 loads from sdk.cashfree.com and opens its pop-up,
  * which talks to the sandbox or production API host. Cashfree publishes no CSP list, so this is
  * the narrow starting set of the plan [CONFIRM from CSP violation reports in a sandbox run; widen
- * only with evidence]. Razorpay stays allowed while its button is the rollback.
+ * only with evidence]. Razorpay is retired: none of its hosts are allowed.
  */
 export const CASHFREE = {
   script: ['https://sdk.cashfree.com'],
@@ -52,15 +35,12 @@ export function contentSecurityPolicy({ apiBaseUrl, production }) {
   const api = apiOrigin(apiBaseUrl);
   const directives = [
     "default-src 'self'",
-    `script-src 'self' ${[...RAZORPAY.script, ...CASHFREE.script].join(' ')}`,
-    `style-src 'self' 'unsafe-inline' ${RAZORPAY.style}`,
-    // The one-time UPI QR image is served by the API (never hot-linked from Razorpay).
-    ['img-src', "'self'", 'data:', api, RAZORPAY.img, CASHFREE.img].filter(Boolean).join(' '),
-    `font-src 'self' ${RAZORPAY.font}`,
-    ['connect-src', "'self'", api, ...RAZORPAY.connect, ...CASHFREE.connect]
-      .filter(Boolean)
-      .join(' '),
-    `frame-src ${[...RAZORPAY.frame, ...CASHFREE.frame].join(' ')}`,
+    `script-src 'self' ${CASHFREE.script.join(' ')}`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: ${CASHFREE.img}`,
+    "font-src 'self'",
+    ['connect-src', "'self'", api, ...CASHFREE.connect].filter(Boolean).join(' '),
+    `frame-src ${CASHFREE.frame.join(' ')}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -77,7 +57,7 @@ export function webSecurityHeaders({ apiBaseUrl, production }) {
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy':
-      'camera=(), microphone=(), geolocation=(), payment=(self "https://api.razorpay.com" "https://sdk.cashfree.com")',
+      'camera=(), microphone=(), geolocation=(), payment=(self "https://sdk.cashfree.com")',
     'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     ...(production && { 'Strict-Transport-Security': 'max-age=63072000; includeSubDomains' }),
   };

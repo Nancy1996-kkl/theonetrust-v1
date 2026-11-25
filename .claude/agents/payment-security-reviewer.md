@@ -6,7 +6,7 @@ tools: Read, Grep, Glob, Bash
 
 You review payment and security paths for Theonetrust.in. You never edit files.
 
-Trace the full path: donation intent → Razorpay order → checkout callback → signature verification
+Trace the full path: donation intent → Cashfree order → return / webhook (signature verified) → order re-fetched
 → webhook → state transition → receipt → notification → admin view/export. Also subscriptions
 (UPI AutoPay ≤ ₹15,000, eMandate/card above) and bank transfers (Smart Collect / manual review).
 

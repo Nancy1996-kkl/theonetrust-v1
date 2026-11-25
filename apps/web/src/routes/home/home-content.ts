@@ -131,8 +131,8 @@ export const STEPS: Step[] = [
   {
     title: { en: 'Pay securely', ta: 'பாதுகாப்பாகச் செலுத்துங்கள்' },
     body: {
-      en: 'UPI, card or netbanking through Razorpay.',
-      ta: 'Razorpay வழியாக UPI, கார்டு, நெட்பேங்கிங்.',
+      en: 'UPI, card or netbanking through Cashfree.',
+      ta: 'Cashfree வழியாக UPI, கார்டு, நெட்பேங்கிங்.',
     },
   },
   {

@@ -42,7 +42,7 @@ describe('policy content: Tamil and English are equivalent', () => {
     }
   });
 
-  it('the refund policy states shipping does not apply (Razorpay)', () => {
+  it('the refund policy states shipping does not apply (payment gateway checklist)', () => {
     const shipping = POLICIES.refund.sections.find((s) => s.id === 'shipping')!;
     expect(shipping.confirmed).toBe(true);
     expect(shipping.paragraphs[0]!.en).toMatch(/^Not applicable\. .*donations only/);

@@ -1,12 +1,11 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { randomBytes } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.ts';
 import { loadEnv } from '../../config/env.ts';
 import { unique, useTestDb } from '../../test/db.ts';
 import {
   PaymentProviderError,
-  RAZORPAY_TIMEOUT_MS,
+  PROVIDER_TIMEOUT_MS,
   type CreateOrderInput,
   type PaymentProvider,
 } from './provider.ts';
@@ -21,12 +20,17 @@ let ip = 0;
 
 /** Slows the provider down so a concurrent request has to wait for the winner's order. */
 let orderDelayMs = 0;
+/**
+ * A test double of the gateway boundary. It does not require the donor's phone, so these tests
+ * stay about the donation rules; the phone rule is covered with the real adapter in
+ * cashfree.db.test.ts.
+ */
 const provider: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_publickey01',
-  verifyCheckoutSignature: () => false,
-  fetchPayment: async () => Promise.reject(new PaymentProviderError('rejected')),
-  fetchOrderPayments: async () => [],
+  name: 'CASHFREE',
+  checkoutMode: 'sandbox',
+  requiresCustomerPhone: false,
+  fetchOrderState: async (orderRef) => ({ orderRef, payments: [] }),
+  fetchRefunds: async () => ({ refundedPaise: 0, status: null, otherPaymentRefunds: false }),
   createOrder: vi.fn(async (input: CreateOrderInput) => {
     if (orderDelayMs) await new Promise((r) => setTimeout(r, orderDelayMs));
     if (failNext) {
@@ -36,10 +40,11 @@ const provider: PaymentProvider = {
     }
     orders.push(input);
     return {
-      orderId: `order_${unique('T').replace(/[^A-Za-z0-9]/g, '')}`,
+      orderId: input.receipt,
       amountPaise: input.amountPaise,
       currency: 'INR' as const,
-      status: 'created',
+      status: 'ACTIVE',
+      sessionId: `session_${input.receipt}`,
     };
   }),
 };
@@ -102,7 +107,7 @@ function post(payload: unknown, headers: Record<string, string> = {}) {
 }
 
 describe('POST /donation-intents', () => {
-  it('creates the intent and a Razorpay order; returns only key ID, order ID and amount', async () => {
+  it('creates the intent and a gateway order; returns only the session, order reference and amount', async () => {
     const res = await post(body());
     expect(res.statusCode).toBe(201);
     const json = res.json();
@@ -113,9 +118,10 @@ describe('POST /donation-intents', () => {
       amountPaise: 100_000,
       currency: 'INR',
       checkout: {
-        provider: 'RAZORPAY',
-        keyId: 'rzp_test_publickey01',
-        orderId: expect.stringMatching(/^order_/),
+        provider: 'CASHFREE',
+        paymentSessionId: expect.stringMatching(/^session_TOT-D-/),
+        mode: 'sandbox',
+        orderId: expect.stringMatching(/^TOT-D-/),
       },
     });
     expect(res.body).not.toMatch(/secret|donor@example|Synthetic Donor/);
@@ -144,7 +150,7 @@ describe('POST /donation-intents', () => {
       expect.objectContaining({
         providerOrderId: json.checkout.orderId,
         amountPaise: 100_000,
-        provider: 'RAZORPAY',
+        provider: 'CASHFREE',
       }),
     ]);
   });
@@ -249,17 +255,19 @@ describe('payment gateway selection (Phase 1)', () => {
     expect(res.statusCode).toBe(201);
     const checkout = res.json().checkout;
     expect(checkout).toEqual({
-      provider: 'RAZORPAY',
-      keyId: 'rzp_test_publickey01',
-      orderId: expect.stringMatching(/^order_/),
+      provider: 'CASHFREE',
+      paymentSessionId: `session_${checkout.orderId}`,
+      mode: 'sandbox',
+      orderId: res.json().publicReference,
     });
     const attempt = await db.paymentAttempt.findUniqueOrThrow({
       where: { providerOrderId: checkout.orderId },
     });
-    expect(attempt.provider).toBe('RAZORPAY');
+    expect(attempt.provider).toBe('CASHFREE');
+    expect(attempt.checkoutSessionId).toBe(`session_${checkout.orderId}`);
   });
 
-  it('the same key reused for another way of paying (QR attempt vs checkout) is a conflict', async () => {
+  it('a key whose order was made with the retired gateway (Razorpay) is a conflict, never reused', async () => {
     const key = unique('chan')
       .replace(/[^A-Za-z0-9_-]/g, '')
       .padEnd(20, 'c');
@@ -267,31 +275,14 @@ describe('payment gateway selection (Phase 1)', () => {
     expect(first.statusCode).toBe(201);
     await db.paymentAttempt.update({
       where: { providerOrderId: first.json().checkout.orderId },
-      data: {
-        // as if it were a QR attempt
-        qrExpiresAt: new Date(NOW.getTime() + 600_000),
-        qrImageUrl: 'https://example.org/qr.png',
-      },
+      data: { provider: 'RAZORPAY' }, // a historical row from before the switch
     });
     expect((await post(body(), { 'idempotency-key': key })).statusCode).toBe(409);
   });
 
-  it('PAYMENT_PROVIDER=none also switches monthly giving off (it is an online payment)', async () => {
-    const config = {
-      NODE_ENV: 'test',
-      AUTH_SECRET_KEY: randomBytes(32).toString('base64'),
-      RAZORPAY_KEY_ID: 'rzp_test_monthlyoff01',
-      RAZORPAY_KEY_SECRET: 'monthly-off-secret-001',
-      RAZORPAY_SUBSCRIPTIONS_ENABLED: 'true',
-    };
-    const offered = async (extra: Record<string, string>) => {
-      const a = buildApp(loadEnv({ ...config, ...extra }), { db, now: () => NOW });
-      const res = await a.inject({ method: 'GET', url: '/api/v1/donation-intents/estimate' });
-      await a.close();
-      return res.json().monthlyOffered as boolean;
-    };
-    expect(await offered({})).toBe(true); // the same setup with Razorpay offers it
-    expect(await offered({ PAYMENT_PROVIDER: 'none' })).toBe(false);
+  it('PAYMENT_PROVIDER is cashfree or none; anything else (razorpay) is refused at boot', () => {
+    expect(loadEnv({ NODE_ENV: 'test' }).PAYMENT_PROVIDER).toBe('none');
+    expect(() => loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'razorpay' })).toThrow();
   });
 
   it('PAYMENT_PROVIDER=none switches online donations off: 503 with the generic error body', async () => {
@@ -299,8 +290,8 @@ describe('payment gateway selection (Phase 1)', () => {
       loadEnv({
         NODE_ENV: 'test',
         PAYMENT_PROVIDER: 'none',
-        RAZORPAY_KEY_ID: 'rzp_test_offswitch01',
-        RAZORPAY_KEY_SECRET: 'off-switch-secret-0001',
+        CASHFREE_CLIENT_ID: 'OFFSWITCH0001',
+        CASHFREE_CLIENT_SECRET: 'off-switch-secret-0001',
       }),
       { db, now: () => NOW },
     );
@@ -314,7 +305,7 @@ describe('payment gateway selection (Phase 1)', () => {
     await off.close();
     expect(res.statusCode).toBe(503);
     expect(res.json()).toMatchObject({ error: { code: 'SERVICE_UNAVAILABLE' } });
-    expect(res.body).not.toMatch(/razorpay|rzp_/i);
+    expect(res.body).not.toMatch(/cashfree|OFFSWITCH/i);
     expect(await db.donationIntent.count()).toBe(before);
   });
 });
@@ -411,7 +402,7 @@ describe('retries and provider failures', () => {
     });
 
     it('the wait covers the gateway timeout, so a slow winner still answers the waiting donor', () => {
-      expect(IDEMPOTENT_REPLAY_WAIT_MS).toBeGreaterThan(RAZORPAY_TIMEOUT_MS);
+      expect(IDEMPOTENT_REPLAY_WAIT_MS).toBeGreaterThan(PROVIDER_TIMEOUT_MS);
     });
   });
 
@@ -451,8 +442,6 @@ describe('GET /donation-intents/estimate', () => {
       receiptMinPaise: 50_000,
       feeCoverOffered: true,
       bankTransferOffered: false,
-      monthlyOffered: false,
-      qrOffered: false,
       phoneRequired: false,
       taxOptInOffered: false,
       feePaise: 2_418,
@@ -465,8 +454,6 @@ describe('GET /donation-intents/estimate', () => {
       receiptMinPaise: 50_000,
       feeCoverOffered: true,
       bankTransferOffered: false,
-      monthlyOffered: false,
-      qrOffered: false,
       phoneRequired: false,
       taxOptInOffered: false,
     });

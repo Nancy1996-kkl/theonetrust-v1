@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { buildApp } from '../../app.ts';
@@ -6,21 +6,15 @@ import { setOwnerPassword } from '../../cli/owner-account.ts';
 import { loadEnv } from '../../config/env.ts';
 import { unique, useTestDb } from '../../test/db.ts';
 import { base32Decode, hotp, timeStep } from '../auth/totp.ts';
-import {
-  razorpayProvider,
-  type PaymentProvider,
-  type ProviderPayment,
-} from '../donations/provider.ts';
+import { fakeCashfree } from '../../test/fake-cashfree.ts';
 import { financialYear } from '../receipts/numbering.ts';
 import { daysUntil, financialYearRange, form113Deadline } from './tracking.ts';
 
 /** Form 113 export, statutory certificate tracking and the 31 May reminder (#35). */
 const db = useTestDb();
 const ORIGIN = 'http://localhost:5173';
-const KEY_SECRET = 'filing-key-secret-0001';
 const AUTH_SECRET_KEY = randomBytes(32).toString('base64');
 let app: FastifyInstance;
-let seq = 0;
 let ip = 0;
 let send: (
   m: 'GET' | 'POST' | 'PATCH',
@@ -29,30 +23,12 @@ let send: (
 ) => Promise<LightMyRequestResponse>;
 const FY = financialYear(new Date());
 
-const remote = new Map<string, ProviderPayment>();
-const real = razorpayProvider({
-  keyId: 'rzp_test_filing00001',
-  keySecret: KEY_SECRET,
-  fetch: async () => new Response('{}'),
-});
-const provider: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_filing00001',
-  verifyCheckoutSignature: real.verifyCheckoutSignature,
-  createOrder: async (input) => ({
-    orderId: `order_F${String(++seq).padStart(8, '0')}`,
-    amountPaise: input.amountPaise,
-    currency: 'INR',
-    status: 'created',
-  }),
-  fetchPayment: async (id) => remote.get(id)!,
-  fetchOrderPayments: async () => [],
-};
+const cf = fakeCashfree('filing-cashfree-secret-01');
 
 beforeAll(async () => {
-  app = buildApp(loadEnv({ NODE_ENV: 'test', AUTH_SECRET_KEY, CORS_ORIGINS: ORIGIN }), {
+  app = buildApp(loadEnv({ NODE_ENV: 'test', ...cf.env, AUTH_SECRET_KEY, CORS_ORIGINS: ORIGIN }), {
     db,
-    paymentProvider: provider,
+    paymentProvider: cf.provider,
   });
   const tax = {
     taxBenefitEnabled: true,
@@ -123,6 +99,7 @@ async function paidOptIn(
       programme: null,
       donorName: name,
       donorEmail: 'filing@example.org',
+      donorPhone: '+919876543210',
       hideNamePublicly: true,
       wantsReceipt: false,
       coverFee: false,
@@ -132,33 +109,14 @@ async function paidOptIn(
     },
   });
   if (res.statusCode !== 201) throw new Error(`intent ${res.statusCode} ${res.body}`);
-  const { publicReference, checkout } = res.json() as {
-    publicReference: string;
-    checkout: { orderId: string };
-  };
-  const p: ProviderPayment = {
-    paymentId: `pay_F${String(++seq).padStart(8, '0')}`,
-    orderId: checkout.orderId,
-    amountPaise,
-    currency: 'INR',
-    status: 'captured',
-    method: 'upi',
-    refundedPaise: 0,
-  };
-  remote.set(p.paymentId, p);
+  const { publicReference } = res.json() as { publicReference: string };
+  cf.pay(publicReference, { paise: amountPaise });
   if (pay) {
     await app.inject({
       method: 'POST',
       url: '/api/v1/payments/verify',
       remoteAddress: nextIp(),
-      payload: {
-        publicReference,
-        orderId: checkout.orderId,
-        paymentId: p.paymentId,
-        signature: createHmac('sha256', KEY_SECRET)
-          .update(`${checkout.orderId}|${p.paymentId}`)
-          .digest('hex'),
-      },
+      payload: { publicReference },
     });
   }
   return db.donationIntent.findUniqueOrThrow({
