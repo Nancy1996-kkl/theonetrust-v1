@@ -29,11 +29,11 @@
 }
 
 .site-header.site-header--overlay {
-  --color-focus: var(--color-focus-on-inverse); /* sits over the teal hero */
-  /* A soft teal fade behind the words keeps them readable over any video frame. */
+  --color-focus: var(--color-focus-on-inverse); /* sits over the dark hero */
+  /* A soft dark-green fade behind the words keeps them readable over any video frame. */
   background: linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--color-surface-inverse) 70%, transparent),
+    color-mix(in srgb, var(--color-hero-band) 70%, transparent),
     transparent
   );
   backdrop-filter: none;
@@ -151,7 +151,7 @@
   gap: var(--space-3);
 }
 
-/* The new green-and-gold emblem reads on teal by itself; a soft halo keeps its edge clean. */
+/* The green-and-gold emblem reads on the green footer by itself; a soft halo keeps its edge clean. */
 .site-footer__logo {
   flex: none;
   width: auto;
@@ -384,6 +384,13 @@
   :lang(ta) .site-header__lang .ui-lang__option {
     padding-inline: var(--space-2);
   }
+
+  /* The serif capitals wordmark (#141) is ~40px wider than the old name and wrapped the Tamil
+     row again at 1366–1440px; one size step smaller and tighter tracking restore the room. */
+  :lang(ta) .site-header__name.brand-wordmark {
+    font-size: var(--text-wordmark-header-ta);
+    letter-spacing: 0.05em;
+  }
 }
 
 /* ── Footer (client, Nov 2026) ───────────────────────────────────────
@@ -544,8 +551,11 @@
   gap: var(--space-3);
 }
 
+/* Higher specificity than the footer's stacked link lists. */
+.site-footer .ui-social__list,
 .ui-social__list {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   gap: var(--space-2);
   margin: 0;
@@ -579,7 +589,7 @@
 
 .ui-social__link svg {
   display: block;
-  /* The footer's teal on a white disc (inverse bands remap text tokens to white). */
+  /* The footer's green on a white disc (inverse bands remap text tokens to white). */
   color: var(--color-surface-inverse);
 }
 
@@ -607,8 +617,9 @@
   translate: 0 14%;
 }
 
-/* Inside dark green bands the pressed language uses the accent action pair (dark green on dark green otherwise). */
+/* Inside dark green bands the pressed language is white with darkest-green text, so the only gold
+   pill in the header stays the Donate button (brief §2). */
 .surface-inverse .ui-lang__option[aria-pressed='true'] {
-  background: var(--color-action-donate-bg);
-  color: var(--color-action-donate-text);
+  background: var(--color-lang-selected-bg-on-inverse);
+  color: var(--color-lang-selected-text-on-inverse);
 }

@@ -26,7 +26,13 @@ import {
 } from './ProofSections.tsx';
 import { READY, useDate } from './section-state.ts';
 import { PHOTOS, TAB_PHOTOS, type HomePhoto } from './photos.ts';
-import { EXPLORE_TABS, HOME_TEXT as T, SERVICES, type Service } from './home-content.ts';
+import {
+  BANNER_CAUSES,
+  EXPLORE_TABS,
+  HOME_TEXT as T,
+  SERVICES,
+  type Service,
+} from './home-content.ts';
 
 /**
  * The home page (redesign approved by the client, Nov 2026), in order: hero, mission & vision,
@@ -58,6 +64,7 @@ export function HomePage({
       <PageMeta path="/" organisation />
       <HeroSection content={content} facts={facts} showDrafts={showDrafts} />
       <VisionMission />
+      <DonateBanner />
       <WhereNeeded content={content} showDrafts={showDrafts} />
       <Services />
       <Explore />
@@ -226,6 +233,80 @@ function VisionMission() {
           <Photo shape="strips" label={T.visionTitle} photo={PHOTOS.vision} />
         </div>
       </Reveal>
+    </section>
+  );
+}
+
+// 2b · Donate Today banner (client, Nov 2026): photo background, words and four gold cause
+// tiles on the left, a round Donate button, an arch photo on the right. Words come from the
+// site's own content; photos are samples (photos.ts). Motion is CSS-only and switched off for
+// reduced motion.
+const BANNER_ICONS = [
+  <path key="edu" d="M2 8l10-5 10 5-10 5L2 8zM6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" />,
+  <path
+    key="health"
+    d="M5 7h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zM9 7V5h6v2M12 11v5M9.5 13.5h5"
+  />,
+  <path
+    key="food"
+    d="M4 11h16l-1.5 8.5A1.5 1.5 0 0 1 17 21H7a1.5 1.5 0 0 1-1.5-1.5L4 11zM8 11l4-7 4 7"
+  />,
+  <path key="elders" d="M12 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6zM7 21v-5a5 5 0 0 1 10 0v5M17 13l2 8" />,
+];
+
+function DonateBanner() {
+  const lang = useLang();
+  const home = homePath(lang);
+  return (
+    <section className="hp-banner surface-inverse" aria-labelledby="hp-banner-title">
+      <img
+        className="hp-banner__bg"
+        src={PHOTOS.children.src}
+        alt=""
+        title={creditLine(PHOTOS.children)}
+      />
+      <div className="hp-wrap hp-banner__inner">
+        <div className="hp-banner__copy">
+          <p className="hp-banner__line">{T.donateLead[lang]}</p>
+          <p className="hp-banner__small">{T.smallAct[lang]}</p>
+          <h2 id="hp-banner-title" className="hp-banner__title">
+            {T.bannerTitle[lang]} <span aria-hidden="true">!</span>
+          </h2>
+          <ul className="hp-banner__causes" aria-label={T.bannerCausesLabel[lang]}>
+            {BANNER_CAUSES.map((cause, i) => (
+              <li key={cause.en} className="hp-banner__cause">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="28"
+                  height="28"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  {BANNER_ICONS[i]}
+                </svg>
+                {cause[lang]}
+              </li>
+            ))}
+          </ul>
+          <Link className="ui-button ui-button--donate hp-banner__cta" to={`${home}#donate`}>
+            {T.donateNow[lang]}
+          </Link>
+          <p className="hp-banner__help">
+            {T.bannerHelpPrompt[lang]} <Link to={`${home}#get-help`}>{T.askHelp[lang]}</Link>
+          </p>
+        </div>
+        <figure className="hp-banner__photo">
+          <img
+            src={PHOTOS.banner.src}
+            alt={PHOTOS.banner.alt[lang]}
+            title={creditLine(PHOTOS.banner)}
+          />
+          <figcaption className="hp-banner__tag">
+            <span aria-hidden="true" />
+            {T.bannerTag[lang]}
+          </figcaption>
+        </figure>
+      </div>
     </section>
   );
 }

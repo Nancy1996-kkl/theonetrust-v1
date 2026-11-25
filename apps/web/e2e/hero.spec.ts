@@ -9,7 +9,7 @@ const HEADLINE = {
   en: 'Together, we can make a difference.',
   ta: 'ஒன்றாகச் சேர்ந்தால், மாற்றம் கொண்டுவர முடியும்.',
 };
-const DONATE = { en: 'Donate now', ta: 'இப்போதே நன்கொடை கொடுங்கள்' };
+const DONATE = { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' };
 
 for (const lang of ['en', 'ta'] as const) {
   const home = lang === 'ta' ? '/ta/' : '/';
@@ -83,6 +83,99 @@ for (const lang of ['en', 'ta'] as const) {
       expect(await video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
       await pause.click();
       await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.paused)).toBe(false);
+    });
+
+    test('every hero text stays AA even over a pure-white video frame (review 24 Nov 2026)', async ({
+      page,
+    }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(home);
+      // Worst case: model the fade's actual stops at each text's farthest point over a WHITE
+      // frame, and compare with the text's real colour. Wide screens fade left→right, phones
+      // and tablets top→bottom (the text may overlap the bottom of the banner).
+      const results = await page.evaluate(() => {
+        const media = document.querySelector('.landing-hero__media')!.getBoundingClientRect();
+        const stacked = matchMedia('(max-width: 63.99em)').matches;
+        const scrim = getComputedStyle(document.documentElement)
+          .getPropertyValue('--color-hero-band')
+          .trim();
+        const probe = document.createElement('i');
+        probe.style.color = scrim;
+        document.body.append(probe);
+        const band = getComputedStyle(probe).color.match(/\d+/g)!.map(Number);
+        probe.remove();
+        const lerp = (stops: [number, number][], t: number) => {
+          if (t <= stops[0]![0]) return stops[0]![1];
+          for (let i = 1; i < stops.length; i++) {
+            const [t1, a1] = stops[i]!;
+            const [t0, a0] = stops[i - 1]!;
+            if (t <= t1) return a0 + ((a1 - a0) * (t - t0)) / (t1 - t0);
+          }
+          return stops[stops.length - 1]![1];
+        };
+        const lum = (rgb: number[]) => {
+          const [r, g, b] = rgb.map((c) => {
+            const v = c / 255;
+            return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+          });
+          return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+        };
+        const ratio = (a: number[], b: number[]) => {
+          const [l1, l2] = [lum(a), lum(b)].sort((x, y) => y - x);
+          return (l1! + 0.05) / (l2! + 0.05);
+        };
+        const out: { what: string; ratio: number; minimum: number }[] = [];
+        const selectors = [
+          '.landing-hero__eyebrow',
+          '.landing-hero__title',
+          '.landing-hero__lead',
+          '.landing-hero__help',
+        ];
+        for (const sel of selectors) {
+          const el = document.querySelector<HTMLElement>(sel);
+          if (!el) continue;
+          const box = el.getBoundingClientRect();
+          let alpha: number;
+          if (stacked) {
+            // Text below the banner sits on the solid band; over it, use its highest point.
+            const t = (box.top - media.top) / media.height;
+            alpha =
+              t >= 1
+                ? 1
+                : lerp(
+                    [
+                      [0.4, 0],
+                      [0.75, 0.7],
+                      [1, 1],
+                    ],
+                    t,
+                  );
+          } else {
+            const t = (box.right - media.left) / media.width;
+            alpha =
+              t <= 0
+                ? 1
+                : lerp(
+                    [
+                      [0, 1],
+                      [0.35, 0.92],
+                      [0.47, 0.5],
+                      [0.62, 0],
+                    ],
+                    t,
+                  );
+          }
+          const behind = band.map((c) => c * alpha + 255 * (1 - alpha));
+          const text = getComputedStyle(el).color.match(/\d+/g)!.map(Number);
+          const size = parseFloat(getComputedStyle(el).fontSize);
+          out.push({ what: sel, ratio: ratio(text, behind), minimum: size >= 24 ? 3 : 4.5 });
+        }
+        return out;
+      });
+      expect(results.length).toBeGreaterThanOrEqual(3);
+      for (const r of results) {
+        expect(r.ratio, `${r.what} over a white frame`).toBeGreaterThanOrEqual(r.minimum);
+      }
     });
 
     test('headline text never sits on the uncovered photo on wide screens', async ({ page }) => {

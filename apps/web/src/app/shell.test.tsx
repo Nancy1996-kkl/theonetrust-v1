@@ -313,20 +313,30 @@ describe('footer', () => {
     );
   });
 
-  it('social icons (client, Nov 2026): only confirmed links, each named by its network', () => {
+  it('social icons (client, Nov 2026): every network shown, each named by its network', () => {
     renderRoute('/');
     const social = within(footer()).getByRole('list', { name: 'Find us online' });
     const links = within(social).getAllByRole('link');
-    // WhatsApp is the only confirmed page today; the others wait for the trust's links.
-    expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAccessibleName('WhatsApp');
+    expect(links.map((a) => a.getAttribute('aria-label'))).toEqual([
+      'WhatsApp',
+      'Facebook',
+      'Instagram',
+      'YouTube',
+      'X (Twitter)',
+    ]);
     expect(links[0]).toHaveAttribute('href', 'https://wa.me/919600516999');
+    // Placeholders until the trust sends its page links.
+    for (const link of links.slice(1)) expect(link).toHaveAttribute('href', '#');
     expect(links[0]).toHaveAttribute('rel', 'noopener noreferrer');
     expect(social.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('social icons show each confirmed page and disappear when none is confirmed', () => {
-    const base = { ...TRUST_FACTS, whatsappUrl: null };
+    const base = {
+      ...TRUST_FACTS,
+      whatsappUrl: null,
+      social: { facebook: null, instagram: null, youtube: null, x: null },
+    };
     const { unmount } = render(
       <MemoryRouter>
         <SiteFooter

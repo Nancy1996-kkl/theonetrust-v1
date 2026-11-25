@@ -52,7 +52,7 @@ export const UI_STRINGS: Record<UiLang, UiStrings> = {
   },
   ta: {
     close: 'மூடு',
-    loading: 'கொஞ்சம் பொறுங்கள்…',
+    loading: 'தயார் செய்கிறோம்…',
     required: 'கட்டாயம்',
     optional: 'விருப்பப்பட்டால்',
     dismiss: 'நீக்கு',
@@ -62,13 +62,14 @@ export const UI_STRINGS: Record<UiLang, UiStrings> = {
     stepCurrent: 'இப்போது இந்தப் படி',
     otherAmount: 'வேறு தொகை (₹)',
     otherShort: 'வேறு',
-    amountInvalid: '₹1 அல்லது அதற்கு மேல், முழு ரூபாயாகத் தொகையை எழுதுங்கள்.',
+    amountInvalid: 'தயவுசெய்து ₹1 அல்லது அதற்கு மேல், முழு ரூபாயாகத் தொகையை எழுதுங்கள்.',
     errorPrefix: 'பிழை:',
     successPrefix: 'முடிந்தது:',
     warningPrefix: 'கவனிக்க:',
     infoPrefix: 'தகவல்:',
     languageSwitch: 'மொழி',
-    tableScrollHint: 'எல்லா விவரங்களையும் பார்க்க, அட்டவணையைப் பக்கவாட்டில் தள்ளுங்கள்.',
+    tableScrollHint:
+      'எல்லா விவரங்களையும் பார்க்க, அட்டவணையைப் பக்கவாட்டில் நகர்த்திப் பார்க்கலாம்.',
   },
 };
 

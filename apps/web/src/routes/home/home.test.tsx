@@ -5,7 +5,7 @@ import { RouterProvider, createMemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { routes } from '../../app/routes.tsx';
 import { expectNoA11yViolations } from '../../test/a11y.ts';
-import { EXPLORE_TABS, HOME_TEXT, SERVICES } from './home-content.ts';
+import { BANNER_CAUSES, EXPLORE_TABS, HOME_TEXT, SERVICES } from './home-content.ts';
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -36,8 +36,9 @@ describe('home page design (client, Nov 2026)', () => {
       await screen.findByRole('heading', { level: 1, name: 'Together, we can make a difference.' }),
     ).toBeVisible();
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
-    expect(headings.slice(0, 9)).toEqual([
+    expect(headings.slice(0, 10)).toEqual([
       'Our mission & vision',
+      'Donate Today !',
       'Where help is needed',
       'Four ways we stand with families',
       'Explore what your gift does',
@@ -67,6 +68,40 @@ describe('home page design (client, Nov 2026)', () => {
       '/?amount=100#donate',
     );
     await expectNoA11yViolations(container);
+  });
+
+  it('Donate Today banner: four causes, Donate and Request Help links, both languages', async () => {
+    renderAt('/');
+    const heading = await screen.findByRole('heading', { level: 2, name: /^Donate Today/ });
+    const banner = heading.closest('section')!;
+    const causes = within(banner).getByRole('list', { name: 'Where your gift goes' });
+    expect(
+      within(causes)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Education', 'Health', 'Food', 'Elders']);
+    expect(within(banner).getByRole('link', { name: 'Donate now' })).toHaveAttribute(
+      'href',
+      '/#donate',
+    );
+    expect(within(banner).getByRole('link', { name: 'Request Help' })).toHaveAttribute(
+      'href',
+      '/#get-help',
+    );
+    // The background photo is decoration; the side photo keeps its description.
+    expect(banner.querySelector('.hp-banner__bg')).toHaveAttribute('alt', '');
+    for (const c of BANNER_CAUSES) expect(c.ta).toBeTruthy();
+  });
+
+  it('Donate Today banner in Tamil', async () => {
+    renderAt('/ta/');
+    const heading = await screen.findByRole('heading', { level: 2, name: /^இன்றே உதவலாம்/ });
+    const banner = heading.closest('section')!;
+    expect(within(banner).getByRole('link', { name: 'உதவி கேட்க' })).toHaveAttribute(
+      'href',
+      '/ta/#get-help',
+    );
+    expect(banner).toHaveTextContent('மருத்துவம்');
   });
 
   it('only the Education card carries the gold tracing border, hidden from screen readers', async () => {

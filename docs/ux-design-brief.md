@@ -16,19 +16,27 @@ The public website should feel premium, elegant, trustworthy, human-centred, and
 
 ### 2. Brand Identity
 
-**Selected colour palette: Forest & Gold** (owner brief, 5 Nov 2026 — replaces Midnight Navy)
+**Selected colour palette: Logo Green & Gold** (owner, 24 Nov 2026 — measured from the trust's
+logo; replaces the Teal & Orange palette of 16 Nov and Forest & Gold of 5 Nov). Full token list,
+derived ink tones and the generated contrast table: `docs/design/tokens.md`.
 
 | Colour | HEX | Purpose |
 |---|---|---|
-| Deep Forest | #0F2A1D | Primary brand, hero and impact bands, headings |
-| Trust Green | #3C763A | Focus ring, icons, primary hover |
-| Mint | #B7E4C7 | Story cards, lead text on forest |
-| Sage | #A8D5BA | Borders and quiet accents on forest |
-| Gold | #D4AF37 | Donate button, 1px rules, impact numbers, small icons |
-| Gold text | #8A6D1F | Small gold labels on ivory/white only |
-| Champagne | #F7E7CE | Stories band |
-| Ivory | #FFFDF8 | Main background |
-| Body | #4A5A50 | Body text |
+| Deep Green | #0B6619 | Primary brand, links, buttons, green bands, footer |
+| Darkest Green | #024414 | Headings, Donate label, hero scrim |
+| Fresh Green | #60B710 | Fills and icons only (never text) |
+| Leaf Green | #338615 | Leaf icons and fills only (never text) |
+| Gold | #E09D12 | Donate button, 1px rules, glow (never text on light) |
+| Light Gold | #FDD947 | Donate hover; numbers, accents and focus on green bands |
+| Gold text | #845400 | Small gold labels on light surfaces only |
+| Light Grey | #F7F7F7 | Main background (the logo's background) |
+| Warm Cream | #FCF4D6 | Warm bands (the glow inside the logo heart) |
+| Soft Green | #EAF3E7 | Muted bands, lead text on green |
+| Body | #1F2D22 | Body text |
+
+**Typography:** headings in **Poppins** (closest free match to the logo's lettering); the brand
+wordmark in **Cinzel** serif capitals (#141); body text in **Plus Jakarta Sans**; Tamil letters in
+**Noto Sans Tamil**.
 
 Additional semantic colours:
 - Success: #287A55
@@ -37,15 +45,15 @@ Additional semantic colours:
 - Information: #3568A8
 
 Making it luxurious and engaging:
-- **Alternate dark and light sections**: forest hero → ivory sections → forest impact band →
-  champagne stories. That rhythm is what makes the site feel premium.
+- **Alternate dark and light sections**: dark-green hero → light-grey sections → green impact
+  band → cream stories. That rhythm is what makes the site feel premium.
 - **Gold only for a few things**: the Donate button, thin 1px divider lines, impact numbers and
   small icons. Never paragraphs. (Gold text fails contrast on light backgrounds; see
   `docs/design/tokens.md` rule 4.)
-- **Donate button**: gold background, forest text, a soft gold glow on hover; in the sticky header
-  and in every forest section.
-- **Emotion**: real, consented beneficiary photos under a forest gradient; counters that animate on
-  scroll (verified figures only); story cards on mint.
+- **Donate button**: gold background, darkest-green text, light gold with a soft glow on hover; in
+  the sticky header and in every green section.
+- **Emotion**: real, consented beneficiary photos under a dark-green gradient; counters that animate on
+  scroll (verified figures only); story cards on soft green.
 - **Trust signals**: registration badges such as 80G / 12A in gold outline style, and simple charts
   of where donations go — only once the trust has confirmed the facts (issue #1).
 
@@ -212,7 +220,7 @@ Display key impact metrics:
 - Communities Reached.
 - Total Donations Received.
 
-Use large numbers, clear labels, and restrained champagne accents.
+Use large numbers, clear labels, and restrained light-gold accents.
 
 Only display verified statistics. Support a configurable empty state when metrics are unavailable.
 

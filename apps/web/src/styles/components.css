@@ -138,8 +138,14 @@
 
 .ui-button--donate:hover {
   background: var(--color-action-donate-bg-hover);
-  /* Soft orange glow (brand brief): the only element on the page that glows. */
+  /* Light gold is close to light pages: a gold-ink edge keeps the button's shape visible. */
+  border-color: var(--color-action-donate-border-hover);
+  /* Soft gold glow (brand brief): the only element on the page that glows. */
   box-shadow: var(--shadow-glow-gold);
+}
+
+.surface-inverse .ui-button--donate:hover {
+  border-color: var(--color-action-donate-border-on-inverse);
 }
 
 .ui-button--donate:active {
@@ -925,4 +931,12 @@
 
 .ui-lang__option:focus-visible {
   outline-offset: calc(var(--focus-ring-width) * -1);
+}
+
+/* Tamil in buttons (client, Nov 2026): Noto Sans Tamil sits about 2px low in the line box and
+   its tall line height made Tamil buttons taller than English ones. A tighter line height and a
+   small upward nudge centre the words and keep every button the same height in both languages. */
+:lang(ta) :is(.ui-button, .hp-chip) {
+  padding-block: calc(var(--space-2) - 0.14em) calc(var(--space-2) + 0.14em);
+  line-height: 1.35;
 }

@@ -1,6 +1,7 @@
 /*
  * Home page redesign preview (client, Nov 2026) — scoped to `.hp` so the live page is untouched.
- * Palette: ivory background, peach and sage bands, forest headings and footer, green actions.
+ * Palette (logo green & gold): light-grey background, cream and soft-green bands, darkest-green
+ * headings, green footer and actions, gold Donate.
  * Photos sit in a different outline in every section and swap sides section by section.
  */
 .hp {
@@ -50,7 +51,8 @@
   align-items: center;
   gap: var(--space-2);
   margin: 0 0 var(--space-2);
-  color: var(--color-action-primary-bg);
+  /* Darkest green: 10:1 on every light band, so the small label stays AA while it fades in. */
+  color: var(--color-text-heading);
   font-weight: var(--weight-bold);
   font-size: var(--text-small);
   letter-spacing: 0.04em;
@@ -105,14 +107,14 @@
   border: var(--border-width-strong) solid var(--color-action-primary-bg);
 }
 
-/* On teal bands the Donate edge is a 2px peach line so the button stands out (G1 S3). */
+/* On green bands the Donate edge is a 2px light-gold line so the button stands out (G1 S3). */
 .hp-hero .ui-button--donate.hp-btn,
 .hp-dark .ui-button--donate.hp-btn,
 .hp-band .ui-button--donate.hp-btn {
   border-color: var(--color-action-donate-border-on-inverse);
 }
 
-/* Dark bands swap the focus ring to its on-inverse colour (turquoise-ink is 1.4:1 on teal). */
+/* Dark bands swap the focus ring to its on-inverse colour (focus-ink is 1.3:1 on green). */
 .hp-hero,
 .hp-dark,
 .hp-band {
@@ -874,11 +876,17 @@
 }
 
 /* "Payment successful" tick on the payment step. */
+/* Floats on the card's top edge, like a badge, so it never pushes the step title down: every
+   step title starts on the same line (client review, Nov 2026). */
 .hp-step__paid {
+  position: absolute;
+  inset-block-start: calc(-1 * var(--space-3));
+  inset-inline-end: var(--space-3);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  margin-block-end: var(--space-2);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-pill);
   background: var(--color-home-sage-tint);
@@ -1574,4 +1582,316 @@
 .hp-dark a {
   color: var(--color-home-on-dark);
   text-decoration: underline;
+}
+
+/* ── 2b · Donate Today banner (client, Nov 2026) ──
+   Layout after the client's reference shop banner: photo background under a teal scrim, the
+   words and four gold cause tiles on the left, a round Donate button, an arch photo right. */
+.hp-banner {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding-block: var(--space-12);
+  color: var(--color-home-on-dark);
+}
+
+.hp-banner__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hp-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    var(--color-banner-scrim-strong),
+    var(--color-banner-scrim-mid)
+  );
+}
+
+@media (min-width: 52em) {
+  .hp-banner::before {
+    background: linear-gradient(
+      90deg,
+      var(--color-banner-scrim-strong) 0%,
+      var(--color-banner-scrim-mid) 45%,
+      var(--color-banner-scrim-soft) 100%
+    );
+  }
+}
+
+.hp-banner__inner {
+  display: grid;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.hp-banner__copy {
+  justify-self: center;
+  max-width: 30rem;
+  text-align: center;
+}
+
+.hp-banner__line {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+}
+
+.hp-banner__small {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-small);
+  opacity: 0.9;
+}
+
+.hp .hp-banner__title {
+  margin: 0 0 var(--space-6);
+  color: var(--color-home-on-dark);
+  font-size: var(--text-h2);
+}
+
+.hp-banner__title span {
+  display: inline-block;
+}
+
+.hp-banner__causes {
+  /* Always a full row of four, or a tidy 2 × 2 on small phones — never 3 + 1. */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 30rem;
+  gap: var(--space-2);
+  margin: 0 auto var(--space-8);
+  padding: 0;
+  list-style: none;
+}
+
+.hp-banner__cause {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3) var(--space-1);
+  overflow-wrap: normal;
+  white-space: nowrap;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--color-banner-gold-from), var(--color-banner-gold-to));
+  box-shadow: var(--shadow-banner-tile);
+  color: var(--color-banner-gold-text);
+  font-size: var(--text-small);
+  font-weight: var(--weight-bold);
+}
+
+.hp-banner__cause svg {
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hp-banner .hp-banner__cta {
+  min-width: 11rem;
+  min-height: var(--control-height);
+  border-radius: var(--radius-pill);
+}
+
+.hp-banner__help {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-small);
+}
+
+.hp-banner__help a {
+  color: var(--color-home-on-dark);
+  font-weight: var(--weight-bold);
+}
+
+.hp-banner__photo {
+  position: relative;
+  justify-self: center;
+  width: min(18rem, 86%);
+  margin: 0;
+}
+
+.hp-banner__photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 4.3;
+  border: 6px solid var(--color-surface);
+  border-radius: 14rem 14rem var(--radius-xl) var(--radius-xl);
+  box-shadow: var(--shadow-banner-photo);
+  object-fit: cover;
+}
+
+.hp-banner__tag {
+  position: absolute;
+  bottom: var(--space-6);
+  left: calc(-1 * var(--space-2));
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-banner-tile);
+  color: var(--color-banner-gold-text);
+  font-size: var(--text-small);
+  font-weight: var(--weight-bold);
+}
+
+.hp-banner__tag span {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+  background: var(--color-banner-live);
+}
+
+@media (min-width: 26em) {
+  .hp-banner__causes {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 52em) {
+  .hp-banner__inner {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hp-banner__photo {
+    width: min(26rem, 100%);
+  }
+
+  .hp-banner__tag {
+    left: calc(-1 * var(--space-4));
+  }
+}
+
+/* Motion: slow zoom of the background, tiles pop in then bounce in turn, the button breathes
+   with a passing shine, the photo floats, the "live" dot pings. Off for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .hp-banner__bg {
+    animation: hp-banner-zoom 18s ease-in-out infinite alternate;
+  }
+
+  .hp-banner__title span {
+    animation: hp-banner-wave 2.4s ease-in-out infinite;
+  }
+
+  .hp-banner__cause {
+    animation: hp-banner-bounce 5.6s var(--ease-standard) infinite;
+  }
+
+  .hp-banner__cause:nth-child(2) {
+    animation-delay: 1.4s;
+  }
+
+  .hp-banner__cause:nth-child(3) {
+    animation-delay: 2.8s;
+  }
+
+  .hp-banner__cause:nth-child(4) {
+    animation-delay: 4.2s;
+  }
+
+  .hp-banner .hp-banner__cta {
+    position: relative;
+    overflow: hidden;
+    animation: hp-banner-breathe 2.6s ease-in-out infinite;
+  }
+
+  .hp-banner .hp-banner__cta::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      var(--color-banner-shine) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    animation: hp-banner-shine 3.2s ease-in-out infinite;
+  }
+
+  .hp-banner__photo {
+    animation: hp-banner-float 5s ease-in-out infinite;
+  }
+
+  .hp-banner__tag span {
+    animation: hp-banner-ping 1.8s ease-out infinite;
+  }
+}
+
+@keyframes hp-banner-zoom {
+  to {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes hp-banner-wave {
+  0%,
+  30%,
+  100% {
+    transform: rotate(0);
+  }
+
+  10% {
+    transform: rotate(14deg);
+  }
+
+  20% {
+    transform: rotate(-6deg);
+  }
+}
+
+@keyframes hp-banner-bounce {
+  0%,
+  15%,
+  100% {
+    transform: none;
+  }
+
+  5% {
+    transform: translateY(calc(-1 * var(--space-2)));
+  }
+
+  10% {
+    transform: translateY(2px);
+  }
+}
+
+@keyframes hp-banner-breathe {
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes hp-banner-shine {
+  60%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes hp-banner-float {
+  50% {
+    transform: translateY(calc(-1 * var(--space-2)));
+  }
+}
+
+@keyframes hp-banner-ping {
+  0% {
+    box-shadow: 0 0 0 0 var(--color-banner-live);
+  }
+
+  70%,
+  100% {
+    box-shadow: 0 0 0 10px transparent;
+  }
 }

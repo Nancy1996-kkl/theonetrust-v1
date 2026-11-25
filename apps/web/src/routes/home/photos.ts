@@ -1,10 +1,11 @@
 import type { Bilingual } from '../../content/landing.ts';
-import children from '../../assets/home/children-books-madurai.jpg';
-import contact from '../../assets/home/contact-smiles.jpg';
-import donate from '../../assets/home/donate-kids-smile.jpg';
-import education from '../../assets/home/education-girls-study.jpg';
-import elderly from '../../assets/home/elderly-grandparents.jpg';
-import healthcare from '../../assets/home/healthcare-bp-check.jpg';
+import children from '../../assets/home/children-food-kits.jpg';
+import banner from '../../assets/home/banner-children-smile.jpg';
+import contact from '../../assets/home/contact-volunteers.jpg';
+import donate from '../../assets/home/donate-schoolchildren-cheer.jpg';
+import education from '../../assets/home/education-classroom-teacher.jpg';
+import elderly from '../../assets/home/elderly-women-meal.jpg';
+import healthcare from '../../assets/home/healthcare-doctor-talk.jpg';
 import vision from '../../assets/home/vision-children-walk.jpg';
 
 /**
@@ -35,73 +36,85 @@ export const PHOTOS = {
   education: {
     src: education,
     alt: {
-      en: 'Two schoolgirls in uniform studying at their desk',
-      ta: 'மேசையில் அமர்ந்து படிக்கும் சீருடை அணிந்த இரண்டு மாணவிகள்',
+      en: 'A teacher guiding students in uniform as they write in a bright classroom',
+      ta: 'வெளிச்சமான வகுப்பறையில் எழுதும் சீருடை மாணவர்களுக்கு வழிகாட்டும் ஆசிரியை',
     },
     credit: {
-      author: 'Unsplash',
+      author: 'CIMT Hooghly (Unsplash)',
       license: 'Unsplash License',
-      url: 'https://unsplash.com/s/photos/indian-school-uniform',
+      url: 'https://unsplash.com/photos/a-classroom-full-of-students-sitting-at-desks-I4lLt9g8i3k',
     },
   },
   children: {
     src: children,
     alt: {
-      en: 'Schoolboys choosing Tamil books at a book fair in Madurai',
-      ta: 'மதுரை புத்தகக் கண்காட்சியில் தமிழ்ப் புத்தகங்களைப் பார்க்கும் பள்ளி மாணவர்கள்',
+      en: 'A volunteer handing food kits to smiling children',
+      ta: 'சிரிக்கும் குழந்தைகளுக்கு உணவுப் பொட்டலங்களைக் கொடுக்கும் ஒரு தன்னார்வலர்',
     },
     credit: {
-      author: 'Pexels',
-      license: 'Pexels License',
-      url: 'https://www.pexels.com/photo/children-exploring-books-at-madurai-literature-event-28963924/',
+      author: 'Supplied by the client',
+      license: 'Client supplied',
+      url: '',
     },
   },
   healthcare: {
     src: healthcare,
     alt: {
-      en: 'A doctor checking a patient’s blood pressure at a clinic',
-      ta: 'மருத்துவமனையில் ஒருவரின் இரத்த அழுத்தத்தைப் பரிசோதிக்கும் மருத்துவர்',
+      en: 'A doctor talking with patients at an outdoor health check-up',
+      ta: 'வெளியில் நடக்கும் மருத்துவ முகாமில் நோயாளிகளோடு பேசும் மருத்துவர்',
     },
     credit: {
-      author: 'Pexels',
-      license: 'Pexels License',
-      url: 'https://www.pexels.com/photo/a-doctor-taking-a-patient-s-blood-pressure-14558560/',
+      author: 'Supplied by the client',
+      license: 'Client supplied',
+      url: '',
     },
   },
   elderly: {
     src: elderly,
     alt: {
-      en: 'Grandparents laughing with their grandchild in the garden',
-      ta: 'தோட்டத்தில் பேரக்குழந்தையுடன் சிரிக்கும் தாத்தா பாட்டி',
+      en: 'Elderly women in saris sitting together with a meal',
+      ta: 'உணவோடு ஒன்றாக அமர்ந்திருக்கும் சேலை அணிந்த முதிய பெண்கள்',
     },
     credit: {
-      author: 'Pexels',
-      license: 'Pexels License',
-      url: 'https://www.pexels.com/photo/woman-and-man-sitting-with-child-18394079/',
+      author: 'Supplied by the client',
+      license: 'Client supplied',
+      url: '',
     },
   },
   donate: {
     src: donate,
     alt: {
-      en: 'Smiling children standing together in front of a yellow door',
-      ta: 'மஞ்சள் கதவின் முன் ஒன்றாக நின்று புன்னகைக்கும் குழந்தைகள்',
+      en: 'Schoolchildren in uniform smiling and waving at the camera',
+      ta: 'சீருடையில் சிரித்தபடி கை அசைக்கும் பள்ளிக் குழந்தைகள்',
     },
     credit: {
-      author: 'Pexels',
-      license: 'Pexels License',
-      url: 'https://www.pexels.com/photo/kids-smiling-at-the-camera-3920704/',
+      author: 'Church of the King (Unsplash)',
+      license: 'Unsplash License',
+      url: 'https://unsplash.com/photos/group-of-children-taking-picture-j9jZSqfH5YI',
+    },
+  },
+  banner: {
+    src: banner,
+    alt: {
+      en: 'Five children smiling together',
+      ta: 'ஒன்றாக நின்று சிரிக்கும் ஐந்து குழந்தைகள்',
+    },
+    credit: {
+      author: 'LJ (Unsplash)',
+      license: 'Unsplash License',
+      url: 'https://unsplash.com/photos/five-children-smiling-XoBWUBA3Amg',
     },
   },
   contact: {
     src: contact,
     alt: {
-      en: 'Many hands joined together in the middle of a circle',
-      ta: 'வட்டமாக நின்று நடுவில் ஒன்றாகச் சேர்த்த பல கைகள்',
+      en: 'Three volunteers in yellow T-shirts helping at a community event',
+      ta: 'ஒரு பொது நிகழ்வில் உதவும் மஞ்சள் சட்டை அணிந்த மூன்று தன்னார்வலர்கள்',
     },
     credit: {
-      author: 'Unsplash',
+      author: 'Rashpal Singh (Unsplash)',
       license: 'Unsplash License',
-      url: 'https://unsplash.com/license',
+      url: 'https://unsplash.com/photos/three-men-wearing-yellow-volunteers-shirts-qKVSEuBT5EY',
     },
   },
 } satisfies Record<string, HomePhoto>;
