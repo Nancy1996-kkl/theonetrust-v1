@@ -34,20 +34,23 @@ create commits, push branches, create/modify GitHub issues, open PRs, or deploy.
    `ui-regression-reviewer`, `a11y-i18n-reviewer`, `change-auditor`,
    `test-engineer`, and `payment-security-reviewer` where relevant.
 
-## Approved brand palette
+## Approved brand palette (logo green & gold, owner 24 Nov 2026)
 
 Use this exact owner-approved palette as the intended brand direction:
 
-- Deep Teal `#025D62`
-- Bright Turquoise `#00AEB4`
-- Warm Orange `#F07800`
-- Natural Green `#4A9200`
-- Cloud White `#F7FAF8`
-- Soft Mint `#EAF3EF`
-- Peach `#FFF2E5`
-- Leaf Tint `#F0F6E8`
-- Charcoal `#263B3B`
-- Border `#DFE9E5`
+- Deep Green `#0B6619`
+- Darkest Green `#024414`
+- Fresh Green `#60B710`
+- Leaf Green `#338615`
+- Gold `#E09D12`
+- Soft Gold `#F2B636`
+- Light Gold `#FDD947`
+- Light Grey `#F7F7F7`
+- Soft Green `#EAF3E7`
+- Warm Cream `#FCF4D6`
+- Leaf Tint `#F2F7EA`
+- Charcoal `#1F2D22`
+- Border `#DCE5DA`
 
 Do not invent additional brand colours. Semantic success, warning, error and info
 colours remain distinct from brand colours and must retain accessible contrast.

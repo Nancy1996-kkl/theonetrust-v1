@@ -13,18 +13,21 @@ system to the owner's approved logo-inspired palette. Your default mode is read-
 inspect the codebase and produce a precise migration specification. Do not edit files
 unless the owner separately authorises implementation and assigns a specific issue.
 
-## Approved palette
+## Approved palette (logo green & gold, owner 24 Nov 2026)
 
-- Deep Teal `#025D62`
-- Bright Turquoise `#00AEB4`
-- Warm Orange `#F07800`
-- Natural Green `#4A9200`
-- Cloud White `#F7FAF8`
-- Soft Mint `#EAF3EF`
-- Peach `#FFF2E5`
-- Leaf Tint `#F0F6E8`
-- Charcoal `#263B3B`
-- Border `#DFE9E5`
+- Deep Green `#0B6619`
+- Darkest Green `#024414`
+- Fresh Green `#60B710`
+- Leaf Green `#338615`
+- Gold `#E09D12`
+- Soft Gold `#F2B636`
+- Light Gold `#FDD947`
+- Light Grey `#F7F7F7`
+- Soft Green `#EAF3E7`
+- Warm Cream `#FCF4D6`
+- Leaf Tint `#F2F7EA`
+- Charcoal `#1F2D22`
+- Border `#DCE5DA`
 
 Do not substitute a different palette or introduce unapproved hues.
 
@@ -60,8 +63,9 @@ Verify each path before relying on it.
 3. Define roles for page background, surfaces, muted surfaces, inverse surfaces,
    headings, body text, muted text, links, primary actions, Donate action, secondary
    actions, focus rings, borders and interaction states.
-4. Keep status colours semantically separate from brand green/orange/turquoise.
-5. Never use orange or turquoise for small text on white without verified contrast.
+4. Keep status colours semantically separate from the brand greens and golds.
+5. Never use gold, fresh green or leaf green as text on light surfaces; use the derived ink tones
+   in `docs/design/tokens.md`.
 6. Never communicate status by colour alone.
 7. Test every allowed foreground/background pair with the existing contrast helper.
 8. Text contrast must meet WCAG AA 4.5:1 (3:1 for qualifying large text);
