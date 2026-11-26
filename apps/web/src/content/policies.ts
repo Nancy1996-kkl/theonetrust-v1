@@ -43,14 +43,14 @@ export const POLICY_UI = {
   contactHeading: { en: 'Questions about this policy', ta: 'இந்தக் கொள்கை பற்றிய கேள்விகள்' },
   contactLead: {
     en: 'Contact us and we will reply as soon as we can:',
-    ta: 'எங்களைத் தொடர்பு கொள்ளுங்கள், சீக்கிரம் பதில் சொல்கிறோம்:',
+    ta: 'எங்களைத் தயங்காமல் தொடர்பு கொள்ளலாம், சீக்கிரம் பதில் சொல்கிறோம்:',
   },
   otherPolicies: { en: 'Other policies', ta: 'மற்ற கொள்கைகள்' },
   kicker: { en: 'Our policies', ta: 'எங்கள் கொள்கைகள்' },
   onThisPage: { en: 'On this page', ta: 'இந்தப் பக்கத்தில்' },
-  emailUs: { en: 'Email us', ta: 'மின்னஞ்சல் அனுப்புங்கள்' },
-  callUs: { en: 'Call us', ta: 'அழைக்கவும்' },
-  whatsappUs: { en: 'Chat on WhatsApp', ta: 'WhatsApp-இல் பேசுங்கள்' },
+  emailUs: { en: 'Email us', ta: 'மின்னஞ்சல் அனுப்பலாம்' },
+  callUs: { en: 'Call us', ta: 'அழைக்க' },
+  whatsappUs: { en: 'Chat on WhatsApp', ta: 'WhatsApp-இல் பேசலாம்' },
   callHours: { en: 'Call hours', ta: 'அழைக்கும் நேரம்' },
   formNotice: {
     en: 'By continuing you agree to our',
@@ -102,7 +102,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
           ),
           p(
             'If you ask on behalf of someone else, please make sure they agree to being contacted.',
-            'வேறொருவருக்காக நீங்கள் கேட்டால், நாங்கள் அவர்களைத் தொடர்பு கொள்ள அவர்கள் சம்மதிக்கிறார்களா என்று முன்பே கேட்டுக்கொள்ளுங்கள்.',
+            'வேறொருவருக்காக நீங்கள் கேட்டால், நாங்கள் அவர்களைத் தொடர்பு கொள்ள அவர்கள் சம்மதிக்கிறார்களா என்று முன்பே கேட்டுத் தெரிந்துகொள்ளுமாறு அன்புடன் கேட்டுக்கொள்கிறோம்.',
           ),
         ],
       },
@@ -245,7 +245,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
         paragraphs: [
           p(
             'Please give true information and do not misuse the site, for example by sending false requests or trying to break its security. We may change these terms; the version on this page applies.',
-            'உண்மையான விவரங்களை மட்டும் கொடுங்கள்; பொய்யான கோரிக்கை அனுப்புவது, தளத்தின் பாதுகாப்பை உடைக்க முயல்வது போல் தவறாகப் பயன்படுத்த வேண்டாம். இந்த விதிமுறைகளை நாங்கள் மாற்றலாம்; இந்தப் பக்கத்தில் இருப்பதுதான் இப்போது பொருந்தும்.',
+            'தயவுசெய்து உண்மையான விவரங்களை மட்டும் கொடுங்கள்; பொய்யான கோரிக்கை அனுப்புவது, தளத்தின் பாதுகாப்பை உடைக்க முயல்வது போன்ற தவறான பயன்பாட்டை அனுமதிக்க முடியாது. இந்த விதிமுறைகளை நாங்கள் மாற்றலாம்; இந்தப் பக்கத்தில் இருப்பதுதான் இப்போது பொருந்தும்.',
           ),
         ],
       },
@@ -303,7 +303,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
         paragraphs: [
           p(
             'Contact us with the date, amount and payment reference. Approved refunds go back to the original payment method through Razorpay; your bank decides when it appears in your account.',
-            'தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண் — இவற்றுடன் எங்களைத் தொடர்பு கொள்ளுங்கள். திருப்பித் தர ஒப்புக்கொண்ட பணம், நீங்கள் செலுத்திய அதே வழியில் Razorpay மூலம் திரும்ப அனுப்பப்படும்; அது உங்கள் கணக்கில் எப்போது வரும் என்பது உங்கள் வங்கியைப் பொறுத்தது.',
+            'தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண் — இவற்றுடன் எங்களைத் தொடர்பு கொள்ளலாம். திருப்பித் தர ஒப்புக்கொண்ட பணம், நீங்கள் செலுத்திய அதே வழியில் Razorpay மூலம் திரும்ப அனுப்பப்படும்; அது உங்கள் கணக்கில் எப்போது வரும் என்பது உங்கள் வங்கியைப் பொறுத்தது.',
           ),
         ],
       },
@@ -314,7 +314,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
         paragraphs: [
           p(
             'If money left your account but the payment failed, it is normally reversed by your bank automatically. Please do not pay again while a payment shows as pending.',
-            'உங்கள் கணக்கிலிருந்து பணம் போய், செலுத்துதல் தோல்வியடைந்தால், பொதுவாக உங்கள் வங்கியே அதைத் திருப்பித் தந்துவிடும். “இன்னும் உறுதியாகவில்லை” என்று காட்டும்போது மறுபடி பணம் செலுத்த வேண்டாம்.',
+            'உங்கள் கணக்கிலிருந்து பணம் போய், செலுத்துதல் தோல்வியடைந்தால், பொதுவாக உங்கள் வங்கியே அதைத் திருப்பித் தந்துவிடும். “இன்னும் உறுதியாகவில்லை” என்று காட்டும்போது மறுபடி பணம் செலுத்தத் தேவையில்லை.',
           ),
         ],
       },
@@ -336,7 +336,7 @@ export const POLICIES: Record<PolicyId, Policy> = {
         paragraphs: [
           p(
             'If your name or other details on an acknowledgement are wrong, contact us. We issue a corrected acknowledgement and keep the original record.',
-            'ஒப்புகையில் உங்கள் பெயரோ வேறு விவரமோ தவறாக இருந்தால், எங்களைத் தொடர்பு கொள்ளுங்கள். திருத்திய ஒப்புகையைத் தருவோம்; பழைய பதிவையும் அப்படியே வைத்திருப்போம்.',
+            'ஒப்புகையில் உங்கள் பெயரோ வேறு விவரமோ தவறாக இருந்தால், எங்களைத் தொடர்பு கொள்ளலாம். திருத்திய ஒப்புகையைத் தருவோம்; பழைய பதிவையும் அப்படியே வைத்திருப்போம்.',
           ),
         ],
       },

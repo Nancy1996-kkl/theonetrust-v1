@@ -208,9 +208,9 @@ export const LANDING_CONTENT: LandingContent = {
   howItWorks: {
     title: { en: 'How it works', ta: 'இது எப்படி நடக்கிறது' },
     steps: [
-      { en: 'Choose a need', ta: 'தேவையைத் தேர்ந்தெடுங்கள்' },
-      { en: 'Choose an amount', ta: 'தொகையைத் தேர்ந்தெடுங்கள்' },
-      { en: 'Pay securely', ta: 'பாதுகாப்பாகச் செலுத்துங்கள்' },
+      { en: 'Choose a need', ta: 'தேவையைத் தேர்வு செய்யலாம்' },
+      { en: 'Choose an amount', ta: 'தொகையைத் தேர்வு செய்யலாம்' },
+      { en: 'Pay securely', ta: 'பாதுகாப்பாகச் செலுத்தலாம்' },
       {
         en: 'Get an acknowledgement and updates',
         ta: 'ஒப்புகையும் புதுத் தகவல்களும் உங்களுக்கு வரும்',

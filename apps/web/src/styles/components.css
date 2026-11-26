@@ -932,3 +932,11 @@
 .ui-lang__option:focus-visible {
   outline-offset: calc(var(--focus-ring-width) * -1);
 }
+
+/* Tamil in buttons (client, Nov 2026): Noto Sans Tamil sits about 2px low in the line box and
+   its tall line height made Tamil buttons taller than English ones. A tighter line height and a
+   small upward nudge centre the words and keep every button the same height in both languages. */
+:lang(ta) :is(.ui-button, .hp-chip) {
+  padding-block: calc(var(--space-2) - 0.14em) calc(var(--space-2) + 0.14em);
+  line-height: 1.35;
+}
