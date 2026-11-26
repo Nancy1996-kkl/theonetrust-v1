@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router';
 import { LanguageSwitch } from '../components/ui/LanguageSwitch.tsx';
 import type { UiLang } from '../components/ui/ui-strings.ts';
 import { focusableIn } from '../components/ui/focus.ts';
-import { TRUST_FACTS } from '../config/trust-facts.ts';
+import { TRUST_FACTS, brandName } from '../config/trust-facts.ts';
 import { homePath } from '../i18n/lang.ts';
 import { useLang, useMessages } from '../i18n/use-lang.ts';
 import emblemUrl from '../assets/brand/emblem.webp';
@@ -103,7 +103,9 @@ export function SiteHeader({ onLanguageChange }: SiteHeaderProps) {
         <a className="site-header__brand" href={home} aria-label={t.homeLink}>
           {/* Trust logo emblem (client, 16 Nov 2026). Decorative: the link has an aria-label. */}
           <img className="site-header__logo" src={emblemUrl} alt="" width={131} height={112} />
-          <span className="site-header__name brand-wordmark">{TRUST_FACTS.siteName}</span>
+          <span className="site-header__name brand-wordmark">
+            {brandName(TRUST_FACTS.siteName)}
+          </span>
         </a>
 
         <nav className="site-header__nav" aria-label={t.sectionsNav}>

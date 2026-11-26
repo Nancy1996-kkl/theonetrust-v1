@@ -92,7 +92,6 @@ export const routes: RouteObject[] = [
     element: <RootLayout />,
     errorElement: <RouteErrorPage />,
     children: [
-      { index: true, element: <HomePage /> },
       // Tamil mirror (ADR 0004). Same layout above it, so switching language keeps state.
       {
         path: 'ta',
@@ -104,10 +103,18 @@ export const routes: RouteObject[] = [
           { path: '*', element: <NotFoundPage /> },
         ],
       },
-      ...policyRoutes,
-      receiptRoute,
-      manageRoute,
-      { path: '*', element: <NotFoundPage /> },
+      // English pages sit one level deep too (a pathless group), so both languages render the
+      // same component tree: switching language updates the page in place instead of
+      // re-mounting it (no image flash, replayed animations or layout jump — client, Nov 2026).
+      {
+        children: [
+          { index: true, element: <HomePage /> },
+          ...policyRoutes,
+          receiptRoute,
+          manageRoute,
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 ];

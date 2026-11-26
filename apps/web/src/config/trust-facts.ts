@@ -48,3 +48,8 @@ export const TRUST_FACTS: TrustFacts = {
   // replace each one with the trust's real page URL as soon as the client sends it.
   social: { facebook: '#', instagram: '#', youtube: '#', x: '#' },
 };
+
+/** Name shown in the logo wordmark: the site name without the ".in" (client, 26 Nov 2026). */
+export function brandName(name: string): string {
+  return name.replace(/\.in$/i, '');
+}
