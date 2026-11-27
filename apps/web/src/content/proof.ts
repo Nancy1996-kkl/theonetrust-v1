@@ -141,6 +141,7 @@ export const PROOF_CONTENT: ProofContent = {
     periodLabel: { en: 'Period', ta: 'காலம்' },
     updatedLabel: { en: 'Updated', ta: 'புதுப்பிக்கப்பட்டது' },
     seeDocuments: { en: 'See our documents', ta: 'எங்கள் ஆவணங்களைப் பார்க்க' },
+    seeDocuments: { en: 'See our documents', ta: 'எங்கள் ஆவணங்களைப் பாருங்கள்' },
     donateCta: { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' },
     verifiedNote: {
       en: 'You receive an acknowledgement only after your payment is verified.',
