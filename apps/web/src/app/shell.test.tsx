@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { expectNoA11yViolations } from '../test/a11y.ts';
 import { renderRoute } from '../test/render.tsx';
 import { UiLangContext } from '../components/ui/ui-strings.ts';
-import { TRUST_FACTS } from '../config/trust-facts.ts';
+import { TRUST_FACTS, brandName } from '../config/trust-facts.ts';
 import { LANG_STORAGE_KEY } from '../i18n/lang.ts';
 import { useDonationDraft } from '../state/donation-draft.ts';
 import { RootLayout } from './RootLayout.tsx';
@@ -114,7 +114,7 @@ describe('header', () => {
 
   it('does not invent a trust name: shows only the site name', () => {
     renderRoute('/');
-    expect(banner()).toHaveTextContent(TRUST_FACTS.siteName);
+    expect(banner()).toHaveTextContent(brandName(TRUST_FACTS.siteName));
     // Visible text only (the JSON-LD script from #16 legitimately contains "[").
     for (const region of [banner(), screen.getByRole('main'), footer()]) {
       const visible = region.cloneNode(true) as HTMLElement;
@@ -217,6 +217,18 @@ describe('language switching', () => {
     expect(window.localStorage.getItem(LANG_STORAGE_KEY)).toBe('en');
   });
 
+  it('updates the page in place when the language changes (no re-mount, no flash)', async () => {
+    const user = userEvent.setup();
+    renderRoute('/');
+    const mainBefore = screen.getByRole('main').firstElementChild;
+    const headerSwitch = within(banner()).getAllByRole('group', { name: 'Language' })[0]!;
+    await user.click(within(headerSwitch).getByRole('button', { name: 'தமிழ்' }));
+    expect(document.documentElement.lang).toBe('ta');
+    expect(screen.getByRole('main').firstElementChild).toBe(mainBefore);
+    await user.click(within(footer()).getByRole('button', { name: 'English' }));
+    expect(screen.getByRole('main').firstElementChild).toBe(mainBefore);
+  });
+
   it('keeps the chosen amount and programme when the language changes', async () => {
     const user = userEvent.setup();
     let latest: ReturnType<typeof useDonationDraft> | undefined;
@@ -307,9 +319,10 @@ describe('footer', () => {
   it('brand wordmark (client, Nov 2026): header and footer name use the serif wordmark style', () => {
     renderRoute('/');
     expect(banner().querySelector('.site-header__name')).toHaveClass('brand-wordmark');
-    expect(banner().querySelector('.site-header__name')).toHaveTextContent(/^Theonetrust\.in$/);
+    // No ".in" in the logo (client, 26 Nov 2026); the copyright line keeps the full site name.
+    expect(banner().querySelector('.site-header__name')).toHaveTextContent(/^Theonetrust$/);
     expect(footer().querySelector('.site-footer__brand .brand-wordmark')).toHaveTextContent(
-      /^Theonetrust\.in$/,
+      /^Theonetrust$/,
     );
   });
 
