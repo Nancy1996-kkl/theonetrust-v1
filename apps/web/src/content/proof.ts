@@ -140,7 +140,7 @@ export const PROOF_CONTENT: ProofContent = {
     sourceLabel: { en: 'Source', ta: 'ஆதாரம்' },
     periodLabel: { en: 'Period', ta: 'காலம்' },
     updatedLabel: { en: 'Updated', ta: 'புதுப்பிக்கப்பட்டது' },
-    seeDocuments: { en: 'See our documents', ta: 'எங்கள் ஆவணங்களைப் பாருங்கள்' },
+    seeDocuments: { en: 'See our documents', ta: 'எங்கள் ஆவணங்களைப் பார்க்க' },
     donateCta: { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' },
     verifiedNote: {
       en: 'You receive an acknowledgement only after your payment is verified.',
@@ -201,7 +201,7 @@ export const PROOF_CONTENT: ProofContent = {
         },
         answer: {
           en: 'Press “Donate”, choose a need and an amount, add your name and contact, then pay by UPI app, card or netbanking in Cashfree’s secure payment window. For larger gifts, bank transfer is also offered when the trust has switched it on.',
-          ta: '“நன்கொடை” என்பதை அழுத்தி, ஒரு தேவையையும் தொகையையும் தேர்வு செய்து, உங்கள் பெயரையும் தொடர்பு விவரத்தையும் கொடுங்கள். பிறகு Cashfree-இன் பாதுகாப்பான சாளரத்தில் UPI செயலி, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்துங்கள். பெரிய தொகைக்கு, அறக்கட்டளை இயக்கியிருந்தால், வங்கிப் பரிமாற்றம் (bank transfer) மூலமும் கொடுக்கலாம்.',
+          ta: '“நன்கொடை” என்பதை அழுத்தி, ஒரு தேவையையும் தொகையையும் தேர்வு செய்து, உங்கள் பெயரையும் தொடர்பு விவரத்தையும் கொடுத்தால் போதும். பிறகு Cashfree-இன் பாதுகாப்பான சாளரத்தில் UPI செயலி, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்தலாம். பெரிய தொகைக்கு, அறக்கட்டளை இயக்கியிருந்தால், வங்கிப் பரிமாற்றம் (bank transfer) மூலமும் கொடுக்கலாம்.',
         },
       },
       {
@@ -225,7 +225,7 @@ export const PROOF_CONTENT: ProofContent = {
         },
         answer: {
           en: 'Yes. In the donate pop-up, choose a need — or “Where it’s needed most” for the general fund. Your choice is saved with your donation.',
-          ta: 'ஆம். நன்கொடைப் பகுதியில் ஒரு தேவையைத் தேர்வு செய்யுங்கள் — அல்லது பொது நிதிக்கு “அதிகம் தேவைப்படும் இடத்துக்கு” என்பதைத் தேர்வு செய்யுங்கள். நீங்கள் தேர்வு செய்தது உங்கள் நன்கொடையுடன் பதிவாகும்.',
+          ta: 'ஆம். நன்கொடைப் பகுதியில் ஒரு தேவையைத் தேர்வு செய்யலாம் — அல்லது பொது நிதிக்கு “அதிகம் தேவைப்படும் இடத்துக்கு” என்பதைத் தேர்வு செய்யலாம். நீங்கள் தேர்வு செய்தது உங்கள் நன்கொடையுடன் பதிவாகும்.',
         },
       },
       {
@@ -249,7 +249,7 @@ export const PROOF_CONTENT: ProofContent = {
         },
         answer: {
           en: 'A donation counts only after our server confirms it with the payment provider. If it shows as pending, use “Check again” and do not pay a second time. If money left your account but the payment failed, it is normally reversed by your bank automatically. If it is not, contact us with the date and amount.',
-          ta: 'பணம் வந்தது என்று பணம் செலுத்தும் நிறுவனத்திடம் நாங்கள் சரிபார்த்த பிறகே நன்கொடை கணக்கில் சேரும். “இன்னும் உறுதியாகவில்லை” என்று காட்டினால், “மீண்டும் சரிபார்” என்பதை அழுத்துங்கள்; மறுபடி பணம் செலுத்த வேண்டாம். உங்கள் கணக்கிலிருந்து பணம் போய், செலுத்துதல் தோல்வியடைந்தால், பொதுவாக உங்கள் வங்கியே அதைத் திருப்பித் தந்துவிடும். அப்படித் திரும்ப வரவில்லை என்றால், தேதியையும் தொகையையும் சொல்லி எங்களைத் தொடர்பு கொள்ளுங்கள்.',
+          ta: 'பணம் வந்தது என்று பணம் செலுத்தும் நிறுவனத்திடம் நாங்கள் சரிபார்த்த பிறகே நன்கொடை கணக்கில் சேரும். “இன்னும் உறுதியாகவில்லை” என்று காட்டினால், “மீண்டும் சரிபார்க்க” என்பதை அழுத்தலாம்; மறுபடி பணம் செலுத்தத் தேவையில்லை. உங்கள் கணக்கிலிருந்து பணம் போய், செலுத்துதல் தோல்வியடைந்தால், பொதுவாக உங்கள் வங்கியே அதைத் திருப்பித் தந்துவிடும். அப்படித் திரும்ப வரவில்லை என்றால், தேதியையும் தொகையையும் சொல்லி எங்களைத் தொடர்பு கொள்ளலாம்.',
         },
       },
       {
@@ -258,7 +258,7 @@ export const PROOF_CONTENT: ProofContent = {
         question: { en: 'Why did my UPI payment fail?', ta: 'என் UPI பணம் ஏன் போகவில்லை?' },
         answer: {
           en: 'Banks and UPI apps set their own limits. The usual limit is ₹1 lakh per payment, but some banks set a lower limit, and new UPI users can often send only ₹5,000 in their first 24 hours. Try a smaller amount, a card or netbanking, or try again later.',
-          ta: 'வங்கிகளும் UPI செயலிகளும் தங்களுக்கென்று ஒரு வரம்பு வைத்திருக்கின்றன. பொதுவாக ஒரு முறைக்கு ₹1 லட்சம் வரை அனுப்பலாம்; சில வங்கிகள் இதைவிடக் குறைவாக வைத்திருக்கும். புதிதாக UPI தொடங்கியவர்கள் முதல் 24 மணி நேரத்தில் பெரும்பாலும் ₹5,000 வரை மட்டுமே அனுப்ப முடியும். சின்னத் தொகையாக அனுப்பிப் பாருங்கள், அல்லது கார்டு / நெட்பேங்கிங் மூலம் செலுத்துங்கள், இல்லையென்றால் கொஞ்சம் கழித்து மறுபடி முயற்சி செய்யுங்கள்.',
+          ta: 'வங்கிகளும் UPI செயலிகளும் தங்களுக்கென்று ஒரு வரம்பு வைத்திருக்கின்றன. பொதுவாக ஒரு முறைக்கு ₹1 லட்சம் வரை அனுப்பலாம்; சில வங்கிகள் இதைவிடக் குறைவாக வைத்திருக்கும். புதிதாக UPI தொடங்கியவர்கள் முதல் 24 மணி நேரத்தில் பெரும்பாலும் ₹5,000 வரை மட்டுமே அனுப்ப முடியும். சின்னத் தொகையாக அனுப்பிப் பார்க்கலாம், அல்லது கார்டு / நெட்பேங்கிங் மூலம் செலுத்தலாம், இல்லையென்றால் கொஞ்சம் கழித்து மறுபடி முயற்சிக்கலாம்.',
         },
       },
       {
@@ -270,7 +270,7 @@ export const PROOF_CONTENT: ProofContent = {
         },
         answer: {
           en: 'Donations are normally not refunded. We do refund if you were charged twice, entered a wrong amount by mistake, or the payment was made without your permission. Contact us with the date, amount and payment reference; the refund goes back to your original payment method through Cashfree. The refund policy has the details.',
-          ta: 'பொதுவாக நன்கொடை திருப்பித் தரப்படாது. ஆனால் ஒரே நன்கொடைக்கு இரண்டு முறை பணம் எடுக்கப்பட்டிருந்தால், தொகையைத் தவறாகப் போட்டிருந்தால், அல்லது உங்கள் அனுமதி இல்லாமல் பணம் செலுத்தப்பட்டிருந்தால் திருப்பித் தருவோம். தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண்ணுடன் எங்களைத் தொடர்பு கொள்ளுங்கள்; பணம் Cashfree வழியாக நீங்கள் செலுத்திய அதே முறைக்குத் திரும்ப வரும். முழு விவரம் பணம் திருப்பித் தருதல் கொள்கையில் உள்ளது.',
+          ta: 'பொதுவாக நன்கொடை திருப்பித் தரப்படாது. ஆனால் ஒரே நன்கொடைக்கு இரண்டு முறை பணம் எடுக்கப்பட்டிருந்தால், தொகையைத் தவறாகப் போட்டிருந்தால், அல்லது உங்கள் அனுமதி இல்லாமல் பணம் செலுத்தப்பட்டிருந்தால் திருப்பித் தருவோம். தேதி, தொகை, பணம் செலுத்திய குறிப்பு எண்ணுடன் எங்களைத் தொடர்பு கொள்ளலாம்; பணம் Cashfree வழியாக நீங்கள் செலுத்திய அதே முறைக்குத் திரும்ப வரும். முழு விவரம் பணம் திருப்பித் தருதல் கொள்கையில் உள்ளது.',
         },
       },
       {
@@ -294,7 +294,7 @@ export const PROOF_CONTENT: ProofContent = {
         },
         answer: {
           en: 'No. The ₹2,000 limit for tax deductions applies only to cash. UPI, cards and netbanking are not cash, so a larger online gift is not affected. Whether any deduction applies depends on the trust’s approval (see the question above).',
-          ta: 'இல்லை. வரி விலக்குக்கான ₹2,000 வரம்பு கையில் கொடுக்கும் பணத்துக்கு (ரொக்கம்) மட்டும்தான். UPI, கார்டு, நெட்பேங்கிங் ரொக்கம் இல்லை, அதனால் இணையம் வழியாகக் கொடுக்கும் பெரிய நன்கொடைக்கு இந்த வரம்பு இல்லை. விலக்கு கிடைக்குமா என்பது அறக்கட்டளையின் ஒப்புதலைப் பொறுத்தது (மேலே உள்ள கேள்வியைப் பாருங்கள்).',
+          ta: 'இல்லை. வரி விலக்குக்கான ₹2,000 வரம்பு கையில் கொடுக்கும் பணத்துக்கு (ரொக்கம்) மட்டும்தான். UPI, கார்டு, நெட்பேங்கிங் ரொக்கம் இல்லை, அதனால் இணையம் வழியாகக் கொடுக்கும் பெரிய நன்கொடைக்கு இந்த வரம்பு இல்லை. விலக்கு கிடைக்குமா என்பது அறக்கட்டளையின் ஒப்புதலைப் பொறுத்தது (மேலே உள்ள கேள்வியில் இதைப் பற்றிப் பார்க்கலாம்).',
         },
       },
       {
@@ -327,7 +327,7 @@ export const PROOF_CONTENT: ProofContent = {
         question: { en: 'How do I ask for help?', ta: 'உதவி எப்படிக் கேட்பது?' },
         answer: {
           en: 'Press “Get Help” and tell us briefly what is needed, or call or WhatsApp us. We will call you back. Sending a request does not guarantee help.',
-          ta: '“உதவி பெற” என்பதை அழுத்தி, என்ன தேவை என்று சுருக்கமாகச் சொல்லுங்கள். இல்லையென்றால் எங்களை அழையுங்கள் அல்லது WhatsApp செய்யுங்கள். நாங்கள் உங்களைத் திரும்ப அழைப்போம். கோரிக்கை அனுப்பினாலே உதவி கிடைக்கும் என்று உறுதி சொல்ல முடியாது.',
+          ta: '“உதவி பெற” என்பதை அழுத்தி, என்ன தேவை என்று சுருக்கமாகச் சொன்னால் போதும். இல்லையென்றால் எங்களை அழைக்கலாம் அல்லது WhatsApp செய்யலாம். நாங்கள் உங்களைத் திரும்ப அழைப்போம். கோரிக்கை அனுப்பினாலே உதவி கிடைக்கும் என்று உறுதி சொல்ல முடியாது.',
         },
       },
       {
@@ -336,7 +336,7 @@ export const PROOF_CONTENT: ProofContent = {
         question: { en: 'How do I report a concern?', ta: 'ஏதாவது புகார் சொல்ல வேண்டுமென்றால்?' },
         answer: {
           en: 'Call, WhatsApp or email us using the details under “Contact”. Tell us what happened and how we can reach you.',
-          ta: '“தொடர்பு” பகுதியில் உள்ள விவரங்களை வைத்து எங்களை அழையுங்கள், WhatsApp செய்யுங்கள், அல்லது மின்னஞ்சல் அனுப்புங்கள். என்ன நடந்தது, உங்களை எப்படித் தொடர்பு கொள்வது என்று சொல்லுங்கள்.',
+          ta: '“தொடர்பு” பகுதியில் உள்ள விவரங்களை வைத்து எங்களை அழைக்கலாம், WhatsApp செய்யலாம், அல்லது மின்னஞ்சல் அனுப்பலாம். என்ன நடந்தது, உங்களை எப்படித் தொடர்பு கொள்வது என்று சொன்னால் உதவியாக இருக்கும்.',
         },
       },
     ],
@@ -344,13 +344,13 @@ export const PROOF_CONTENT: ProofContent = {
   contact: {
     title: { en: 'Contact us', ta: 'எங்களைத் தொடர்பு கொள்ள' },
     addressLabel: { en: 'Address', ta: 'முகவரி' },
-    helpTitle: { en: 'Request Help', ta: 'உதவி கோருங்கள்' },
+    helpTitle: { en: 'Request Help', ta: 'உதவி கேட்க' },
     helpBody: {
       en: 'For yourself or for someone you know. Tell us briefly what is needed and we will call you back. Sending a request does not guarantee help.',
-      ta: 'உங்களுக்கோ உங்களுக்குத் தெரிந்தவருக்கோ கேட்கலாம். என்ன தேவை என்று சுருக்கமாகச் சொல்லுங்கள், நாங்கள் உங்களைத் திரும்ப அழைப்போம். கோரிக்கை அனுப்பினாலே உதவி கிடைக்கும் என்று உறுதி சொல்ல முடியாது.',
+      ta: 'உங்களுக்கோ உங்களுக்குத் தெரிந்தவருக்கோ கேட்கலாம். என்ன தேவை என்று சுருக்கமாகச் சொன்னால் போதும், நாங்கள் உங்களைத் திரும்ப அழைப்போம். கோரிக்கை அனுப்பினாலே உதவி கிடைக்கும் என்று உறுதி சொல்ல முடியாது.',
     },
     helpCta: { en: 'Get Help', ta: 'உதவி பெற' },
-    whatsappCta: { en: 'WhatsApp us', ta: 'WhatsApp செய்யுங்கள்' },
+    whatsappCta: { en: 'WhatsApp us', ta: 'WhatsApp-இல் பேசலாம்' },
   },
   finalCta: {
     title: {
@@ -360,19 +360,19 @@ export const PROOF_CONTENT: ProofContent = {
         ta: 'நீங்கள் கொடுப்பது ஒருவரின் வாழ்க்கையையே மாற்றும்.',
       },
     },
-    fallbackTitle: { en: 'Make a donation', ta: 'நன்கொடை கொடுங்கள்' },
-    amountLegend: { en: 'Choose an amount', ta: 'தொகையைத் தேர்ந்தெடுங்கள்' },
+    fallbackTitle: { en: 'Make a donation', ta: 'அன்புடன் உதவுங்கள்' },
+    amountLegend: { en: 'Choose an amount', ta: 'தொகையைத் தேர்வு செய்யலாம்' },
     presetsRupees: [500, 1000, 2000, 5000],
     donateCta: { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' },
   },
   states: {
-    loadingTitle: { en: 'Loading…', ta: 'கொஞ்சம் பொறுங்கள்…' },
+    loadingTitle: { en: 'Loading…', ta: 'தயார் செய்கிறோம்…' },
     errorTitle: { en: 'This section could not be loaded', ta: 'இந்தப் பகுதியை ஏற்ற முடியவில்லை' },
     errorBody: {
       en: 'Please check your connection and try again.',
-      ta: 'இணையம் சரியாக இருக்கிறதா என்று பார்த்து, மறுபடி முயற்சி செய்யுங்கள்.',
+      ta: 'இணையம் சரியாக இருக்கிறதா என்று பார்த்து, மறுபடி முயற்சிக்கலாம்.',
     },
-    retry: { en: 'Try again', ta: 'மீண்டும் முயற்சிக்கவும்' },
+    retry: { en: 'Try again', ta: 'மீண்டும் முயற்சிக்க' },
   },
 };
 

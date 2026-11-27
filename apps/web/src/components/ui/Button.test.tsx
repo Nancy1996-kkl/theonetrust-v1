@@ -61,7 +61,7 @@ describe('Button', () => {
 
   it('loading label follows the language (Tamil) and can be overridden', () => {
     const { unmount } = renderUi(<Button loading>செலுத்து</Button>, 'ta');
-    expect(screen.getByRole('button')).toHaveAccessibleName('செலுத்து கொஞ்சம் பொறுங்கள்…');
+    expect(screen.getByRole('button')).toHaveAccessibleName('செலுத்து தயார் செய்கிறோம்…');
     unmount();
     renderUi(
       <Button loading loadingLabel="Saving…">

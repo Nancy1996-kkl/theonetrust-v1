@@ -44,6 +44,12 @@ export const TRUST_FACTS: TrustFacts = {
   callHours: { en: 'Every day, 8 AM – 10 PM', ta: 'தினமும், காலை 8 – இரவு 10' },
   // Town-level placeholder (client, Nov 2026); replace with the trust's exact location later.
   mapUrl: 'https://www.google.com/maps/search/?api=1&query=Kanchipuram%2C+Tamil+Nadu',
-  // [CONFIRM] #1 — the client asked for social icons (Nov 2026); page links are still pending.
-  social: { facebook: null, instagram: null, youtube: null, x: null },
+  // [CONFIRM] #1 — the client wants all social icons shown now (Nov 2026). '#' is a placeholder:
+  // replace each one with the trust's real page URL as soon as the client sends it.
+  social: { facebook: '#', instagram: '#', youtube: '#', x: '#' },
 };
+
+/** Name shown in the logo wordmark: the site name without the ".in" (client, 26 Nov 2026). */
+export function brandName(name: string): string {
+  return name.replace(/\.in$/i, '');
+}

@@ -27,19 +27,19 @@ const T = {
   ta: {
     home: '/ta/',
     donate: 'நன்கொடை',
-    cont: 'தொடரவும்',
+    cont: 'அடுத்த படிக்கு',
     amount: '₹1,000',
     name: 'முழுப் பெயர்',
     mobile: 'கைபேசி எண்',
     consent: 'என் நன்கொடையைப் பதிவு செய்ய, அறக்கட்டளை இந்த விவரங்களை வைத்துக்கொள்ளலாம்.',
     pay: '₹1,000 பாதுகாப்பாகச் செலுத்து',
     thanks: 'நன்றி — உங்கள் பணம் வந்து சேர்ந்தது',
-    payAgain: 'பணம் செலுத்தும் சாளரத்தை மீண்டும் திற',
+    payAgain: 'பணம் செலுத்தும் சாளரத்தை மீண்டும் திறக்க',
     failed: 'பணம் செலுத்த முடியவில்லை',
-    tryAgain: 'மீண்டும் முயற்சி செய்',
+    tryAgain: 'மீண்டும் முயற்சிக்க',
     windowTitle: 'பணம் செலுத்தும் சாளரம் திறக்கவில்லை',
     pending: 'உங்கள் பணம் வந்ததா என்று இன்னும் பார்த்துக்கொண்டிருக்கிறோம்',
-    checkAgain: 'மீண்டும் சரிபார்',
+    checkAgain: 'மீண்டும் சரிபார்க்க',
   },
 } as const;
 
@@ -132,7 +132,7 @@ test('the chosen amount survives a language switch', async ({ page }) => {
     .getByRole('button', { name: 'தமிழ்' })
     .click();
   await page.getByRole('banner').getByRole('link', { name: 'நன்கொடை', exact: true }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'தொடரவும்' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'அடுத்த படிக்கு' }).click();
   await expect(page.getByRole('dialog').getByRole('radio', { name: '₹1,000' })).toBeChecked();
 });
 

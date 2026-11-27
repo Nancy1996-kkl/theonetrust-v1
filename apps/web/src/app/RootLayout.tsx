@@ -12,6 +12,7 @@ import {
 } from '../state/donation-draft.ts';
 import { SiteFooter } from './SiteFooter.tsx';
 import { SiteHeader } from './SiteHeader.tsx';
+import { preloadTamilFont } from './preload-tamil-font.ts';
 import { DonatePanel } from '../donate/DonatePanel.tsx';
 import { GetHelpPanel } from '../help/GetHelpPanel.tsx';
 
@@ -50,6 +51,11 @@ export function RootLayout() {
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
+
+  // Smooth language switch: have the Tamil font ready before the visitor needs it.
+  useEffect(() => {
+    preloadTamilFont();
+  }, []);
 
   const changeLanguage = useCallback(
     (next: UiLang) => {

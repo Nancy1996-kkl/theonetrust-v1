@@ -3,7 +3,7 @@ import { AreaLink } from '../components/ui/AreaLink.tsx';
 import { LanguageSwitch } from '../components/ui/LanguageSwitch.tsx';
 import { SocialLinks } from '../components/ui/SocialLinks.tsx';
 import type { UiLang } from '../components/ui/ui-strings.ts';
-import { TRUST_FACTS, type TrustFacts } from '../config/trust-facts.ts';
+import { TRUST_FACTS, brandName, type TrustFacts } from '../config/trust-facts.ts';
 import { homePath, localizedPath } from '../i18n/lang.ts';
 import { useLang, useMessages } from '../i18n/use-lang.ts';
 import emblemUrl from '../assets/brand/emblem.webp';
@@ -36,7 +36,7 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
           <section className="site-footer__group site-footer__trust" aria-labelledby="footer-trust">
             <h2 id="footer-trust" className="site-footer__title site-footer__brand">
               <img className="site-footer__logo" src={emblemUrl} alt="" width={131} height={112} />
-              <span className="brand-wordmark">{name}</span>
+              <span className="brand-wordmark">{brandName(name)}</span>
             </h2>
             {facts.registration && <p>{facts.registration}</p>}
             <p className="site-footer__vision">{t.footerVision}</p>
@@ -164,7 +164,7 @@ export function SiteFooter({ onLanguageChange, facts = TRUST_FACTS, year }: Site
       </div>
       {/* Big faded name along the bottom edge — decoration only. */}
       <p className="site-footer__wordmark" aria-hidden="true">
-        {facts.siteName.replace(/\.in$/, '')}
+        {brandName(facts.siteName)}
       </p>
     </footer>
   );

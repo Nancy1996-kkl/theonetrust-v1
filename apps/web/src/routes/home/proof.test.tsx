@@ -465,7 +465,7 @@ describe('loading and error states', () => {
   it('error state in Tamil', () => {
     renderHome('/ta/', { states: { faq: { status: 'error', retry: vi.fn() } } });
     expect(
-      within(section('faq')).getByRole('button', { name: 'மீண்டும் முயற்சிக்கவும்' }),
+      within(section('faq')).getByRole('button', { name: 'மீண்டும் முயற்சிக்க' }),
     ).toBeVisible();
   });
 });
@@ -504,10 +504,10 @@ describe('contact', () => {
     expect(within(section('contact')).queryByRole('link', { name: 'Ask for help' })).toBeNull();
   });
 
-  it('labels the help button "உதவி கோருங்கள்" on the Tamil page', () => {
+  it('labels the help button "உதவி கேட்க" on the Tamil page', () => {
     renderHome('/ta');
     expect(
-      within(section('contact')).getByRole('link', { name: 'உதவி கோருங்கள்' }),
+      within(section('contact')).getByRole('link', { name: 'உதவி கேட்க' }),
     ).toBeInTheDocument();
   });
 

@@ -551,8 +551,11 @@
   gap: var(--space-3);
 }
 
+/* Higher specificity than the footer's stacked link lists. */
+.site-footer .ui-social__list,
 .ui-social__list {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   gap: var(--space-2);
   margin: 0;

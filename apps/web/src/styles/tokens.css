@@ -250,6 +250,17 @@
   --text-wordmark-footer: 1.125rem;
   /* Tamil desktop header: one step smaller so the longer Tamil menu stays on one row */
   --text-wordmark-header-ta: 0.875rem;
+  /* Donate Today banner (client, Nov 2026): gold cause tiles with dark text (AA), green photo scrim */
+  --color-banner-gold-from: var(--palette-gold-light);
+  --color-banner-gold-to: var(--palette-gold-soft);
+  --color-banner-gold-text: var(--palette-green-deep);
+  --color-banner-scrim-strong: color-mix(in srgb, var(--palette-green-deep) 92%, transparent);
+  --color-banner-scrim-mid: color-mix(in srgb, var(--palette-green-deep) 80%, transparent);
+  --color-banner-scrim-soft: color-mix(in srgb, var(--palette-green) 40%, transparent);
+  --color-banner-live: var(--palette-green-bright);
+  --color-banner-shine: rgb(255 255 255 / 0.32);
+  --shadow-banner-tile: 0 10px 22px rgb(0 0 0 / 0.28);
+  --shadow-banner-photo: 0 24px 50px rgb(0 0 0 / 0.4);
   --shadow-emblem-halo: drop-shadow(0 0 6px rgb(255 255 255 / 0.35));
   --shadow-emblem-halo-lg: drop-shadow(0 0 8px rgb(255 255 255 / 0.3));
   --duration-base: 200ms;

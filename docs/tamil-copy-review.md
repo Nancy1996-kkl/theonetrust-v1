@@ -669,3 +669,22 @@ English, like UPI). Nothing else in these sentences changed.
 Removed with the features they described (no replacement text): the monthly-giving consent,
 manage page and dashboard page; the one-time UPI QR screen (Cashfree's own window shows a UPI QR);
 the Razorpay button / payment-page pop-ups; the UPI-limit and "payment cancelled" screens.
+
+## Polite wording on buttons and headings (client review, 25 Nov 2026)
+
+The client felt some Tamil buttons read like orders. Short buttons and headings now use the gentle
+"-லாம்" form ("you may…") or a plain noun phrase; long explanations keep the polite "-ங்கள்".
+The owner's Donate wording "அன்புடன் உதவுங்கள்" is kept.
+
+| Where                         | Before                                      | After                                       |
+| ----------------------------- | ------------------------------------------- | ------------------------------------------- |
+| Programme "Give" button       | கொடுங்கள்                                   | உதவலாம்                                     |
+| Donate section kicker         | இன்றே கொடுங்கள்                             | இன்றே உதவலாம்                               |
+| Donate section title          | எங்கள் பணியில் நீங்களும் சேருங்கள்          | எங்கள் பணியில் நீங்களும் இணையலாம்           |
+| Donate Today banner           | —                                           | இன்றே உதவலாம் !                             |
+| Steps                         | …தேர்வு செய்யுங்கள் / …செலுத்துங்கள்        | …தேர்வு செய்யலாம் / …செலுத்தலாம்            |
+| Volunteer / Partner           | தன்னார்வலர் ஆகுங்கள் / கைகோருங்கள்          | தன்னார்வலராக இணையலாம் / கைகோர்க்கலாம்       |
+| Request Help                  | உதவி கோருங்கள்                              | உதவி கேட்க                                  |
+| Talk to us / WhatsApp / Email | பேசுங்கள் / அனுப்புங்கள் / செய்யுங்கள்      | பேசலாம் / அனுப்பலாம் / WhatsApp-இல் பேசலாம் |
+| Donate form, receipts         | தேர்ந்தெடுங்கள் / பாருங்கள் / செலுத்துங்கள் | தேர்வு செய்யலாம் / பார்க்க / செலுத்தலாம்    |
+| FAQ kicker, documents link    | தெரிந்துகொள்ளுங்கள் / பாருங்கள்             | தெரிந்துகொள்ள / பார்க்க                     |

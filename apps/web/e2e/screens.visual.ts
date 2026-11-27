@@ -165,7 +165,7 @@ for (const lang of ['en', 'ta'] as const) {
       await signedInOwner(page, lang, { '/settings': { status: 500 } });
       await page.goto('/admin/settings');
       await expect(
-        page.getByRole('button', { name: lang === 'ta' ? 'மீண்டும் முயற்சிக்கவும்' : 'Try again' }),
+        page.getByRole('button', { name: lang === 'ta' ? 'மீண்டும் முயற்சிக்க' : 'Try again' }),
       ).toBeVisible();
       await settle(page);
       await expect(page.locator('main')).toHaveScreenshot(`admin-error-${lang}.png`);

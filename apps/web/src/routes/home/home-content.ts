@@ -44,9 +44,9 @@ export const HOME_TEXT = {
   needTitle: { en: 'Where help is needed', ta: 'எங்கே உதவி தேவை' },
   needIntro: {
     en: 'Pick where your gift should go. Not sure? The general fund goes wherever the need is greatest that week.',
-    ta: 'உங்கள் நன்கொடை எதற்குப் போக வேண்டும் என்று தேர்வு செய்யுங்கள். முடிவு செய்ய முடியவில்லையா? பொது நிதி, அந்த வாரம் அதிகம் தேவைப்படும் இடத்துக்குப் போகும்.',
+    ta: 'உங்கள் நன்கொடை எதற்குப் போக வேண்டும் என்று நீங்களே தேர்வு செய்யலாம். முடிவு செய்ய முடியவில்லையா? பொது நிதி, அந்த வாரம் அதிகம் தேவைப்படும் இடத்துக்குப் போகும்.',
   },
-  give: { en: 'Give', ta: 'கொடுங்கள்' },
+  give: { en: 'Give', ta: 'உதவலாம்' },
 
   // 3b · Services
   servicesKicker: { en: 'What we do', ta: 'நாங்கள் செய்வது' },
@@ -64,7 +64,7 @@ export const HOME_TEXT = {
   impactKicker: { en: 'Our impact', ta: 'எங்கள் பணியின் பலன்' },
   impactEmpty: {
     en: 'We will put numbers here only when we can back them with records. Until then, ask us — we are happy to tell you what your gift did.',
-    ta: 'பதிவுகளோடு நிரூபிக்க முடிந்த பிறகுதான் இங்கே எண்ணிக்கைகளைப் போடுவோம். அதுவரை எங்களிடம் கேளுங்கள் — உங்கள் நன்கொடை என்ன செய்தது என்று மகிழ்ச்சியாகச் சொல்வோம்.',
+    ta: 'பதிவுகளோடு நிரூபிக்க முடிந்த பிறகுதான் இங்கே எண்ணிக்கைகளைப் போடுவோம். அதுவரை எங்களிடம் கேட்கலாம் — உங்கள் நன்கொடை என்ன செய்தது என்று மகிழ்ச்சியாகச் சொல்வோம்.',
   },
 
   // 6 · How it works
@@ -73,59 +73,76 @@ export const HOME_TEXT = {
   paySuccess: { en: 'Payment successful', ta: 'பணம் செலுத்தப்பட்டது' },
 
   // 7 · Donation
-  donateKicker: { en: 'Give today', ta: 'இன்றே கொடுங்கள்' },
-  donateTitle: { en: 'Be a part of our mission', ta: 'எங்கள் பணியில் நீங்களும் சேருங்கள்' },
+  donateKicker: { en: 'Give today', ta: 'இன்றே உதவலாம்' },
+  donateTitle: { en: 'Be a part of our mission', ta: 'எங்கள் பணியில் நீங்களும் இணையலாம்' },
   donateLead: {
     en: 'Any amount helps — every gift reaches people who need it.',
     ta: 'எந்தத் தொகையும் உதவும் — ஒவ்வொரு நன்கொடையும் தேவைப்படுபவர்களைச் சென்று சேரும்.',
   },
   donateBody: {
     en: 'Choose an amount or type your own (from ₹1). Pay by UPI, card or netbanking — the payment opens in a secure window on this page.',
-    ta: 'ஒரு தொகையைத் தேர்வு செய்யுங்கள், அல்லது நீங்களே எழுதுங்கள் (₹1 முதல்). UPI, கார்டு, நெட்பேங்கிங் — எதில் வேண்டுமானாலும் இதே பக்கத்தில் பாதுகாப்பாகச் செலுத்தலாம்.',
+    ta: 'ஒரு தொகையைத் தேர்வு செய்யலாம், அல்லது நீங்களே எழுதலாம் (₹1 முதல்). UPI, கார்டு, நெட்பேங்கிங் — எதில் வேண்டுமானாலும் இதே பக்கத்தில் பாதுகாப்பாகச் செலுத்தலாம்.',
   },
   donateOther: { en: 'Other amount', ta: 'வேறு தொகை' },
   donateNow: { en: 'Donate now', ta: 'அன்புடன் உதவுங்கள்' },
   smallAct: { en: 'Small act, big change', ta: 'சிறு உதவி, பெரிய மாற்றம்' },
   bandTitle: { en: 'Every contribution matters.', ta: 'ஒவ்வொரு நன்கொடையும் முக்கியம்.' },
   bandDonate: { en: 'Donate', ta: 'நன்கொடை' },
-  bandVolunteer: { en: 'Volunteer', ta: 'தன்னார்வலர் ஆகுங்கள்' },
-  bandPartner: { en: 'Partner with us', ta: 'எங்களோடு கைகோருங்கள்' },
+  bandVolunteer: { en: 'Volunteer', ta: 'தன்னார்வலராக இணையலாம்' },
+  bandPartner: { en: 'Partner with us', ta: 'எங்களோடு கைகோர்க்கலாம்' },
+
+  // 2b · Donate Today banner (client, Nov 2026; layout after the reference shop banner)
+  bannerTitle: { en: 'Donate Today', ta: 'இன்றே உதவலாம்' },
+  bannerCausesLabel: { en: 'Where your gift goes', ta: 'உங்கள் நன்கொடை எங்கே போகிறது' },
+  bannerHelpPrompt: { en: 'Need help yourself?', ta: 'உங்களுக்கே உதவி தேவையா?' },
+  bannerTag: {
+    en: 'Every rupee spent carefully',
+    ta: 'ஒவ்வொரு ரூபாயும் கவனமாகச் செலவிடப்படுகிறது',
+  },
 
   // 8 · Contact
   contactKicker: { en: 'We are here', ta: 'நாங்கள் இருக்கிறோம்' },
-  contactTitle: { en: 'Talk to us', ta: 'எங்களோடு பேசுங்கள்' },
+  contactTitle: { en: 'Talk to us', ta: 'எங்களோடு பேசலாம்' },
   contactBody: {
     en: 'Want to know more before you give, or need help yourself? Call or WhatsApp us — a real person from the trust will answer.',
-    ta: 'கொடுப்பதற்கு முன் இன்னும் தெரிந்துகொள்ள வேண்டுமா, அல்லது உங்களுக்கே உதவி தேவையா? போன் செய்யுங்கள் அல்லது WhatsApp-இல் எழுதுங்கள் — அறக்கட்டளையிலிருந்து ஒருவர் நேரடியாகப் பதில் சொல்வார்.',
+    ta: 'கொடுப்பதற்கு முன் இன்னும் தெரிந்துகொள்ள வேண்டுமா, அல்லது உங்களுக்கே உதவி தேவையா? போன் செய்யலாம் அல்லது WhatsApp-இல் எழுதலாம் — அறக்கட்டளையிலிருந்து ஒருவர் நேரடியாகப் பதில் சொல்வார்.',
   },
-  whatsappUs: { en: 'Chat on WhatsApp', ta: 'WhatsApp-இல் பேசுங்கள்' },
-  askHelp: { en: 'Request Help', ta: 'உதவி கோருங்கள்' },
+  whatsappUs: { en: 'Chat on WhatsApp', ta: 'WhatsApp-இல் பேசலாம்' },
+  askHelp: { en: 'Request Help', ta: 'உதவி கேட்க' },
 
   // 9 · FAQ
-  faqKicker: { en: 'Good to know', ta: 'தெரிந்துகொள்ளுங்கள்' },
+  faqKicker: { en: 'Good to know', ta: 'தெரிந்துகொள்ள' },
   faqTitle: { en: 'Questions people ask', ta: 'அடிக்கடி கேட்கப்படும் கேள்விகள்' },
 
   // 10 · Footer
 } satisfies Record<string, Bilingual>;
 
 /** How it works — four steps, each with one plain line. */
+/** Donate Today banner: the four gold cause tiles (client, Nov 2026). */
+export const BANNER_CAUSES = [
+  { en: 'Education', ta: 'கல்வி' },
+  { en: 'Health', ta: 'மருத்துவம்' },
+  { en: 'Food', ta: 'உணவு' },
+  { en: 'Elders', ta: 'முதியோர்' },
+];
+
 export const STEPS: Step[] = [
   {
-    title: { en: 'Choose a cause', ta: 'எதற்கு என்று தேர்வு செய்யுங்கள்' },
+    title: { en: 'Choose a cause', ta: 'எதற்கு என்று தேர்வு செய்யலாம்' },
     body: {
       en: 'Education, health, food, elders — or the general fund.',
       ta: 'கல்வி, மருத்துவம், உணவு, முதியவர்கள் — அல்லது பொது நிதி.',
     },
   },
   {
-    title: { en: 'Pick an amount', ta: 'தொகையைத் தேர்வு செய்யுங்கள்' },
+    title: { en: 'Pick an amount', ta: 'தொகையைத் தேர்வு செய்யலாம்' },
     body: {
       en: 'Any amount from ₹1. Every gift helps.',
       ta: '₹1 முதல் எந்தத் தொகையும். ஒவ்வொரு நன்கொடையும் உதவும்.',
     },
   },
   {
-    title: { en: 'Pay securely', ta: 'பாதுகாப்பாகச் செலுத்துங்கள்' },
+    title: { en: 'Pay securely', ta: 'பாதுகாப்பாகச் செலுத்தலாம்' },
     body: {
       en: 'UPI, card or netbanking through Cashfree.',
       ta: 'Cashfree வழியாக UPI, கார்டு, நெட்பேங்கிங்.',
@@ -242,7 +259,7 @@ export const SERVICES: Service[] = [
     title: { en: 'Emergency help', ta: 'அவசர உதவி' },
     body: {
       en: 'Quick support after an accident, illness or loss. Ask us — we will call you back.',
-      ta: 'விபத்து, நோய், இழப்பு போன்ற நேரங்களில் விரைவான உதவி. கேளுங்கள் — நாங்களே உங்களை அழைக்கிறோம்.',
+      ta: 'விபத்து, நோய், இழப்பு போன்ற நேரங்களில் விரைவான உதவி. கேட்டால் போதும் — நாங்களே உங்களை அழைக்கிறோம்.',
     },
   },
 ];
