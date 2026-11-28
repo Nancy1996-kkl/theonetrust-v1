@@ -259,7 +259,7 @@ describe('language switching', () => {
       }),
     );
     expect(document.documentElement.lang).toBe('ta');
-    expect(latest!.draft).toEqual({ programme: 'health', amountPaise: 123400, frequency: 'once' });
+    expect(latest!.draft).toEqual({ programme: 'health', amountPaise: 123400 });
   });
 
   it('works when browser storage is blocked', async () => {

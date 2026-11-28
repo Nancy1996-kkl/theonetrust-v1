@@ -36,16 +36,16 @@ How to do each step: `docs/deployment.md`.
 
 ## D. Payments (owner + developer)
 
-| #   | Item                                                                                                                              | Evidence                        | Done |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---- |
-| D1  | Razorpay account activated for the trust; methods confirmed                                                                       | dashboard                       |      |
-| D2  | Test-mode payment on the deployed site with the CSP on: Checkout opens and completes (#38 O3)                                     | screenshot                      |      |
-| D3  | Live webhook created with a new secret and the events in `docs/deployment.md` §6                                                  | dashboard                       |      |
-| D4  | Live keys + webhook secret on the API host only; `launch:check` ✔                                                                 | output                          |      |
-| D5  | **Live webhook verified**: one small real donation → PAID, `/admin/webhooks` shows it Handled, acknowledgement email arrives      | reference (no card/UPI details) |      |
-| D6  | That donation refunded from the dashboard; refund visible in the ledger and webhooks view                                         | reference                       |      |
-| D7  | Monthly giving: stays **off** (`RAZORPAY_SUBSCRIPTIONS_ENABLED=false`) unless Razorpay Subscriptions is confirmed for the account | setting                         |      |
-| D8  | International payments stay off until FCRA/bank/gateway requirements are confirmed (spec §12)                                     | setting                         |      |
+| #   | Item                                                                                                                         | Evidence                        | Done |
+| --- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ---- |
+| D1  | Cashfree account activated for the trust (KYC); methods confirmed; domain whitelisted                                        | dashboard                       |      |
+| D2  | Sandbox payment on the deployed site with the CSP on: Cashfree's window opens and completes (#38 O3)                         | screenshot                      |      |
+| D3  | Production webhook created for the events in `docs/deployment.md` §6 (signed with the client secret)                         | dashboard                       |      |
+| D4  | Production keys on the API host only; `launch:check` ✔                                                                       | output                          |      |
+| D5  | **Live webhook verified**: one small real donation → PAID, `/admin/webhooks` shows it Handled, acknowledgement email arrives | reference (no card/UPI details) |      |
+| D6  | That donation refunded from the dashboard; refund visible in the ledger and webhooks view                                    | reference                       |      |
+| D7  | Monthly giving: not offered until Cashfree Subscriptions is built and confirmed for the account (plan Phase 9)               | setting                         |      |
+| D8  | International payments stay off until FCRA/bank/gateway requirements are confirmed (spec §12)                                | setting                         |      |
 
 ## E. Trust facts and legal ([CONFIRM] items)
 

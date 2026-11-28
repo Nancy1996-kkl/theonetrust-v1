@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { buildApp } from '../../app.ts';
@@ -7,11 +7,7 @@ import { loadEnv } from '../../config/env.ts';
 import { deriveAuthKeys } from '../../security/crypto.ts';
 import { unique, useTestDb } from '../../test/db.ts';
 import { base32Decode, hotp, timeStep } from '../auth/totp.ts';
-import {
-  razorpayProvider,
-  type PaymentProvider,
-  type ProviderPayment,
-} from '../donations/provider.ts';
+import { fakeCashfree } from '../../test/fake-cashfree.ts';
 import { receiptViewByToken } from '../receipts/view.ts';
 import { EmailSendError, type EmailMessage, type EmailProvider } from './provider.ts';
 import { SheetSendError, type SheetCell, type SheetProvider } from './sheet.ts';
@@ -22,41 +18,17 @@ import { BACKOFF_MS, MAX_ATTEMPTS, processDueNotifications, type WorkerDeps } fr
  * with backoff, and an email failure never changes a payment.
  */
 const db = useTestDb();
-const KEY_SECRET = 'notify-key-secret-0001';
 const AUTH_SECRET_KEY = randomBytes(32).toString('base64');
 const RECEIPT_KEY = deriveAuthKeys(AUTH_SECRET_KEY).receipt;
 const ORIGIN = 'http://localhost:5173';
 const OWNER = 'owner.notify@example.org';
 let app: FastifyInstance;
-let seq = 0;
 let ip = 0;
 /** The API's clock stays fixed (owner session); the worker's clock moves to test backoff. */
 const APP_CLOCK = new Date('2027-06-01T05:00:00Z');
 let clock = new Date(APP_CLOCK);
 
-const remote = new Map<string, ProviderPayment>();
-const real = razorpayProvider({
-  keyId: 'rzp_test_notify00001',
-  keySecret: KEY_SECRET,
-  fetch: async () => new Response('{}'),
-});
-const payments: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_notify00001',
-  verifyCheckoutSignature: real.verifyCheckoutSignature,
-  createOrder: async (input) => ({
-    orderId: `order_N${String(++seq).padStart(8, '0')}`,
-    amountPaise: input.amountPaise,
-    currency: 'INR',
-    status: 'created',
-  }),
-  fetchPayment: async (id) => {
-    const p = remote.get(id);
-    if (!p) throw new Error('unknown');
-    return p;
-  },
-  fetchOrderPayments: async () => [],
-};
+const cf = fakeCashfree('notify-cashfree-secret-01');
 
 /** A provider that records messages and fails on demand. */
 const sent: EmailMessage[] = [];
@@ -88,6 +60,7 @@ beforeAll(async () => {
   app = buildApp(
     loadEnv({
       NODE_ENV: 'test',
+      ...cf.env,
       AUTH_SECRET_KEY,
       CORS_ORIGINS: ORIGIN,
       OWNER_NOTIFICATION_EMAIL: OWNER,
@@ -95,7 +68,7 @@ beforeAll(async () => {
       EMAIL_API_KEY: 're_test_0123456789abcdef',
       EMAIL_FROM: 'Theonetrust.in <no-reply@example.org>',
     }),
-    { db, paymentProvider: payments, now: () => APP_CLOCK },
+    { db, paymentProvider: cf.provider, now: () => APP_CLOCK },
   );
   // Owner session for the delivery-status routes.
   const ownerLogin = `${unique('notify-owner')}@example.org`;
@@ -163,33 +136,15 @@ async function paid(patch: Record<string, unknown> = {}, giftPaise = 100_000) {
       ...patch,
     },
   });
-  const { publicReference: ref, checkout } = res.json() as {
-    publicReference: string;
-    checkout: { orderId: string };
-  };
-  const p: ProviderPayment = {
-    paymentId: `pay_N${String(++seq).padStart(8, '0')}`,
-    orderId: checkout.orderId,
-    amountPaise: giftPaise,
-    currency: 'INR',
-    status: 'captured',
-    method: 'upi',
-    refundedPaise: 0,
-  };
-  remote.set(p.paymentId, p);
+  const { publicReference: ref } = res.json() as { publicReference: string };
+  const p = { paymentId: cf.pay(ref) };
+  // The donor is back on the site: the server re-fetches the order from the gateway.
   const verify = () =>
     app.inject({
       method: 'POST',
       url: '/api/v1/payments/verify',
       remoteAddress: nextIp(),
-      payload: {
-        publicReference: ref,
-        orderId: checkout.orderId,
-        paymentId: p.paymentId,
-        signature: createHmac('sha256', KEY_SECRET)
-          .update(`${checkout.orderId}|${p.paymentId}`)
-          .digest('hex'),
-      },
+      payload: { publicReference: ref },
     });
   const v = await verify();
   const intent = await db.donationIntent.findUniqueOrThrow({ where: { publicReference: ref } });
@@ -296,10 +251,12 @@ describe('worker: send, retry, give up — the payment stays PAID', () => {
     expect(`${donor.text}${donor.html}`).not.toMatch(/donor\.notify|9876543210/);
     for (const mail of [owner, donor]) {
       // Strip the values the trust itself generates at random (reference, link token): by
-      // chance they can look like a PAN (e.g. "…BVRHF1113C…"), which made this test flaky.
+      // chance they can look like a PAN (e.g. "…BVRHF1113C…"), which made this test flaky. The
+      // gateway's payment ID is numeric (Cashfree's are 13+ digits) and is meant for the owner.
       const body = `${mail.text}${mail.html}`
         .replaceAll('919876543210', '')
         .replaceAll(d.ref, '')
+        .replaceAll(d.payment.paymentId, '')
         .replaceAll(d.receiptToken ?? '', '');
       expect(body).not.toMatch(/\b\d{12,19}\b|[A-Z]{5}\d{4}[A-Z]/);
     }

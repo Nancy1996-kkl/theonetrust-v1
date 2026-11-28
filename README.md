@@ -1,7 +1,7 @@
 # Theonetrust.in
 
-Bilingual (தமிழ் / English) website for a charitable trust: donations (Razorpay — UPI QR, cards,
-netbanking, monthly giving), a "Get Help" request form, transparency documents and a private owner
+Bilingual (தமிழ் / English) website for a charitable trust: donations (Cashfree — UPI, cards,
+netbanking; monthly giving returns later with Cashfree Subscriptions), a "Get Help" request form, transparency documents and a private owner
 dashboard.
 
 - Plan: [`docs/website-plan.md`](docs/website-plan.md) · Spec: [`PROJECT_SPEC.md`](PROJECT_SPEC.md) ·

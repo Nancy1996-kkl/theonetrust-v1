@@ -44,10 +44,11 @@ Vitest `requireAssertions` fails tests that assert nothing.
 
 ## Payment test suite (#28)
 
-Razorpay **test mode only**. `pnpm check:no-live-keys` (in `verify` and CI) fails on any tracked
-live key ID (`rzp_live_…`), a filled-in Razorpay secret outside test files, or a committed `.env`;
-the API also refuses a live key outside production. API tests stub the Razorpay HTTP API but use
-the production signature code; they run in the CI `database` job against PostgreSQL 16.
+Cashfree **sandbox only** outside production. `pnpm check:no-live-keys` (in `verify` and CI)
+fails on a filled-in Cashfree client secret outside test files, a retired Razorpay key, or a
+committed `.env`; the API refuses production Cashfree outside the production deployment. API tests
+drive the REAL Cashfree adapter against a fake Cashfree (`apps/api/src/test/fake-cashfree.ts`) and
+sign webhooks like Cashfree; they run in the CI `database` job against PostgreSQL 16.
 
 | Case                                             | API (`apps/api/src/modules/…`)                                                                         | Browser (`apps/web/e2e/donate.spec.ts`)               |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |

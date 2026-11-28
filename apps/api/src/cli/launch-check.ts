@@ -14,7 +14,6 @@ export interface Check {
 const https = (u: string | undefined) => Boolean(u && u.startsWith('https://'));
 
 export function launchReadiness(env: Env): Check[] {
-  const keyId = env.RAZORPAY_KEY_ID ?? '';
   return [
     { id: 'production', ok: env.NODE_ENV === 'production', detail: 'NODE_ENV=production' },
     {
@@ -29,14 +28,13 @@ export function launchReadiness(env: Env): Check[] {
     },
     { id: 'auth_key', ok: Boolean(env.AUTH_SECRET_KEY), detail: 'AUTH_SECRET_KEY set' },
     {
-      id: 'razorpay_live',
-      ok: keyId.startsWith('rzp_live_') && Boolean(env.RAZORPAY_KEY_SECRET),
-      detail: 'live Razorpay key ID and key secret set (switch only after the test-mode sign-off)',
-    },
-    {
-      id: 'razorpay_webhook',
-      ok: Boolean(env.RAZORPAY_WEBHOOK_SECRET),
-      detail: 'RAZORPAY_WEBHOOK_SECRET set (same value as the live webhook in the dashboard)',
+      id: 'cashfree_live',
+      ok:
+        env.PAYMENT_PROVIDER === 'cashfree' &&
+        env.CASHFREE_ENV === 'production' &&
+        Boolean(env.CASHFREE_CLIENT_ID && env.CASHFREE_CLIENT_SECRET),
+      detail:
+        'PAYMENT_PROVIDER=cashfree, CASHFREE_ENV=production and both keys set (the client secret also verifies webhooks; switch only after the sandbox sign-off)',
     },
     {
       id: 'site_https',

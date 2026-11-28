@@ -2,8 +2,8 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures/guard.ts';
 
 /**
- * Donate panel (#24) with the mock adapter (playwright.config.ts). The mock is told the Checkout
- * outcome through window.__donateMock; the live site never uses it. The auto bug detector runs
+ * Donate panel (#24) with the mock adapter (playwright.config.ts). The mock is told what Cashfree's
+ * payment window and the server answer through window.__donateMock; the live site never uses it. The auto bug detector runs
  * after every test (overflow, axe incl. contrast, console) at all five viewports.
  */
 const T = {
@@ -17,11 +17,10 @@ const T = {
     consent: 'The trust may keep these details to record my donation.',
     pay: 'Pay ₹1,000 securely',
     thanks: 'Thank you — payment received',
-    cancelled: 'Payment cancelled',
+    payAgain: 'Open the payment window again',
     failed: "Payment didn't go through",
     tryAgain: 'Try again',
-    limit: "Your UPI app or bank didn't allow this amount",
-    payCard: 'Pay by card or netbanking',
+    windowTitle: "The payment window couldn't open",
     pending: "We're confirming your payment",
     checkAgain: 'Check again',
   },
@@ -35,11 +34,10 @@ const T = {
     consent: 'என் நன்கொடையைப் பதிவு செய்ய, அறக்கட்டளை இந்த விவரங்களை வைத்துக்கொள்ளலாம்.',
     pay: '₹1,000 பாதுகாப்பாகச் செலுத்து',
     thanks: 'நன்றி — உங்கள் பணம் வந்து சேர்ந்தது',
-    cancelled: 'பணம் செலுத்துவதை நிறுத்திவிட்டீர்கள்',
+    payAgain: 'பணம் செலுத்தும் சாளரத்தை மீண்டும் திறக்க',
     failed: 'பணம் செலுத்த முடியவில்லை',
     tryAgain: 'மீண்டும் முயற்சிக்க',
-    limit: 'உங்கள் UPI செயலி அல்லது வங்கி இந்தத் தொகையை அனுமதிக்கவில்லை',
-    payCard: 'கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்து',
+    windowTitle: 'பணம் செலுத்தும் சாளரம் திறக்கவில்லை',
     pending: 'உங்கள் பணம் வந்ததா என்று இன்னும் பார்த்துக்கொண்டிருக்கிறோம்',
     checkAgain: 'மீண்டும் சரிபார்க்க',
   },
@@ -78,10 +76,29 @@ for (const lang of ['en', 'ta'] as const) {
     expect(page.url()).toBe(url);
   });
 
-  test(`cancelled checkout keeps need and amount (${lang})`, async ({ page }) => {
-    const panel = await toReview(page, lang, 'cancel');
+  test(`window closed without paying: pending, then the same order can be reopened (${lang})`, async ({
+    page,
+  }) => {
+    const panel = await toReview(page, lang, 'stuck');
     await panel.getByRole('button', { name: t.pay }).click();
-    await expect(panel).toContainText(t.cancelled);
+    await expect(panel.getByRole('heading', { name: t.pending })).toBeVisible();
+    await expect(panel.getByRole('heading', { name: t.thanks })).toHaveCount(0);
+    // This time the donor pays in the reopened window (same order): thanks only after the check.
+    await page.evaluate(() => {
+      (window as unknown as { __donateMock: string }).__donateMock = 'success';
+    });
+    await panel.getByRole('button', { name: t.payAgain }).click();
+    await expect(panel.getByRole('heading', { name: t.thanks })).toBeVisible();
+  });
+
+  test(`a payment window that cannot open says so and offers try again (${lang})`, async ({
+    page,
+  }) => {
+    const panel = await toReview(page, lang, 'window-fail');
+    await panel.getByRole('button', { name: t.pay }).click();
+    await expect(panel.getByRole('heading', { name: t.windowTitle })).toBeVisible();
+    await expect(panel).not.toContainText('TOT-D-');
+    await panel.getByRole('button', { name: t.tryAgain }).click();
     await expect(panel.getByRole('button', { name: t.pay })).toBeVisible();
   });
 
@@ -93,14 +110,6 @@ for (const lang of ['en', 'ta'] as const) {
     await expect(panel.getByRole('button', { name: t.pay })).toBeVisible();
   });
 }
-
-test('UPI limit suggests card or netbanking', async ({ page }) => {
-  const panel = await toReview(page, 'en', 'limit');
-  await panel.getByRole('button', { name: T.en.pay }).click();
-  await expect(panel.getByRole('heading', { name: T.en.limit })).toBeVisible();
-  await panel.getByRole('button', { name: T.en.payCard }).click();
-  await expect(panel.getByRole('button', { name: T.en.pay })).toBeVisible();
-});
 
 test('pending verification never shows success until checked again', async ({ page }) => {
   const panel = await toReview(page, 'ta', 'pending');
@@ -140,38 +149,6 @@ test('bank transfer: account details + reference; "not confirmed yet" until the 
   await panel.getByRole('button', { name: "I've made the transfer" }).click();
   await expect(panel.getByRole('heading', { name: 'Not confirmed yet' })).toBeVisible();
   await expect(panel.getByRole('heading', { name: T.en.thanks })).toHaveCount(0);
-});
-
-test('UPI QR in the pop-up: pick ₹500 → QR for ₹500 → "thank you" only after the server check', async ({
-  page,
-}) => {
-  const panel = await toReview(page, 'en', 'stuck');
-  for (const amount of ['₹200', '₹500', '₹1,000', '₹1,500', '₹2,000']) {
-    await expect(panel.getByRole('button', { name: `QR for ${amount}` })).toBeVisible();
-  }
-  await panel.getByRole('button', { name: 'QR for ₹500' }).click();
-  await expect(panel.getByRole('heading', { name: 'Scan to pay ₹500' })).toBeVisible();
-  await expect(
-    panel.getByRole('img', { name: 'UPI QR code to pay ₹500 to the trust' }),
-  ).toBeVisible();
-  await expect(panel.getByRole('link', { name: 'Download QR' })).toBeVisible();
-  // Server still says pending: no success.
-  await panel.getByRole('button', { name: 'I have paid — check now' }).click();
-  await expect(panel.getByRole('heading', { name: T.en.thanks })).toHaveCount(0);
-  await page.evaluate(() => {
-    (window as unknown as { __donateMock: string }).__donateMock = 'success';
-  });
-  await panel.getByRole('button', { name: 'I have paid — check now' }).click();
-  await expect(panel.getByRole('heading', { name: T.en.thanks })).toBeVisible();
-});
-
-test('UPI QR in Tamil', async ({ page }) => {
-  const panel = await toReview(page, 'ta', 'stuck');
-  await panel.getByRole('button', { name: '₹200-க்கு QR' }).click();
-  await expect(
-    panel.getByRole('heading', { name: '₹200 செலுத்த ஸ்கேன் பண்ணுங்கள்' }),
-  ).toBeVisible();
-  await expect(panel.getByRole('link', { name: 'QR-ஐ டவுன்லோட் பண்ணு' })).toBeVisible();
 });
 
 // ── Payment test suite (#28): ₹1, limits, refresh and back button ──────────────────────────
@@ -235,7 +212,7 @@ test('refresh while a payment is being confirmed re-checks it — never shows Pa
   await expect(again.getByRole('button', { name: T.en.pay })).toHaveCount(0);
   await expect(again.getByRole('heading', { name: T.en.thanks })).toHaveCount(0);
 
-  // Razorpay now reports it captured: the re-check, not the browser, decides.
+  // The gateway now reports it captured: the re-check, not the browser, decides.
   await page.evaluate(() => {
     (window as unknown as { __donateMock: string }).__donateMock = 'pending';
   });
@@ -259,49 +236,23 @@ test('back button after a payment closes the panel; reopening never repeats the 
   await expect(reopened.getByRole('heading', { name: T.en.pending })).toHaveCount(0);
 });
 
-// ── Monthly giving (#32) with the mock adapter ───────────────────────────────────────────
+// ── Monthly giving is retired with Razorpay (back with Cashfree Subscriptions) ───────────
 
-test('monthly giving: consent with amount, start and how to cancel → manage link → cancel', async ({
+test('no monthly giving is offered anywhere; old manage links show "not found"', async ({
   page,
 }) => {
   await page.goto('/');
-  await page.getByRole('banner').getByRole('link', { name: 'Donate', exact: true }).click();
+  // ("Monthly groceries" is a kind of help, not a way of giving.)
+  await expect(page.locator('main')).not.toContainText(/every month|“Monthly”|monthly giving/i);
+  await page.goto('/?frequency=monthly#donate');
   const panel = page.getByRole('dialog');
   await panel.getByRole('button', { name: 'Continue' }).click();
-  await panel.getByText('Every month', { exact: true }).click();
-  await panel.getByText('₹1,000', { exact: true }).click();
-  await panel.getByRole('button', { name: 'Continue' }).click();
-  await panel.getByRole('textbox', { name: 'Full name' }).fill('Synthetic Donor');
-  await panel.getByRole('textbox', { name: 'Email' }).fill('donor@example.org');
-  await panel.getByText('The trust may keep these details to record my donation.').click();
-  await panel.getByRole('button', { name: 'Continue' }).click();
-  const consent = panel.getByRole('region', { name: 'Please check before you agree' });
-  await expect(consent).toContainText('₹1,000 every month, until you cancel');
-  await expect(consent).toContainText('manage');
-  await panel.getByRole('button', { name: 'Set up ₹1,000 every month' }).click();
-  await expect(panel.getByText('Please tick this box to set up monthly giving.')).toBeVisible();
-  await panel.getByText('I agree to a monthly donation of ₹1,000 until I cancel.').click();
-  await panel.getByRole('button', { name: 'Set up ₹1,000 every month' }).click();
-  await expect(
-    panel.getByRole('heading', { name: 'Thank you — monthly giving is set up' }),
-  ).toBeVisible();
-  await panel.getByRole('link', { name: 'See or cancel your monthly giving' }).click();
-  await expect(page).toHaveURL(/\/manage\/Q{43}$/);
-  await expect(page.getByRole('heading', { level: 1, name: 'Your monthly giving' })).toBeVisible();
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow');
-  await page.getByRole('button', { name: 'Cancel monthly giving' }).click();
-  await page.getByRole('button', { name: 'Yes, cancel it' }).click();
-  await expect(
-    page.getByText('Monthly giving is cancelled. No more donations will be taken.'),
-  ).toBeVisible();
-});
-
-test('manage page in Tamil; unknown link shows "not found"', async ({ page }) => {
-  await page.goto(`/ta/manage/${'Q'.repeat(43)}`);
-  await expect(
-    page.getByRole('heading', { level: 1, name: 'உங்கள் மாதாந்திர நன்கொடை' }),
-  ).toBeVisible();
-  await expect(page.getByText('நடப்பில் உள்ளது')).toBeVisible();
-  await page.goto(`/manage/${'Z'.repeat(43)}`);
-  await expect(page.getByRole('heading', { name: 'Link not found' })).toBeVisible();
+  await expect(panel.getByRole('radio', { name: /monthly/i })).toHaveCount(0);
+  for (const [path, title] of [
+    [`/manage/${'Q'.repeat(43)}`, 'Page not found'],
+    [`/ta/manage/${'Q'.repeat(43)}`, 'பக்கம் கிடைக்கவில்லை'],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible();
+  }
 });

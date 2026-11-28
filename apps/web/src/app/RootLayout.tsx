@@ -13,12 +13,7 @@ import {
 import { SiteFooter } from './SiteFooter.tsx';
 import { SiteHeader } from './SiteHeader.tsx';
 import { preloadTamilFont } from './preload-tamil-font.ts';
-import { DonateCheckoutPanel } from '../donate/DonateCheckoutPanel.tsx';
-import { DonateLinkPanel } from '../donate/DonateLinkPanel.tsx';
 import { DonatePanel } from '../donate/DonatePanel.tsx';
-import { DONATE_PAGE_URL } from '../donate/donate-page-link.ts';
-import { DONATE_BUTTON } from '../donate/razorpay-button.ts';
-import { selectDonatePopup } from '../donate/donate-popup.ts';
 import { GetHelpPanel } from '../help/GetHelpPanel.tsx';
 
 function sessionStore(): Storage | undefined {
@@ -36,12 +31,6 @@ function browserStorage(): Storage | undefined {
     return undefined;
   }
 }
-
-const DONATE_POPUP = selectDonatePopup({
-  provider: import.meta.env.VITE_DONATE_PROVIDER,
-  hasButton: Boolean(DONATE_BUTTON),
-  hasPageLink: Boolean(DONATE_PAGE_URL),
-});
 
 /**
  * Public app shell (issue #11). Sits ABOVE both language route trees, so switching language
@@ -97,15 +86,8 @@ export function RootLayout() {
           </main>
           <SiteFooter onLanguageChange={changeLanguage} />
           <GetHelpPanel />
-          {/* Cashfree (full panel + our API) when selected, else the Razorpay Payment Button
-              (pay inside the pop-up, the rollback), else the Payment Page link, else the panel. */}
-          {DONATE_POPUP === 'button' && DONATE_BUTTON ? (
-            <DonateCheckoutPanel config={DONATE_BUTTON} />
-          ) : DONATE_POPUP === 'link' && DONATE_PAGE_URL ? (
-            <DonateLinkPanel url={DONATE_PAGE_URL} />
-          ) : (
-            <DonatePanel />
-          )}
+          {/* The donate pop-up: our API and Cashfree's payment window inside it. */}
+          <DonatePanel />
           {/* New pages open at the top (or at their #anchor); back/forward restore the old position.
               The key ignores the /ta prefix, so switching language keeps the reader's place. */}
           <ScrollRestoration getKey={(loc) => loc.pathname.replace(/^\/ta(?=\/|$)/, '') || '/'} />

@@ -2,9 +2,7 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { Link, useLocation, useNavigate } from 'react-router';
 import {
   DONATION_REFERENCE,
-  DONATION_QR_AMOUNTS_RUPEES,
   formatInr,
-  MONTHLY_CONSENT_VERSION,
   normalizeIndianMobile,
   type BankTransferIntentResponse,
   type DonationEstimateResponse,
@@ -31,10 +29,7 @@ import {
   useDonateClient,
   type CheckoutOutcome,
 } from './donate-client.ts';
-import { MonthlyConsent } from './MonthlyConsent.tsx';
-import { QrAmounts, QrPay } from './QrPay.tsx';
 import { TaxOptInFields } from './TaxOptInFields.tsx';
-import { useMonthlyClient } from './monthly-client.ts';
 import {
   DONATE_MESSAGES,
   DONATE_PRESETS_RUPEES,
@@ -58,19 +53,15 @@ type Screen =
   | 'paid'
   | 'pending'
   | 'failed'
-  | 'limit'
+  /** Cashfree's window could not open (blocked script, network): nothing was paid. */
+  | 'window'
   | 'invalid'
   | 'wait'
   | 'network'
   | 'bank'
-  | 'bank-sent'
-  | 'qr'
-  | 'monthly-done'
-  | 'monthly-pending';
+  | 'bank-sent';
 const STEPS: Step[] = ['need', 'amount', 'details', 'review'];
 const STEP_LABELS: DonateMessageKey[] = ['stepNeed', 'stepAmount', 'stepDetails', 'stepPay'];
-/** Matches the API default (DONATION_QR_EXPIRY_MINUTES); the QR itself shows its exact time. */
-const QR_EXPIRY_MINUTES = 15;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface Details {
@@ -148,8 +139,8 @@ function Callout({
 
 /**
  * Donate panel (#24, ADR 0005): opens on the single page at #donate (header, hero, "Ways we
- * help" cards, shared links). Need → amount → details → check and pay → Razorpay Checkout →
- * server verification. Results stay inside the panel and never change the URL. "Paid" is shown
+ * help" cards, shared links). Need → amount → details → check and pay → Cashfree's payment
+ * window → server verification. Results stay inside the panel and never change the URL. "Paid" is shown
  * only when the server has verified the payment.
  */
 export function DonatePanel({ programmes: injected }: { programmes?: Programme[] }) {
@@ -174,7 +165,6 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const [foreignReturn, setForeignReturn] = useState(false);
   /** Each new check-in-the-background run; an older run's late answer is ignored. */
   const pollToken = useRef(0);
-  const [cancelled, setCancelled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [details, setDetails] = useState<Details>({
     name: '',
@@ -200,13 +190,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
   const [utr, setUtr] = useState('');
   const [utrError, setUtrError] = useState(false);
   const [receiptToken, setReceiptToken] = useState<string | null>(null);
-  const monthlyClient = useMonthlyClient();
-  const [mandateConsent, setMandateConsent] = useState(false);
-  const [mandateError, setMandateError] = useState(false);
-  const [manageToken, setManageToken] = useState<string | null>(null);
-  /** The amount on the QR button the donor picked (client, Nov 2026). */
-  const [qrGift, setQrGift] = useState<number | null>(null);
-  const monthlyKey = useRef<string | null>(null);
+  /** When "Check again" last found the payment still unconfirmed (shown, and announced). */
+  const [checkedAt, setCheckedAt] = useState<string | null>(null);
   const attemptKey = useRef<string | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -214,20 +199,10 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     draft.programme ?? (programmes.some((p) => p.slug === 'general') ? 'general' : null);
   const chosen = programmes.find((p) => p.slug === programme);
   const gift = draft.amountPaise;
-  /** Monthly giving (#32) only when the server says it is switched on. */
-  const monthly = draft.frequency === 'monthly' && limits?.monthlyOffered === true;
   /** Tax opt-in (#34): only when the server says the approval is confirmed and switched on. */
-  const taxOffered = limits?.taxOptInOffered === true && !monthly;
+  const taxOffered = limits?.taxOptInOffered === true;
   /** The gateway needs the donor's mobile to take the payment (Cashfree): the server says so. */
   const phoneRequired = limits?.phoneRequired === true;
-  /** UPI QR only when the server offers it (one-time gifts, up to its cap) and no tax opt-in. */
-  const qrClient = client.startQr ? { startQr: client.startQr, status: client.status } : null;
-  const qrOffered =
-    qrClient !== null &&
-    limits?.qrOffered === true &&
-    limits.qrMaxPaise !== undefined &&
-    !monthly &&
-    !(taxOffered && details.taxOptIn);
 
   // Limits and the fee estimate come from the server; nothing is assumed here.
   useEffect(() => {
@@ -308,13 +283,10 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
 
   function close() {
     navigate({ pathname: location.pathname, search: location.search }, { replace: true });
-    if (screen === 'paid' || screen === 'bank-sent' || screen === 'monthly-done') {
+    if (screen === 'paid' || screen === 'bank-sent') {
       setScreen('form');
       setStep('need');
-      setCancelled(false);
     }
-    // An open QR is dropped with the pop-up; reopening shows the review step, not a stale QR.
-    if (screen === 'qr') setScreen('form');
   }
 
   function settle(
@@ -365,6 +337,14 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     const status = await client.status(ref);
     setBusy(false);
     settle(status, ref);
+    // Still not confirmed: say so, or "Check again" would look like it did nothing.
+    setCheckedAt(
+      status === 'PAID' || status === 'FAILED'
+        ? null
+        : new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' }).format(
+            new Date(),
+          ),
+    );
   }
 
   function validateDetails(): boolean {
@@ -401,7 +381,6 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
 
   function back() {
     const index = STEPS.indexOf(step);
-    setCancelled(false);
     if (index > 0) setStep(STEPS[index - 1] ?? 'need');
   }
 
@@ -464,77 +443,9 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
     setScreen(ok ? 'bank-sent' : 'network');
   }
 
-  /** Monthly (#32): consent → server subscription → Checkout mandate → server verification. */
-  async function payMonthly() {
-    if (busy || !gift || !programme) return;
-    if (!mandateConsent) return setMandateError(true);
-    setMandateError(false);
-    setBusy(true);
-    setCancelled(false);
-    monthlyKey.current ??= newIdempotencyKey();
-    const mobile = details.mobile.trim() ? normalizeIndianMobile(details.mobile) : null;
-    const started = await monthlyClient.start(
-      {
-        amountPaise: gift,
-        currency: 'INR',
-        programme,
-        donorName: details.name.trim(),
-        donorEmail: details.email.trim() || null,
-        donorPhone: mobile,
-        consent: true,
-        mandateConsent: true,
-        consentVersion: MONTHLY_CONSENT_VERSION,
-        locale: lang,
-      },
-      monthlyKey.current,
-    );
-    if (!started.ok) {
-      setBusy(false);
-      setScreen(
-        started.reason === 'invalid'
-          ? 'invalid'
-          : started.reason === 'rate_limited'
-            ? 'wait'
-            : 'network',
-      );
-      return;
-    }
-    setReference(started.subscription.publicReference);
-    const outcome = await monthlyClient.checkout(started.subscription, {
-      name: details.name.trim(),
-      ...(details.email.trim() && { email: details.email.trim() }),
-      ...(mobile && { contact: mobile }),
-      lang,
-    });
-    if (outcome.kind === 'dismissed') {
-      setBusy(false);
-      setCancelled(true);
-      return;
-    }
-    // Monthly giving is Razorpay-only: anything but its own completed callback is a failure.
-    if (outcome.kind !== 'completed') {
-      setBusy(false);
-      monthlyKey.current = null;
-      setScreen('failed');
-      return;
-    }
-    setScreen('confirming');
-    const result = await monthlyClient.verify(started.subscription, outcome);
-    setBusy(false);
-    monthlyKey.current = null;
-    if (result?.status === 'ACTIVE') {
-      setManageToken(result.manageToken ?? null);
-      setScreen('monthly-done');
-    } else {
-      setScreen('monthly-pending');
-    }
-  }
-
   async function pay() {
-    if (monthly) return payMonthly();
     if (busy || !gift || !programme) return;
     setBusy(true);
-    setCancelled(false);
     pollToken.current += 1; // a new attempt: an older background check no longer applies
     if (attemptFor.current !== paySignature) {
       attemptFor.current = paySignature;
@@ -560,27 +471,15 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       setReference(current.publicReference);
     }
     // Kept before the gateway opens: Cashfree may move the page to its own and come back.
-    if (current.checkout.provider === 'CASHFREE') {
-      pending.set(current.publicReference);
-    }
-    const outcome: CheckoutOutcome = await client.checkout(current, {
-      name: details.name.trim(),
-      ...(details.email.trim() && { email: details.email.trim() }),
-      ...(details.mobile.trim() && { contact: normalizeIndianMobile(details.mobile) ?? '' }),
-      lang,
-    });
-    if (outcome.kind === 'dismissed') {
-      // Back on the review step with the same need and amount; the same order is reused.
-      setBusy(false);
-      setCancelled(true);
-      return;
-    }
+    pending.set(current.publicReference);
+    const outcome: CheckoutOutcome = await client.checkout(current);
     if (outcome.kind === 'failed') {
+      // The payment window could not open: nothing was paid on this order.
       setBusy(false);
       attemptKey.current = null;
       setIntent(null);
-      if (current.checkout.provider === 'CASHFREE') pending.clear();
-      setScreen(outcome.reason === 'upi_limit' ? 'limit' : 'failed');
+      pending.clear();
+      setScreen('window');
       return;
     }
     // The page is moving to Cashfree's own; the return link re-opens this pop-up to check. If it
@@ -591,13 +490,12 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       return;
     }
     setScreen('confirming');
-    pending.set(current.publicReference);
     const ref = current.publicReference;
-    const status = await client.verify(current, outcome);
+    const status = await client.verify(ref);
     setBusy(false);
     settle(status, ref);
     // Cashfree's window says nothing reliable: keep asking the server in the background.
-    if (outcome.kind === 'returned') keepChecking(status, ref);
+    keepChecking(status, ref);
   }
 
   const heading = (text: string) => (
@@ -627,35 +525,6 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         <p>{t.dontClose}</p>
       </div>
     );
-  } else if (screen === 'monthly-done' || screen === 'monthly-pending') {
-    const done = screen === 'monthly-done';
-    body = (
-      <>
-        {heading(done ? t.monthlyDone : t.monthlyPending)}
-        <Callout tone={done ? 'success' : 'warning'}>
-          {done ? fill(t.monthlyDoneText, { amount: money(gift ?? 0) }) : t.monthlyPendingText}
-        </Callout>
-        {reference && (
-          <dl className="donate__summary">
-            <div>
-              <dt>{t.reference}</dt>
-              <dd>{reference}</dd>
-            </div>
-          </dl>
-        )}
-        {done && manageToken && (
-          <p>
-            <Link to={localizedPath(`/manage/${manageToken}`, lang)}>{t.manageLink}</Link>
-          </p>
-        )}
-        {done && <p className="donate__muted">{t.manageHelp}</p>}
-      </>
-    );
-    footer = (
-      <Button fullWidth onClick={close}>
-        {t.backToPage}
-      </Button>
-    );
   } else if (screen === 'paid' || screen === 'pending' || screen === 'failed') {
     const isPaid = screen === 'paid';
     body = (
@@ -676,7 +545,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
               ? `${t.sumAmount}: ${money(total)}`
               : t.confirmedText
             : screen === 'pending'
-              ? intent?.checkout.provider === 'CASHFREE'
+              ? intent
                 ? t.noDoubleCharge
                 : t.dontPayAgain
               : t.failedText}
@@ -703,8 +572,11 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         {!isPaid && (
           <p className="donate__muted">{screen === 'pending' ? t.pendingHelp : t.failedHelp}</p>
         )}
-        {screen === 'pending' && intent?.checkout.provider === 'CASHFREE' && (
-          <p className="donate__muted">{t.payAgainHint}</p>
+        {screen === 'pending' && intent && <p className="donate__muted">{t.payAgainHint}</p>}
+        {screen === 'pending' && (
+          <p className="donate__muted" role="status" aria-live="polite">
+            {checkedAt ? fill(t.stillPending, { time: checkedAt }) : ''}
+          </p>
         )}
       </>
     );
@@ -717,16 +589,17 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         <Button fullWidth loading={busy} onClick={() => void recheck()}>
           {t.checkAgain}
         </Button>
-        {/* Cashfree: the same order is reopened (one successful payment per order), so a donor
-            who closed the window without paying can finish — and can never pay twice. */}
-        {intent?.checkout.provider === 'CASHFREE' && (
+        {/* The same order is reopened (one successful payment per order), so a donor who closed
+            the window without paying can finish — and can never pay twice. */}
+        {intent && (
           <Button
             fullWidth
             variant="secondary"
+            disabled={busy}
             onClick={() => {
               pollToken.current += 1;
-              setScreen('form');
-              setStep('review');
+              setCheckedAt(null);
+              void pay();
             }}
           >
             {t.payAgainSameOrder}
@@ -801,37 +674,30 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         </Button>
       </div>
     );
-  } else if (screen === 'qr' && qrClient && qrGift) {
+  } else if (screen === 'window') {
     body = (
-      <QrPay
-        client={qrClient}
-        request={{ ...intentRequest(), giftPaise: qrGift, coverFee: false }}
-        t={t}
-        money={money}
-        locale={locale}
-        headingRef={headingRef}
-        onSettled={(status, ref) => {
-          setReference(ref);
-          settle(status, ref);
-        }}
-        onFailed={(reason) =>
-          setScreen(
-            reason === 'invalid' ? 'invalid' : reason === 'rate_limited' ? 'wait' : 'network',
-          )
-        }
-      />
+      <>
+        {heading(t.windowTitle)}
+        <Callout tone="warning">{t.windowText}</Callout>
+      </>
     );
     footer = (
-      <Button
-        variant="ghost"
-        fullWidth
-        onClick={() => {
-          setScreen('form');
-          setStep('review');
-        }}
-      >
-        {t.back}
-      </Button>
+      <div className="donate__actions">
+        <Button
+          fullWidth
+          onClick={() => {
+            setScreen('form');
+            setStep('review');
+          }}
+        >
+          {t.tryAgain}
+        </Button>
+        {limits?.bankTransferOffered && (
+          <Button variant="ghost" fullWidth loading={busy} onClick={() => void startBank()}>
+            {t.bankTransferLink}
+          </Button>
+        )}
+      </div>
     );
   } else if (screen === 'bank-sent') {
     body = (
@@ -850,42 +716,6 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       <Button fullWidth onClick={close}>
         {t.backToPage}
       </Button>
-    );
-  } else if (screen === 'limit') {
-    body = (
-      <>
-        {heading(t.limitTitle)}
-        <Callout tone="warning">{t.limitText}</Callout>
-        <p>{t.methodsText}</p>
-      </>
-    );
-    footer = (
-      <div className="donate__actions">
-        <Button
-          fullWidth
-          onClick={() => {
-            setScreen('form');
-            setStep('review');
-          }}
-        >
-          {t.payCard}
-        </Button>
-        <Button
-          variant="secondary"
-          fullWidth
-          onClick={() => {
-            setScreen('form');
-            setStep('amount');
-          }}
-        >
-          {t.smaller}
-        </Button>
-        {limits?.bankTransferOffered && (
-          <Button variant="ghost" fullWidth loading={busy} onClick={() => void startBank()}>
-            {t.payBank}
-          </Button>
-        )}
-      </div>
     );
   } else if (screen === 'invalid' || screen === 'wait' || screen === 'network') {
     const [title, text] =
@@ -947,22 +777,6 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         <form id="donate-step" onSubmit={next} noValidate>
           {stepper}
           {heading(t.howMuch)}
-          {limits?.monthlyOffered && (
-            <RadioCardGroup
-              legend={t.howOften}
-              name="donate-frequency"
-              value={draft.frequency}
-              onChange={(value) => {
-                setMandateConsent(false);
-                monthlyKey.current = null;
-                updateDraft({ frequency: value === 'monthly' ? 'monthly' : 'once' });
-              }}
-              options={[
-                { value: 'once', label: t.once },
-                { value: 'monthly', label: t.monthly, description: t.monthlyHint },
-              ]}
-            />
-          )}
           <AmountPicker
             legend={t.howMuch}
             // Its own radio group: the page's final call-to-action has an amount picker too.
@@ -987,7 +801,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
             }
             required
           />
-          {fee !== null && fee > 0 && !monthly && (
+          {fee !== null && fee > 0 && (
             <Checkbox
               label={fill(t.coverFee, { fee: money(fee) })}
               hint={t.coverFeeHint}
@@ -1072,11 +886,6 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
         <>
           {stepper}
           {heading(t.review)}
-          {cancelled && (
-            <Callout tone="info">
-              <strong>{t.cancelled}.</strong> {t.cancelledText}
-            </Callout>
-          )}
           <dl className="donate__summary">
             <div>
               <dt>{t.sumNeed}</dt>
@@ -1103,36 +912,8 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
               <dd>{details.name.trim()}</dd>
             </div>
           </dl>
-          {monthly && gift && (
-            <MonthlyConsent
-              amountPaise={gift}
-              checked={mandateConsent}
-              error={mandateError}
-              onChange={(value) => {
-                setMandateConsent(value);
-                if (value) setMandateError(false);
-              }}
-            />
-          )}
           <p className="donate__muted">{t.trustLine}</p>
-          {qrOffered && limits?.qrMaxPaise !== undefined && (
-            <QrAmounts
-              amounts={DONATION_QR_AMOUNTS_RUPEES}
-              maxPaise={limits.qrMaxPaise}
-              expiryMinutes={QR_EXPIRY_MINUTES}
-              t={t}
-              money={money}
-              disabled={busy}
-              onPick={(paise) => {
-                // The donor's amount becomes the QR's amount, so the summary always matches.
-                updateDraft({ amountPaise: paise as Paise });
-                setQrGift(paise);
-                setCancelled(false);
-                setScreen('qr');
-              }}
-            />
-          )}
-          {limits?.bankTransferOffered && !monthly && (
+          {limits?.bankTransferOffered && (
             <Button variant="ghost" loading={busy} onClick={() => void startBank()}>
               {t.bankTransferLink}
             </Button>
@@ -1144,9 +925,7 @@ export function DonatePanel({ programmes: injected }: { programmes?: Programme[]
       <div className="donate__actions">
         {step === 'review' ? (
           <Button variant="donate" fullWidth loading={busy} onClick={() => void pay()}>
-            {monthly
-              ? fill(t.setUpMonthly, { amount: money(gift ?? 0) })
-              : fill(t.payNow, { amount: money(total) })}
+            {fill(t.payNow, { amount: money(total) })}
           </Button>
         ) : (
           <Button type="submit" form="donate-step" fullWidth>

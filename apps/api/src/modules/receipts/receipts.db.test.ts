@@ -1,57 +1,34 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.ts';
 import { loadEnv } from '../../config/env.ts';
 import { useTestDb } from '../../test/db.ts';
 import {
-  razorpayProvider,
-  type PaymentProvider,
-  type ProviderPayment,
-} from '../donations/provider.ts';
+  cashfreePaymentEvent,
+  cashfreeRefundEvent,
+  fakeCashfree,
+  sendCashfreeWebhook,
+} from '../../test/fake-cashfree.ts';
 
 /**
  * Acknowledgements (#29): created only after a verified capture, exactly one per payment even
  * across retries, private token link with minimal fields, PDF on demand, refunds as new entries.
  */
 const db = useTestDb();
-const KEY_SECRET = 'receipt-key-secret-001';
-const WEBHOOK_SECRET = 'receipt-webhook-secret-001';
+const SECRET = 'receipt-cashfree-secret-001';
 const AUTH_SECRET_KEY = randomBytes(32).toString('base64');
 let app: FastifyInstance;
-let seq = 0;
 let ip = 0;
 
-const remote = new Map<string, ProviderPayment>();
-const real = razorpayProvider({
-  keyId: 'rzp_test_receipt0001',
-  keySecret: KEY_SECRET,
-  fetch: async () => new Response('{}'),
-});
-const provider: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_receipt0001',
-  verifyCheckoutSignature: real.verifyCheckoutSignature,
-  createOrder: async (input) => ({
-    orderId: `order_R${String(++seq).padStart(8, '0')}`,
-    amountPaise: input.amountPaise,
-    currency: 'INR',
-    status: 'created',
-  }),
-  fetchPayment: async (id) => {
-    const p = remote.get(id);
-    if (!p) throw new Error('unknown');
-    return p;
-  },
-  fetchOrderPayments: async (orderId) => [...remote.values()].filter((p) => p.orderId === orderId),
-};
+const cf = fakeCashfree(SECRET);
+const provider = cf.provider;
 
 const env = (extra: Record<string, string> = {}) =>
   loadEnv({
     NODE_ENV: 'test',
-    RAZORPAY_WEBHOOK_SECRET: WEBHOOK_SECRET,
+    ...cf.env,
     AUTH_SECRET_KEY,
-    PUBLIC_SITE_URL: 'https://theonetrust.example',
     ...extra,
   });
 
@@ -99,70 +76,43 @@ async function donation(giftPaise = 100_000, patch: Record<string, unknown> = {}
     },
   });
   expect(res.statusCode).toBe(201);
-  const body = res.json() as { publicReference: string; checkout: { orderId: string } };
+  const body = res.json() as { publicReference: string };
   const intent = await db.donationIntent.findUniqueOrThrow({
     where: { publicReference: body.publicReference },
   });
-  return { ref: body.publicReference, orderId: body.checkout.orderId, id: intent.id, giftPaise };
+  return { ref: body.publicReference, id: intent.id, giftPaise };
 }
 
-function pays(orderId: string, amountPaise: number, patch: Partial<ProviderPayment> = {}) {
-  const p: ProviderPayment = {
-    paymentId: `pay_R${String(++seq).padStart(8, '0')}`,
-    orderId,
-    amountPaise,
-    currency: 'INR',
-    status: 'captured',
-    method: 'upi',
-    refundedPaise: 0,
-    ...patch,
-  };
-  remote.set(p.paymentId, p);
-  return p;
+/** The donor pays at the gateway; returns the gateway's payment ID. */
+function pays(
+  ref: string,
+  amountPaise: number,
+  opts: { status?: 'SUCCESS' | 'FAILED'; captured?: boolean } = {},
+) {
+  return { paymentId: cf.pay(ref, { paise: amountPaise, ...opts }) };
 }
 
-const verify = (ref: string, orderId: string, paymentId: string) =>
+/** The donor is back on the site: the server re-fetches the order from the gateway. */
+const verify = (ref: string) =>
   app.inject({
     method: 'POST',
     url: '/api/v1/payments/verify',
     remoteAddress: nextIp(),
-    payload: {
-      publicReference: ref,
-      orderId,
-      paymentId,
-      signature: createHmac('sha256', KEY_SECRET).update(`${orderId}|${paymentId}`).digest('hex'),
-    },
+    payload: { publicReference: ref },
   });
 
-function webhook(event: string, p: ProviderPayment) {
-  const raw = JSON.stringify({
-    event,
-    payload: {
-      payment: {
-        entity: {
-          id: p.paymentId,
-          entity: 'payment',
-          order_id: p.orderId,
-          amount: p.amountPaise,
-          currency: 'INR',
-          status: p.status,
-          method: p.method,
-          amount_refunded: p.refundedPaise,
-        },
-      },
-    },
-  });
-  return app.inject({
-    method: 'POST',
-    url: '/api/v1/webhooks/razorpay',
-    headers: {
-      'content-type': 'application/json',
-      'x-razorpay-signature': createHmac('sha256', WEBHOOK_SECRET).update(raw).digest('hex'),
-      'x-razorpay-event-id': `evt_R${String(++seq).padStart(10, '0')}`,
-    },
-    payload: raw,
-  });
-}
+const recheck = (ref: string) =>
+  app.inject({ method: 'GET', url: `/api/v1/donations/status/${ref}`, remoteAddress: nextIp() });
+
+const paymentWebhook = (ref: string, paymentId: string) =>
+  sendCashfreeWebhook(app, SECRET, cashfreePaymentEvent(ref, paymentId));
+
+const refundWebhook = (
+  ref: string,
+  paymentId: string,
+  refundId: string,
+  status: 'SUCCESS' | 'PENDING',
+) => sendCashfreeWebhook(app, SECRET, cashfreeRefundEvent(ref, paymentId, refundId, status));
 
 const receipts = (intentId: string) =>
   db.receipt.findMany({ where: { donationIntentId: intentId }, orderBy: { issuedAt: 'asc' } });
@@ -171,8 +121,8 @@ const getView = (token: string) =>
 
 async function paidWithReceipt(giftPaise = 100_000, patch: Record<string, unknown> = {}) {
   const d = await donation(giftPaise, patch);
-  const p = pays(d.orderId, giftPaise);
-  const res = await verify(d.ref, d.orderId, p.paymentId);
+  const p = pays(d.ref, giftPaise);
+  const res = await verify(d.ref);
   expect(res.json().status).toBe('PAID');
   return { ...d, payment: p, token: res.json().receiptToken as string };
 }
@@ -195,9 +145,9 @@ describe('issued only after verified capture, once per payment', () => {
 
   it('retries — callback replayed, webhook, status re-check — never add a second receipt', async () => {
     const d = await paidWithReceipt();
-    await verify(d.ref, d.orderId, d.payment.paymentId);
-    await webhook('payment.captured', d.payment);
-    await webhook('order.paid', d.payment);
+    await verify(d.ref);
+    await paymentWebhook(d.ref, d.payment.paymentId);
+    await paymentWebhook(d.ref, d.payment.paymentId); // a replay
     const status = await app.inject({
       method: 'GET',
       url: `/api/v1/donations/status/${d.ref}`,
@@ -209,11 +159,11 @@ describe('issued only after verified capture, once per payment', () => {
 
   it('two callbacks at the same moment still produce one receipt', async () => {
     const d = await donation();
-    const p = pays(d.orderId, 100_000);
+    const p = pays(d.ref, 100_000);
     const results = await Promise.all([
-      verify(d.ref, d.orderId, p.paymentId),
-      verify(d.ref, d.orderId, p.paymentId),
-      webhook('payment.captured', p),
+      verify(d.ref),
+      verify(d.ref),
+      paymentWebhook(d.ref, p.paymentId),
     ]);
     expect(results.some((r) => r.statusCode === 200)).toBe(true);
     expect(await receipts(d.id)).toHaveLength(1);
@@ -221,8 +171,8 @@ describe('issued only after verified capture, once per payment', () => {
 
   it('webhook first (browser closed): the receipt exists and the later status shows its link', async () => {
     const d = await donation();
-    const p = pays(d.orderId, 100_000);
-    await webhook('payment.captured', p);
+    const p = pays(d.ref, 100_000);
+    await paymentWebhook(d.ref, p.paymentId);
     expect(await receipts(d.id)).toHaveLength(1);
     const status = await app.inject({
       method: 'GET',
@@ -236,11 +186,14 @@ describe('issued only after verified capture, once per payment', () => {
     const pending = await donation();
     expect(await receipts(pending.id)).toHaveLength(0);
     const auth = await donation();
-    await webhook('payment.authorized', pays(auth.orderId, 100_000, { status: 'authorized' }));
+    pays(auth.ref, 100_000, { captured: false });
+    await recheck(auth.ref);
     const failed = await donation();
-    await webhook('payment.failed', pays(failed.orderId, 100_000, { status: 'failed' }));
+    pays(failed.ref, 100_000, { status: 'FAILED' });
+    await recheck(failed.ref);
     const wrong = await donation();
-    await webhook('payment.captured', pays(wrong.orderId, 1_000));
+    pays(wrong.ref, 1_000);
+    await recheck(wrong.ref);
     for (const d of [pending, auth, failed, wrong]) expect(await receipts(d.id)).toHaveLength(0);
   });
 
@@ -366,18 +319,11 @@ describe('GET /receipts/:token — minimal fields only', () => {
     await closed.close();
     const noKey = buildApp(env({ AUTH_SECRET_KEY: '' }), { db, paymentProvider: provider });
     const d = await donation();
-    const p = pays(d.orderId, 100_000);
+    pays(d.ref, 100_000);
     const res = await noKey.inject({
       method: 'POST',
       url: '/api/v1/payments/verify',
-      payload: {
-        publicReference: d.ref,
-        orderId: d.orderId,
-        paymentId: p.paymentId,
-        signature: createHmac('sha256', KEY_SECRET)
-          .update(`${d.orderId}|${p.paymentId}`)
-          .digest('hex'),
-      },
+      payload: { publicReference: d.ref },
     });
     expect(res.json()).toEqual({ publicReference: d.ref, status: 'PAID', amountPaise: 100_000 });
     // The receipt is still issued (the link is derived later, when a key is configured).
@@ -418,9 +364,8 @@ describe('no PDF download (client, Nov 2026)', () => {
 describe('refunds and corrections are new entries, never deletions', () => {
   it('partial refund: the original is kept as REPLACED, a new receipt holds the net amount', async () => {
     const d = await paidWithReceipt(100_000);
-    const refunded = { ...d.payment, refundedPaise: 30_000 };
-    remote.set(refunded.paymentId, refunded);
-    await webhook('refund.processed', refunded);
+    const refundId = cf.refund(d.ref, d.payment.paymentId, 30_000, 'SUCCESS');
+    await refundWebhook(d.ref, d.payment.paymentId, refundId, 'SUCCESS');
 
     const [original, corrected] = await receipts(d.id);
     expect(original).toMatchObject({ voidReason: 'CORRECTED', amountPaise: 100_000 });
@@ -438,7 +383,7 @@ describe('refunds and corrections are new entries, never deletions', () => {
     expect(fresh).toMatchObject({ state: 'VALID', amountPaise: 70_000, method: 'upi' });
 
     // The same refund event again changes nothing.
-    await webhook('refund.processed', refunded);
+    await refundWebhook(d.ref, d.payment.paymentId, refundId, 'SUCCESS');
     expect(await receipts(d.id)).toHaveLength(2);
     const status = await app.inject({
       method: 'GET',
@@ -450,10 +395,11 @@ describe('refunds and corrections are new entries, never deletions', () => {
 
   it('full refund: the acknowledgement is withdrawn (REFUNDED) but kept; no new receipt', async () => {
     const d = await paidWithReceipt(100_000);
-    const refunded = { ...d.payment, refundedPaise: 100_000, status: 'refunded' as const };
-    await webhook('refund.created', refunded);
+    const refundId = cf.refund(d.ref, d.payment.paymentId, 100_000, 'PENDING');
+    await refundWebhook(d.ref, d.payment.paymentId, refundId, 'PENDING');
     expect((await getView(d.token)).json().state).toBe('VALID'); // not processed yet
-    await webhook('refund.processed', refunded);
+    cf.settleRefund(d.ref, refundId, 'SUCCESS');
+    await refundWebhook(d.ref, d.payment.paymentId, refundId, 'SUCCESS');
     const all = await receipts(d.id);
     expect(all).toHaveLength(1);
     expect(all[0]).toMatchObject({ voidReason: 'REFUNDED' });

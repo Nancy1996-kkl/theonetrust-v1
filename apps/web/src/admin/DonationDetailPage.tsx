@@ -55,7 +55,7 @@ function Section<Row>({
 /**
  * `/admin/donations/:id` (#31): everything about one donation — payment attempts, status
  * history, webhook history, bank transfers, acknowledgements, emails and exceptions. The only
- * action is an audited "re-check with Razorpay"; amounts and statuses are never edited here.
+ * action is an audited "re-check with the gateway (Cashfree)"; amounts and statuses are never edited here.
  */
 export function DonationDetailPage() {
   const { api, t, lang } = useAdmin();
@@ -198,7 +198,6 @@ export function DonationDetailPage() {
           col('status', l.providerStatus, (a) => a.providerStatus ?? '—'),
           col('captured', l.captured, (a) => money(a.capturedPaise), { align: 'end' }),
           col('refunded', l.refunded, (a) => money(a.refundedPaise), { align: 'end' }),
-          col('sig', l.signature, (a) => (a.signatureVerified ? l.yes : l.no)),
         ]}
         rowKey={(a) => a.providerOrderId}
       />

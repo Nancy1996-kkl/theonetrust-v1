@@ -22,7 +22,6 @@ export function outboxDeps(env: Env, db: Db): WorkerDeps | undefined {
     ownerEmail: env.OWNER_NOTIFICATION_EMAIL,
     siteUrl: env.PUBLIC_SITE_URL ?? env.CORS_ORIGINS[0] ?? 'http://localhost:5173',
     receiptKey: keys?.receipt,
-    manageKey: keys?.manage,
     now: () => new Date(),
   };
 }

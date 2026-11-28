@@ -622,7 +622,7 @@ Total: 528 strings. Mark any line you want changed and send it back.
 ## Second pass — English words taken out
 
 At the client's request ("where English is not needed, use Tamil"), the English words added in the
-first pass are replaced. Kept as-is only: UPI, PAN, WhatsApp, Razorpay, PDF, CSV, AutoPay,
+first pass are replaced. Kept as-is only: UPI, PAN, WhatsApp, Razorpay (now Cashfree), PDF, CSV, AutoPay,
 eMandate, கார்டு, நெட்பேங்கிங் (the words people actually use).
 
 | Before                                   | After                                     |
@@ -650,6 +650,25 @@ stays “Donate now”; the header button stays “நன்கொடை”.
 | --- | ---------------------------------- | ------------------ |
 | 1   | இப்போதே நன்கொடை கொடுங்கள்          | அன்புடன் உதவுங்கள் |
 | 2   | இப்போதே நன்கொடை அளியுங்கள் (proof) | அன்புடன் உதவுங்கள் |
+
+## Payment gateway name — Razorpay → Cashfree (25 Nov 2026)
+
+The trust now takes online donations through Cashfree; Razorpay is removed. Every Tamil string
+that named the gateway now names Cashfree with the same grammar (the gateway name is kept in
+English, like UPI). Nothing else in these sentences changed.
+
+| Where                        | Before                                           | After                                         |
+| ---------------------------- | ------------------------------------------------ | --------------------------------------------- |
+| Donate pop-up trust line     | Razorpay மூலம் பாதுகாப்பாகச் செலுத்தலாம் · …     | Cashfree மூலம் பாதுகாப்பாகச் செலுத்தலாம் · …  |
+| Home page payment line       | Razorpay வழியாக UPI, கார்டு, நெட்பேங்கிங்.       | Cashfree வழியாக UPI, கார்டு, நெட்பேங்கிங்.    |
+| Policies, FAQ, landing       | Razorpay-இல் / Razorpay-இடம் / Razorpay மூலம்    | Cashfree-இல் / Cashfree-இடம் / Cashfree மூலம் |
+| Dashboard (re-check, alerts) | Razorpay-இல் மீண்டும் சரிபார்                    | Cashfree-இல் மீண்டும் சரிபார்                 |
+| Dashboard settings           | பொது விசை ID                                     | Cashfree கிளையன்ட் (App) ID                   |
+| Dashboard exception label    | மாதப் பணம் எடுக்க முடியவில்லை (Razorpay மறுபடி…) | மாதப் பணம் எடுக்க முடியவில்லை                 |
+
+Removed with the features they described (no replacement text): the monthly-giving consent,
+manage page and dashboard page; the one-time UPI QR screen (Cashfree's own window shows a UPI QR);
+the Razorpay button / payment-page pop-ups; the UPI-limit and "payment cancelled" screens.
 
 ## Polite wording on buttons and headings (client review, 25 Nov 2026)
 

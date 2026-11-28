@@ -28,7 +28,7 @@ a shared link such as `/ta/?programme=education#donate`. All of these open the *
    default ₹500) the donor can ask for an acknowledgement — a download link on the result page,
    plus email only if they consent. Tax-benefit opt-in appears only when the trust's approval is
    confirmed.
-4. Pay in Razorpay Checkout: UPI QR or app, card, or netbanking.
+4. Pay in Cashfree's payment window: UPI QR or app, card, or netbanking.
 5. The donate panel shows the **verified** result. The result never appears in the URL; a private
    status token is kept only in that browser tab while the payment is being confirmed.
 
@@ -46,7 +46,7 @@ flowchart LR
   A[Single page or shared link] --> B[Donate panel: choose need]
   B --> C[Choose amount]
   C --> D[Name and contact]
-  D --> E[Razorpay checkout]
+  D --> E[Cashfree payment window]
   E -->|callback| F{Server verifies}
   F -->|captured| G[Thank you + receipt link]
   F -->|not yet| H[Pending verification: Check again]
@@ -60,6 +60,10 @@ Issues: #12, #23, #24, #26, #27, #29, #30.
 ---
 
 ## 2. Monthly donor (autopay)
+
+> **Not offered now (25 Nov 2026):** monthly giving was built on Razorpay Subscriptions and is
+> retired with Razorpay. It returns with Cashfree Subscriptions (migration plan, Phase 9); this
+> journey is the target design for that work.
 
 **Goal**: give every month and stay in control.
 **Entry**: "Give monthly" choice on the amount step of the donate panel, a link in a thank-you email.
@@ -78,8 +82,8 @@ Issues: #12, #23, #24, #26, #27, #29, #30.
 | Outcome                                  | What happens                                                                  |
 | ---------------------------------------- | ----------------------------------------------------------------------------- |
 | Mandate active                           | Confirmation + manage link                                                    |
-| Donor pauses or cancels in their UPI app | Our record follows Razorpay's notice; the manage page shows the new status    |
-| Donor cancels via manage link            | Cancelled at Razorpay; confirmation shown and emailed                         |
+| Donor pauses or cancels in their UPI app | Our record follows the gateway's notice; the manage page shows the new status |
+| Donor cancels via manage link            | Cancelled at the gateway first; confirmation shown and emailed                |
 | A monthly charge fails / mandate halted  | Donor gets a gentle email with a link to restart; owner sees it in exceptions |
 | Donor wants a different amount           | Cancel and set up a new mandate (UPI mandates can't be edited)                |
 
@@ -93,8 +97,8 @@ Issues: #32, #33, #29, #30.
 **Entry**: an amount above the UPI guidance in the donate panel, the "UPI limit" message, an FAQ link.
 
 1. Choose need and amount; choose **Bank transfer (NEFT/RTGS)**, or card / netbanking for any amount.
-2. If Razorpay Smart Collect is enabled for the trust: a unique account number for this donation
-   is shown. Otherwise: the trust's bank details and a donation reference to include.
+2. If a virtual-account service is ever enabled for the trust: a unique account number for this
+   donation is shown. Otherwise: the trust's bank details and a donation reference to include.
 3. Donor transfers from their bank.
 4. Smart Collect: the credit is matched automatically → receipt as in journey 1.
    Manual: the donor may add their UTR; the donation stays **pending until the owner confirms it

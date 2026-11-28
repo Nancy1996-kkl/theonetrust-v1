@@ -1,10 +1,6 @@
 import type { DonationStatus } from '@theonetrust/contracts';
 import type { Db } from '../../db/client.ts';
-import {
-  PaymentProviderError,
-  razorpayOrderState,
-  type PaymentProvider,
-} from '../donations/provider.ts';
+import { PaymentProviderError, type PaymentProvider } from '../donations/provider.ts';
 import type { PaymentState } from './order-state.ts';
 import { applyOrderState } from './reconcile.ts';
 
@@ -30,7 +26,6 @@ export interface RecheckResult {
  *
  * - by order, never only by a stored payment ID: a failed first try and a successful retry on the
  *   same order are both seen, and the successful one wins;
- * - QR attempts are matched by the QR they were paid on; monthly charges by their payment;
  * - every captured payment is applied, so a second captured payment surfaces as a duplicate for
  *   the owner instead of being silently ignored.
  *
@@ -46,8 +41,6 @@ export async function recheckAttempt(
   if (attempt.provider !== provider.name) {
     throw new PaymentProviderError('rejected');
   }
-  const state = provider.fetchOrderState
-    ? await provider.fetchOrderState(attempt.providerOrderId)
-    : await razorpayOrderState(provider, attempt.providerOrderId);
+  const state = await provider.fetchOrderState(attempt.providerOrderId);
   return applyOrderState(db, attempt.id, state, now);
 }

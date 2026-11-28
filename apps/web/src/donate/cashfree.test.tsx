@@ -18,7 +18,6 @@ import {
   type VerifiedStatus,
 } from './donate-client.ts';
 import { DONATE_MESSAGES } from './donate-messages.ts';
-import { selectDonatePopup } from './donate-popup.ts';
 
 const REF = 'TOT-D-ABCDEFGHJKMN';
 const CASHFREE_INTENT: DonationIntentResponse = {
@@ -40,24 +39,6 @@ afterEach(() => {
   vi.useRealTimers();
   delete (window as { Cashfree?: unknown }).Cashfree;
   document.head.querySelectorAll(`script[src="${CASHFREE_SDK}"]`).forEach((s) => s.remove());
-});
-
-describe('which donate pop-up (precedence)', () => {
-  it('cashfree → panel, even with a Razorpay button or page link configured', () => {
-    expect(selectDonatePopup({ provider: 'cashfree', hasButton: true, hasPageLink: true })).toBe(
-      'panel',
-    );
-  });
-
-  it('otherwise button → link → panel (the Razorpay button stays the rollback)', () => {
-    expect(selectDonatePopup({ provider: undefined, hasButton: true, hasPageLink: true })).toBe(
-      'button',
-    );
-    expect(selectDonatePopup({ provider: '', hasButton: false, hasPageLink: true })).toBe('link');
-    expect(selectDonatePopup({ provider: 'other', hasButton: false, hasPageLink: false })).toBe(
-      'panel',
-    );
-  });
 });
 
 describe('loadCashfree', () => {
@@ -114,9 +95,8 @@ describe('API client with Cashfree', () => {
         },
       };
     };
-    const razorpay = vi.fn(async () => Promise.reject(new Error('must not load')));
-    const api = createApiDonateClient('', vi.fn(), razorpay, async () => factory);
-    return { api, calls, razorpay };
+    const api = createApiDonateClient('', vi.fn(), async () => factory);
+    return { api, calls };
   }
 
   it.each([
@@ -126,22 +106,21 @@ describe('API client with Cashfree', () => {
     ['a thrown error', new Error('boom'), 'returned'],
     ['a redirect (pop-up could not open)', { redirect: true }, 'redirecting'],
   ])('%s → %s (Cashfree’s answer is never proof: the server decides)', async (_n, result, kind) => {
-    const { api, calls, razorpay } = withCashfree(result);
-    expect(await api.checkout(CASHFREE_INTENT, { name: 'A', lang: 'ta' })).toEqual({ kind });
+    const { api, calls } = withCashfree(result);
+    expect(await api.checkout(CASHFREE_INTENT)).toEqual({ kind });
     // Only the one-time session goes to Cashfree: no name, phone or email.
     expect(calls).toEqual([
       { mode: 'sandbox' },
       { paymentSessionId: 'session_abc', redirectTarget: '_modal' },
     ]);
-    expect(razorpay).not.toHaveBeenCalled();
   });
 
-  it('verify sends ONLY the public reference for Cashfree', async () => {
+  it('verify sends ONLY the public reference', async () => {
     const fetchImpl = vi.fn(async () =>
       ok({ publicReference: REF, status: 'PAID', amountPaise: 1 }),
     );
     const api = createApiDonateClient('https://api.example/api/v1', fetchImpl);
-    expect(await api.verify(CASHFREE_INTENT, { kind: 'returned' })).toBe('PAID');
+    expect(await api.verify(REF)).toBe('PAID');
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe('https://api.example/api/v1/payments/verify');
     expect(JSON.parse(String(init.body))).toEqual({ publicReference: REF });
@@ -257,7 +236,7 @@ describe('donate pop-up with Cashfree', () => {
     await expectNoA11yViolations(dialog);
   });
 
-  it('Razorpay (no phoneRequired): the mobile stays optional with no hint', async () => {
+  it('no phoneRequired from the server (online giving off): the mobile stays optional, no hint', async () => {
     const user = userEvent.setup();
     renderAt(
       '/#donate',
@@ -293,7 +272,7 @@ describe('donate pop-up with Cashfree', () => {
       expect.objectContaining({ donorPhone: '+919876543210', locale: 'en' }),
       expect.stringMatching(/^[0-9a-f]{32}$/),
     );
-    expect(donate.verify).toHaveBeenCalledWith(CASHFREE_INTENT, { kind: 'returned' });
+    expect(donate.verify).toHaveBeenCalledWith(REF);
     expect(sessionStorage.getItem(PENDING_KEY)).toBeNull();
   });
 
@@ -376,7 +355,8 @@ describe('donate pop-up with Cashfree', () => {
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
     await user.click(await within(dialog).findByRole('button', { name: t.payAgainSameOrder }));
-    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    // The window opens straight away (no extra step), on the same order.
+    await waitFor(() => expect(donate.checkout).toHaveBeenCalledTimes(2));
     await within(dialog).findByRole('heading', { name: t.pending });
     expect(donate.start).toHaveBeenCalledTimes(1);
     expect(donate.checkout).toHaveBeenCalledTimes(2);
@@ -398,7 +378,7 @@ describe('donate pop-up with Cashfree', () => {
   it('Cashfree’s script blocked → failed and the reference is not kept', async () => {
     const user = userEvent.setup();
     const donate = cashfreeClient({
-      checkout: vi.fn(async () => ({ kind: 'failed' as const, reason: 'other' as const })),
+      checkout: vi.fn(async () => ({ kind: 'failed' as const })),
     });
     renderAt('/#donate', donate);
     const dialog = await toDetails(user);
@@ -408,8 +388,34 @@ describe('donate pop-up with Cashfree', () => {
     );
     await user.click(within(dialog).getByRole('button', { name: t.continue }));
     await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
-    expect(await within(dialog).findByRole('heading', { name: t.failed })).toBeVisible();
+    expect(await within(dialog).findByRole('heading', { name: t.windowTitle })).toBeVisible();
+    // Nothing was paid: no reference to quote, no "if money left your account" help.
+    expect(dialog).not.toHaveTextContent('TOT-D-');
+    expect(dialog).not.toHaveTextContent(t.failedHelp);
     expect(sessionStorage.getItem(PENDING_KEY)).toBeNull();
+    await expectNoA11yViolations(dialog);
+  });
+
+  it('"Check again" that finds it still pending says so (announced), never silent', async () => {
+    const user = userEvent.setup();
+    const donate = cashfreeClient({
+      verify: vi.fn(async () => 'PENDING' as const),
+      status: vi.fn(async () => 'PENDING' as const),
+    });
+    renderAt('/#donate', donate);
+    const dialog = await toDetails(user);
+    await user.type(
+      within(dialog).getByRole('textbox', { name: new RegExp(t.mobile) }),
+      '9876543210',
+    );
+    await user.click(within(dialog).getByRole('button', { name: t.continue }));
+    await user.click(within(dialog).getByRole('button', { name: 'Pay ₹1,000 securely' }));
+    await within(dialog).findByRole('heading', { name: t.pending });
+    const live = within(dialog).getByRole('status');
+    expect(live).toHaveTextContent('');
+    await user.click(within(dialog).getByRole('button', { name: t.checkAgain }));
+    await waitFor(() => expect(live).toHaveTextContent(/Still not confirmed — checked at/));
+    expect(live).toHaveAttribute('aria-live', 'polite');
   });
 });
 
@@ -497,7 +503,7 @@ describe('mock client (dev / e2e only) Cashfree scenarios', () => {
     const g = globalThis as { __donateMock?: string };
     try {
       g.__donateMock = 'cashfree';
-      expect(await mock.estimate()).toMatchObject({ phoneRequired: true, qrOffered: false });
+      expect(await mock.estimate()).toMatchObject({ phoneRequired: true });
       const started = await mock.start(
         {
           giftPaise: 100,
@@ -515,22 +521,24 @@ describe('mock client (dev / e2e only) Cashfree scenarios', () => {
         'k',
       );
       expect(started.ok && started.intent.checkout.provider).toBe('CASHFREE');
-      expect(await mock.checkout(CASHFREE_INTENT, { name: 'A', lang: 'en' })).toEqual({
+      expect(await mock.checkout(CASHFREE_INTENT)).toEqual({
         kind: 'returned',
       });
-      expect(await mock.verify(CASHFREE_INTENT, { kind: 'returned' })).toBe('PAID');
+      expect(await mock.verify(REF)).toBe('PAID');
       g.__donateMock = 'cashfree-pending';
-      expect(await mock.verify(CASHFREE_INTENT, { kind: 'returned' })).toBe('PENDING');
+      expect(await mock.verify(REF)).toBe('PENDING');
       expect(await mock.status(REF)).toBe('PAID');
       g.__donateMock = 'cashfree-fail';
-      expect(await mock.verify(CASHFREE_INTENT, { kind: 'returned' })).toBe('FAILED');
+      expect(await mock.verify(REF)).toBe('FAILED');
       expect(await mock.status(REF)).toBe('FAILED');
       g.__donateMock = 'cashfree-redirect';
-      expect(await mock.checkout(CASHFREE_INTENT, { name: 'A', lang: 'en' })).toEqual({
+      expect(await mock.checkout(CASHFREE_INTENT)).toEqual({
         kind: 'redirecting',
       });
       g.__donateMock = 'success';
-      expect(await mock.estimate()).toMatchObject({ phoneRequired: false, qrOffered: true });
+      const estimate = await mock.estimate();
+      expect(estimate).toMatchObject({ phoneRequired: true });
+      expect(estimate).not.toHaveProperty('qrOffered');
     } finally {
       delete g.__donateMock;
     }

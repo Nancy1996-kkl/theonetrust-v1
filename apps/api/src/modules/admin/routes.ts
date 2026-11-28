@@ -14,7 +14,6 @@ import { AuditQuery, listAuditEntries } from '../audit/query.ts';
 import { helpAdminRoutes } from '../help/admin-routes.ts';
 import type { PaymentProvider } from '../donations/provider.ts';
 import { ledgerAdminRoutes } from '../ledger/admin-routes.ts';
-import { subscriptionAdminRoutes } from '../subscriptions/admin-routes.ts';
 import { taxAdminRoutes } from '../tax/admin-routes.ts';
 import { taxFilingRoutes } from '../tax/filing-routes.ts';
 import { notificationAdminRoutes } from '../notifications/admin-routes.ts';
@@ -51,7 +50,7 @@ export interface AdminRouteOptions {
   db?: Db;
   /** Whether an email provider is configured (shown on the delivery-status page). */
   emailSending?: boolean;
-  /** For the owner's audited "re-check with Razorpay" (#31). */
+  /** For the owner's audited "re-check with the gateway" (#31). */
   paymentProvider?: PaymentProvider | undefined;
   receiptKey?: Buffer | undefined;
   /** AES key for PAN/address — used only by the audited Form 113 export (#35). */
@@ -164,7 +163,6 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
       now: opts.now ?? (() => new Date()),
     });
     await notificationAdminRoutes(app, { db: opts.db, sendingEnabled: opts.emailSending ?? false });
-    await subscriptionAdminRoutes(app, { db: opts.db });
     await taxAdminRoutes(app, { db: opts.db, now: opts.now ?? (() => new Date()) });
     await taxFilingRoutes(app, {
       db: opts.db,
@@ -184,10 +182,10 @@ export async function adminRoutes(app: FastifyInstance, opts: AdminRouteOptions)
       db: opts.db,
       ownerEmail: opts.ownerEmail,
       payment: opts.paymentStatus ?? {
+        mode: 'not_configured',
         keyId: undefined,
         keySecretSet: false,
         webhookSecretSet: false,
-        subscriptionsEnabled: false,
       },
     });
     await ledgerAdminRoutes(app, {

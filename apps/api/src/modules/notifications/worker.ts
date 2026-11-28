@@ -5,13 +5,10 @@ import { ownerEmailFor } from '../../db/repositories/trust-settings.ts';
 import type { NotificationOutbox } from '../../generated/prisma/client.ts';
 import { currentReceipt, shareTokenFor } from '../receipts/issue.ts';
 import { verifyUrl } from '../receipts/routes.ts';
-import { manageToken } from '../subscriptions/rules.ts';
 import { EmailSendError, type EmailProvider } from './provider.ts';
 import { SheetSendError, type SheetCell, type SheetProvider } from './sheet.ts';
 import {
   renderDonorDonationPaid,
-  renderDonorSubscriptionStarted,
-  renderDonorSubscriptionProblem,
   renderOwnerDonationPaid,
   renderOwnerHelpRequest,
   istDateTime,
@@ -41,8 +38,6 @@ export interface WorkerDeps {
   ownerEmail?: string | undefined;
   siteUrl: string;
   receiptKey?: Buffer | undefined;
-  /** Manage-link key for monthly giving emails (#32). */
-  manageKey?: Buffer | undefined;
   now: () => Date;
   batchSize?: number;
 }
@@ -171,58 +166,6 @@ export async function buildEmail(deps: WorkerDeps, row: NotificationOutbox): Pro
     return {
       to: found.email,
       email: renderDonorDonationPaid(found.ctx, row.locale === 'ta' ? 'ta' : 'en'),
-    };
-  }
-  if (row.template === 'donor_subscription_started' && kind === 'donation_subscription') {
-    const sub = await deps.db.donationSubscription.findUnique({ where: { id } });
-    if (!sub) return { cancel: 'entity_missing' };
-    if (!sub.donorEmail || !EMAIL.test(sub.donorEmail)) return { cancel: 'no_donor_email' };
-    if (sub.status === 'CANCELLED' || sub.status === 'COMPLETED') return { cancel: 'not_active' };
-    if (!deps.manageKey) return { cancel: 'no_link_key' };
-    const lang = row.locale === 'ta' ? 'ta' : 'en';
-    const token = manageToken(deps.manageKey, sub.manageTokenSalt);
-    const settings = await deps.db.trustSettings.findUnique({ where: { id: 1 } });
-    return {
-      to: sub.donorEmail,
-      email: renderDonorSubscriptionStarted(
-        {
-          donorName: sub.donorName,
-          amountPaise: sub.amountPaise,
-          startDate: sub.startAt
-            ? new Date(sub.startAt.getTime() + 330 * 60_000).toISOString().slice(0, 10)
-            : null,
-          manageUrl: site(deps, `${lang === 'ta' ? '/ta' : ''}/manage/${token}`),
-          trustName: settings?.legalName ?? SITE_NAME,
-        },
-        lang,
-      ),
-    };
-  }
-  if (row.template === 'donor_subscription_problem' && kind === 'donation_subscription') {
-    const sub = await deps.db.donationSubscription.findUnique({ where: { id } });
-    if (!sub) return { cancel: 'entity_missing' };
-    if (!sub.donorEmail || !EMAIL.test(sub.donorEmail)) return { cancel: 'no_donor_email' };
-    // Already fixed or ended by the time we send: no alarming email.
-    if (sub.status !== 'ACTIVE' && sub.status !== 'HALTED') return { cancel: 'not_active' };
-    const lang = row.locale === 'ta' ? 'ta' : 'en';
-    const settings = await deps.db.trustSettings.findUnique({ where: { id: 1 } });
-    return {
-      to: sub.donorEmail,
-      email: renderDonorSubscriptionProblem(
-        {
-          donorName: sub.donorName,
-          amountPaise: sub.amountPaise,
-          halted: sub.status === 'HALTED',
-          manageUrl: deps.manageKey
-            ? site(
-                deps,
-                `${lang === 'ta' ? '/ta' : ''}/manage/${manageToken(deps.manageKey, sub.manageTokenSalt)}`,
-              )
-            : null,
-          trustName: settings?.legalName ?? SITE_NAME,
-        },
-        lang,
-      ),
     };
   }
   return { cancel: 'unknown_template' };

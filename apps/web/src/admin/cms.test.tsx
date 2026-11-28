@@ -583,10 +583,9 @@ const SETTINGS: AdminTrustSettings = {
   feeTable: null,
   payment: {
     mode: 'test',
-    keyId: 'rzp_test_x',
+    keyId: 'TESTCLIENT01',
     keySecretSet: true,
     webhookSecretSet: false,
-    subscriptionsEnabled: false,
   },
 };
 
@@ -608,10 +607,9 @@ describe('settings page (#36)', () => {
       updateTrustSettings,
     });
     expect(await screen.findByText(c.payTest)).toBeVisible();
-    expect(screen.getByText('rzp_test_x')).toBeVisible();
+    expect(screen.getByText('TESTCLIENT01')).toBeVisible();
     expect(screen.getByText(c.paySet)).toBeVisible();
     expect(screen.getByText(c.payNotSet)).toBeVisible();
-    expect(screen.getByText(c.payOff)).toBeVisible();
     expect(screen.getByText(/server@example.org/)).toBeVisible();
     await expectNoA11yViolations(container);
 
@@ -646,14 +644,13 @@ describe('settings page (#36)', () => {
         ...SETTINGS,
         ownerEmail: null,
         ownerEmailSource: 'none' as const,
-        payment: { ...SETTINGS.payment, mode: 'live' as const, subscriptionsEnabled: true },
+        payment: { ...SETTINGS.payment, mode: 'live' as const },
       });
     const updateTrustSettings = vi.fn();
     renderAt('/admin/settings', { trustSettings, updateTrustSettings });
     await user.click(await screen.findByRole('button', { name: ADMIN_STRINGS.en.retry }));
     expect(await screen.findByText(c.payLive)).toBeVisible();
     expect(screen.getByText(c.setOwnerNone)).toBeVisible();
-    expect(screen.getByText(c.payOn)).toBeVisible();
     await user.type(screen.getByLabelText(c.reason), REASON);
     await user.type(screen.getByLabelText(c.setFeeTable), 'not json');
     await user.click(screen.getByRole('button', { name: c.save }));

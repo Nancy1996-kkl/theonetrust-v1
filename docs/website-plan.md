@@ -4,6 +4,12 @@
 > 30 Oct 2026 payment-limits addendum (§17). Where this plan and `PROJECT_SPEC.md` differ,
 > **this plan wins**. It is a build plan, not legal or tax advice: every `[CONFIRM]` item needs
 > verified trust documents or the trust's CA before launch.
+>
+> **Update 25 Nov 2026 — payment gateway:** the trust chose **Cashfree**; Razorpay is removed from
+> the code (`docs/decisions/2026-11-20-cashfree-migration-plan.md`, Phase 8). Where this plan says
+> Razorpay below, read Cashfree. Monthly giving (Subscriptions / UPI AutoPay) and the separate
+> one-time QR are not offered until Phase 9; Cashfree's own payment window shows a UPI QR. Bank
+> transfer stays manual (the owner confirms with bank evidence); there is no Smart Collect.
 
 ## 1. Mission and scope
 

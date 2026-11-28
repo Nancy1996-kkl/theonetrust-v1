@@ -39,8 +39,11 @@ beforeAll(async () => {
       DOCUMENT_MAX_BYTES: '2048',
       PUBLIC_DOCUMENTS_BASE_URL: 'https://api.example.org/api/v1/documents',
       OWNER_NOTIFICATION_EMAIL: 'server-owner@example.org',
-      RAZORPAY_KEY_ID: 'rzp_test_cms0000001',
-      RAZORPAY_KEY_SECRET: 'cms-secret-never-shown',
+      PUBLIC_SITE_URL: 'https://theonetrust.example',
+      PAYMENT_PROVIDER: 'cashfree',
+      CASHFREE_ENV: 'sandbox',
+      CASHFREE_CLIENT_ID: 'CMSTEST0000001',
+      CASHFREE_CLIENT_SECRET: 'cms-secret-never-shown',
     }),
     { db, documentStore: localDocumentStore(dir) },
   );
@@ -521,9 +524,10 @@ describe('settings (#36)', () => {
       ownerEmailSource: 'server',
       payment: {
         mode: 'test',
-        keyId: 'rzp_test_cms0000001',
+        keyId: 'CMSTEST0000001',
         keySecretSet: true,
-        webhookSecretSet: false,
+        // Cashfree signs webhooks with the client secret: set together with it.
+        webhookSecretSet: true,
       },
     });
     expect(

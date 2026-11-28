@@ -6,7 +6,7 @@ import { cashfreeId, verifyCashfreeSignature } from '../donations/cashfree.ts';
 import type { PaymentProvider } from '../donations/provider.ts';
 import { recheckAttempt } from './recheck.ts';
 import { applyRefund } from './reconcile.ts';
-import { deliverWebhook, type WebhookOutcome } from './webhook-routes.ts';
+import { deliverWebhook, type WebhookOutcome } from './webhook-delivery.ts';
 
 /** A webhook signed further ahead than this is refused (clock skew allowance). */
 export const CASHFREE_FUTURE_SKEW_MS = 5 * 60_000;
@@ -67,7 +67,7 @@ function timestampMs(timestamp: string): number {
  * 1. verify base64(HMAC-SHA256(client secret, timestamp + RAW body)) — invalid → 400, nothing
  *    stored; a timestamp more than 5 minutes in the future is refused too (old ones are allowed:
  *    Cashfree retries for hours and replays are harmless because of step 2);
- * 2. durable, idempotent record of the derived event key (shared with Razorpay);
+ * 2. durable, idempotent record of the derived event key (webhook-delivery.ts);
  * 3. the payload's statuses and amounts are NEVER trusted: the order is re-fetched from Cashfree
  *    with our secret and applied through the shared reconcile rules;
  * 4. 200 only after the outcome is stored; 500 on failure so Cashfree retries.
@@ -124,7 +124,7 @@ export async function cashfreeWebhookRoutes(
             ? await db.paymentAttempt.findUnique({ where: { providerPaymentId: paymentId } })
             : null;
       // An auto-refund of a payment that never settled one of our orders changes nothing here.
-      if (!attempt || attempt.provider !== 'CASHFREE' || !provider.fetchRefunds) {
+      if (!attempt || attempt.provider !== 'CASHFREE') {
         return { status: 'IGNORED', note: 'refund_unmatched' };
       }
       // Only money we recorded as captured can be refunded against the donation.
@@ -156,15 +156,7 @@ export async function cashfreeWebhookRoutes(
       await applyRefund(
         db,
         attempt.id,
-        {
-          paymentId: attempt.providerPaymentId,
-          orderId: attempt.providerOrderId,
-          amountPaise: attempt.amountPaise,
-          currency: 'INR',
-          status: full ? 'refunded' : 'captured',
-          method: attempt.method,
-          refundedPaise: refunds.refundedPaise,
-        },
+        { state: full ? 'refunded' : 'captured', refundedPaise: refunds.refundedPaise },
         refunds.status,
         opts.now(),
       );

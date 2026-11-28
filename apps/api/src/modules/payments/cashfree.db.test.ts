@@ -298,13 +298,12 @@ describe('donation intent with Cashfree', () => {
     expect(res.statusCode).toBe(503);
   });
 
-  it('QR is not offered with Cashfree (its own pop-up shows the UPI QR)', async () => {
+  it('the estimate asks for the phone; no separate QR or monthly offer (Cashfree’s pop-up shows UPI QR)', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/v1/donation-intents/estimate' });
-    expect(res.json()).toMatchObject({
-      qrOffered: false,
-      monthlyOffered: false,
-      phoneRequired: true,
-    });
+    const body = res.json() as Record<string, unknown>;
+    expect(body).toMatchObject({ phoneRequired: true });
+    expect(body).not.toHaveProperty('qrOffered');
+    expect(body).not.toHaveProperty('monthlyOffered');
   });
 });
 

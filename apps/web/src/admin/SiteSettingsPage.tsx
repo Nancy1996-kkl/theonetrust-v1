@@ -218,10 +218,6 @@ export function SiteSettingsPage() {
             <dt>{c.payWebhook}</dt>
             <dd>{setText(p.webhookSecretSet)}</dd>
           </div>
-          <div>
-            <dt>{c.payMonthly}</dt>
-            <dd>{p.subscriptionsEnabled ? c.payOn : c.payOff}</dd>
-          </div>
         </dl>
       </section>
     </div>

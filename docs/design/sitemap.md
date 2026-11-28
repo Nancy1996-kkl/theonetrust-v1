@@ -9,9 +9,11 @@ issue #1 when verified.
 - **Public visitors and donors use one single page** — `theonetrust.in` (English) and
   `theonetrust.in/ta/` (Tamil). Donating, Get Help and the payment result all happen **inside that
   page** in panels; nobody is sent to another page to finish a task.
-- **Small linked pages** exist only because Razorpay requires policy links to activate live
-  payments: Terms, Privacy, Refund & cancellation. They are reached from the footer.
-- **Private links** sent by email: a receipt (acknowledgement) link and a monthly-giving manage link.
+- **Small linked pages** exist only because the payment gateway (Cashfree) asks for policy links
+  before activating live payments: Terms, Privacy, Refund & cancellation. They are reached from the
+  footer.
+- **Private links** sent by email: a receipt (acknowledgement) link. (The monthly-giving manage
+  link was retired with Razorpay; it returns with Cashfree Subscriptions, Phase 9.)
 - **The owner uses a private dashboard** at `/admin`, in Tamil or English with a toggle.
 
 ## Routes
@@ -24,23 +26,23 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
 | Route | Tamil route | Purpose | Who | Access | Search engines | Built in | Status |
 |---|---|---|---|---|---|---|---|
 | `/` | `/ta/` | The single public page: hero, about, ways we help, donate panel, get-help panel, impact, transparency, FAQ, contact | Everyone | Public | Index | #11, #12, #13, #15, #24 | Built (placeholder) |
-| `/privacy` | `/ta/privacy` | Privacy policy (Razorpay requirement) | Everyone | Public | Index | #14 | Built |
-| `/terms` | `/ta/terms` | Terms and conditions (Razorpay requirement) | Everyone | Public | Index | #14 | Built |
-| `/refund-policy` | `/ta/refund-policy` | Refund, cancellation and correction policy, incl. "shipping: not applicable — donations only" (Razorpay requirement) | Donors | Public | Index | #14 | Built |
+| `/privacy` | `/ta/privacy` | Privacy policy (payment gateway requirement) | Everyone | Public | Index | #14 | Built |
+| `/terms` | `/ta/terms` | Terms and conditions (payment gateway requirement) | Everyone | Public | Index | #14 | Built |
+| `/refund-policy` | `/ta/refund-policy` | Refund, cancellation and correction policy, incl. "shipping: not applicable — donations only" (payment gateway requirement) | Donors | Public | Index | #14 | Built |
 | `/receipt/:token` | `/ta/receipt/:token` | Donation acknowledgement (minimal fields) + PDF download + verification QR target; link sent by email or shown in the donate panel | Donor and anyone they share it with | Private random token | No index | #29 | Built |
-| `/manage/:token` | `/ta/manage/:token` | See and cancel monthly giving without logging in; pause only where Razorpay supports it for that method (UPI mandates are paused in the donor's UPI app) | Monthly donor | Private random token | No index | #32, #33 | Built |
+| `/manage/:token` | `/ta/manage/:token` | See and cancel monthly giving without logging in — retired with Razorpay; returns with Cashfree Subscriptions | Monthly donor | Private random token | No index | #32, #33; Phase 9 | Retired (Phase 9) |
 | `/admin/login` | — | Owner sign-in with authenticator-app second factor | Trust owner | Public page, rate-limited | No index | #19 | Built |
 | `/admin` | — | Overview: verified totals, pending, failed, refunds, recent activity, exceptions | Trust owner | Owner session | No index | #19 (shell), #31 | Built |
 | `/admin/donations` | — | Donations ledger with filters and CSV export | Trust owner | Owner session | No index | #31 | Built |
 | `/admin/donations/:id` | — | One donation: payment attempts, webhook history, receipt, notifications | Trust owner | Owner session | No index | #31 | Built |
 | `/admin/bank-transfers` | — | Record bank credits, second confirmation, open exceptions | Trust owner | Owner session | No index | #25 | Built |
 | `/admin/exceptions` | — | Payment exceptions and reconciliation (pending too long, mismatch, bank transfers) | Trust owner | Owner session | No index | #25, #31 | Built |
-| `/admin/webhooks` | — | Payment notifications from Razorpay: how each was handled, what needs a look | Trust owner | Owner session | No index | #39 | Built |
+| `/admin/webhooks` | — | Payment notifications from Cashfree: how each was handled, what needs a look | Trust owner | Owner session | No index | #39 | Built |
 | `/admin/notifications` | — | Email delivery: queued, sent, retrying and failed emails (owner + donor) with a short reason; send again | Trust owner | Owner session | No index | #30 | Built |
 | `/admin/receipts` | — | Receipts: copy link, download, resend | Trust owner | Owner session | No index | #31 | Built |
 | `/admin/help-requests` | — | Help request inbox: New → Contacted → Verifying → Helping → Closed | Trust owner | Owner session | No index | #22 | Built |
 | `/admin/help-requests/:id` | — | One help request with private notes and status history | Trust owner | Owner session | No index | #22 | Built |
-| `/admin/monthly-giving` | — | Monthly giving subscriptions and their charge history | Trust owner | Owner session | No index | #33 | Built |
+| `/admin/monthly-giving` | — | Monthly giving subscriptions and their charge history — retired with Razorpay; returns with Cashfree Subscriptions | Trust owner | Owner session | No index | #33; Phase 9 | Retired (Phase 9) |
 | `/admin/programmes` | — | Ways we help: create, edit, pause (bilingual) | Trust owner | Owner session | No index | #36 | Built |
 | `/admin/content` | — | Site sections, FAQ and stories (draft → preview → publish, both languages) | Trust owner | Owner session | No index | #36 | Built |
 | `/admin/metrics` | — | Impact figures: source, period and date required before publishing | Trust owner | Owner session | No index | #36 | Built |
@@ -57,7 +59,7 @@ Status: **Built** = exists in `apps/web/src/app/routes.tsx` · **Planned** = bui
   links use random tokens; the server stores only their hash.
 - Panels open from anchors on the single page: `#donate` opens the donate panel, `#get-help` opens
   the Get Help panel. Closing a panel returns to where the visitor was.
-- The single page accepts only safe pre-fill parameters for the donate panel: `?programme=<slug>&amount=<whole rupees>&frequency=monthly`
+- The single page accepts only safe pre-fill parameters for the donate panel: `?programme=<slug>&amount=<whole rupees>`
   (e.g. `/ta/?programme=education#donate`). Unknown or invalid values are ignored, never trusted —
   the server validates everything again.
 - The payment result never appears in the URL. While a payment is being confirmed, a private status
@@ -87,20 +89,22 @@ Section order follows the plan (§4). IDs are the anchor targets used by the nav
 
 ### Panels on the single page
 
-| Panel                      | Opens from                                                                | Contains                                                                                                            | Result shown in the panel                                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **Donate** (`#donate`)     | Header and hero Donate buttons, Ways we help cards, shared pre-fill links | Need → amount (one-time or monthly) → name and contact → optional acknowledgement / tax options → Razorpay Checkout | Verified thank-you (+ acknowledgement link above the threshold), pending verification with **Check again**, failed, cancelled |
-| **Get Help** (`#get-help`) | Header and hero Get Help buttons, Contact section                         | Who needs help → kind of help → short description → contact and best time → consent; plus Call me back and WhatsApp | Reference ID and "we will call you"                                                                                           |
+| Panel                      | Opens from                                                                | Contains                                                                                                                            | Result shown in the panel                                                                                                                      |
+| -------------------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Donate** (`#donate`)     | Header and hero Donate buttons, Ways we help cards, shared pre-fill links | Need → amount → name and contact (mobile required by Cashfree) → optional acknowledgement / tax options → Cashfree's payment window | Verified thank-you (+ acknowledgement link above the threshold), pending verification with **Check again** (and reopen the same order), failed |
+| **Get Help** (`#get-help`) | Header and hero Get Help buttons, Contact section                         | Who needs help → kind of help → short description → contact and best time → consent; plus Call me back and WhatsApp                 | Reference ID and "we will call you"                                                                                                            |
 
 Panels are accessible dialogs (labelled, focus kept inside, Escape and a visible close button,
 focus returns to the button that opened them). On phones they open full-height; on desktop as a
 side panel. Switching language keeps the panel open with the same answers.
 
-## Razorpay activation links
+## Payment gateway activation links
 
-Razorpay asks for these links before enabling live payments:
+Cashfree's onboarding asks for a live website with these sections (mandatory: Terms, About us,
+Contact us with an email and phone, Privacy policy, the registered name; conditional: refund,
+shipping, pricing — source: Cashfree onboarding FAQs, checked 25 Nov 2026):
 
-| Razorpay asks for                    | We give                                                                                |
+| Cashfree asks for                    | We give                                                                                |
 | ------------------------------------ | -------------------------------------------------------------------------------------- |
 | About us                             | `https://theonetrust.in/#about`                                                        |
 | Contact us                           | `https://theonetrust.in/#contact`                                                      |
@@ -108,8 +112,9 @@ Razorpay asks for these links before enabling live payments:
 | Terms and conditions                 | `https://theonetrust.in/terms`                                                         |
 | Privacy policy                       | `https://theonetrust.in/privacy`                                                       |
 | Cancellation / refund (and shipping) | `https://theonetrust.in/refund-policy`                                                 |
+| Registered name of the trust         | Footer and policy pages [CONFIRM] (issue #1)                                           |
 
-If Razorpay's checks reject anchor links for About, Contact or Pricing, small pages can be added for
+If Cashfree's checks reject anchor links for About, Contact or Pricing, small pages can be added for
 them — this table and the route table are updated first.
 
 ## Navigation

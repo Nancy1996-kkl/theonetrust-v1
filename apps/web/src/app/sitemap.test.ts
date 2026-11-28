@@ -61,7 +61,7 @@ const appRoutes = [...new Set(flattenRoutes(routes))];
 const isAdmin = (route: string) => route.startsWith('/admin');
 const isPrivateLink = (route: string) => /:token\b/.test(route);
 
-/** ADR 0005: the only public browsing pages are the single page and Razorpay's policy pages. */
+/** ADR 0005: the only public browsing pages are the single page and the gateway's policy pages. */
 const ALLOWED_PUBLIC_PAGES = ['/', '/privacy', '/terms', '/refund-policy', '*'];
 const expectedTamil = (route: string) =>
   route === '/' ? '/ta/' : route === '*' ? '/ta/*' : `/ta${route}`;
@@ -194,7 +194,7 @@ describe('URL rules', () => {
     expect(line, 'URL rules must document the /donate pre-fill parameters').toBeDefined();
     const query = /`\?([^`]+)`/.exec(line!)?.[1] ?? '';
     const keys = query.split('&').map((pair) => pair.split('=')[0]);
-    expect(keys).toEqual(['programme', 'amount', 'frequency']);
+    expect(keys).toEqual(['programme', 'amount']);
     for (const key of keys) expect(PII.test(key ?? ''), key).toBe(false);
   });
 });

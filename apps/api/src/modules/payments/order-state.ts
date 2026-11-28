@@ -1,10 +1,10 @@
 /**
  * Gateway-neutral payment data (Phase 1b of docs/decisions/2026-11-20-cashfree-migration-plan.md).
  * Each gateway adapter translates its own words into these; reconcile only ever sees these, so
- * Razorpay and Cashfree payments follow exactly the same PAID rules.
+ * every gateway's payments follow exactly the same PAID rules.
  *
- * The words are lowercase and match Razorpay's (except `created` → `pending`), so attempts
- * already stored with Razorpay's words stay readable without a data migration.
+ * The words are lowercase and match the retired Razorpay adapter's (except `created` →
+ * `pending`), so attempts stored before the switch stay readable without a data migration.
  */
 export const PAYMENT_STATES = [
   'pending',

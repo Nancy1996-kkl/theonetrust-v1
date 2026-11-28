@@ -29,7 +29,6 @@ describe('outboxDeps (Phase 2d)', () => {
       ownerEmail: 'owner@theonetrust.example',
     });
     expect(deps?.receiptKey).toHaveLength(32);
-    expect(deps?.manageKey).toHaveLength(32);
     expect(deps?.now()).toBeInstanceOf(Date);
   });
 

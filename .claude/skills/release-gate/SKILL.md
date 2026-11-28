@@ -14,7 +14,7 @@ description: Final go/no-go before a deployment or release — full test matrix,
    backend ones use the `VITE_` prefix.
 6. DB: migrations apply cleanly to a fresh database and to a restored copy of production;
    backup taken and restore tested (see `docs/database-provider-switch.md`).
-7. Payments: Razorpay sandbox smoke test (success, failure, webhook) on the release candidate.
+7. Payments: Cashfree sandbox smoke test (success, failure, webhook) on the release candidate.
    For the first live release: one small real donation + refund, verified in the dashboard.
 8. Run `change-auditor`, `payment-security-reviewer` and `ui-a11y-reviewer` against the release diff.
 9. Every `[CONFIRM]` item in issue #1 is resolved, or the dependent feature is disabled.

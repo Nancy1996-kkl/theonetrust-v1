@@ -51,7 +51,7 @@ const rupees = (paise: number) => (paise / 100).toFixed(2);
  * Owner ledger (#31): overview, donations (search, filters, allow-listed sort, pagination),
  * one donation's full history, the exceptions queue, receipts and a masked IST CSV export.
  * Nothing here edits an amount or sets a status by hand: the only actions are an audited
- * re-check with Razorpay (the normal reconcile rules apply), resolving an exception with a
+ * re-check with the gateway (the normal reconcile rules apply), resolving an exception with a
  * reason, and re-sending an acknowledgement email.
  */
 export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminOptions) {
@@ -253,7 +253,7 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
   });
 
   /**
-   * Re-check with Razorpay (with our secret), exactly like the donor's status re-check: the
+   * Re-check with the gateway (with our secret), exactly like the donor's status re-check: the
    * shared reconcile rules decide. The owner cannot pick a status.
    */
   app.post('/donations/:id/recheck', async (request) => {
@@ -269,7 +269,7 @@ export async function ledgerAdminRoutes(app: FastifyInstance, opts: LedgerAdminO
     let status = intent.status;
     let outcome = 'no_payment_found';
     try {
-      // Same helper as the donor re-check: by order, QR and monthly charges included (F-1, F-4).
+      // Same helper as the donor re-check: every payment on the order (F-1).
       const result = await recheckAttempt(db, opts.provider, attempt, opts.now());
       status = result.status;
       // The gateway's own word, so the owner's audit trail keeps exactly what it said.

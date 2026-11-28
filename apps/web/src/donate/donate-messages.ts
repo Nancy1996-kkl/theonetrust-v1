@@ -33,6 +33,10 @@ const en = {
   mobileHint:
     'Our payment partner needs your mobile number to take the payment. We never sell it or show it publicly.',
   payAgainSameOrder: 'Open the payment window again',
+  stillPending: 'Still not confirmed — checked at {time}. You can check again in a minute.',
+  windowTitle: "The payment window couldn't open",
+  windowText:
+    "Nothing was paid. An ad blocker, a weak network or an app's built-in browser may be stopping Cashfree's secure window. Please try again, or open this page in your phone's browser.",
   payAgainHint:
     'Closed the payment window before paying? Open it again: it is the same payment, so you can never be charged twice.',
   noDoubleCharge: "You won't be charged twice for this donation. This can take a few minutes.",
@@ -55,38 +59,13 @@ const en = {
   sumGift: 'Gift',
   sumFee: 'Payment fee',
   sumName: 'Name',
-  trustLine: 'Secure payment via Razorpay · UPI QR or app, card, netbanking',
+  trustLine: 'Secure payment via Cashfree · UPI app, card, netbanking',
   payNow: 'Pay {amount} securely',
   confirming: 'Confirming your payment…',
   dontClose: "Please don't close this page or pay again.",
   thanks: 'Thank you — payment received',
   reference: 'Reference',
   backToPage: 'Back to the page',
-  howOften: 'How often?',
-  once: 'One time',
-  monthly: 'Every month',
-  monthlyHint: 'Cancel any time with your private link.',
-  setUpMonthly: 'Set up {amount} every month',
-  consentTitle: 'Please check before you agree',
-  consentAmount: 'Amount: {amount} every month, until you cancel.',
-  consentStartNow: 'First donation: today, when you approve it. Then on the same day each month.',
-  consentStartOn: 'First donation: {date}. Then on the same day each month.',
-  consentMethodUpi:
-    'You can approve it with UPI AutoPay, eMandate (netbanking, debit card or Aadhaar) or a card. Your bank or app sends a notice before each debit.',
-  consentMethodMandate:
-    'Above ₹15,000 a month UPI AutoPay is not available: approve it with eMandate (netbanking, debit card or Aadhaar) or a card.',
-  consentPsp: 'Mandates above ₹15,000 are not supported on PhonePe or BHIM.',
-  consentCancel:
-    'To stop: use the private “manage” link we show after setup (and email, if you gave one) — no login needed. UPI AutoPay can also be paused or cancelled in your UPI app.',
-  consentAgree: 'I agree to a monthly donation of {amount} until I cancel.',
-  mandateError: 'Please tick this box to set up monthly giving.',
-  monthlyDone: 'Thank you — monthly giving is set up',
-  monthlyDoneText: '{amount} every month, until you cancel.',
-  monthlyPending: "We're confirming your monthly giving",
-  monthlyPendingText:
-    "Your bank or UPI app is still confirming the mandate. Don't set it up again — we'll update it automatically.",
-  manageLink: 'See or cancel your monthly giving',
-  manageHelp: 'Keep this link private. Anyone with it can cancel your monthly giving.',
   taxOpt: 'I want to claim a tax deduction for this donation',
   taxExplain:
     'A deduction is possible only under the old tax regime, and only for donations not paid in cash. The trust needs your PAN and address to report your donation to the Income Tax Department; they are stored encrypted and never shown on receipts, links or emails.',
@@ -106,15 +85,7 @@ const en = {
   failedText: 'Your details are kept. You can try again or use another way to pay.',
   tryAgain: 'Try again',
   failedHelp: 'If money left your account, contact us with this reference.',
-  cancelled: 'Payment cancelled',
-  cancelledText: 'Nothing was charged. Your choices are kept.',
-  limitTitle: "Your UPI app or bank didn't allow this amount",
-  limitText:
-    'Banks set their own UPI limits. New UPI users may be limited to ₹5,000 in the first 24 hours.',
-  payCard: 'Pay by card or netbanking',
-  smaller: 'Give a smaller amount',
   bankTransferLink: 'Giving a large amount? Pay by bank transfer',
-  payBank: 'Pay by bank transfer',
   bankTitle: 'Pay by bank transfer (NEFT / RTGS / IMPS)',
   accName: 'Account name',
   accNo: 'Account number',
@@ -137,58 +108,6 @@ const en = {
   waitText: 'There were many attempts from this connection. Please try again in a few minutes.',
   netTitle: 'Could not reach the trust',
   netText: 'Your choices are kept. Check your connection and try again.',
-  qrTitle: 'Or scan a UPI QR',
-  qrIntro: 'Pick an amount. We make a QR for exactly that amount, valid for {minutes} minutes.',
-  qrChoose: 'QR for {amount}',
-  qrHeading: 'Scan to pay {amount}',
-  qrAlt: 'UPI QR code to pay {amount} to the trust',
-  qrHow: 'Open any UPI app (GPay, PhonePe, Paytm, BHIM), scan this QR and pay. It works once only.',
-  qrDownload: 'Download QR',
-  qrWaiting: 'Waiting for your payment… this page updates by itself.',
-  qrNotProof:
-    'A scan or a screenshot does not confirm the gift. We show "thank you" only after the payment reaches the trust.',
-  qrExpires: 'Valid until {time}',
-  qrExpiredTitle: 'This QR has expired',
-  qrExpiredText: 'If you already paid, we will confirm it shortly. Otherwise, make a new QR.',
-  qrNew: 'Make a new QR',
-  qrPaid: 'I have paid — check now',
-  linkLead: "You'll continue on Razorpay's secure payment page, set up for the trust.",
-  linkMethods: 'Pay by UPI (any app or QR), debit or credit card, or netbanking.',
-  linkContinue: 'Continue to secure payment',
-  linkReceipt: 'Razorpay emails your receipt as soon as the payment succeeds.',
-  checkoutProgress: 'Donation progress',
-  checkoutStepAmount: 'Amount',
-  checkoutStepPay: 'Pay securely',
-  checkoutStepReceipt: 'Receipt',
-  checkoutAmountLegend: 'How much would you like to give?',
-  checkoutPay: 'Donate {amount} securely',
-  checkoutAmountMissing: 'Choose an amount, or type one of ₹1 or more.',
-  checkoutMethodsTitle: 'Pay in seconds, your way',
-  checkoutMethodUpi: 'UPI: GPay, PhonePe, Paytm and more',
-  checkoutMethodCard: 'Debit and credit cards',
-  checkoutMethodNetbanking: 'Netbanking',
-  checkoutPrivacy: 'Your name, email and phone are used only to send your receipt.',
-  checkoutSecure: 'Secured by Razorpay. We never see your card, UPI or bank details.',
-  checkoutOpening: 'Opening Razorpay’s secure window…',
-  checkoutPayingTitle: 'Finish your donation in the Razorpay window',
-  checkoutPayingText:
-    'Enter your details, then pay with a UPI app, QR, card or netbanking. On a phone, your UPI apps open directly.',
-  checkoutFallback: 'Window didn’t open? Use Razorpay’s secure page',
-  checkoutFailed:
-    'Razorpay’s window couldn’t open here. Your network or an ad blocker may be stopping it.',
-  checkoutAfterTitle: 'Payment window closed',
-  checkoutNotPaidTitle: 'Didn’t finish paying?',
-  checkoutNotPaidText: 'No money was taken. You can try again whenever you’re ready.',
-  checkoutPaidTitle: 'Already paid?',
-  checkoutPaidText: 'Thank you! Razorpay emails your receipt within a few minutes.',
-  checkoutTryAgain: 'Try again with {amount}',
-  checkoutChangeAmount: 'Change amount',
-  checkoutClose: 'Close',
-  thanksTitle: 'Thank you for giving',
-  thanksText: 'Your kindness reaches people who need it.',
-  thanksReceipt:
-    'Razorpay is emailing your receipt to the address you gave. That email is your confirmation.',
-  thanksSpam: 'No email in a few minutes? Check your spam or promotions folder.',
 };
 
 export type DonateMessageKey = keyof typeof en;
@@ -221,7 +140,12 @@ const ta: Record<DonateMessageKey, string> = {
   mobileError: 'தயவுசெய்து 10 இலக்க கைபேசி எண்ணை எழுதுங்கள்',
   mobileHint:
     'பணம் செலுத்த, எங்கள் கட்டண நிறுவனத்துக்கு உங்கள் கைபேசி எண் தேவை. இதை நாங்கள் யாருக்கும் விற்பதும் இல்லை, வெளியே காட்டுவதும் இல்லை.',
-  payAgainSameOrder: 'கட்டணச் சாளரத்தை மீண்டும் திறக்க',
+  payAgainSameOrder: 'பணம் செலுத்தும் சாளரத்தை மீண்டும் திறக்க',
+  stillPending:
+    'இன்னும் உறுதியாகவில்லை — {time}-க்குச் சரிபார்த்தோம். ஒரு நிமிடம் கழித்து மீண்டும் சரிபார்க்கலாம்.',
+  windowTitle: 'பணம் செலுத்தும் சாளரம் திறக்கவில்லை',
+  windowText:
+    'எந்தப் பணமும் எடுக்கப்படவில்லை. விளம்பரத் தடுப்பான், பலவீனமான இணையம், அல்லது ஒரு செயலிக்குள் இருக்கும் உலாவி Cashfree-இன் பாதுகாப்பான சாளரத்தைத் தடுத்திருக்கலாம். மீண்டும் முயற்சிக்கலாம், அல்லது இந்தப் பக்கத்தை உங்கள் கைபேசியின் உலாவியில் திறந்து பார்க்கலாம்.',
   payAgainHint:
     'பணம் செலுத்தும் முன் சாளரத்தை மூடிவிட்டீர்களா? மீண்டும் திறக்கலாம்: இது அதே பணம் செலுத்துதல்தான், அதனால் இரண்டு முறை பணம் எடுக்கப்படாது.',
   noDoubleCharge:
@@ -247,40 +171,13 @@ const ta: Record<DonateMessageKey, string> = {
   sumGift: 'நன்கொடை',
   sumFee: 'பணம் அனுப்பும் செலவு',
   sumName: 'பெயர்',
-  trustLine: 'Razorpay மூலம் பாதுகாப்பாகச் செலுத்தலாம் · UPI QR அல்லது செயலி, கார்டு, நெட்பேங்கிங்',
+  trustLine: 'Cashfree மூலம் பாதுகாப்பாகச் செலுத்தலாம் · UPI செயலி, கார்டு, நெட்பேங்கிங்',
   payNow: '{amount} பாதுகாப்பாகச் செலுத்து',
   confirming: 'உங்கள் பணம் வந்ததா என்று பார்க்கிறோம்…',
   dontClose: 'தயவுசெய்து இந்தப் பக்கத்திலேயே இருங்கள்; மறுபடி பணம் செலுத்தத் தேவையில்லை.',
   thanks: 'நன்றி — உங்கள் பணம் வந்து சேர்ந்தது',
   reference: 'குறிப்பு எண்',
   backToPage: 'பக்கத்துக்குத் திரும்ப',
-  howOften: 'எவ்வளவு அடிக்கடி?',
-  once: 'ஒரு முறை',
-  monthly: 'ஒவ்வொரு மாதமும்',
-  monthlyHint: 'உங்களுக்கு மட்டும் அனுப்பும் இணைப்பு மூலம் எப்போது வேண்டுமானாலும் நிறுத்தலாம்.',
-  setUpMonthly: 'ஒவ்வொரு மாதமும் {amount} கொடுக்க ஏற்பாடு செய்ய',
-  consentTitle: 'ஒப்புக்கொள்ளும் முன், இதை ஒருமுறை படித்துப் பார்க்கலாம்',
-  consentAmount: 'தொகை: நீங்கள் ரத்து செய்யும் வரை ஒவ்வொரு மாதமும் {amount}.',
-  consentStartNow:
-    'முதல் நன்கொடை: இன்று, நீங்கள் அனுமதி கொடுக்கும்போது. அதன் பிறகு ஒவ்வொரு மாதமும் அதே தேதியில்.',
-  consentStartOn: 'முதல் நன்கொடை: {date}. அதன் பிறகு ஒவ்வொரு மாதமும் அதே தேதியில்.',
-  consentMethodUpi:
-    'UPI AutoPay, eMandate (நெட்பேங்கிங், டெபிட் கார்டு அல்லது ஆதார்), அல்லது கார்டு — இவற்றில் ஒன்றின் மூலம் அனுமதி கொடுக்கலாம். ஒவ்வொரு முறை பணம் எடுக்கும் முன்பும் உங்கள் வங்கி அல்லது செயலி உங்களுக்குச் சொல்லும்.',
-  consentMethodMandate:
-    'மாதம் ₹15,000-க்கு மேல் UPI AutoPay வேலை செய்யாது: eMandate (நெட்பேங்கிங், டெபிட் கார்டு அல்லது ஆதார்) அல்லது கார்டு மூலம் அனுமதி கொடுக்கலாம்.',
-  consentPsp: '₹15,000-க்கு மேல் உள்ள மாதாந்திர அனுமதி PhonePe, BHIM-இல் வேலை செய்யாது.',
-  consentCancel:
-    'நிறுத்த: ஏற்பாடு முடிந்ததும் காட்டும் “நிர்வகி” இணைப்பைப் பயன்படுத்தலாம் (மின்னஞ்சல் கொடுத்திருந்தால் அதிலும் அனுப்புவோம்) — கணக்கில் நுழையத் தேவையில்லை. UPI AutoPay-ஐ உங்கள் UPI செயலியிலேயே நிறுத்தி வைக்கலாம் அல்லது ரத்து செய்யலாம்.',
-  consentAgree: 'நான் நிறுத்தும் வரை மாதம் {amount} நன்கொடை கொடுக்க ஒப்புக்கொள்கிறேன்.',
-  mandateError: 'மாதாந்திர நன்கொடையைத் தொடங்க, தயவுசெய்து இந்தக் கட்டத்தில் குறியிடுங்கள்.',
-  monthlyDone: 'நன்றி — மாதாந்திர நன்கொடை தொடங்கிவிட்டது',
-  monthlyDoneText: 'நீங்கள் நிறுத்தும் வரை ஒவ்வொரு மாதமும் {amount}.',
-  monthlyPending: 'உங்கள் மாதாந்திர நன்கொடை இன்னும் உறுதியாகவில்லை',
-  monthlyPendingText:
-    'உங்கள் வங்கி அல்லது UPI செயலி இன்னும் அனுமதியை உறுதி செய்துகொண்டிருக்கிறது. மறுபடி ஏற்பாடு செய்யத் தேவையில்லை — முடிந்ததும் இங்கே தானாகக் காட்டுவோம்.',
-  manageLink: 'உங்கள் மாதாந்திர நன்கொடையைப் பார்க்க / நிறுத்த',
-  manageHelp:
-    'இந்த இணைப்பை யாருக்கும் கொடுக்காதீர்கள். இது யாரிடம் இருந்தாலும் உங்கள் மாதாந்திர நன்கொடையை நிறுத்த முடியும்.',
   taxOpt: 'இந்த நன்கொடைக்கு வரி விலக்கு வேண்டும்',
   taxExplain:
     'பழைய வரி முறையில் இருப்பவர்களுக்கு மட்டும், ரொக்கமாகக் கொடுக்காத நன்கொடைக்கு மட்டும் விலக்கு கிடைக்கும். உங்கள் நன்கொடையை வருமான வரித் துறைக்குத் தெரிவிக்க அறக்கட்டளைக்கு உங்கள் PAN, முகவரி தேவை; அவை மறைகுறியாக்கம் செய்து பாதுகாப்பாக வைக்கப்படும், ஒப்புகையிலோ இணைப்பிலோ மின்னஞ்சலிலோ எப்போதும் வராது.',
@@ -304,16 +201,7 @@ const ta: Record<DonateMessageKey, string> = {
   tryAgain: 'மீண்டும் முயற்சிக்க',
   failedHelp:
     'உங்கள் கணக்கிலிருந்து பணம் போயிருந்தால், இந்தக் குறிப்பு எண்ணைச் சொல்லி எங்களைத் தயங்காமல் தொடர்பு கொள்ளலாம்.',
-  cancelled: 'பணம் செலுத்துவதை நிறுத்திவிட்டீர்கள்',
-  cancelledText:
-    'உங்கள் கணக்கிலிருந்து பணம் எதுவும் எடுக்கவில்லை. நீங்கள் தேர்வு செய்தவை அப்படியே இருக்கின்றன.',
-  limitTitle: 'உங்கள் UPI செயலி அல்லது வங்கி இந்தத் தொகையை அனுமதிக்கவில்லை',
-  limitText:
-    'ஒவ்வொரு வங்கியும் தனக்கென UPI வரம்பு வைத்திருக்கிறது. புதிதாக UPI தொடங்கியவர்களுக்கு முதல் 24 மணி நேரத்தில் ₹5,000 வரை மட்டுமே இருக்கலாம்.',
-  payCard: 'கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்து',
-  smaller: 'சின்னத் தொகை கொடுக்க',
   bankTransferLink: 'பெரிய தொகையா? வங்கிப் பரிமாற்றம் மூலமும் செலுத்தலாம்',
-  payBank: 'வங்கிப் பரிமாற்றம்',
   bankTitle: 'வங்கிப் பரிமாற்றம் மூலமும் செலுத்தலாம் (NEFT / RTGS / IMPS)',
   accName: 'கணக்குப் பெயர்',
   accNo: 'கணக்கு எண்',
@@ -341,66 +229,6 @@ const ta: Record<DonateMessageKey, string> = {
   netTitle: 'அறக்கட்டளையின் தளத்தோடு இணைய முடியவில்லை',
   netText:
     'நீங்கள் தேர்வு செய்தவை அப்படியே இருக்கின்றன. இணையம் சரியாக இருக்கிறதா என்று பார்த்து, மறுபடி முயற்சிக்கலாம்.',
-  qrTitle: 'அல்லது UPI QR ஸ்கேன் செய்தும் கொடுக்கலாம்',
-  qrIntro:
-    'தொகையைத் தேர்வு செய்யலாம். அதே தொகைக்கு ஒரு QR வரும்; அது {minutes} நிமிடம் மட்டும் வேலை செய்யும்.',
-  qrChoose: '{amount}-க்கு QR',
-  qrHeading: '{amount} செலுத்த ஸ்கேன் செய்ய',
-  qrAlt: 'அறக்கட்டளைக்கு {amount} செலுத்தும் UPI QR',
-  qrHow:
-    'ஏதாவது ஒரு UPI ஆப் (GPay, PhonePe, Paytm, BHIM) திறந்து இந்த QR-ஐ ஸ்கேன் செய்து பணம் அனுப்பலாம். இது ஒருமுறை மட்டும் வேலை செய்யும்.',
-  qrDownload: 'QR-ஐ டவுன்லோட் பண்ணு',
-  qrWaiting: 'உங்கள் பணத்துக்காகக் காத்திருக்கிறோம்… இந்தப் பக்கம் தானாகவே மாறும்.',
-  qrNotProof:
-    'ஸ்கேன் பண்ணியதோ, ஸ்கிரீன்ஷாட்டோ நன்கொடையை உறுதி செய்யாது. பணம் அறக்கட்டளைக்கு வந்த பிறகுதான் "நன்றி" காட்டுவோம்.',
-  qrExpires: '{time} வரை வேலை செய்யும்',
-  qrExpiredTitle: 'இந்த QR-இன் நேரம் முடிந்துவிட்டது',
-  qrExpiredText:
-    'ஏற்கெனவே பணம் அனுப்பியிருந்தால், சீக்கிரம் உறுதி செய்வோம். இல்லையென்றால் புது QR பெறலாம்.',
-  qrNew: 'புது QR எடு',
-  qrPaid: 'பணம் அனுப்பிவிட்டேன் — இப்போது சரிபார்க்க',
-  linkLead:
-    'அறக்கட்டளைக்காக அமைக்கப்பட்ட Razorpay-யின் பாதுகாப்பான பக்கத்தில் பணம் செலுத்துவீர்கள்.',
-  linkMethods:
-    'UPI (எந்த ஆப் அல்லது QR), டெபிட் / கிரெடிட் கார்டு, அல்லது நெட்பேங்கிங் மூலம் செலுத்தலாம்.',
-  linkContinue: 'பாதுகாப்பாகப் பணம் செலுத்தத் தொடரலாம்',
-  linkReceipt: 'பணம் செலுத்தியவுடன் Razorpay உங்கள் ரசீதை மின்னஞ்சலில் அனுப்பும்.',
-  checkoutProgress: 'நன்கொடை முன்னேற்றம்',
-  checkoutStepAmount: 'தொகை',
-  checkoutStepPay: 'பாதுகாப்பாகச் செலுத்து',
-  checkoutStepReceipt: 'ரசீது',
-  checkoutAmountLegend: 'எவ்வளவு நன்கொடை அளிக்க விரும்புகிறீர்கள்?',
-  checkoutPay: '{amount} பாதுகாப்பாக நன்கொடை அளி',
-  checkoutAmountMissing:
-    'தயவுசெய்து ஒரு தொகையைத் தேர்வு செய்யுங்கள், அல்லது ₹1 அல்லது அதற்கு மேல் எழுதுங்கள்.',
-  checkoutMethodsTitle: 'சில நொடிகளில், உங்களுக்கு வசதியான வழியில்',
-  checkoutMethodUpi: 'UPI: GPay, PhonePe, Paytm மற்றும் பல',
-  checkoutMethodCard: 'டெபிட் / கிரெடிட் கார்டுகள்',
-  checkoutMethodNetbanking: 'நெட்பேங்கிங்',
-  checkoutPrivacy: 'உங்கள் பெயர், மின்னஞ்சல், தொலைபேசி எண் ரசீது அனுப்ப மட்டுமே பயன்படும்.',
-  checkoutSecure:
-    'Razorpay மூலம் பாதுகாப்பானது. உங்கள் கார்டு, UPI, வங்கி விவரங்களை நாங்கள் பார்ப்பதில்லை.',
-  checkoutOpening: 'Razorpay-யின் பாதுகாப்பான சாளரம் திறக்கிறது…',
-  checkoutPayingTitle: 'Razorpay சாளரத்தில் உங்கள் நன்கொடையை முடிக்கலாம்',
-  checkoutPayingText:
-    'உங்கள் விவரங்களை நிரப்பி, UPI ஆப், QR, கார்டு அல்லது நெட்பேங்கிங் மூலம் செலுத்தலாம். போனில் உங்கள் UPI ஆப்கள் நேரடியாகத் திறக்கும்.',
-  checkoutFallback: 'சாளரம் திறக்கவில்லையா? Razorpay-யின் பாதுகாப்பான பக்கத்திலும் செலுத்தலாம்',
-  checkoutFailed:
-    'Razorpay சாளரம் இங்கே திறக்கவில்லை. உங்கள் நெட்வொர்க் அல்லது ஆட் பிளாக்கர் அதைத் தடுத்திருக்கலாம்.',
-  checkoutAfterTitle: 'பணம் செலுத்தும் சாளரம் மூடப்பட்டது',
-  checkoutNotPaidTitle: 'பணம் செலுத்தி முடிக்கவில்லையா?',
-  checkoutNotPaidText: 'எந்தத் தொகையும் எடுக்கப்படவில்லை. நீங்கள் தயாரானதும் மீண்டும் முயலலாம்.',
-  checkoutPaidTitle: 'ஏற்கனவே செலுத்திவிட்டீர்களா?',
-  checkoutPaidText: 'நன்றி! சில நிமிடங்களில் Razorpay உங்கள் ரசீதை மின்னஞ்சலில் அனுப்பும்.',
-  checkoutTryAgain: '{amount} உடன் மீண்டும் முயற்சிக்க',
-  checkoutChangeAmount: 'தொகையை மாற்று',
-  checkoutClose: 'மூடு',
-  thanksTitle: 'நன்கொடைக்கு நன்றி',
-  thanksText: 'உங்கள் அன்பு தேவையுள்ளவர்களைச் சென்றடைகிறது.',
-  thanksReceipt:
-    'நீங்கள் கொடுத்த மின்னஞ்சலுக்கு Razorpay உங்கள் ரசீதை அனுப்புகிறது. அந்த மின்னஞ்சலே உங்கள் உறுதிப்படுத்தல்.',
-  thanksSpam:
-    'சில நிமிடங்களில் மின்னஞ்சல் வரவில்லையா? Spam அல்லது Promotions பகுதியிலும் ஒருமுறை பார்க்கலாம்.',
 };
 
 export const DONATE_MESSAGES: Record<UiLang, Record<DonateMessageKey, string>> = { en, ta };

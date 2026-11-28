@@ -88,7 +88,7 @@ imports, route composition and tests first.
 8. Keep admin styles and dense data views readable; do not apply public marketing
    treatments indiscriminately to admin workflows.
 9. Do not change typography/font loading without a separate approved task.
-10. Do not alter API, database, auth, Razorpay, payment, webhook, subscription,
+10. Do not alter API, database, auth, Cashfree, payment, webhook, subscription,
     receipt or refund code.
 
 ## Protected paths / actions
@@ -100,7 +100,7 @@ Unless the owner explicitly approves a separate engineering task, do not modify:
 - Prisma schema or migrations
 - payment/provider configuration, secrets or `.env*`
 - production deployment configuration or DNS
-- live Razorpay settings or production data
+- live Cashfree settings or production data
 
 Do not deploy or run production mutations.
 

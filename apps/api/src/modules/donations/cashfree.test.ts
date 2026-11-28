@@ -417,7 +417,7 @@ describe('cashfreeProvider order state and refunds', () => {
       },
     ]);
     const provider = adapter(fetchFn);
-    const state = await provider.fetchOrderState?.(ORDER);
+    const state = await provider.fetchOrderState(ORDER);
     expect(state?.payments.map((p) => [p.paymentId, p.state])).toEqual([
       ['1', 'failed'],
       ['2', 'captured'],
@@ -426,19 +426,14 @@ describe('cashfreeProvider order state and refunds', () => {
       `https://sandbox.cashfree.com/pg/orders/${ORDER}`,
       `https://sandbox.cashfree.com/pg/orders/${ORDER}/payments`,
     ]);
-    const asPayments = await provider.fetchOrderPayments(ORDER);
-    expect(asPayments[1]).toMatchObject({
-      paymentId: '2',
-      status: 'captured',
-      amountPaise: 150_050,
-    });
+    expect(state?.payments[1]).toMatchObject({ paymentId: '2', amountPaise: 150_050 });
   });
 
   it('a SUCCESS payment on an order not PAID is held as authorized, never captured', async () => {
     const { fetchFn } = remote({ order_id: ORDER, order_status: 'ACTIVE' }, [
       { cf_payment_id: '2', payment_status: 'SUCCESS', is_captured: true, payment_amount: 1500.5 },
     ]);
-    const state = await adapter(fetchFn).fetchOrderState?.(ORDER);
+    const state = await adapter(fetchFn).fetchOrderState(ORDER);
     expect(state?.payments[0]?.state).toBe('authorized');
   });
 
@@ -449,7 +444,7 @@ describe('cashfreeProvider order state and refunds', () => {
     ['payments not a list', { order_id: ORDER, order_status: 'ACTIVE' }, { items: [] }],
   ])('refuses %s', async (_name, order, payments) => {
     const { fetchFn } = remote(order, payments);
-    await expect(adapter(fetchFn).fetchOrderState?.(ORDER)).rejects.toMatchObject({
+    await expect(adapter(fetchFn).fetchOrderState(ORDER)).rejects.toMatchObject({
       reason: 'unexpected_response',
     });
   });
@@ -461,7 +456,7 @@ describe('cashfreeProvider order state and refunds', () => {
         { order_id: ORDER, order_status: orderStatus, order_amount: 1500.5, order_currency: 'INR' },
         [{ cf_payment_id: '1', payment_status: 'USER_DROPPED', payment_amount: 1500.5 }],
       );
-      const state = await adapter(fetchFn).fetchOrderState?.(ORDER);
+      const state = await adapter(fetchFn).fetchOrderState(ORDER);
       expect(state?.payments[0]).toEqual({
         paymentId: `order:${ORDER}`,
         orderId: ORDER,
@@ -478,22 +473,20 @@ describe('cashfreeProvider order state and refunds', () => {
 
   it('an expired order with an unreadable amount stays reviewable (-1), and ACTIVE adds nothing', async () => {
     const odd = remote({ order_id: ORDER, order_status: 'EXPIRED', order_amount: 'x' }, []);
-    expect((await adapter(odd.fetchFn).fetchOrderState?.(ORDER))?.payments[0]).toMatchObject({
+    expect((await adapter(odd.fetchFn).fetchOrderState(ORDER))?.payments[0]).toMatchObject({
       amountPaise: -1,
       currency: '',
     });
     const active = remote({ order_id: ORDER, order_status: 'ACTIVE' }, []);
-    expect((await adapter(active.fetchFn).fetchOrderState?.(ORDER))?.payments).toEqual([]);
+    expect((await adapter(active.fetchFn).fetchOrderState(ORDER))?.payments).toEqual([]);
   });
 
-  it('never asks Cashfree about a malformed order ID or a Razorpay payment', async () => {
+  it('never asks Cashfree about a malformed order ID', async () => {
     const { calls, fetchFn } = remote({}, []);
     const provider = adapter(fetchFn);
-    await expect(provider.fetchOrderState?.('../etc')).rejects.toMatchObject({
+    await expect(provider.fetchOrderState('../etc')).rejects.toMatchObject({
       reason: 'rejected',
     });
-    await expect(provider.fetchPayment('pay_x')).rejects.toMatchObject({ reason: 'rejected' });
-    expect(provider.verifyCheckoutSignature('a', 'b', 'c')).toBe(false);
     expect(calls).toHaveLength(0);
   });
 
@@ -503,13 +496,13 @@ describe('cashfreeProvider order state and refunds', () => {
       [],
       [{ refund_status: 'SUCCESS', refund_amount: 100, cf_payment_id: '2' }],
     );
-    expect(await adapter(fetchFn).fetchRefunds?.(ORDER, '2')).toEqual({
+    expect(await adapter(fetchFn).fetchRefunds(ORDER, '2')).toEqual({
       refundedPaise: 10_000,
       status: 'processed',
       otherPaymentRefunds: false,
     });
     const none = remote({}, [], []);
-    expect(await adapter(none.fetchFn).fetchRefunds?.(ORDER, '2')).toEqual({
+    expect(await adapter(none.fetchFn).fetchRefunds(ORDER, '2')).toEqual({
       refundedPaise: 0,
       status: null,
       otherPaymentRefunds: false,
@@ -535,7 +528,7 @@ describe('default transport', () => {
         orderExpiryMinutes: 30,
         now: () => NOW,
       });
-      expect(await provider.fetchRefunds?.(ORDER, '2')).toMatchObject({ status: null });
+      expect(await provider.fetchRefunds(ORDER, '2')).toMatchObject({ status: null });
       expect(spy).toHaveBeenCalledOnce();
     } finally {
       vi.unstubAllGlobals();

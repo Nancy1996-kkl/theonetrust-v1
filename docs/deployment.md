@@ -12,7 +12,7 @@ secrets live only in the hosting providers' secret settings.
 | API (`apps/api`)      | Always-on Node host (22.12 or newer, see `engines`) (no cold starts: payment verification must answer at once) | One instance is enough at launch. Needs a persistent volume for `DOCUMENT_STORAGE_DIR`.                                                                |
 | Database              | Neon PostgreSQL, **production branch** (fallback: Supabase PostgreSQL — `docs/database-provider-switch.md`)    | Pooled URL → `DATABASE_URL`, direct URL → `DIRECT_URL`, both `sslmode=require`.                                                                        |
 | Email                 | Resend or Brevo                                                                                                | Sender domain verified with SPF, DKIM and DMARC.                                                                                                       |
-| Payments              | Razorpay                                                                                                       | Test mode until the sign-off in `docs/release-checklist.md`.                                                                                           |
+| Payments              | Cashfree                                                                                                       | Sandbox until the sign-off in `docs/release-checklist.md`. Razorpay is retired (records made with it stay as history).                                 |
 
 ## 2. DNS for theonetrust.in
 
@@ -71,16 +71,19 @@ snapshots and restored the same way.
 
 ## 6. Going live with payments (owner, with the developer)
 
-1. Razorpay account activated for the trust; payment methods confirmed.
-2. In the Razorpay dashboard (live mode): create the webhook `https://api.theonetrust.in/api/v1/webhooks/razorpay`
-   with a new secret, events `payment.authorized`, `payment.captured`, `payment.failed`, `order.paid`, `refund.created`, `refund.processed`, `refund.failed`
-   (plus `subscription.*` only if monthly giving is switched on).
-3. Put the live key ID, key secret and webhook secret into the API host's secrets; redeploy;
-   `launch:check` must show ✔ for `razorpay_live` and `razorpay_webhook`.
+The full go-live list is Phase 7b of `docs/decisions/2026-11-20-cashfree-migration-plan.md`.
+
+1. Cashfree account activated for the trust (KYC); the trust's HTTPS domain whitelisted.
+2. In the Cashfree dashboard (production): add the webhook `https://theonetrust.in/api/v1/webhooks/cashfree`
+   (API version 2026-01-01) for payment success, failed and user-dropped events and refund events.
+   Cashfree signs webhooks with the client secret — there is no separate webhook secret.
+3. Put `PAYMENT_PROVIDER=cashfree`, `CASHFREE_ENV=production`, `CASHFREE_CLIENT_ID` and
+   `CASHFREE_CLIENT_SECRET` into the API host's secrets; redeploy; `launch:check` must show ✔ for
+   `cashfree_live`.
 4. Make one small real donation (for example ₹1) from a personal UPI account. Check: the donate panel
-   shows success only after verification; `/admin/webhooks` shows `payment.captured` as Handled;
-   the donation is PAID; the acknowledgement email arrives.
-5. Refund it from the Razorpay dashboard. Check: `/admin/webhooks` shows the refund event; the
+   shows success only after verification; `/admin/webhooks` shows `PAYMENT_SUCCESS_WEBHOOK` as
+   Handled; the donation is PAID; the acknowledgement email arrives.
+5. Refund it from the Cashfree dashboard. Check: `/admin/webhooks` shows the refund event; the
    donation shows the refund; the ledger total is back.
 6. Record steps 4–5 in `docs/release-checklist.md`.
 
@@ -90,9 +93,9 @@ snapshots and restored the same way.
 - **API**: redeploy the previous release. Migrations are additive (new tables/columns/CHECKs), so the
   previous API runs on the newer schema. Never roll a migration back on production data without a
   restore plan.
-- **Payments**: to stop new donations at once, set `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` back to
-  the test keys (or remove them) and redeploy, so no new live order can be created. Keep the
-  webhook secret so payments already in flight are still recorded.
+- **Payments**: to stop new donations at once, set `PAYMENT_PROVIDER=none` and redeploy, so no new
+  order can be created. Keep the Cashfree keys so payments already in flight are still recorded
+  (webhooks and the daily re-check need them).
 - **Database**: restore from Neon point-in-time history into a new branch, verify with the drill
   script, then point `DATABASE_URL`/`DIRECT_URL` at it (`docs/database-provider-switch.md` for the
   cut-over steps).

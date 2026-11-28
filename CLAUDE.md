@@ -1,6 +1,6 @@
 # Theonetrust.in — rules for Claude Code and engineers
 
-Bilingual (Tamil/English) charitable-trust website, donation platform (Razorpay) and owner
+Bilingual (Tamil/English) charitable-trust website, donation platform (Cashfree) and owner
 dashboard. Money, donor privacy and beneficiary dignity are involved: **correctness beats speed**.
 
 ## Sources of truth (read before changing anything)

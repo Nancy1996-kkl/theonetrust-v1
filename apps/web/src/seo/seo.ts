@@ -195,7 +195,7 @@ export function buildLlmsTxt(
   const lines = [
     `# ${facts.legalName ?? facts.siteName}`,
     '',
-    `> A small charitable trust${where}. Donate online (UPI, card or netbanking through Razorpay) or ask for help — in Tamil or English.`,
+    `> A small charitable trust${where}. Donate online (UPI, card or netbanking through Cashfree) or ask for help — in Tamil or English.`,
     '',
     '## Pages',
     '',

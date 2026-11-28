@@ -225,15 +225,19 @@ describe('serverless handler (Phase 2a)', () => {
   it('drains only after the routes that queue emails', () => {
     for (const url of [
       '/api/v1/payments/verify',
-      '/api/v1/webhooks/razorpay',
+      '/api/v1/webhooks/cashfree',
       '/api/v1/help-requests',
       '/api/v1/help-requests/callback',
-      '/api/v1/subscriptions/x/verify',
       '/api/v1/admin/receipts/x/resend',
     ]) {
       expect(DRAIN_AFTER.test(url), url).toBe(true);
     }
-    for (const url of ['/api/v1/health', '/api/v1/donation-intents', '/api/v1/auth/sign-in']) {
+    for (const url of [
+      '/api/v1/health',
+      '/api/v1/donation-intents',
+      '/api/v1/auth/sign-in',
+      '/api/v1/subscriptions/x/verify',
+    ]) {
       expect(DRAIN_AFTER.test(url), url).toBe(false);
     }
   });

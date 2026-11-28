@@ -93,7 +93,7 @@ For a database containing only disposable synthetic data:
 2. Select direct connection if the backend host/network can reach it. If not, use the Supabase session-mode pooler supported by the selected ORM/migration tool. Avoid the transaction-mode pooler for schema migrations unless the selected tool explicitly documents support.
 3. Apply the same committed schema migrations to the new database. If the data matters, use a database backup/restore instead of recreating only the schema.
 4. Replace backend `DATABASE_URL` and `DIRECT_URL` in the local/deployment secret store, restart/redeploy the API, and run API/integration/E2E tests.
-5. Verify counts, unique constraints, payment/receipt links, owner auth, dashboard filters, exports and a Razorpay sandbox payment flow.
+5. Verify counts, unique constraints, payment/receipt links, owner auth, dashboard filters, exports and a Cashfree sandbox payment flow.
 6. Retain the original Neon database until verification is complete.
 
 ## Switch after accepting real donations
@@ -102,10 +102,10 @@ This is a controlled data migration, not a URL-only change:
 
 1. Obtain owner approval and schedule a low-traffic maintenance window. Document a rollback decision point.
 2. Check the latest migrations and take a restorable source backup using a direct/unpooled connection. Store the backup securely.
-3. Pause new donation intents. Keep webhook events retryable during the cutover; never return success for an event that has not been durably recorded. Reconcile recent and pending Razorpay orders before reopening donations.
+3. Pause new donation intents. Keep webhook events retryable during the cutover; never return success for an event that has not been durably recorded. Reconcile recent and pending Cashfree orders before reopening donations.
 4. Restore data and apply any missing migrations on the destination. Do not allow the old and new databases to accept simultaneous writes.
 5. Validate row counts and foreign keys; uniqueness of provider payment/order IDs and receipt numbers; donation totals; refund states; owner access; dashboard reports; and audit history.
-6. Change the backend secrets and deploy. Run a smoke-test suite and a Razorpay sandbox test. Then reconcile pending/recent live orders against trusted provider status.
+6. Change the backend secrets and deploy. Run a smoke-test suite and a Cashfree sandbox test. Then reconcile pending/recent live orders against trusted provider status.
 7. Keep the Neon source intact and read-only through the agreed rollback period. Document what to do if the new database has accepted writes; do not blindly point the app back to the old database and lose those writes.
 
 ## Portability rules

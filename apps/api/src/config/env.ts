@@ -79,11 +79,11 @@ const EnvSchema = z
     LOGIN_MAX_FAILURES: z.coerce.number().int().min(3).max(20).default(5),
     LOGIN_LOCKOUT_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
     /**
-     * Which gateway takes online donations (Phase 1 of the Cashfree plan). `none` switches online
-     * donations off cleanly (503), e.g. while moving gateways. `cashfree` (Phase 4) needs the
-     * CASHFREE_* keys; Razorpay stays the default so nothing changes until it is switched.
+     * Which gateway takes NEW online donations. `cashfree` needs the CASHFREE_* keys; `none` (the
+     * default) refuses new online donations (503) — bank transfer still works. With the Cashfree
+     * keys and CASHFREE_ENV still set, payments already in flight keep being recorded.
      */
-    PAYMENT_PROVIDER: z.enum(['razorpay', 'cashfree', 'none']).default('razorpay'),
+    PAYMENT_PROVIDER: z.enum(['cashfree', 'none']).default('none'),
     /**
      * Cashfree PG keys (Developers → API Keys) — backend only, never VITE_*. The client secret
      * also verifies Cashfree's webhooks (there is no separate webhook secret).
@@ -120,26 +120,6 @@ const EnvSchema = z
       .default('2026-01-01'),
     /** How long a Cashfree order accepts payment. */
     CASHFREE_ORDER_EXPIRY_MINUTES: z.coerce.number().int().min(15).max(1440).default(30),
-    /**
-     * Razorpay API keys — backend only, never VITE_*. Test keys (rzp_test_) until launch (#39):
-     * outside production a live key is refused. Without keys, donations answer 503.
-     */
-    RAZORPAY_KEY_ID: z.preprocess(
-      (value) => (value === '' ? undefined : value),
-      z
-        .string()
-        .regex(/^rzp_(test|live)_[A-Za-z0-9]{8,32}$/)
-        .optional(),
-    ),
-    RAZORPAY_KEY_SECRET: z.preprocess(
-      (value) => (value === '' ? undefined : value),
-      z.string().min(16).max(128).optional(),
-    ),
-    /** Secret set on the Razorpay webhook (Dashboard → Webhooks). Without it, webhooks answer 503. */
-    RAZORPAY_WEBHOOK_SECRET: z.preprocess(
-      (value) => (value === '' ? undefined : value),
-      z.string().min(16).max(256).optional(),
-    ),
     /** Donation intents allowed per IP per hour. */
     DONATION_RATE_LIMIT_PER_HOUR: z.coerce.number().int().min(1).max(500).default(20),
     /** Get Help submissions allowed per IP per hour (plan §5 anti-spam). */
@@ -209,26 +189,6 @@ const EnvSchema = z
         )
         .optional(),
     ),
-    /**
-     * Monthly giving (#32). Off until the trust confirms Razorpay Subscriptions and UPI AutoPay
-     * are enabled on its account [CONFIRM].
-     */
-    RAZORPAY_SUBSCRIPTIONS_ENABLED: z
-      .enum(['true', 'false', ''])
-      .default('false')
-      .transform((v) => v === 'true'),
-    /**
-     * One-time UPI QR inside the donate pop-up (client, Nov 2026). Needs Razorpay "QR Codes"
-     * switched on for the account [CONFIRM]; off by default. Test-mode QRs cannot be scanned.
-     */
-    RAZORPAY_QR_ENABLED: z
-      .enum(['true', 'false', ''])
-      .default('false')
-      .transform((v) => v === 'true'),
-    /** Largest QR payment (paise). Client: ₹2,000. */
-    DONATION_QR_MAX_PAISE: z.coerce.number().int().min(100).max(10_000_000).default(200_000),
-    /** How long a QR accepts payment (Razorpay allows 2 minutes to 2 hours). */
-    DONATION_QR_EXPIRY_MINUTES: z.coerce.number().int().min(3).max(120).default(15),
     /** A checkout payment still unsettled after this many minutes is listed for the owner (#31). */
     ADMIN_STALE_PENDING_MINUTES: z.coerce.number().int().min(5).max(10_080).default(30),
     /** Where donors' replies to the thank-you email go, e.g. the trust's Gmail. Optional. */
@@ -306,21 +266,6 @@ const EnvSchema = z
     EMAIL_WORKER_INTERVAL_MS: z.coerce.number().int().min(1_000).max(3_600_000).default(30_000),
   })
   .superRefine((env, ctx) => {
-    if (Boolean(env.RAZORPAY_KEY_ID) !== Boolean(env.RAZORPAY_KEY_SECRET)) {
-      const missing = env.RAZORPAY_KEY_ID ? 'RAZORPAY_KEY_SECRET' : 'RAZORPAY_KEY_ID';
-      ctx.addIssue({
-        code: 'custom',
-        path: [missing],
-        message: 'set both Razorpay keys or neither',
-      });
-    }
-    if (env.NODE_ENV !== 'production' && env.RAZORPAY_KEY_ID?.startsWith('rzp_live_')) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['RAZORPAY_KEY_ID'],
-        message: 'live key outside production',
-      });
-    }
     if (Boolean(env.CASHFREE_CLIENT_ID) !== Boolean(env.CASHFREE_CLIENT_SECRET)) {
       const missing = env.CASHFREE_CLIENT_ID ? 'CASHFREE_CLIENT_SECRET' : 'CASHFREE_CLIENT_ID';
       ctx.addIssue({

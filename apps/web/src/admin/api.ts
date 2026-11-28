@@ -30,8 +30,6 @@ import {
   type MfaSetupResponse,
   type AdminOverview,
   type AdminReceiptList,
-  type AdminSubscriptionDetail,
-  type AdminSubscriptionList,
   type TaxSettings,
   type TaxStatusUpdate,
   type TaxTrackingItem,
@@ -188,10 +186,6 @@ export function createAdminApi(baseUrl: string, fetchImpl: Fetch = (...args) => 
         `/admin/receipts/${encodeURIComponent(id)}/resend`,
         { reason },
       ),
-    subscriptions: (status?: string, page = 1) =>
-      call<AdminSubscriptionList>('GET', `/admin/subscriptions?${query({ status, page })}`),
-    subscription: (id: string) =>
-      call<AdminSubscriptionDetail>('GET', `/admin/subscriptions/${encodeURIComponent(id)}`),
     taxSettings: () => call<TaxSettings>('GET', '/admin/tax-settings'),
     updateTaxSettings: (body: TaxSettingsUpdate) =>
       call<TaxSettings>('PATCH', '/admin/tax-settings', body),

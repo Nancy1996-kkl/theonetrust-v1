@@ -12,7 +12,6 @@ import { DonationDetailPage } from '../admin/DonationDetailPage.tsx';
 import { DonationsPage } from '../admin/DonationsPage.tsx';
 import { ExceptionsPage } from '../admin/ExceptionsPage.tsx';
 import { ReceiptsPage } from '../admin/ReceiptsPage.tsx';
-import { MonthlyGivingPage } from '../admin/MonthlyGivingPage.tsx';
 import { TaxSettingsPage } from '../admin/TaxSettingsPage.tsx';
 import { ContentPage } from '../admin/ContentPage.tsx';
 import { DocumentsPage } from '../admin/DocumentsPage.tsx';
@@ -27,9 +26,8 @@ import { HomePage } from '../routes/home/HomePage.tsx';
 import { NotFoundPage } from '../routes/not-found/NotFoundPage.tsx';
 import { PolicyPage } from '../routes/policy/PolicyPage.tsx';
 import { ReceiptPage } from '../receipt/ReceiptPage.tsx';
-import { ManagePage } from '../manage/ManagePage.tsx';
 
-/** Razorpay-required policy pages (ADR 0005), mirrored under /ta/. */
+/** Policy pages payment gateways require (ADR 0005), mirrored under /ta/. */
 const policyRoutes: RouteObject[] = [
   { path: 'terms', element: <PolicyPage id="terms" /> },
   { path: 'privacy', element: <PolicyPage id="privacy" /> },
@@ -38,9 +36,6 @@ const policyRoutes: RouteObject[] = [
 
 /** Private acknowledgement link (#29): random token, never indexed. */
 const receiptRoute: RouteObject = { path: 'receipt/:token', element: <ReceiptPage /> };
-
-/** Private manage link for monthly giving (#32): random token, never indexed. */
-const manageRoute: RouteObject = { path: 'manage/:token', element: <ManagePage /> };
 
 /** Home page redesign for the trust's approval (client, Nov 2026): not linked, never indexed. */
 
@@ -73,7 +68,6 @@ export const routes: RouteObject[] = [
               { path: 'exceptions', element: <ExceptionsPage /> },
               { path: 'webhooks', element: <WebhooksPage /> },
               { path: 'receipts', element: <ReceiptsPage /> },
-              { path: 'monthly-giving', element: <MonthlyGivingPage /> },
               { path: 'tax', element: <TaxSettingsPage /> },
               { path: 'programmes', element: <ProgrammesPage /> },
               { path: 'content', element: <ContentPage /> },
@@ -99,7 +93,6 @@ export const routes: RouteObject[] = [
           { index: true, element: <HomePage /> },
           ...policyRoutes,
           receiptRoute,
-          manageRoute,
           { path: '*', element: <NotFoundPage /> },
         ],
       },
@@ -111,7 +104,6 @@ export const routes: RouteObject[] = [
           { index: true, element: <HomePage /> },
           ...policyRoutes,
           receiptRoute,
-          manageRoute,
           { path: '*', element: <NotFoundPage /> },
         ],
       },

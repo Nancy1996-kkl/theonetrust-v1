@@ -8,9 +8,10 @@ const READY = {
   DIRECT_URL: 'postgresql://u:p@db-direct.example/app?sslmode=require',
   DATABASE_SCHEMA: 'theonetrust',
   AUTH_SECRET_KEY: Buffer.alloc(32, 7).toString('base64'),
-  RAZORPAY_KEY_ID: ['rzp', 'live', 'Abcdefgh12345'].join('_'),
-  RAZORPAY_KEY_SECRET: 'synthetic-secret-value',
-  RAZORPAY_WEBHOOK_SECRET: 'synthetic-webhook-secret',
+  PAYMENT_PROVIDER: 'cashfree',
+  CASHFREE_ENV: 'production',
+  CASHFREE_CLIENT_ID: 'SYNTHETIC_APP_ID_123',
+  CASHFREE_CLIENT_SECRET: 'synthetic-secret-value',
   PUBLIC_SITE_URL: 'https://theonetrust.in',
   CORS_ORIGINS: 'https://theonetrust.in',
   EMAIL_PROVIDER: 'resend',
@@ -32,7 +33,7 @@ describe('launch readiness (#39)', () => {
     const checks = launchReadiness(
       loadEnv({
         ...READY,
-        RAZORPAY_KEY_ID: 'rzp_test_abcdefgh',
+        PAYMENT_PROVIDER: 'none',
         DATABASE_URL: 'postgresql://u:p@db.example/app',
         CORS_ORIGINS: 'https://theonetrust.in,http://localhost:5173',
         EMAIL_PROVIDER: 'none',
@@ -41,14 +42,14 @@ describe('launch readiness (#39)', () => {
     );
     expect(checks.filter((c) => !c.ok).map((c) => c.id)).toEqual([
       'database_tls',
-      'razorpay_live',
+      'cashfree_live',
       'site_https',
       'email',
       'trust_proxy',
     ]);
     const report = formatReport(checks);
     expect(report).toContain('5 item(s) not ready.');
-    for (const secret of ['synthetic-secret-value', 'synthetic-webhook-secret', 'u:p@']) {
+    for (const secret of ['synthetic-secret-value', 'SYNTHETIC_APP_ID_123', 'u:p@']) {
       expect(report).not.toContain(secret);
     }
   });

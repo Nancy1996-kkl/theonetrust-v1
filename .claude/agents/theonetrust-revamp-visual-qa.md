@@ -50,7 +50,7 @@ block approval and require the existing `payment-security-reviewer`.
 
 Never approve:
 
-- A changed Razorpay/payment flow hidden inside a visual PR.
+- A changed Cashfree/payment flow hidden inside a visual PR.
 - Broken or missing Tamil/English route parity.
 - Invented trust facts, statistics, stories or tax promises.
 - Unreviewed screenshot baseline updates.

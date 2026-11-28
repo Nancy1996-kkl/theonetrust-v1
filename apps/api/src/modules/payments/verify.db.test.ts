@@ -1,61 +1,25 @@
-import { createHmac } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../../app.ts';
 import { loadEnv } from '../../config/env.ts';
 import { useTestDb } from '../../test/db.ts';
-import {
-  PaymentProviderError,
-  razorpayProvider,
-  type PaymentProvider,
-  type ProviderPayment,
-} from '../donations/provider.ts';
+import { fakeCashfree } from '../../test/fake-cashfree.ts';
 import { donorStatus } from './reconcile.ts';
 
+/**
+ * The donor's return to the site (`POST /payments/verify`) and the status re-check: the browser
+ * only names the donation; every decision comes from the order re-fetched from the gateway.
+ */
 const db = useTestDb();
-const SECRET = 'secret-secret-123';
+const cf = fakeCashfree('verify-cashfree-secret-01');
 let app: FastifyInstance;
 let ip = 0;
-let seq = 0;
-
-/** What "Razorpay" will answer when asked. Real signature check (same code as production). */
-const remote = new Map<string, ProviderPayment>();
-let fetchFails = false;
-const real = razorpayProvider({
-  keyId: 'rzp_test_abcdefgh12',
-  keySecret: SECRET,
-  fetch: async () => new Response('{}'),
-});
-const provider: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_abcdefgh12',
-  verifyCheckoutSignature: real.verifyCheckoutSignature,
-  createOrder: async (input) => ({
-    orderId: `order_T${String(++seq).padStart(8, '0')}`,
-    amountPaise: input.amountPaise,
-    currency: 'INR',
-    status: 'created',
-  }),
-  fetchPayment: async (id) => {
-    if (fetchFails) throw new PaymentProviderError('network');
-    const p = remote.get(id);
-    if (!p) throw new PaymentProviderError('rejected');
-    return p;
-  },
-  fetchOrderPayments: async (orderId) => {
-    if (fetchFails) throw new PaymentProviderError('network');
-    return [...remote.values()].filter((p) => p.orderId === orderId);
-  },
-};
-
-const sign = (orderId: string, paymentId: string) =>
-  createHmac('sha256', SECRET).update(`${orderId}|${paymentId}`).digest('hex');
 
 beforeAll(() => {
-  app = buildApp(loadEnv({ NODE_ENV: 'test' }), { db, paymentProvider: provider });
+  app = buildApp(loadEnv({ NODE_ENV: 'test', ...cf.env }), { db, paymentProvider: cf.provider });
 });
 beforeEach(() => {
-  fetchFails = false;
+  cf.setDown(false);
 });
 afterAll(async () => {
   await app.close();
@@ -72,6 +36,7 @@ async function newDonation(giftPaise = 100_000) {
       programme: null,
       donorName: 'Synthetic Donor',
       donorEmail: 'donor@example.org',
+      donorPhone: '+919876543210',
       hideNamePublicly: true,
       wantsReceipt: false,
       coverFee: false,
@@ -79,34 +44,12 @@ async function newDonation(giftPaise = 100_000) {
       locale: 'en',
     },
   });
-  const body = res.json() as {
-    publicReference: string;
-    amountPaise: number;
-    checkout: { orderId: string };
-  };
-  return {
-    ref: body.publicReference,
-    orderId: body.checkout.orderId,
-    amountPaise: body.amountPaise,
-  };
+  expect(res.statusCode).toBe(201);
+  const body = res.json() as { publicReference: string; amountPaise: number };
+  return { ref: body.publicReference, amountPaise: body.amountPaise };
 }
 
-function remotePayment(orderId: string, patch: Partial<ProviderPayment> = {}): ProviderPayment {
-  const payment: ProviderPayment = {
-    paymentId: `pay_T${String(++seq).padStart(8, '0')}`,
-    orderId,
-    amountPaise: 100_000,
-    currency: 'INR',
-    status: 'captured',
-    method: 'upi',
-    refundedPaise: 0,
-    ...patch,
-  };
-  remote.set(payment.paymentId, payment);
-  return payment;
-}
-
-const verify = (payload: Record<string, string>) =>
+const verify = (payload: Record<string, unknown>) =>
   app.inject({
     method: 'POST',
     url: '/api/v1/payments/verify',
@@ -123,77 +66,46 @@ const intentStatus = async (ref: string) =>
   (await db.donationIntent.findUniqueOrThrow({ where: { publicReference: ref } })).status;
 
 describe('POST /payments/verify', () => {
-  it('valid signature + captured payment fetched from Razorpay → PAID', async () => {
+  it('a captured payment re-fetched from the gateway → PAID; repeating it changes nothing', async () => {
     const d = await newDonation();
-    const p = remotePayment(d.orderId);
-    const res = await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: p.paymentId,
-      signature: sign(d.orderId, p.paymentId),
-    });
+    const paymentId = cf.pay(d.ref);
+    const res = await verify({ publicReference: d.ref });
     expect(res.json()).toEqual({ publicReference: d.ref, status: 'PAID', amountPaise: 100_000 });
     expect(await intentStatus(d.ref)).toBe('PAID');
     const attempt = await db.paymentAttempt.findUniqueOrThrow({
-      where: { providerOrderId: d.orderId },
+      where: { providerOrderId: d.ref },
     });
     expect(attempt).toMatchObject({
-      providerPaymentId: p.paymentId,
+      providerPaymentId: paymentId,
       providerStatus: 'captured',
       capturedPaise: 100_000,
       method: 'upi',
     });
-    expect(attempt.signatureVerifiedAt).not.toBeNull();
-    // Idempotent: the same callback again changes nothing.
-    const again = await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: p.paymentId,
-      signature: sign(d.orderId, p.paymentId),
-    });
+    const again = await verify({ publicReference: d.ref });
     expect(again.json().status).toBe('PAID');
   });
 
-  it('a forged signature cannot mark a payment PAID — nothing changes', async () => {
+  it('the browser cannot claim a payment: extra fields are refused and nothing changes', async () => {
     const d = await newDonation();
-    const p = remotePayment(d.orderId);
-    for (const signature of [
-      '0'.repeat(64),
-      sign(d.orderId, 'pay_Somebody99'),
-      sign('order_Other999', p.paymentId),
-      'not-hex',
+    for (const extra of [
+      { orderId: d.ref, paymentId: '5000000001', signature: 'x'.repeat(64) },
+      { status: 'PAID' },
     ]) {
-      const res = await verify({
-        publicReference: d.ref,
-        orderId: d.orderId,
-        paymentId: p.paymentId,
-        signature,
-      });
+      const res = await verify({ publicReference: d.ref, ...extra });
       expect(res.statusCode).toBe(400);
-      expect(res.json().error.fields).toEqual([{ path: 'signature', issue: 'invalid' }]);
     }
     expect(await intentStatus(d.ref)).toBe('CREATED');
-    const attempt = await db.paymentAttempt.findUniqueOrThrow({
-      where: { providerOrderId: d.orderId },
-    });
-    expect(attempt.providerPaymentId).toBeNull();
   });
 
   it.each([
-    ['a different amount', { amountPaise: 1_000 }],
+    ['a different amount', { paise: 1_000 }],
     ['another currency', { currency: 'USD' }],
-    ['another order', { orderId: 'order_SomeoneElse1' }],
   ])(
     'a mismatch (%s) moves it to MANUAL_REVIEW with an exception, never PAID',
     async (_why, patch) => {
       const d = await newDonation();
-      const p = remotePayment(d.orderId, patch);
-      const res = await verify({
-        publicReference: d.ref,
-        orderId: d.orderId,
-        paymentId: p.paymentId,
-        signature: sign(d.orderId, p.paymentId),
-      });
+      const paymentId = cf.pay(d.ref, patch);
+      const res = await verify({ publicReference: d.ref });
       expect(res.json().status).toBe('PENDING');
       expect(await intentStatus(d.ref)).toBe('MANUAL_REVIEW');
       const intent = await db.donationIntent.findUniqueOrThrow({
@@ -204,46 +116,18 @@ describe('POST /payments/verify', () => {
       });
       expect(exception).toMatchObject({
         kind: 'PAYMENT_MISMATCH',
-        providerPaymentId: p.paymentId,
+        providerPaymentId: paymentId,
         status: 'OPEN',
       });
     },
   );
 
-  it('a second, different payment for the same order is a duplicate → MANUAL_REVIEW (unless already paid)', async () => {
-    const d = await newDonation();
-    const first = remotePayment(d.orderId, { status: 'authorized' });
-    await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: first.paymentId,
-      signature: sign(d.orderId, first.paymentId),
-    });
-    expect(await intentStatus(d.ref)).toBe('AUTHORIZED');
-    const second = remotePayment(d.orderId);
-    const res = await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: second.paymentId,
-      signature: sign(d.orderId, second.paymentId),
-    });
-    expect(res.json().status).toBe('PENDING');
-    expect(await intentStatus(d.ref)).toBe('MANUAL_REVIEW');
+  it('two captured payments on one order: PAID once, the second is a DUPLICATE_PAYMENT exception', async () => {
     const paid = await newDonation();
-    const p1 = remotePayment(paid.orderId);
-    await verify({
-      publicReference: paid.ref,
-      orderId: paid.orderId,
-      paymentId: p1.paymentId,
-      signature: sign(paid.orderId, p1.paymentId),
-    });
-    const p2 = remotePayment(paid.orderId);
-    await verify({
-      publicReference: paid.ref,
-      orderId: paid.orderId,
-      paymentId: p2.paymentId,
-      signature: sign(paid.orderId, p2.paymentId),
-    });
+    cf.pay(paid.ref);
+    await verify({ publicReference: paid.ref });
+    cf.pay(paid.ref);
+    await verify({ publicReference: paid.ref });
     expect(await intentStatus(paid.ref)).toBe('PAID');
     const intent = await db.donationIntent.findUniqueOrThrow({
       where: { publicReference: paid.ref },
@@ -255,148 +139,91 @@ describe('POST /payments/verify', () => {
     ).toBe(1);
   });
 
-  it('failed → FAILED; and a FAILED donation never comes back', async () => {
+  it('failed → FAILED', async () => {
     const d = await newDonation();
-    const failed = remotePayment(d.orderId, { status: 'failed' });
-    expect(
-      (
-        await verify({
-          publicReference: d.ref,
-          orderId: d.orderId,
-          paymentId: failed.paymentId,
-          signature: sign(d.orderId, failed.paymentId),
-        })
-      ).json().status,
-    ).toBe('FAILED');
+    cf.pay(d.ref, { status: 'FAILED' });
+    expect((await verify({ publicReference: d.ref })).json().status).toBe('FAILED');
     expect(await intentStatus(d.ref)).toBe('FAILED');
   });
 
-  it('Razorpay unreachable: stays pending (never a guess)', async () => {
+  it('gateway unreachable: stays as recorded (never a guess)', async () => {
     const d = await newDonation();
-    const p = remotePayment(d.orderId);
-    fetchFails = true;
-    const res = await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: p.paymentId,
-      signature: sign(d.orderId, p.paymentId),
-    });
+    cf.pay(d.ref);
+    cf.setDown(true);
+    const res = await verify({ publicReference: d.ref });
     expect(res.json().status).toBe('PENDING');
     expect(await intentStatus(d.ref)).toBe('CREATED');
   });
 
-  it('unknown reference, order of another donation, bank transfer → 404; bad input → 400', async () => {
-    const a = await newDonation();
-    const b = await newDonation();
-    const p = remotePayment(b.orderId);
-    expect(
-      (
-        await verify({
-          publicReference: a.ref,
-          orderId: b.orderId,
-          paymentId: p.paymentId,
-          signature: sign(b.orderId, p.paymentId),
-        })
-      ).statusCode,
-    ).toBe(404);
-    expect(
-      (
-        await verify({
-          publicReference: 'TOT-D-000000000000',
-          orderId: b.orderId,
-          paymentId: p.paymentId,
-          signature: 'x',
-        })
-      ).statusCode,
-    ).toBe(404);
-    expect(
-      (
-        await verify({
-          publicReference: a.ref,
-          orderId: 'nope',
-          paymentId: p.paymentId,
-          signature: 'x',
-        })
-      ).statusCode,
-    ).toBe(400);
+  it('unknown reference or bank transfer → 404; bad input → 400; no gateway → 503', async () => {
+    expect((await verify({ publicReference: 'TOT-D-000000000000' })).statusCode).toBe(404);
+    expect((await verify({ publicReference: 'nope' })).statusCode).toBe(400);
+    expect((await verify({})).statusCode).toBe(400);
+    const off = buildApp(loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'none' }), { db });
+    const d = await newDonation();
+    const res = await off.inject({
+      method: 'POST',
+      url: '/api/v1/payments/verify',
+      payload: { publicReference: d.ref },
+    });
+    expect(res.statusCode).toBe(503);
+    await off.close();
   });
 });
 
 describe('GET /donations/status/:reference', () => {
-  it('re-checks with Razorpay when the callback never arrived (by order) and returns donor-safe fields only', async () => {
+  it('re-checks by order when the donor never came back, returning donor-safe fields only', async () => {
     const d = await newDonation();
-    remotePayment(d.orderId, { status: 'failed' });
-    remotePayment(d.orderId, { status: 'captured' });
+    cf.pay(d.ref, { status: 'FAILED' });
+    cf.pay(d.ref);
     const res = await status(d.ref);
     expect(res.json()).toEqual({ publicReference: d.ref, status: 'PAID', amountPaise: 100_000 });
-    expect(res.body).not.toMatch(/donor|email|Synthetic|pay_|order_/i);
+    expect(res.body).not.toMatch(/donor|email|Synthetic|\d{12}|session_/i);
     expect(await intentStatus(d.ref)).toBe('PAID');
   });
 
-  it('uses the known payment ID, stays PENDING when nothing is captured yet or Razorpay is down', async () => {
+  it('stays PENDING when nothing is captured yet or the gateway is down', async () => {
     const d = await newDonation();
-    const p = remotePayment(d.orderId, { status: 'authorized' });
-    await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: p.paymentId,
-      signature: sign(d.orderId, p.paymentId),
-    });
+    cf.pay(d.ref, { captured: false });
     expect((await status(d.ref)).json().status).toBe('PENDING');
-    fetchFails = true;
+    cf.setDown(true);
     expect((await status(d.ref)).json().status).toBe('PENDING');
-    fetchFails = false;
-    remote.set(p.paymentId, { ...p, status: 'captured' });
-    expect((await status(d.ref)).json().status).toBe('PAID');
+    cf.setDown(false);
     const none = await newDonation();
     expect((await status(none.ref)).json().status).toBe('PENDING');
   });
 
   it('a young FAILED donation is re-checked (a retry may have succeeded); gateway down → stays FAILED', async () => {
     const d = await newDonation();
-    const failed = remotePayment(d.orderId, { status: 'failed' });
-    await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: failed.paymentId,
-      signature: sign(d.orderId, failed.paymentId),
-    });
-    remotePayment(d.orderId); // the retry on the same order was captured
-    fetchFails = true;
+    cf.pay(d.ref, { status: 'FAILED' });
+    await verify({ publicReference: d.ref });
+    expect(await intentStatus(d.ref)).toBe('FAILED');
+    cf.pay(d.ref); // the retry on the same order was captured
+    cf.setDown(true);
     expect((await status(d.ref)).json().status).toBe('FAILED'); // never a guess
-    fetchFails = false;
+    cf.setDown(false);
     expect((await status(d.ref)).json().status).toBe('PAID');
   });
 
   it('an old FAILED donation is answered from the ledger, without asking the gateway', async () => {
     const d = await newDonation();
-    const failed = remotePayment(d.orderId, { status: 'failed' });
-    await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: failed.paymentId,
-      signature: sign(d.orderId, failed.paymentId),
-    });
+    cf.pay(d.ref, { status: 'FAILED' });
+    await verify({ publicReference: d.ref });
     const window = loadEnv({ NODE_ENV: 'test' }).FAILED_RECHECK_WINDOW_MS;
     expect(window).toBe(86_400_000);
     await db.donationIntent.update({
       where: { publicReference: d.ref },
       data: { createdAt: new Date(Date.now() - window - 60_000) },
     });
-    remotePayment(d.orderId); // captured, but only the owner re-check may find it now
+    cf.pay(d.ref); // captured, but only the owner re-check may find it now
     expect((await status(d.ref)).json().status).toBe('FAILED');
     expect(await intentStatus(d.ref)).toBe('FAILED');
   });
 
   it('settled donations are answered from the ledger; unknown → 404; bad reference → 400', async () => {
     const d = await newDonation();
-    const p = remotePayment(d.orderId, { status: 'failed' });
-    await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: p.paymentId,
-      signature: sign(d.orderId, p.paymentId),
-    });
+    cf.pay(d.ref, { status: 'FAILED' });
+    await verify({ publicReference: d.ref });
     expect((await status(d.ref)).json().status).toBe('FAILED');
     expect((await status('TOT-D-000000000000')).statusCode).toBe(404);
     expect((await status('nope')).statusCode).toBe(400);
@@ -419,15 +246,10 @@ describe('GET /donations/status/:reference', () => {
 
   it('with no gateway (PAYMENT_PROVIDER=none) the ledger still answers; without a database, 503', async () => {
     const d = await newDonation();
-    const p = remotePayment(d.orderId);
-    await verify({
-      publicReference: d.ref,
-      orderId: d.orderId,
-      paymentId: p.paymentId,
-      signature: sign(d.orderId, p.paymentId),
-    });
+    cf.pay(d.ref);
+    await verify({ publicReference: d.ref });
     const pending = await newDonation();
-    remotePayment(pending.orderId); // captured at the gateway, but no gateway to ask now
+    cf.pay(pending.ref); // captured at the gateway, but no gateway to ask now
     const bare = buildApp(loadEnv({ NODE_ENV: 'test', PAYMENT_PROVIDER: 'none' }), { db });
     const get = (ref: string) =>
       bare.inject({ method: 'GET', url: `/api/v1/donations/status/${ref}` });

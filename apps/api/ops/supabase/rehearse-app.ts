@@ -3,15 +3,10 @@
  * restricted theonetrust_app role to the local mirror, makes, verifies and acknowledges a
  * donation; every forbidden action must be refused. Exits 1 on any failure.
  */
-import { createHmac } from 'node:crypto';
 import { buildApp } from '../../src/app.ts';
 import { loadEnv } from '../../src/config/env.ts';
 import { createDb } from '../../src/db/client.ts';
-import {
-  razorpayProvider,
-  type PaymentProvider,
-  type ProviderPayment,
-} from '../../src/modules/donations/provider.ts';
+import { fakeCashfree } from '../../src/test/fake-cashfree.ts';
 
 const url = process.env.REHEARSAL_APP_URL ?? '';
 if (
@@ -21,32 +16,12 @@ if (
   process.exit(1);
 }
 const db = createDb(url, {}, 'theonetrust');
-const SECRET = 'rehearsal-key-secret-01';
-const remote = new Map<string, ProviderPayment>();
-let seq = 0;
-const real = razorpayProvider({
-  keyId: 'rzp_test_rehearsal01',
-  keySecret: SECRET,
-  fetch: async () => new Response('{}'),
+// The real Cashfree adapter against a local fake: nothing leaves the machine.
+const cf = fakeCashfree('rehearsal-cashfree-secret-01');
+const app = buildApp(loadEnv({ NODE_ENV: 'test', ...cf.env }), {
+  db,
+  paymentProvider: cf.provider,
 });
-const provider: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_rehearsal01',
-  verifyCheckoutSignature: real.verifyCheckoutSignature,
-  createOrder: async (input) => ({
-    orderId: `order_R${String(++seq).padStart(8, '0')}`,
-    amountPaise: input.amountPaise,
-    currency: 'INR',
-    status: 'created',
-  }),
-  fetchPayment: async (id) => {
-    const p = remote.get(id);
-    if (!p) throw new Error('unknown payment');
-    return p;
-  },
-  fetchOrderPayments: async (orderId) => [...remote.values()].filter((p) => p.orderId === orderId),
-};
-const app = buildApp(loadEnv({ NODE_ENV: 'test' }), { db, paymentProvider: provider });
 const results: Array<[string, boolean, string]> = [];
 const check = (name: string, ok: boolean, detail = '') => results.push([name, ok, detail]);
 async function denied(name: string, action: () => Promise<unknown>) {
@@ -73,6 +48,7 @@ const created = await app.inject({
     programme: null,
     donorName: 'Rehearsal Donor',
     donorEmail: 'rehearsal@example.org',
+    donorPhone: '+919876543210',
     hideNamePublicly: true,
     wantsReceipt: true,
     coverFee: false,
@@ -81,32 +57,13 @@ const created = await app.inject({
   },
 });
 check('create a donation in theonetrust', created.statusCode === 201, String(created.statusCode));
-const { publicReference, checkout } = created.json() as {
-  publicReference: string;
-  checkout: { orderId: string };
-};
-const payment: ProviderPayment = {
-  paymentId: 'pay_R00000001',
-  orderId: checkout.orderId,
-  amountPaise: 100_000,
-  currency: 'INR',
-  status: 'captured',
-  method: 'upi',
-  refundedPaise: 0,
-};
-remote.set(payment.paymentId, payment);
+const { publicReference } = created.json() as { publicReference: string };
+cf.pay(publicReference);
 const verified = await app.inject({
   method: 'POST',
   url: '/api/v1/payments/verify',
   remoteAddress: '10.1.1.2',
-  payload: {
-    publicReference,
-    orderId: checkout.orderId,
-    paymentId: payment.paymentId,
-    signature: createHmac('sha256', SECRET)
-      .update(`${checkout.orderId}|${payment.paymentId}`)
-      .digest('hex'),
-  },
+  payload: { publicReference },
 });
 check('verified payment → PAID', (verified.json() as { status: string }).status === 'PAID');
 check(

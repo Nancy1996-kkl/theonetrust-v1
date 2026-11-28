@@ -42,7 +42,7 @@ describe('policy content: Tamil and English are equivalent', () => {
     }
   });
 
-  it('the refund policy states shipping does not apply (Razorpay)', () => {
+  it('the refund policy states shipping does not apply (payment gateway checklist)', () => {
     const shipping = POLICIES.refund.sections.find((s) => s.id === 'shipping')!;
     expect(shipping.confirmed).toBe(true);
     expect(shipping.paragraphs[0]!.en).toMatch(/^Not applicable\. .*donations only/);
@@ -69,8 +69,13 @@ describe('policy content: Tamil and English are equivalent', () => {
     }
   });
 
-  it('the refund policy covers cancelling monthly giving', () => {
-    expect(POLICIES.refund.sections.some((s) => s.id === 'monthly')).toBe(true);
+  it('the refund policy promises nothing about monthly giving (retired until Phase 9)', () => {
+    expect(POLICIES.refund.sections.some((s) => s.id === 'monthly')).toBe(false);
+    for (const lang of ['en', 'ta'] as const) {
+      expect(JSON.stringify(POLICIES.refund)).not.toMatch(
+        lang === 'en' ? /monthly giving/i : /மாதாந்திர நன்கொடை/,
+      );
+    }
   });
 });
 

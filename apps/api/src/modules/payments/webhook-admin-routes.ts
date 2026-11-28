@@ -12,7 +12,7 @@ const Query = z.object({
 const LIMIT = 100;
 
 /**
- * `GET /api/v1/admin/webhooks` (#39): the webhook delivery view. Razorpay retries a delivery we
+ * `GET /api/v1/admin/webhooks` (#39): the webhook delivery view. The gateway retries a delivery we
  * answered with an error, and a FAILED event is processed again on that retry; this list shows
  * what arrived, how it was handled and what still needs a look. Read-only, no payloads.
  */

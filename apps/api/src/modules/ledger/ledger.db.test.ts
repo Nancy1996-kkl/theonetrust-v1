@@ -1,4 +1,4 @@
-import { createHmac, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance, LightMyRequestResponse } from 'fastify';
 import { buildApp } from '../../app.ts';
@@ -7,11 +7,11 @@ import { loadEnv } from '../../config/env.ts';
 import { unique, useTestDb } from '../../test/db.ts';
 import { base32Decode, hotp, timeStep } from '../auth/totp.ts';
 import {
-  PaymentProviderError,
-  razorpayProvider,
-  type PaymentProvider,
-  type ProviderPayment,
-} from '../donations/provider.ts';
+  cashfreePaymentEvent,
+  cashfreeRefundEvent,
+  fakeCashfree,
+  sendCashfreeWebhook,
+} from '../../test/fake-cashfree.ts';
 import { istDayStart, istStamp, maskEmail } from './query.ts';
 
 /**
@@ -19,11 +19,9 @@ import { istDayStart, istStamp, maskEmail } from './query.ts';
  * donation, reads its full history, works the exceptions queue, handles receipts and exports.
  */
 const db = useTestDb();
-const KEY_SECRET = 'ledger-key-secret-0001';
-const WEBHOOK_SECRET = 'ledger-webhook-secret-01';
+const SECRET = 'ledger-cashfree-secret-01';
 const ORIGIN = 'http://localhost:5173';
 let app: FastifyInstance;
-let seq = 0;
 let ip = 0;
 let send: (
   m: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE',
@@ -31,45 +29,17 @@ let send: (
   body?: unknown,
 ) => Promise<LightMyRequestResponse>;
 
-const remote = new Map<string, ProviderPayment>();
-const real = razorpayProvider({
-  keyId: 'rzp_test_ledger00001',
-  keySecret: KEY_SECRET,
-  fetch: async () => new Response('{}'),
-});
-const provider: PaymentProvider = {
-  name: 'RAZORPAY',
-  publicKeyId: 'rzp_test_ledger00001',
-  verifyCheckoutSignature: real.verifyCheckoutSignature,
-  createOrder: async (input) => ({
-    orderId: `order_L${String(++seq).padStart(8, '0')}`,
-    amountPaise: input.amountPaise,
-    currency: 'INR',
-    status: 'created',
-  }),
-  fetchPayment: async (id) => {
-    const p = remote.get(id);
-    if (!p) throw new Error('unknown');
-    return p;
-  },
-  fetchOrderPayments: async (orderId) => {
-    if (providerDown) throw new PaymentProviderError('network');
-    return [...remote.values()].filter((p) => p.orderId === orderId);
-  },
-  // A QR payment is reported by the QR it was made on (no order of ours), like Razorpay's API.
-  fetchQrPayments: async (qrId) => [...remote.values()].filter((p) => p.orderId === qrId),
-};
-let providerDown = false;
+const cf = fakeCashfree(SECRET);
 
 beforeAll(async () => {
   app = buildApp(
     loadEnv({
       NODE_ENV: 'test',
+      ...cf.env,
       AUTH_SECRET_KEY: randomBytes(32).toString('base64'),
       CORS_ORIGINS: ORIGIN,
-      RAZORPAY_WEBHOOK_SECRET: WEBHOOK_SECRET,
     }),
-    { db, paymentProvider: provider },
+    { db, paymentProvider: cf.provider },
   );
   const email = `${unique('ledger-owner')}@example.org`;
   await setOwnerPassword(db, email, 'river mango lamp seventeen');
@@ -131,71 +101,44 @@ async function intent(giftPaise = 100_000, patch: Record<string, unknown> = {}) 
   const row = await db.donationIntent.findUniqueOrThrow({
     where: { publicReference: body.publicReference },
   });
+  // With Cashfree, the gateway order ID is our public reference.
   return { ref: body.publicReference, orderId: body.checkout.orderId, id: row.id };
 }
 
-function pays(orderId: string, amountPaise: number, patch: Partial<ProviderPayment> = {}) {
-  const p: ProviderPayment = {
-    paymentId: `pay_L${String(++seq).padStart(8, '0')}`,
-    orderId,
-    amountPaise,
-    currency: 'INR',
-    status: 'captured',
-    method: 'upi',
-    refundedPaise: 0,
-    ...patch,
-  };
-  remote.set(p.paymentId, p);
-  return p;
+/** The donor pays at the gateway; returns the gateway's payment ID. */
+function pays(
+  ref: string,
+  amountPaise: number,
+  opts: { status?: 'SUCCESS' | 'FAILED' | 'PENDING' } = {},
+) {
+  return { paymentId: cf.pay(ref, { paise: amountPaise, ...opts }) };
 }
 
-const verify = (ref: string, orderId: string, paymentId: string) =>
+/** The donor is back on the site: the server re-fetches the order from the gateway. */
+const verify = (ref: string) =>
   app.inject({
     method: 'POST',
     url: '/api/v1/payments/verify',
     remoteAddress: nextIp(),
-    payload: {
-      publicReference: ref,
-      orderId,
-      paymentId,
-      signature: createHmac('sha256', KEY_SECRET).update(`${orderId}|${paymentId}`).digest('hex'),
-    },
+    payload: { publicReference: ref },
   });
 
-function webhook(event: string, p: ProviderPayment) {
-  const raw = JSON.stringify({
-    event,
-    payload: {
-      payment: {
-        entity: {
-          id: p.paymentId,
-          entity: 'payment',
-          order_id: p.orderId,
-          amount: p.amountPaise,
-          currency: 'INR',
-          status: p.status,
-          method: p.method,
-          amount_refunded: p.refundedPaise,
-        },
-      },
-    },
-  });
-  return app.inject({
-    method: 'POST',
-    url: '/api/v1/webhooks/razorpay',
-    headers: {
-      'content-type': 'application/json',
-      'x-razorpay-signature': createHmac('sha256', WEBHOOK_SECRET).update(raw).digest('hex'),
-      'x-razorpay-event-id': `evt_L${String(++seq).padStart(10, '0')}`,
-    },
-    payload: raw,
-  });
+const paymentWebhook = (
+  ref: string,
+  paymentId: string,
+  type?: Parameters<typeof cashfreePaymentEvent>[2],
+) => sendCashfreeWebhook(app, SECRET, cashfreePaymentEvent(ref, paymentId, type));
+
+/** A processed refund of `paise` on a payment, as the gateway reports it. */
+function refunded(ref: string, paymentId: string, paise: number) {
+  const refundId = cf.refund(ref, paymentId, paise, 'SUCCESS');
+  return sendCashfreeWebhook(app, SECRET, cashfreeRefundEvent(ref, paymentId, refundId, 'SUCCESS'));
 }
 
 async function paid(giftPaise = 100_000, patch: Record<string, unknown> = {}) {
   const d = await intent(giftPaise, patch);
-  const p = pays(d.orderId, giftPaise);
-  await verify(d.ref, d.orderId, p.paymentId);
+  const p = pays(d.ref, giftPaise);
+  await verify(d.ref);
   return { ...d, payment: p };
 }
 
@@ -203,15 +146,13 @@ describe('overview', () => {
   it('verified totals today / month / lifetime, refunds shown separately; attention counts', async () => {
     const before = (await send('GET', '/api/v1/admin/overview')).json();
     const d = await paid(200_000);
-    await webhook('refund.processed', { ...d.payment, refundedPaise: 50_000 });
+    await refunded(d.ref, d.payment.paymentId, 50_000);
     const pending = await intent(30_000);
-    await verify(
-      pending.ref,
-      pending.orderId,
-      pays(pending.orderId, 30_000, { status: 'created' }).paymentId,
-    );
+    pays(pending.ref, 30_000, { status: 'PENDING' });
+    await verify(pending.ref);
     const failed = await intent(40_000);
-    await webhook('payment.failed', pays(failed.orderId, 40_000, { status: 'failed' }));
+    const failure = pays(failed.ref, 40_000, { status: 'FAILED' });
+    await paymentWebhook(failed.ref, failure.paymentId, 'PAYMENT_FAILED_WEBHOOK');
     const after = (await send('GET', '/api/v1/admin/overview')).json();
     for (const window of ['today', 'month', 'lifetime'] as const) {
       expect(after[window].grossPaise - before[window].grossPaise).toBe(200_000);
@@ -226,7 +167,7 @@ describe('overview', () => {
 });
 
 describe('donations ledger', () => {
-  it('finds a donation by reference, receipt number, Razorpay IDs; filters and paginates', async () => {
+  it('finds a donation by reference, receipt number, gateway IDs; filters and paginates', async () => {
     const d = await paid(150_000);
     const receipt = await db.receipt.findFirstOrThrow({ where: { donationIntentId: d.id } });
     for (const q of [
@@ -292,7 +233,7 @@ describe('donations ledger', () => {
 
   it('detail: status history, webhook history, receipts, emails — contact details masked', async () => {
     const d = await paid(120_000);
-    await webhook('payment.captured', d.payment); // a late duplicate, linked to the donation
+    await paymentWebhook(d.ref, d.payment.paymentId); // a late duplicate, linked to the donation
     const res = await send('GET', `/api/v1/admin/donations/${d.id}`);
     expect(res.statusCode).toBe(200);
     const detail = res.json();
@@ -304,13 +245,17 @@ describe('donations ledger', () => {
       ]),
     ).toEqual([['CREATED', 'PAID', 'gateway_verified']]);
     expect(detail.webhooks).toEqual([
-      expect.objectContaining({ eventType: 'payment.captured', processingStatus: 'PROCESSED' }),
+      expect.objectContaining({
+        eventType: 'PAYMENT_SUCCESS_WEBHOOK',
+        processingStatus: 'PROCESSED',
+      }),
     ]);
     expect(detail.attempts[0]).toMatchObject({
       providerOrderId: d.orderId,
       providerPaymentId: d.payment.paymentId,
       capturedPaise: 120_000,
-      signatureVerified: true,
+      // Cashfree has no browser signature: the server always re-fetches the order instead.
+      signatureVerified: false,
     });
     expect(detail.receipts[0]).toMatchObject({ state: 'VALID', canResend: true });
     expect(detail.receipts[0].token).toMatch(/^[A-Za-z0-9_-]{43}$/);
@@ -348,14 +293,14 @@ describe('donations ledger', () => {
 describe('exceptions queue', () => {
   it('lists stale pending, manual review and open exceptions; re-check uses the normal rules', async () => {
     const stale = await intent(60_000);
-    const created = pays(stale.orderId, 60_000, { status: 'created' });
-    await verify(stale.ref, stale.orderId, created.paymentId);
+    const created = pays(stale.ref, 60_000, { status: 'PENDING' });
+    await verify(stale.ref);
     await db.donationIntent.update({
       where: { id: stale.id },
       data: { createdAt: new Date(Date.now() - 2 * 3_600_000) },
     });
     const mismatch = await intent(70_000);
-    await webhook('payment.captured', pays(mismatch.orderId, 1_000));
+    await paymentWebhook(mismatch.ref, pays(mismatch.ref, 1_000).paymentId);
 
     const queue = (await send('GET', '/api/v1/admin/exceptions')).json();
     expect(queue.staleAfterMinutes).toBe(30);
@@ -372,15 +317,15 @@ describe('exceptions queue', () => {
     );
     expect(exception.actions).toEqual(['resolve']);
 
-    // Re-check needs a reason; then Razorpay says captured → PAID through reconcile.
+    // Re-check needs a reason; then the gateway says captured → PAID through reconcile.
     expect((await send('POST', `/api/v1/admin/donations/${stale.id}/recheck`, {})).statusCode).toBe(
       400,
     );
-    remote.set(created.paymentId, { ...created, status: 'captured' });
+    cf.capture(stale.ref, created.paymentId);
     const res = await send('POST', `/api/v1/admin/donations/${stale.id}/recheck`, {
       reason: 'Donor says money left the account',
     });
-    expect(res.json()).toMatchObject({ status: 'PAID', outcome: 'provider_captured' });
+    expect(res.json()).toMatchObject({ status: 'PAID', outcome: 'provider_SUCCESS' });
     expect(
       await db.auditLog.findFirst({ where: { action: 'donation.rechecked', entityId: stale.id } }),
     ).toMatchObject({ changedFields: ['status'] });
@@ -396,7 +341,7 @@ describe('exceptions queue', () => {
       'POST',
       `/api/v1/admin/payment-exceptions/${exception.exceptionId}/resolve`,
       {
-        reason: 'Refunded the extra payment in Razorpay',
+        reason: 'Refunded the extra payment at the gateway',
       },
     );
     expect(resolved.json().status).toBe('RESOLVED');
@@ -409,18 +354,19 @@ describe('exceptions queue', () => {
 
   it('re-check heals a FAILED donation whose retry on the same order was captured (audit F-1)', async () => {
     const d = await intent(100_000);
-    await webhook('payment.failed', pays(d.orderId, 100_000, { status: 'failed' }));
+    const failure = pays(d.ref, 100_000, { status: 'FAILED' });
+    await paymentWebhook(d.ref, failure.paymentId, 'PAYMENT_FAILED_WEBHOOK');
     expect((await db.donationIntent.findUniqueOrThrow({ where: { id: d.id } })).status).toBe(
       'FAILED',
     );
-    pays(d.orderId, 100_000); // the retry succeeded; no callback or webhook reached us
+    pays(d.ref, 100_000); // the retry succeeded; no callback or webhook reached us
     const res = await send('POST', `/api/v1/admin/donations/${d.id}/recheck`, {
       reason: 'Donor says the second try worked',
     });
-    expect(res.json()).toMatchObject({ status: 'PAID', outcome: 'provider_captured' });
+    expect(res.json()).toMatchObject({ status: 'PAID', outcome: 'provider_SUCCESS' });
 
     // The donor also paid a second time on the same order: repeated re-checks flag it ONCE.
-    pays(d.orderId, 100_000);
+    pays(d.ref, 100_000);
     for (let i = 0; i < 3; i++) {
       const again = await send('POST', `/api/v1/admin/donations/${d.id}/recheck`, {
         reason: 'Checking the second payment',
@@ -437,52 +383,19 @@ describe('exceptions queue', () => {
 
   it('the re-check audit keeps the gateway’s own word; a started-only payment stays unsettled', async () => {
     const d = await intent(30_000);
-    pays(d.orderId, 30_000, { status: 'created' });
+    pays(d.ref, 30_000, { status: 'PENDING' });
     const res = await send('POST', `/api/v1/admin/donations/${d.id}/recheck`, {
       reason: 'Donor says the app is still waiting',
     });
-    expect(res.json()).toMatchObject({ status: 'PENDING', outcome: 'provider_created' });
+    expect(res.json()).toMatchObject({ status: 'PENDING', outcome: 'provider_PENDING' });
     const log = await db.auditLog.findFirstOrThrow({
       where: { action: 'donation.rechecked', entityId: d.id },
       orderBy: { createdAt: 'desc' },
     });
-    expect(log.reason).toContain('[provider_created]');
+    expect(log.reason).toContain('[provider_PENDING]');
   });
 
-  it('re-check works for QR and monthly-charge attempts (audit F-4)', async () => {
-    // QR: the attempt is keyed by the QR it was paid on, not by an order.
-    const qr = await intent(40_000);
-    const qrId = `qr_L${String(++seq).padStart(10, '0')}`;
-    await db.paymentAttempt.updateMany({
-      where: { providerOrderId: qr.orderId },
-      data: { providerOrderId: qrId },
-    });
-    pays(qrId, 40_000);
-    expect(
-      (
-        await send('POST', `/api/v1/admin/donations/${qr.id}/recheck`, {
-          reason: 'Donor scanned the QR',
-        })
-      ).json(),
-    ).toMatchObject({ status: 'PAID', outcome: 'provider_captured' });
-
-    // Monthly charge with no order: stored as subpay_<payment id>, matched by that payment.
-    const monthly = await intent(50_000);
-    const charge = pays('order_unused000001', 50_000, { orderId: null });
-    await db.paymentAttempt.updateMany({
-      where: { providerOrderId: monthly.orderId },
-      data: { providerOrderId: `subpay_${charge.paymentId}` },
-    });
-    expect(
-      (
-        await send('POST', `/api/v1/admin/donations/${monthly.id}/recheck`, {
-          reason: 'Monthly charge check',
-        })
-      ).json(),
-    ).toMatchObject({ status: 'PAID', outcome: 'provider_captured' });
-  });
-
-  it('re-check: unknown or bank-transfer donation → 404; Razorpay down → recorded, nothing changes', async () => {
+  it('re-check: unknown or bank-transfer donation → 404; gateway down → recorded, nothing changes', async () => {
     expect(
       (
         await send('POST', `/api/v1/admin/donations/${crypto.randomUUID()}/recheck`, {
@@ -491,17 +404,17 @@ describe('exceptions queue', () => {
       ).statusCode,
     ).toBe(404);
     const d = await intent(80_000);
-    // Nothing at Razorpay yet: the status stays as it is.
+    // Nothing at the gateway yet: the status stays as it is.
     let res = await send('POST', `/api/v1/admin/donations/${d.id}/recheck`, {
       reason: 'Checking again',
     });
     expect(res.json()).toMatchObject({ status: 'CREATED', outcome: 'no_payment_found' });
-    // Razorpay unreachable: recorded in the audit reason, nothing changes.
-    providerDown = true;
+    // The gateway unreachable: recorded in the audit reason, nothing changes.
+    cf.setDown(true);
     res = await send('POST', `/api/v1/admin/donations/${d.id}/recheck`, {
       reason: 'Checking again',
     });
-    providerDown = false;
+    cf.setDown(false);
     expect(res.json()).toMatchObject({ status: 'CREATED', outcome: 'provider_network' });
     const bank = await intent(90_000);
     await db.donationIntent.update({ where: { id: bank.id }, data: { channel: 'BANK_TRANSFER' } });
@@ -548,13 +461,11 @@ describe('receipts', () => {
       (await send('POST', `/api/v1/admin/receipts/${r1.id}/resend`, { reason: 'Please resend' }))
         .statusCode,
     ).toBe(409);
-    const refunded = await paid(100_000);
-    await webhook('refund.processed', {
-      ...refunded.payment,
-      refundedPaise: 100_000,
-      status: 'refunded',
+    const refundedDonation = await paid(100_000);
+    await refunded(refundedDonation.ref, refundedDonation.payment.paymentId, 100_000);
+    const r2 = await db.receipt.findFirstOrThrow({
+      where: { donationIntentId: refundedDonation.id },
     });
-    const r2 = await db.receipt.findFirstOrThrow({ where: { donationIntentId: refunded.id } });
     expect(
       (await send('POST', `/api/v1/admin/receipts/${r2.id}/resend`, { reason: 'Please resend' }))
         .statusCode,

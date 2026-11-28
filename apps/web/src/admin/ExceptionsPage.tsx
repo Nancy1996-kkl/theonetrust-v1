@@ -12,7 +12,7 @@ import { LEDGER_STRINGS, fillText } from './ledger-strings.ts';
 
 /**
  * `/admin/exceptions` (#31): stale pending payments, mismatches, duplicates, refunds and bank
- * cases. Actions: re-check with Razorpay, or mark an exception resolved — each with a reason,
+ * cases. Actions: re-check with the gateway (Cashfree), or mark an exception resolved — each with a reason,
  * each audited. No status or amount can be set by hand.
  */
 export function ExceptionsPage() {
