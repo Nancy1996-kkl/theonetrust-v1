@@ -1,11 +1,13 @@
 import type { Bilingual } from '../../content/landing.ts';
-import children from '../../assets/home/children-food-kits.jpg';
+import children from '../../assets/home/children-kindness-clothes.jpg';
 import banner from '../../assets/home/banner-children-smile.jpg';
 import contact from '../../assets/home/contact-volunteers.jpg';
+import bannerBg from '../../assets/home/children-food-kits.jpg';
 import donate from '../../assets/home/donate-schoolchildren-cheer.jpg';
-import education from '../../assets/home/education-classroom-teacher.jpg';
+import education from '../../assets/home/education-girls-slate.jpg';
 import elderly from '../../assets/home/elderly-women-meal.jpg';
 import healthcare from '../../assets/home/healthcare-doctor-talk.jpg';
+import talk from '../../assets/home/talk-helping-hand.jpg';
 import vision from '../../assets/home/vision-children-walk.jpg';
 
 /**
@@ -36,20 +38,20 @@ export const PHOTOS = {
   education: {
     src: education,
     alt: {
-      en: 'A teacher guiding students in uniform as they write in a bright classroom',
-      ta: 'வெளிச்சமான வகுப்பறையில் எழுதும் சீருடை மாணவர்களுக்கு வழிகாட்டும் ஆசிரியை',
+      en: 'Smiling schoolgirls in uniform, one holding a slate that says "Education"',
+      ta: '"Education" என்று எழுதிய சிலேட்டைப் பிடித்தபடி சிரிக்கும் சீருடைப் பள்ளி மாணவிகள்',
     },
     credit: {
-      author: 'CIMT Hooghly (Unsplash)',
-      license: 'Unsplash License',
-      url: 'https://unsplash.com/photos/a-classroom-full-of-students-sitting-at-desks-I4lLt9g8i3k',
+      author: 'Supplied by the client',
+      license: 'Client supplied',
+      url: '',
     },
   },
   children: {
     src: children,
     alt: {
-      en: 'A volunteer handing food kits to smiling children',
-      ta: 'சிரிக்கும் குழந்தைகளுக்கு உணவுப் பொட்டலங்களைக் கொடுக்கும் ஒரு தன்னார்வலர்',
+      en: 'A volunteer handing folded clothes to smiling schoolchildren',
+      ta: 'சிரிக்கும் பள்ளிக் குழந்தைகளுக்கு மடித்த உடைகளைக் கொடுக்கும் ஒரு தன்னார்வலர்',
     },
     credit: {
       author: 'Supplied by the client',
@@ -115,6 +117,32 @@ export const PHOTOS = {
       author: 'Rashpal Singh (Unsplash)',
       license: 'Unsplash License',
       url: 'https://unsplash.com/photos/three-men-wearing-yellow-volunteers-shirts-qKVSEuBT5EY',
+    },
+  },
+  /** Donate Today background: the earlier food-kits photo (client, 28 Nov 2026: keep it). */
+  bannerBg: {
+    src: bannerBg,
+    alt: {
+      en: 'A volunteer handing food kits to smiling children',
+      ta: 'சிரிக்கும் குழந்தைகளுக்கு உணவுப் பொட்டலங்களைக் கொடுக்கும் ஒரு தன்னார்வலர்',
+    },
+    credit: {
+      author: 'Supplied by the client',
+      license: 'Client supplied',
+      url: '',
+    },
+  },
+  /** "Talk to us" background (client, 28 Nov 2026): an outstretched hand and a small child. */
+  talk: {
+    src: talk,
+    alt: {
+      en: 'An adult hand reaching out to hold a small child’s hand',
+      ta: 'ஒரு சிறு குழந்தையின் கையைப் பிடிக்க நீளும் ஒரு பெரியவரின் கை',
+    },
+    credit: {
+      author: 'Supplied by the client',
+      license: 'Client supplied',
+      url: '',
     },
   },
 } satisfies Record<string, HomePhoto>;

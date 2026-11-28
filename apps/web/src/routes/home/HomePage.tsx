@@ -261,52 +261,54 @@ function DonateBanner() {
     <section className="hp-banner surface-inverse" aria-labelledby="hp-banner-title">
       <img
         className="hp-banner__bg"
-        src={PHOTOS.children.src}
+        src={PHOTOS.bannerBg.src}
         alt=""
-        title={creditLine(PHOTOS.children)}
+        title={creditLine(PHOTOS.bannerBg)}
       />
-      <div className="hp-wrap hp-banner__inner">
-        <div className="hp-banner__copy">
-          <p className="hp-banner__line">{T.donateLead[lang]}</p>
-          <p className="hp-banner__small">{T.smallAct[lang]}</p>
-          <h2 id="hp-banner-title" className="hp-banner__title">
-            {T.bannerTitle[lang]} <span aria-hidden="true">!</span>
-          </h2>
-          <ul className="hp-banner__causes" aria-label={T.bannerCausesLabel[lang]}>
-            {BANNER_CAUSES.map((cause, i) => (
-              <li key={cause.en} className="hp-banner__cause">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="28"
-                  height="28"
-                  aria-hidden="true"
-                  focusable="false"
-                >
-                  {BANNER_ICONS[i]}
-                </svg>
-                {cause[lang]}
-              </li>
-            ))}
-          </ul>
-          <Link className="ui-button ui-button--donate hp-banner__cta" to={`${home}#donate`}>
-            {T.donateNow[lang]}
-          </Link>
-          <p className="hp-banner__help">
-            {T.bannerHelpPrompt[lang]} <Link to={`${home}#get-help`}>{T.askHelp[lang]}</Link>
-          </p>
+      <Reveal>
+        <div className="hp-wrap hp-banner__inner">
+          <div className="hp-banner__copy">
+            <p className="hp-banner__line">{T.donateLead[lang]}</p>
+            <p className="hp-banner__small">{T.smallAct[lang]}</p>
+            <h2 id="hp-banner-title" className="hp-banner__title">
+              {T.bannerTitle[lang]} <span aria-hidden="true">!</span>
+            </h2>
+            <ul className="hp-banner__causes" aria-label={T.bannerCausesLabel[lang]}>
+              {BANNER_CAUSES.map((cause, i) => (
+                <li key={cause.en} className="hp-banner__cause">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="28"
+                    height="28"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    {BANNER_ICONS[i]}
+                  </svg>
+                  {cause[lang]}
+                </li>
+              ))}
+            </ul>
+            <Link className="ui-button ui-button--donate hp-banner__cta" to={`${home}#donate`}>
+              {T.donateNow[lang]}
+            </Link>
+            <p className="hp-banner__help">
+              {T.bannerHelpPrompt[lang]} <Link to={`${home}#get-help`}>{T.askHelp[lang]}</Link>
+            </p>
+          </div>
+          <figure className="hp-banner__photo">
+            <img
+              src={PHOTOS.banner.src}
+              alt={PHOTOS.banner.alt[lang]}
+              title={creditLine(PHOTOS.banner)}
+            />
+            <figcaption className="hp-banner__tag">
+              <span aria-hidden="true" />
+              {T.bannerTag[lang]}
+            </figcaption>
+          </figure>
         </div>
-        <figure className="hp-banner__photo">
-          <img
-            src={PHOTOS.banner.src}
-            alt={PHOTOS.banner.alt[lang]}
-            title={creditLine(PHOTOS.banner)}
-          />
-          <figcaption className="hp-banner__tag">
-            <span aria-hidden="true" />
-            {T.bannerTag[lang]}
-          </figcaption>
-        </figure>
-      </div>
+      </Reveal>
     </section>
   );
 }
@@ -503,7 +505,7 @@ function Explore() {
             role="tabpanel"
             aria-labelledby={`${base}-tab-${tab.id}`}
             key={tab.id}
-            className={`hp-explore hp-split hp-tabpanel-anim${active % 2 ? ' hp-explore--photo-right' : ''}`}
+            className="hp-explore hp-split hp-tabpanel-anim"
           >
             <Photo shape="stack" label={tab.title} photo={TAB_PHOTOS[tab.id]} />
             <div className="hp-split__text">
@@ -671,7 +673,7 @@ function Donation() {
   );
 }
 
-// 8 · Contact — photo left, verified details only.
+// 8 · Contact — photo left, photo background, verified details only.
 function Contact({ facts, proof }: { facts: TrustFacts; proof: ProofContent }) {
   const lang = useLang();
   const rows: Array<[Bilingual, ReactNode]> = [];
@@ -691,7 +693,14 @@ function Contact({ facts, proof }: { facts: TrustFacts; proof: ProofContent }) {
   if (facts.callHours)
     rows.push([{ en: 'Call hours', ta: 'அழைக்கும் நேரம்' }, facts.callHours[lang]]);
   return (
-    <section id="contact" className="hp-section" aria-labelledby="hp-contact-title">
+    <section
+      id="contact"
+      className="hp-section hp-talk surface-inverse"
+      aria-labelledby="hp-contact-title"
+    >
+      {/* Same layout as before; the background is the photo under a light black shade with
+          white text. It zooms in on entry, then keeps a slow zoom (client, 28 Nov 2026). */}
+      <img className="hp-talk__bg" src={PHOTOS.talk.src} alt="" title={creditLine(PHOTOS.talk)} />
       <Reveal>
         <div className="hp-wrap hp-split hp-split--reverse">
           <div className="hp-split__text">

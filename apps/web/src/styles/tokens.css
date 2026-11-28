@@ -257,6 +257,12 @@
   --color-banner-scrim-strong: color-mix(in srgb, var(--palette-green-deep) 92%, transparent);
   --color-banner-scrim-mid: color-mix(in srgb, var(--palette-green-deep) 80%, transparent);
   --color-banner-scrim-soft: color-mix(in srgb, var(--palette-green) 40%, transparent);
+  /* Light black over the Talk to us photo (client, 28 Nov 2026): the photo keeps its own
+     colours; white text stays AA on the strong side. */
+  --color-talk-scrim-strong: color-mix(in srgb, var(--palette-charcoal) 55%, transparent);
+  --color-talk-scrim-soft: color-mix(in srgb, var(--palette-charcoal) 25%, transparent);
+  /* Text straight on the Talk to us photo: a soft dark halo keeps it readable. */
+  --shadow-text-on-photo: 0 1px 2px rgb(0 0 0 / 0.75), 0 2px 14px rgb(0 0 0 / 0.55);
   --color-banner-live: var(--palette-green-bright);
   --color-banner-shine: rgb(255 255 255 / 0.32);
   --shadow-banner-tile: 0 10px 22px rgb(0 0 0 / 0.28);

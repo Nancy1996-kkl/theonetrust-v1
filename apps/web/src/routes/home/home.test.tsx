@@ -148,6 +148,43 @@ describe('home page design (client, Nov 2026)', () => {
     expect(tabs[3]).toHaveFocus();
   });
 
+  it('explore photos (client, 28 Nov 2026): one tidy layout, new Education and Children photos', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    const list = await screen.findByRole('tablist', { name: 'Areas of work' });
+    const tabs = within(list).getAllByRole('tab');
+    const photoIn = (name: RegExp) =>
+      within(screen.getByRole('tabpanel')).getByRole('img', { name });
+    expect(photoIn(/slate that says "Education"/)).toBeInTheDocument();
+    await user.click(tabs[1]!);
+    expect(photoIn(/handing folded clothes to smiling schoolchildren/)).toBeInTheDocument();
+    await user.click(tabs[3]!);
+    expect(photoIn(/Elderly women in saris/)).toBeInTheDocument();
+    // The photo no longer jumps from side to side tab by tab.
+    expect(screen.getByRole('tabpanel')).not.toHaveClass('hp-explore--photo-right');
+  });
+
+  it('Donate Today keeps its food-kits background and zooms in on entry', async () => {
+    const { container } = renderAt('/');
+    await screen.findByRole('heading', { name: /Donate Today/ });
+    const bg = container.querySelector('.hp-banner__bg');
+    expect(bg?.getAttribute('src')).toContain('children-food-kits');
+    expect(bg).toHaveAttribute('alt', '');
+    expect(container.querySelector('.hp-banner .reveal .hp-banner__copy')).not.toBeNull();
+  });
+
+  it('Talk to us (client, 28 Nov 2026): helping-hand photo background behind the contact details', async () => {
+    const { container } = renderAt('/');
+    const section = await screen.findByRole('region', { name: 'Talk to us' });
+    expect(section).toHaveClass('hp-talk', 'surface-inverse');
+    // Same layout as before: the volunteers photo stays next to the details.
+    expect(within(section).getByRole('img', { name: /volunteers in yellow/ })).toBeInTheDocument();
+    const bg = container.querySelector('#contact .hp-talk__bg');
+    expect(bg?.getAttribute('src')).toContain('talk-helping-hand');
+    expect(bg).toHaveAttribute('alt', '');
+    expect(within(section).getByRole('link', { name: '+91 96005 16999' })).toBeInTheDocument();
+  });
+
   it('FAQ: opening one question closes the one that was open', async () => {
     const user = userEvent.setup();
     const { container } = renderAt('/');
